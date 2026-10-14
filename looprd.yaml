@@ -1,0 +1,156 @@
+# Generated from server/looprd_handler.py. Do not edit by hand.
+apiVersion: looprd/v1
+component: looprd-social
+release: 0.2.0
+api:
+  version: v1
+auth:
+  mode: public
+database:
+  backend: sqlite
+  schemaVersion: 1
+models:
+  SocialProfile:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      subjectId:
+        type: string
+        maxLength: 72
+        required: true
+        unique: true
+      data:
+        type: json
+        required: true
+      revision:
+        type: integer
+        required: true
+      updated:
+        type: integer
+        required: true
+  SocialMessage:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      subjectId:
+        type: string
+        maxLength: 72
+        required: true
+      displayName:
+        type: string
+        maxLength: 24
+        required: true
+      content:
+        type: string
+        maxLength: 320
+        required: true
+      created:
+        type: integer
+        required: true
+  SocialPulse:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+      signal:
+        type: integer
+        required: true
+resources:
+  pulses:
+    model: SocialPulse
+    path: /pulses
+    operations:
+    - get
+websocket:
+  path: /events
+  resources:
+  - pulses
+handlers:
+- path: /social
+  method: POST
+  kind: python
+  source: "\"\"\"Looprd Social v0.2.0 native Looprd handler (DEVELOPMENT ONLY).\n\nSelf-contained in looprd.yaml\
+    \ by tools/generate-looprd.py.\nThe verified Looprd v1 handler contract provides ctx.body, ctx.session_factory\n\
+    and ctx.publish. No unverified request-header assumptions are used.\n\"\"\"\nimport hashlib\nimport hmac\nimport\
+    \ json\nimport os\nimport re\nimport time\nimport sqlalchemy as sa\nfrom starlette.concurrency import run_in_threadpool\n\
+    \nSCHEMA = 'looprd.social.profile/v1'\nAPPEARANCE_SCHEMA = 'modular-portraits.identity/v1'\nSOCIAL = 'looprd-social'\n\
+    PROFILE = sa.table('SocialProfile',\n    sa.column('id', sa.Integer), sa.column('subjectId', sa.String),\n \
+    \   sa.column('data', sa.JSON), sa.column('revision', sa.Integer),\n    sa.column('updated', sa.Integer))\n\
+    MESSAGE = sa.table('SocialMessage',\n    sa.column('id', sa.Integer), sa.column('subjectId', sa.String),\n \
+    \   sa.column('displayName', sa.String), sa.column('content', sa.String),\n    sa.column('created', sa.Integer))\n\
+    PULSE = sa.table('SocialPulse', sa.column('id', sa.Integer),sa.column('signal', sa.Integer))\nSUBJECT = re.compile(r'^[a-zA-Z0-9_-]{8,72}$')\n\
+    SLOT = re.compile(r'^[a-z0-9-]{1,64}$')\nCOLOR = re.compile(r'^#[a-fA-F0-9]{6}$')\n\n\ndef error(message):\n\
+    \    return {'ok':False,'error':message}\n\n\ndef configured_tokens():\n    \"\"\"Dev identity->token mapping;\
+    \ provision via runtime environment/secret only.\"\"\"\n    raw = os.environ.get('LOOPRD_SOCIAL_DEV_TOKENS_JSON',\
+    \ '')\n    try:\n        found = json.loads(raw)\n    except (ValueError,TypeError):\n        return {}\n  \
+    \  if not isinstance(found,dict):\n        return {}\n    return {name:token for name,token in found.items()\n\
+    \            if isinstance(name,str) and SUBJECT.fullmatch(name)\n            and isinstance(token,str) and\
+    \ len(token)>=24 and len(token)<=256}\n\n\ndef authorize(token, tokens):\n    if not isinstance(token,str) or\
+    \ not 24<=len(token)<=256:\n        return None\n    value=hashlib.sha256(token.encode('utf8')).digest()\n \
+    \   identity=None\n    for name,secret in tokens.items():\n        if isinstance(secret,str) and hmac.compare_digest(value,hashlib.sha256(secret.encode('utf8')).digest()):\n\
+    \            identity=name\n    return identity\n\n\ndef clean_profile(subject, input):\n    if not isinstance(input,dict)\
+    \ or input.get('schema',SCHEMA)!=SCHEMA:\n        raise ValueError('Invalid shared profile')\n    if set(input)-{'schema','profileId','displayName','appearance'}:\n\
+    \        raise ValueError('Game state or unrecognized profile fields are not allowed')\n    if input.get('profileId')\
+    \ not in (None,subject):\n        raise ValueError('Cannot write another profile')\n    value=input.get('displayName')\n\
+    \    if not isinstance(value,str):\n        raise ValueError('Display name required')\n    name=re.sub(r'[\\\
+    x00-\\x1f\\x7f<>]','',value).strip()[:24]\n    if not name:\n        raise ValueError('Display name required')\n\
+    \    appearance=input.get('appearance')\n    if appearance is not None:\n        if (not isinstance(appearance,dict)\
+    \ or appearance.get('schema')!=APPEARANCE_SCHEMA\n                or appearance.get('pack') not in ('everyday-illustrated','dominion-pixel')\n\
+    \                or type(appearance.get('revision')) is not int or appearance['revision']!=1):\n           \
+    \ raise ValueError('Invalid portrait identity')\n        choices=appearance.get('choices')\n        colors=appearance.get('colors')\n\
+    \        if (not isinstance(choices,dict) or not isinstance(colors,dict)\n                or len(choices)>60\
+    \ or len(colors)>60\n                or not all(isinstance(k,str) and SLOT.fullmatch(k) and isinstance(v,str)\
+    \ and SLOT.fullmatch(v) for k,v in choices.items())\n                or not all(isinstance(k,str) and SLOT.fullmatch(k)\
+    \ and isinstance(v,str) and COLOR.fullmatch(v) for k,v in colors.items())):\n            raise ValueError('Invalid\
+    \ portrait attributes')\n        try:\n            if len(json.dumps(appearance,separators=(',',':'),ensure_ascii=False))>16384:\n\
+    \                raise ValueError('Portrait payload exceeds limit')\n        except (ValueError,TypeError):\n\
+    \            raise ValueError('Invalid portrait payload')\n    return {'schema':SCHEMA,'profileId':subject,'displayName':name,'appearance':appearance}\n\
+    \n\ndef event_signal(db):\n    current=db.execute(sa.select(PULSE).where(PULSE.c.id==1)).mappings().first()\n\
+    \    count=(current['signal'] if current else 0)+1\n    if current:\n        db.execute(sa.update(PULSE).where(PULSE.c.id==1).values(signal=count))\n\
+    \    else:\n        db.execute(sa.insert(PULSE).values(id=1,signal=count))\n    # Public websocket payload intentionally\
+    \ excludes identity, profile and chat.\n    return {'component':SOCIAL,'resource':'pulses','action':'updated','id':1,\n\
+    \            'data':{'id':1,'signal':count}}\n\n\ndef execute(body,sessions,tokens=None,now=None):\n    \"\"\
+    \"Returns (response, optional notification), after SQLite commit.\"\"\"\n    if not isinstance(body,dict):\n\
+    \        return error('Invalid request'),None\n    tokens=configured_tokens() if tokens is None else tokens\n\
+    \    subject=authorize(body.get('token'),tokens)\n    if not subject:\n        return error('Invalid development\
+    \ credential'),None\n    op=body.get('op')\n    now=int(time.time()) if now is None else int(now)\n    try:\n\
+    \        with sessions.begin() as db:\n            stored=db.execute(sa.select(PROFILE).where(PROFILE.c.subjectId==subject)).mappings().first()\n\
+    \            current=stored['data'] if stored else {'schema':SCHEMA,'profileId':subject,\n                 \
+    \     'displayName':subject,'appearance':None}\n            if op=='me':\n                return {'ok':True,'profile':current,'revision':stored['revision']\
+    \ if stored else 0},None\n            if op=='save_profile':\n                p=clean_profile(subject,body.get('profile'))\n\
+    \                before=stored['revision'] if stored else 0\n                if body.get('ifRevision') is not\
+    \ None and body.get('ifRevision')!=before:\n                    return error('Profile revision conflict'),None\n\
+    \                if stored:\n                    db.execute(sa.update(PROFILE).where(PROFILE.c.subjectId==subject).values(\n\
+    \                        data=p,revision=before+1,updated=now))\n                else:\n                   \
+    \ db.execute(sa.insert(PROFILE).values(subjectId=subject,data=p,\n                        revision=1,updated=now))\n\
+    \                return {'ok':True,'profile':p,'revision':before+1},event_signal(db)\n            if op=='chat_feed':\n\
+    \                rows=db.execute(sa.select(MESSAGE).where(MESSAGE.c.created>=now-7*86400)\n                \
+    \    .order_by(MESSAGE.c.id.desc()).limit(50)).mappings().all()\n                messages=[{'id':m['id'],'authorId':m['subjectId'],'displayName':m['displayName'],\n\
+    \                           'text':m['content'],'at':m['created']} for m in reversed(rows)]\n              \
+    \  return {'ok':True,'schema':'looprd.social.chat/v1','messages':messages},None\n            if op=='chat_send':\n\
+    \                content=body.get('text')\n                if not isinstance(content,str) or not 1<=len(content.strip())<=320\
+    \ or re.search(r'[\\x00-\\x08\\x0e-\\x1f\\x7f]',content):\n                    return error('Invalid chat message'),None\n\
+    \                last=db.execute(sa.select(MESSAGE.c.created).where(MESSAGE.c.subjectId==subject)\n        \
+    \            .order_by(MESSAGE.c.id.desc()).limit(1)).scalar_one_or_none()\n                if last is not None\
+    \ and now-last<2:\n                    return error('Chat cooldown: wait 2 seconds'),None\n                db.execute(sa.insert(MESSAGE).values(subjectId=subject,\n\
+    \                    displayName=current['displayName'],content=content.strip(),created=now))\n            \
+    \    new_id=db.execute(sa.select(MESSAGE.c.id).order_by(MESSAGE.c.id.desc()).limit(1)).scalar_one()\n      \
+    \          # Bounded 7-day/100-message history. No game states or tokens retained.\n                db.execute(sa.delete(MESSAGE).where(MESSAGE.c.created<now-7*86400))\n\
+    \                keep=db.execute(sa.select(MESSAGE.c.id).order_by(MESSAGE.c.id.desc()).limit(100)).scalars().all()\n\
+    \                if keep:db.execute(sa.delete(MESSAGE).where(MESSAGE.c.id.not_in(keep)))\n                message={'id':new_id,'authorId':subject,\n\
+    \                    'displayName':current['displayName'],'text':content.strip(),'at':now}\n               \
+    \ return {'ok':True,'message':message},event_signal(db)\n            if op=='game_ticket':\n               \
+    \ return error('Game tickets require trusted OIDC and game-service validation; not implemented'),None\n    \
+    \        return error('Unknown operation'),None\n    except (ValueError,TypeError) as exc:\n        return error(str(exc)),None\n\
+    \n\nasync def handle(ctx):\n    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory)\n\
+    \    if event is not None:\n        ctx.publish(event)\n    return result\n"
+- path: /info
+  kind: response
+  response:
+    protocol: looprd.social/1
+    auth: development credentials only
+    status: not production identity issuer

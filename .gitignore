@@ -1,0 +1,11 @@
+.data/
+.env
+.env.*
+*.local.json
+__pycache__/
+.pytest_cache/
+node_modules/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3

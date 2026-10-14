@@ -1,0 +1,42 @@
+{
+  "schema": "ziprunner.workboard-update.v1",
+  "project": "looprd-social",
+  "version": "0.2.0",
+  "summary": "Independent Looprd v1-native development Social service with profile and lobby chat persistence, safe bridge and no game tickets.",
+  "implemented": [
+    {
+      "id": "LRS-001",
+      "title": "Native Looprd Social component and SQLite persistence",
+      "summary": "Create generated looprd.yaml from auditable Python handler; model shared profiles, bounded chat history and public signals, restrict mutations with per-account dev credentials.",
+      "operator_checks": [
+        "Run node --test tests/*.test.mjs and verify looprd.yaml component and model schema."
+      ]
+    },
+    {
+      "id": "LRS-002",
+      "title": "Local REST compatibility for Life Loop",
+      "summary": "Provide loopback-only bridge translating existing Life Loop REST profile and lobby calls to native Looprd POST /social without changing game simulation.",
+      "operator_checks": [
+        "Start Looprd component then bridge on loopback and test Life Loop Profile connection."
+      ]
+    },
+    {
+      "id": "LRS-003",
+      "title": "Secure deployment boundary and blocked game tickets",
+      "summary": "Protect profile/chat data against anonymous reads and prohibit game-room single sign-on without validated issuer and audience.",
+      "operator_checks": [
+        "Confirm /social requires token and game_ticket refuses issuance."
+      ]
+    }
+  ],
+  "remaining": [
+    {
+      "id": "LRS-004",
+      "title": "Production OIDC authentication and game ticket trust",
+      "summary": "Blocked: requires configured issuer, audience, token signature verification and game Looprd service changes.",
+      "operator_checks": [
+        "Do not expose dev token mode publicly; production implementation needs separate security review."
+      ]
+    }
+  ]
+}

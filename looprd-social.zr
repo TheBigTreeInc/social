@@ -1,0 +1,34 @@
+{
+  "project_key": "looprd-social",
+  "display_name": "Looprd Social",
+  "zip_match_patterns": [
+    "looprd-social-*-ziprunner.zip"
+  ],
+  "zip_patterns": [
+    "looprd-social-*-ziprunner.zip"
+  ],
+  "match_patterns": [
+    "looprd-social-*-ziprunner.zip"
+  ],
+  "build_commands": [
+    "node --test tests/*.test.mjs"
+  ],
+  "start_commands": [],
+  "strip_single_root_folder": false,
+  "delete_missing_files": false,
+  "clean_git_tree": false,
+  "post_build_requires_success": true,
+  "build_window": "hidden",
+  "protected_paths": [
+    ".git",
+    "ziprunner.config.json",
+    "ziprunner.project-state.json",
+    ".data",
+    ".env",
+    "*.local.json",
+    "*.sqlite",
+    "*.sqlite3",
+    "node_modules"
+  ],
+  "git_auto_push": false
+}
