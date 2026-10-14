@@ -1,4 +1,4 @@
-# Looprd Social — native Looprd service v0.2.0
+# Looprd Social — native Looprd service v0.2.1
 
 **Separate service/repository** for cross-game display profiles, modular portrait selections, and a small social lobby. The authoritative game Looprd instance (The Life Loop or another game) remains independent.
 
@@ -58,7 +58,7 @@ For a quick *standalone development test without Looprd*, `LOOPRD_SOCIAL_DEV_TOK
 
 - Social owns: `profileId`, `displayName`, appearance identity, bounded lobby history (up to 100 entries; 7-day time window).
 - Games own: turns, jobs, money, game state, saves, inventories, matchmaking room capabilities.
-- The social server **never** issues game-room credentials in v0.2.0. In future, game Looprd instances must verify signed, short-lived audience-scoped credentials from a trusted identity issuer.
+- The social server **never** issues game-room credentials in v0.2.1. In future, game Looprd instances must verify signed, short-lived audience-scoped credentials from a trusted identity issuer.
 - Social data never appears in public Looprd `resources` or WebSocket pulse payloads. Credential checks live inside the action handler; `auth.mode: public` alone is **not** authentication.
 - Treat development tokens as passwords. Do not paste them into chats/logs, check them into Git, or send them over non-local HTTP. The bridge refuses plain HTTP for remote Looprd URLs and binds to loopback only.
 - For shared/public deployment, replace the development credential mechanism with OIDC Authorization Code + PKCE, server-validated JWTs, scoped user privacy, rate limiting, moderation, TLS, key rotation, and a purpose-built cross-game ticket issuer.
@@ -82,3 +82,15 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 - ZipRunner source package: `looprd-social-0.2.0-ziprunner.zip`.
 
 No git push or server deployment is performed by this package.
+
+## v0.2.1 loader validation repair
+
+Looprd requires **every** primary key to be an integer with `generated: true`.
+The earlier `SocialPulse.id` declared `primaryKey: true` without `generated: true`,
+which causes `load: ValidationError` *before* any database activation. The fix is
+a source-generator change and regenerated `looprd.yaml`. The SQLite schema version
+remains 1; no migration, table replacement or database reset is needed.
+
+Run `python -m looprd validate looprd.yaml` in a Looprd-enabled environment.
+`python tests/test_loader_contract.py` provides focused checks without requiring
+the Looprd runtime. Do not deploy development tokens on a public endpoint.

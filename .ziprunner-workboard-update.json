@@ -1,8 +1,8 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.2.0",
-  "summary": "Independent Looprd v1-native development Social service with profile and lobby chat persistence, safe bridge and no game tickets.",
+  "version": "0.2.1",
+  "summary": "Fix Looprd v1 loader validation: generated primary key for SocialPulse, with schema contract regression tests; existing profile/chat API unchanged.",
   "implemented": [
     {
       "id": "LRS-001",
@@ -26,6 +26,15 @@
       "summary": "Protect profile/chat data against anonymous reads and prohibit game-room single sign-on without validated issuer and audience.",
       "operator_checks": [
         "Confirm /social requires token and game_ticket refuses issuance."
+      ]
+    },
+    {
+      "id": "LRS-005",
+      "title": "Fix SocialPulse generated primary key for Looprd validation",
+      "summary": "Mark SocialPulse.id generated: true to satisfy Looprd Column primaryKey constraints; ensure generated descriptor checks prevent recurrence.",
+      "operator_checks": [
+        "Run python tools/generate-looprd.py --check",
+        "Run Python loader contract test and Looprd validate looprd.yaml before deployment."
       ]
     }
   ],

@@ -36,7 +36,7 @@ class SocialLooprdTests(unittest.TestCase):
   s=self.spec
   self.assertEqual(s['apiVersion'],'looprd/v1')
   self.assertEqual(s['component'],'looprd-social')
-  self.assertEqual(s['release'],'0.2.0')
+  self.assertEqual(s['release'],'0.2.1')
   self.assertEqual(s['handlers'][0]['path'],'/social')
   self.assertEqual(s['handlers'][0]['source'],(ROOT/'server/looprd_handler.py').read_text())
   self.assertEqual(s['resources']['pulses']['operations'],['get'])

@@ -18,7 +18,7 @@ spec={
  'models':{
     'SocialProfile':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True,True),'data':{'type':'json','required':True},'revision':integer(True),'updated':integer(True)}},
     'SocialMessage':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'displayName':string(24,True),'content':string(320,True),'created':integer(True)}},
-    'SocialPulse':{'fields':{'id':integer(primary=True),'signal':integer(True)}}},
+    'SocialPulse':{'fields':{'id':integer(primary=True,generated=True),'signal':integer(True)}}},
  'resources':{'pulses':{'model':'SocialPulse','path':'/pulses','operations':['get']}},
  'websocket':{'path':'/events','resources':['pulses']},
  'handlers':[
