@@ -22,7 +22,7 @@ class SocialLooprdTests(unittest.TestCase):
   for name,model in self.spec['models'].items():
    cols=[]
    for key,field in model['fields'].items():
-    kind={'integer':sa.Integer,'string':sa.String(field.get('maxLength',128)),'json':sa.JSON}[field['type']]
+    kind={'integer':sa.Integer,'string':sa.String(field.get('maxLength',128)),'json':sa.JSON,'boolean':sa.Boolean}[field['type']]
     cols.append(sa.Column(key,kind,primary_key=field.get('primaryKey',False),
       autoincrement=field.get('generated',False),nullable=not field.get('required',False),
       unique=field.get('unique',False)))

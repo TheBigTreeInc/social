@@ -1,48 +1,83 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.2.3",
-  "summary": "CI repair: pin LoopRD descriptors to LF on Windows; upgrade Android SDK setup to v4 without the retired tools package; preserve Social server/data compatibility.",
+  "version": "0.3.0",
+  "summary": "Social account registration and sign-in without OIDC or manual tokens; Xfire/MSN-style friends and conversations; server-local discovery; additive v2 Social schema and Android Tauri config correction.",
   "implemented": [
     {
-      "id": "SCL-012",
-      "title": "Repair native CI pre-build failures",
-      "summary": "Ensure byte-exact LoopRD SHA-256 links on Windows checkouts and avoid retired Android SDK tools package; native Windows/Android compile is still unverified.",
+      "id": "SCL-013",
+      "title": "Social-owned account registration and sign-in",
+      "summary": "Register/login on the selected LoopRD Social component using password hashing and revocable per-device sessions; no externally provisioned token or OIDC provider.",
       "operator_checks": [
-        "Review GitHub Windows workflow and verify the manifest integrity step succeeds on Windows after CRLF-safe checkout.",
-        "Review GitHub Android workflow and verify SDK setup and app build reach compilation; install any resulting APK and NSIS artifacts on target devices."
+        "On an HTTPS LoopRD server hosting Social v0.3.0, register two accounts and sign into one from Windows and Android.",
+        "Verify an unknown server and one without Social do not create a local account and show a clear unavailable state.",
+        "Verify logout revokes the current session without revoking the other device."
+      ]
+    },
+    {
+      "id": "SCL-014",
+      "title": "Messenger contact roster and direct conversation",
+      "summary": "Introduce real contact requests, acceptance, presence and private direct messages with consent enforcement; rework the client UI into compact MSN/Xfire-inspired navigation.",
+      "operator_checks": [
+        "From account A add account B; confirm B must accept before either may direct-message.",
+        "Verify buddy online indicators after authenticated activity and the lobby chat still works.",
+        "Inspect the Windows UI and Android layout for compact contact roster and message composer."
+      ]
+    },
+    {
+      "id": "SCL-015",
+      "title": "Social component capability detection",
+      "summary": "Discover Social on the selected LoopRD server before account actions; no external account or chat persistence fallback.",
+      "operator_checks": [
+        "Connect to a server lacking the Social component; verify a readable explanation and no account registration.",
+        "Disable registration using LOOPRD_SOCIAL_ALLOW_REGISTRATION=false; verify only sign-in is offered."
+      ]
+    },
+    {
+      "id": "SCL-016",
+      "title": "Tauri Android configuration repair",
+      "summary": "Remove unsupported bundle.targets apk value from Android override; preserve GitHub Android workflow for follow-up native compilation.",
+      "operator_checks": [
+        "Run GitHub Android phone app workflow and verify initialization proceeds past tauri android init --ci.",
+        "Install resulting APK on a test device if build finishes; report any downstream Tauri/Gradle failures."
       ]
     }
   ],
   "remaining": [
     {
       "id": "LRS-004",
-      "title": "Production-ready Social authentication and trusted game invitations",
-      "summary": "Replace development-only tokens with Social-owned, verified and revocable device sessions, game-specific trust and invitation contract. An external OIDC provider is NOT required.",
+      "title": "Account recovery and hardened public registration",
+      "summary": "Social-owned password recovery and device management, optional email verification/invite controls, abuse prevention, security review and production readiness remain to be implemented. External OIDC not required.",
       "priority": "high"
     },
     {
       "id": "SCL-007",
-      "title": "Server-backed friends and private conversations",
-      "summary": "Extend Social component to support game-oriented friends, private/group chat and permissions without changing LoopRD domain logic.",
+      "title": "Private groups and game invitations",
+      "summary": "Buddy list/direct messages are implemented in this pass. Group conversation membership, game invitations, moderation and game ticket authorization still need Social and game-side contracts.",
       "priority": "high"
     },
     {
       "id": "SCL-009",
-      "title": "Background Android push and turn notification delivery",
-      "summary": "Current local alerts work only while app is running; require implementer-owned device registration and push provider for terminated apps.",
+      "title": "Android background push and turn delivery",
+      "summary": "Turn notifications work while the client is running; provide Social-owned device push registration and a push provider to wake Android after app termination.",
       "priority": "high"
     },
     {
       "id": "SCL-010",
-      "title": "GitHub native build and device acceptance",
-      "summary": "Native Windows and Android Actions initially failed before compilation on 2026-10-15; CI workflow fixes are included but require fresh GitHub runs and device acceptance.",
+      "title": "Native build and device acceptance",
+      "summary": "Windows build passed on upstream v0.2.3; Android failed on invalid Tauri config. Both v0.3.0 native artifacts and GUI acceptance remain unverified.",
       "priority": "high"
     },
     {
       "id": "SCL-011",
-      "title": "Game component activity integration",
-      "summary": "Implement the optional game-specific activity/v1 contract in supported game components; existing games may not expose it yet.",
+      "title": "Game activity integration",
+      "summary": "Each game hosted on the selected LoopRD server must implement its own turn-activity contract for automatic alerts; the Social app cannot fabricate turns.",
+      "priority": "medium"
+    },
+    {
+      "id": "SCL-017",
+      "title": "Secure persistent device login",
+      "summary": "Currently device session token is memory-only; add native OS-secure storage with explicit remembered-device management and logout/remote revoke controls.",
       "priority": "medium"
     }
   ]

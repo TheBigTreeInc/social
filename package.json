@@ -1,6 +1,6 @@
 {
   "name": "looprd-social",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,5 +15,5 @@
     "client:build": "cd client && npm run web:build",
     "client:sync-portraits": "cd client && npm run portrait:sync"
   },
-  "description": "LoopRD Social API and integrated Windows/Android social client (development identity only)"
+  "description": "Social-owned accounts, buddies, direct messages and game alerts on LoopRD with Windows/Android clients"
 }

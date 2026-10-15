@@ -1,14 +1,34 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.2.3
+release: 0.3.0
 api:
   version: v1
 auth:
   mode: public
+limits:
+  requestsPerMinute: 180
+  authAttemptsPerMinute: 90
+  burstPerSecond: 15
+  maxInFlight: 30
 database:
   backend: sqlite
-  schemaVersion: 1
+  schemaVersion: 2
+  migrations:
+  - version: 2
+    statements:
+    - CREATE TABLE "SocialAccount" ("id" INTEGER PRIMARY KEY, "handle" VARCHAR(32) NOT NULL UNIQUE, "passwordHash"
+      VARCHAR(255) NOT NULL, "created" INTEGER NOT NULL, "failedAttempts" INTEGER NOT NULL, "lockedUntil" INTEGER
+      NOT NULL)
+    - CREATE TABLE "SocialSession" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "tokenHash" VARCHAR(64)
+      NOT NULL UNIQUE, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL, "lastSeen" INTEGER NOT NULL, "revoked"
+      BOOLEAN NOT NULL)
+    - CREATE TABLE "SocialContact" ("id" INTEGER PRIMARY KEY, "leftId" VARCHAR(72) NOT NULL, "rightId" VARCHAR(72)
+      NOT NULL, "requestedBy" VARCHAR(72) NOT NULL, "status" VARCHAR(16) NOT NULL, "created" INTEGER NOT NULL)
+    - CREATE UNIQUE INDEX "SocialContact_pair" ON "SocialContact" ("leftId", "rightId")
+    - CREATE TABLE "SocialDirectMessage" ("id" INTEGER PRIMARY KEY, "leftId" VARCHAR(72) NOT NULL, "rightId" VARCHAR(72)
+      NOT NULL, "senderId" VARCHAR(72) NOT NULL, "content" VARCHAR(1000) NOT NULL, "created" INTEGER NOT NULL)
+    - CREATE INDEX "SocialDirectMessage_pair" ON "SocialDirectMessage" ("leftId", "rightId", "id")
 models:
   SocialProfile:
     fields:
@@ -60,6 +80,119 @@ models:
       signal:
         type: integer
         required: true
+  SocialAccount:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      handle:
+        type: string
+        maxLength: 32
+        required: true
+        unique: true
+      passwordHash:
+        type: string
+        maxLength: 255
+        required: true
+      created:
+        type: integer
+        required: true
+      failedAttempts:
+        type: integer
+        required: true
+      lockedUntil:
+        type: integer
+        required: true
+  SocialSession:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      subjectId:
+        type: string
+        maxLength: 72
+        required: true
+      tokenHash:
+        type: string
+        maxLength: 64
+        required: true
+        unique: true
+      created:
+        type: integer
+        required: true
+      expires:
+        type: integer
+        required: true
+      lastSeen:
+        type: integer
+        required: true
+      revoked:
+        type: boolean
+        required: true
+  SocialContact:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      leftId:
+        type: string
+        maxLength: 72
+        required: true
+      rightId:
+        type: string
+        maxLength: 72
+        required: true
+      requestedBy:
+        type: string
+        maxLength: 72
+        required: true
+      status:
+        type: string
+        maxLength: 16
+        required: true
+      created:
+        type: integer
+        required: true
+    indexes:
+    - name: SocialContact_pair
+      fields:
+      - leftId
+      - rightId
+      unique: true
+  SocialDirectMessage:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      leftId:
+        type: string
+        maxLength: 72
+        required: true
+      rightId:
+        type: string
+        maxLength: 72
+        required: true
+      senderId:
+        type: string
+        maxLength: 72
+        required: true
+      content:
+        type: string
+        maxLength: 1000
+        required: true
+      created:
+        type: integer
+        required: true
+    indexes:
+    - name: SocialDirectMessage_pair
+      fields:
+      - leftId
+      - rightId
+      - id
 resources:
   pulses:
     model: SocialPulse
@@ -74,25 +207,26 @@ handlers:
 - path: /social
   method: POST
   kind: python
-  source: "\"\"\"Looprd Social v0.2.2 native Looprd handler (DEVELOPMENT ONLY).\n\nSelf-contained in looprd.yaml\
-    \ by tools/generate-looprd.py.\nThe verified Looprd v1 handler contract provides ctx.body, ctx.session_factory\n\
-    and ctx.publish. No unverified request-header assumptions are used.\n\"\"\"\nimport hashlib\nimport hmac\nimport\
-    \ json\nimport os\nimport re\nimport time\nimport sqlalchemy as sa\nfrom starlette.concurrency import run_in_threadpool\n\
-    \nSCHEMA = 'looprd.social.profile/v1'\nAPPEARANCE_SCHEMA = 'modular-portraits.identity/v1'\nPORTRAIT_NUMBER\
-    \ = re.compile(r'^[1-9][0-9]{0,511}$')\nSOCIAL = 'looprd-social'\nPROFILE = sa.table('SocialProfile',\n    sa.column('id',\
-    \ sa.Integer), sa.column('subjectId', sa.String),\n    sa.column('data', sa.JSON), sa.column('revision', sa.Integer),\n\
-    \    sa.column('updated', sa.Integer))\nMESSAGE = sa.table('SocialMessage',\n    sa.column('id', sa.Integer),\
-    \ sa.column('subjectId', sa.String),\n    sa.column('displayName', sa.String), sa.column('content', sa.String),\n\
-    \    sa.column('created', sa.Integer))\nPULSE = sa.table('SocialPulse', sa.column('id', sa.Integer),sa.column('signal',\
-    \ sa.Integer))\nSUBJECT = re.compile(r'^[a-zA-Z0-9_-]{8,72}$')\nSLOT = re.compile(r'^[a-z0-9-]{1,64}$')\nCOLOR\
-    \ = re.compile(r'^#[a-fA-F0-9]{6}$')\n\n\ndef error(message):\n    return {'ok':False,'error':message}\n\n\n\
-    def configured_tokens():\n    \"\"\"Dev identity->token mapping; provision via runtime environment/secret only.\"\
-    \"\"\n    raw = os.environ.get('LOOPRD_SOCIAL_DEV_TOKENS_JSON', '')\n    try:\n        found = json.loads(raw)\n\
-    \    except (ValueError,TypeError):\n        return {}\n    if not isinstance(found,dict):\n        return {}\n\
-    \    return {name:token for name,token in found.items()\n            if isinstance(name,str) and SUBJECT.fullmatch(name)\n\
+  source: "\"\"\"Looprd Social v0.3.0 native Looprd handler.\n\nSelf-contained in looprd.yaml by tools/generate-looprd.py.\n\
+    The verified Looprd v1 handler contract provides ctx.body, ctx.session_factory\nand ctx.publish. No unverified\
+    \ request-header assumptions are used.\n\"\"\"\nimport hashlib\nimport hmac\nimport json\nimport os\nimport\
+    \ re\nimport time\nimport sqlalchemy as sa\nfrom starlette.concurrency import run_in_threadpool\n\nSCHEMA =\
+    \ 'looprd.social.profile/v1'\nAPPEARANCE_SCHEMA = 'modular-portraits.identity/v1'\nPORTRAIT_NUMBER = re.compile(r'^[1-9][0-9]{0,511}$')\n\
+    SOCIAL = 'looprd-social'\nPROFILE = sa.table('SocialProfile',\n    sa.column('id', sa.Integer), sa.column('subjectId',\
+    \ sa.String),\n    sa.column('data', sa.JSON), sa.column('revision', sa.Integer),\n    sa.column('updated',\
+    \ sa.Integer))\nMESSAGE = sa.table('SocialMessage',\n    sa.column('id', sa.Integer), sa.column('subjectId',\
+    \ sa.String),\n    sa.column('displayName', sa.String), sa.column('content', sa.String),\n    sa.column('created',\
+    \ sa.Integer))\nPULSE = sa.table('SocialPulse', sa.column('id', sa.Integer),sa.column('signal', sa.Integer))\n\
+    SUBJECT = re.compile(r'^[a-zA-Z0-9_-]{8,72}$')\nSLOT = re.compile(r'^[a-z0-9-]{1,64}$')\nCOLOR = re.compile(r'^#[a-fA-F0-9]{6}$')\n\
+    \n\ndef error(message):\n    return {'ok':False,'error':message}\n\n\ndef configured_tokens():\n    \"\"\"Dev\
+    \ identity->token mapping; provision via runtime environment/secret only.\"\"\"\n    raw = os.environ.get('LOOPRD_SOCIAL_DEV_TOKENS_JSON',\
+    \ '')\n    try:\n        found = json.loads(raw)\n    except (ValueError,TypeError):\n        return {}\n  \
+    \  if not isinstance(found,dict):\n        return {}\n    return {name:token for name,token in found.items()\n\
+    \            if isinstance(name,str) and SUBJECT.fullmatch(name) and not re.fullmatch(r'acct_[0-9]+',name)\n\
     \            and isinstance(token,str) and len(token)>=24 and len(token)<=256}\n\n\ndef authorize(token, tokens):\n\
     \    if not isinstance(token,str) or not 24<=len(token)<=256:\n        return None\n    value=hashlib.sha256(token.encode('utf8')).digest()\n\
-    \    identity=None\n    for name,secret in tokens.items():\n        if isinstance(secret,str) and hmac.compare_digest(value,hashlib.sha256(secret.encode('utf8')).digest()):\n\
+    \    identity=None\n    for name,secret in tokens.items():\n        if not re.fullmatch(r'acct_[0-9]+',name)\
+    \ and isinstance(secret,str) and hmac.compare_digest(value,hashlib.sha256(secret.encode('utf8')).digest()):\n\
     \            identity=name\n    return identity\n\n\ndef valid_portrait_code(code):\n    \"\"\"Validate portable\
     \ numeric portrait v1 framing, without owning online artwork IDs.\n\n    TheBigTreeInc/assets owns the registry\
     \ and rendering. Social stores only the\n    canonical decimal *text*; no JavaScript number coercion or asset\
@@ -131,12 +265,99 @@ handlers:
     \    count=(current['signal'] if current else 0)+1\n    if current:\n        db.execute(sa.update(PULSE).where(PULSE.c.id==1).values(signal=count))\n\
     \    else:\n        db.execute(sa.insert(PULSE).values(id=1,signal=count))\n    # Public websocket payload intentionally\
     \ excludes identity, profile and chat.\n    return {'component':SOCIAL,'resource':'pulses','action':'updated','id':1,\n\
-    \            'data':{'id':1,'signal':count}}\n\n\ndef execute(body,sessions,tokens=None,now=None):\n    \"\"\
-    \"Returns (response, optional notification), after SQLite commit.\"\"\"\n    if not isinstance(body,dict):\n\
-    \        return error('Invalid request'),None\n    tokens=configured_tokens() if tokens is None else tokens\n\
-    \    subject=authorize(body.get('token'),tokens)\n    if not subject:\n        return error('Invalid development\
-    \ credential'),None\n    op=body.get('op')\n    now=int(time.time()) if now is None else int(now)\n    try:\n\
-    \        with sessions.begin() as db:\n            stored=db.execute(sa.select(PROFILE).where(PROFILE.c.subjectId==subject)).mappings().first()\n\
+    \            'data':{'id':1,'signal':count}}\n\n\n\nimport base64\nimport hashlib\nimport hmac\nimport os\n\
+    import re\nimport secrets\nimport time\nimport sqlalchemy as sa\n\nACCOUNT = sa.table('SocialAccount', sa.column('id',sa.Integer),sa.column('handle',sa.String),\n\
+    \    sa.column('passwordHash',sa.String),sa.column('created',sa.Integer),\n    sa.column('failedAttempts',sa.Integer),sa.column('lockedUntil',sa.Integer))\n\
+    SESSION = sa.table('SocialSession',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n    sa.column('tokenHash',sa.String),sa.column('created',sa.Integer),\n\
+    \    sa.column('expires',sa.Integer),sa.column('lastSeen',sa.Integer),sa.column('revoked',sa.Boolean))\nCONTACT\
+    \ = sa.table('SocialContact',sa.column('id',sa.Integer),sa.column('leftId',sa.String),\n    sa.column('rightId',sa.String),sa.column('requestedBy',sa.String),\n\
+    \    sa.column('status',sa.String),sa.column('created',sa.Integer))\nDM = sa.table('SocialDirectMessage',sa.column('id',sa.Integer),sa.column('leftId',sa.String),\n\
+    \    sa.column('rightId',sa.String),sa.column('senderId',sa.String),\n    sa.column('content',sa.String),sa.column('created',sa.Integer))\n\
+    HANDLE = re.compile(r'^[a-z][a-z0-9_]{2,23}$')\nSESSION_AGE = 30*86400\nDUMMY_SALT = b'looprd-social-dummy-salt'\n\
+    \ndef username(value):\n    if not isinstance(value,str) or not HANDLE.fullmatch(value.strip().lower()):\n \
+    \       raise ValueError('Username must be 3–24 letters, digits or underscores and start with a letter')\n \
+    \   return value.strip().lower()\n\ndef password_digest(password,salt=None):\n    if not isinstance(password,str)\
+    \ or not 12<=len(password)<=128:\n        raise ValueError('Password must contain 12–128 characters')\n    salt\
+    \ = salt or secrets.token_bytes(16)\n    digest=hashlib.scrypt(password.encode(),salt=salt,n=16384,r=8,p=1,maxmem=32*1024*1024)\n\
+    \    return 'scrypt16384$'+base64.urlsafe_b64encode(salt).decode().rstrip('=')+'$'+digest.hex()\n\ndef verify_password(password,stored):\n\
+    \    try:\n        tag,salt,text=stored.split('$')\n        if tag!='scrypt16384' or not isinstance(password,str)\
+    \ or len(password)>128:\n            return False\n        raw=base64.urlsafe_b64decode(salt+'='*(-len(salt)%4))\n\
+    \        guess=hashlib.scrypt(password.encode(),salt=raw,n=16384,r=8,p=1,maxmem=32*1024*1024)\n        return\
+    \ hmac.compare_digest(guess,bytes.fromhex(text))\n    except (ValueError,TypeError,OverflowError):\n       \
+    \ return False\n\ndef new_session(db,subject,now):\n    value=secrets.token_urlsafe(32)\n    db.execute(sa.insert(SESSION).values(subjectId=subject,tokenHash=hashlib.sha256(value.encode()).hexdigest(),\n\
+    \        created=now,expires=now+SESSION_AGE,lastSeen=now,revoked=False))\n    return {'token':value,'expiresAt':now+SESSION_AGE}\n\
+    \ndef session_identity(db,token,now):\n    if not isinstance(token,str) or not 32<=len(token)<=256:\n      \
+    \  return None\n    hashed=hashlib.sha256(token.encode()).hexdigest()\n    session=db.execute(sa.select(SESSION).where(SESSION.c.tokenHash==hashed,\n\
+    \        SESSION.c.revoked.is_(False),SESSION.c.expires>now)).mappings().first()\n    if not session:\n    \
+    \    return None\n    # Batched presence freshness; no speculative persistence when not authenticated.\n   \
+    \ if now-session['lastSeen']>=30:\n        db.execute(sa.update(SESSION).where(SESSION.c.id==session['id']).values(lastSeen=now))\n\
+    \    return session['subjectId']\n\ndef register(db,body,now):\n    if os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower()\
+    \ not in ('true','1','yes'):\n        return {'ok':False,'error':'Registration is disabled on this Social server','code':'REGISTRATION_DISABLED'}\n\
+    \    handle=username(body.get('username'))\n    password=body.get('password')\n    if db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==handle)).first():\n\
+    \        return {'ok':False,'error':'This username is already registered','code':'USERNAME_TAKEN'}\n    digest=password_digest(password)\n\
+    \    id_=db.execute(sa.insert(ACCOUNT).values(handle=handle,passwordHash=digest,created=now,\n        failedAttempts=0,lockedUntil=0).returning(ACCOUNT.c.id)).scalar_one()\n\
+    \    subject='acct_'+str(id_)\n    db.execute(sa.insert(PROFILE).values(subjectId=subject,\n        data={'schema':SCHEMA,'profileId':subject,'displayName':handle,'appearance':None,'portraitCode':None},\n\
+    \        revision=1,updated=now))\n    return {'ok':True,**new_session(db,subject,now),'profileId':subject}\n\
+    \ndef login(db,body,now):\n    # Never reveal whether a username exists. Persistent per-account backoff and\n\
+    \    # generic LoopRD per-IP rate limits both apply to public authentication.\n    try: handle=username(body.get('username'))\n\
+    \    except ValueError: handle=None\n    record=db.execute(sa.select(ACCOUNT).where(ACCOUNT.c.handle==handle)).mappings().first()\
+    \ if handle else None\n    password=body.get('password')\n    if record is None:\n        if isinstance(password,str)\
+    \ and 12<=len(password)<=128:\n            hashlib.scrypt(password.encode(),salt=DUMMY_SALT,n=16384,r=8,p=1,maxmem=32*1024*1024)\n\
+    \        return {'ok':False,'error':'Invalid username or password','code':'INVALID_LOGIN'}\n    if record['lockedUntil']>now:\n\
+    \        return {'ok':False,'error':'Too many attempts; try again later','code':'LOGIN_LOCKED'}\n    if not\
+    \ verify_password(password,record['passwordHash']):\n        attempts=record['failedAttempts']+1\n        db.execute(sa.update(ACCOUNT).where(ACCOUNT.c.id==record['id']).values(\n\
+    \            failedAttempts=attempts,lockedUntil=now+900 if attempts>=5 else 0))\n        return {'ok':False,'error':'Invalid\
+    \ username or password','code':'INVALID_LOGIN'}\n    db.execute(sa.update(ACCOUNT).where(ACCOUNT.c.id==record['id']).values(failedAttempts=0,lockedUntil=0))\n\
+    \    subject='acct_'+str(record['id'])\n    return {'ok':True,**new_session(db,subject,now),'profileId':subject}\n\
+    \ndef logout(db,token):\n    if isinstance(token,str):\n        db.execute(sa.update(SESSION).where(SESSION.c.tokenHash==hashlib.sha256(token.encode()).hexdigest()).values(revoked=True))\n\
+    \    return {'ok':True}\n\ndef pair(a,b): return tuple(sorted((a,b)))\n\ndef contact_row(db,subject,other):\n\
+    \    left,right=pair(subject,other)\n    return db.execute(sa.select(CONTACT).where(CONTACT.c.leftId==left,CONTACT.c.rightId==right)).mappings().first()\n\
+    \ndef account_subject(db,handle):\n    row=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==handle)).first()\n\
+    \    return 'acct_'+str(row[0]) if row else None\n\ndef contact_list(db,subject,now):\n    contacts=db.execute(sa.select(CONTACT).where(sa.or_(CONTACT.c.leftId==subject,CONTACT.c.rightId==subject))).mappings().all()\n\
+    \    result=[]\n    for link in contacts:\n        peer=link['rightId'] if link['leftId']==subject else link['leftId']\n\
+    \        if not peer.startswith('acct_'): continue\n        account=db.execute(sa.select(ACCOUNT.c.handle).where(ACCOUNT.c.id==int(peer[5:]))).first()\n\
+    \        if not account:continue\n        online=db.execute(sa.select(SESSION.c.id).where(SESSION.c.subjectId==peer,\n\
+    \            SESSION.c.lastSeen>=now-100,SESSION.c.expires>now,SESSION.c.revoked.is_(False)).limit(1)).first()\
+    \ is not None\n        result.append({'id':peer,'username':account[0],'status':link['status'],\n           \
+    \ 'direction':'outgoing' if link['requestedBy']==subject else 'incoming',\n            'online':online,'game':None})\n\
+    \    return {'ok':True,'contacts':sorted(result,key=lambda v:(v['status']!='accepted',not v['online'],v['username']))}\n\
+    \ndef contact_request(db,subject,handle,now):\n    peer=account_subject(db,username(handle))\n    if not peer\
+    \ or peer==subject:return {'ok':False,'error':'User not found or unavailable'}\n    existing=contact_row(db,subject,peer)\n\
+    \    if existing:return {'ok':False,'error':'Contact request already exists'}\n    left,right=pair(subject,peer)\n\
+    \    db.execute(sa.insert(CONTACT).values(leftId=left,rightId=right,requestedBy=subject,status='pending',created=now))\n\
+    \    return {'ok':True}\n\ndef contact_action(db,subject,peer,action):\n    if not isinstance(peer,str) or not\
+    \ re.fullmatch(r'acct_[0-9]{1,19}',peer):\n        return {'ok':False,'error':'Invalid contact'}\n    row=contact_row(db,subject,peer)\n\
+    \    if not row:return {'ok':False,'error':'Contact not found'}\n    if action=='contact_accept':\n        if\
+    \ row['status']!='pending' or row['requestedBy']==subject:\n            return {'ok':False,'error':'No incoming\
+    \ request to accept'}\n        db.execute(sa.update(CONTACT).where(CONTACT.c.id==row['id']).values(status='accepted'))\n\
+    \    elif action=='contact_remove':\n        db.execute(sa.delete(CONTACT).where(CONTACT.c.id==row['id']))\n\
+    \    return {'ok':True}\n\ndef direct_messages(db,subject,peer,now):\n    row=contact_row(db,subject,peer)\n\
+    \    if not row or row['status']!='accepted':return {'ok':False,'error':'Contact is not accepted'}\n    left,right=pair(subject,peer)\n\
+    \    rows=db.execute(sa.select(DM).where(DM.c.leftId==left,DM.c.rightId==right,DM.c.created>=now-30*86400)\n\
+    \        .order_by(DM.c.id.desc()).limit(100)).mappings().all()\n    return {'ok':True,'messages':[{'id':m['id'],'authorId':m['senderId'],\
+    \ 'text':m['content'], 'at':m['created']}\n        for m in reversed(rows)]}\n\ndef direct_send(db,subject,peer,content,now):\n\
+    \    if not isinstance(content,str) or not 1<=len(content.strip())<=1000 or re.search(r'[\\x00-\\x08\\x0e-\\\
+    x1f\\x7f]',content):\n        return {'ok':False,'error':'Message must be 1–1000 safe characters'}\n    row=contact_row(db,subject,peer)\n\
+    \    if not row or row['status']!='accepted':return {'ok':False,'error':'Contact is not accepted'}\n    left,right=pair(subject,peer)\n\
+    \    prev=db.execute(sa.select(DM.c.created).where(DM.c.senderId==subject).order_by(DM.c.id.desc()).limit(1)).scalar_one_or_none()\n\
+    \    if prev is not None and now-prev<1:return {'ok':False,'error':'Please slow down'}\n    db.execute(sa.insert(DM).values(leftId=left,rightId=right,senderId=subject,content=content.strip(),created=now))\n\
+    \    return {'ok':True}\n\n\ndef execute(body,sessions,tokens=None,now=None):\n    \"\"\"Returns (response,\
+    \ optional notification), after SQLite commit.\"\"\"\n    if not isinstance(body,dict):\n        return error('Invalid\
+    \ request'),None\n    tokens=configured_tokens() if tokens is None else tokens\n    op=body.get('op')\n    now=int(time.time())\
+    \ if now is None else int(now)\n    try:\n        with sessions.begin() as db:\n            if op=='capabilities':\n\
+    \                return {'ok':True,'schema':'looprd.social.capabilities/v1',\n                    'accounts':True,'registration':os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower()\
+    \ in ('true','1','yes'),\n                    'contacts':True,'directMessages':True,'sessionSeconds':SESSION_AGE},None\n\
+    \            if op=='register':\n                return register(db,body,now),None\n            if op=='login':\n\
+    \                return login(db,body,now),None\n            subject=session_identity(db,body.get('token'),now)\
+    \ or authorize(body.get('token'),tokens)\n            if not subject:\n                return error('Sign in\
+    \ to Social first'),None\n            if op=='logout':\n                return logout(db,body.get('token')),None\n\
+    \            if op=='contact_list':\n                return contact_list(db,subject,now),None\n            if\
+    \ op=='contact_request':\n                result=contact_request(db,subject,body.get('username'),now)\n    \
+    \            return result,event_signal(db) if result['ok'] else None\n            if op in ('contact_accept','contact_remove'):\n\
+    \                result=contact_action(db,subject,body.get('peer'),op)\n                return result,event_signal(db)\
+    \ if result['ok'] else None\n            if op=='dm_feed':\n                return direct_messages(db,subject,body.get('peer'),now),None\n\
+    \            if op=='dm_send':\n                result=direct_send(db,subject,body.get('peer'),body.get('text'),now)\n\
+    \                return result,event_signal(db) if result['ok'] else None\n            stored=db.execute(sa.select(PROFILE).where(PROFILE.c.subjectId==subject)).mappings().first()\n\
     \            current=stored['data'] if stored else {'schema':SCHEMA,'profileId':subject,\n                 \
     \     'displayName':subject,'appearance':None,'portraitCode':None}\n            if op=='me':\n             \
     \   return {'ok':True,'profile':current,'revision':stored['revision'] if stored else 0},None\n            if\
@@ -166,12 +387,19 @@ handlers:
     \                    'displayName':current['displayName'],'text':content.strip(),'at':now}\n               \
     \ return {'ok':True,'message':message},event_signal(db)\n            if op=='game_ticket':\n               \
     \ return error('Game tickets require application-owned verified identity and game-service validation; not implemented'),None\n\
-    \            return error('Unknown operation'),None\n    except (ValueError,TypeError) as exc:\n        return\
-    \ error(str(exc)),None\n\n\nasync def handle(ctx):\n    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory)\n\
+    \            return error('Unknown operation'),None\n    except sa.exc.IntegrityError:\n        return error('Account\
+    \ or contact already exists'),None\n    except (ValueError,TypeError) as exc:\n        return error(str(exc)),None\n\
+    \n\nasync def handle(ctx):\n    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory)\n\
     \    if event is not None:\n        ctx.publish(event)\n    return result\n"
 - path: /info
   kind: response
   response:
     protocol: looprd.social/1
-    auth: development credentials only
-    status: not production identity issuer
+    auth: social-accounts
+    registration: see-capabilities
+    features:
+    - contacts
+    - direct-messages
+    - lobby
+    - portraits
+    release: 0.3.0

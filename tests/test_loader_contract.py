@@ -4,8 +4,8 @@ import yaml
 root=Path(__file__).resolve().parents[1]
 spec=yaml.safe_load((root/'looprd.yaml').read_text())
 assert spec['component']=='looprd-social'
-assert spec['database']['schemaVersion']==1
-assert spec['database'].get('migrations',[])==[]
+assert spec['database']['schemaVersion']==2
+assert [m['version'] for m in spec['database']['migrations']]==[2]
 for name,model in spec['models'].items():
     keys=[(k,v) for k,v in model['fields'].items() if v.get('primaryKey',False)]
     assert len(keys)==1,(name,keys)

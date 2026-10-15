@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeServer,componentPath,LooprdSocial,parseGameActivity,gameActivity,newTurnKeys} from '../src/protocol.js';
-import {readConfig,writeConfig,portraitStorageKey,seenStorageKey,previousTurnKeys} from '../src/persistence.js';
+import {readConfig,writeConfig,selectServerGames,portraitStorageKey,seenStorageKey,previousTurnKeys} from '../src/persistence.js';
 
 const server='https://social.example.org';
 test('HTTPS origin accepted, remote HTTP and injected paths/tokens rejected',()=>{
@@ -58,4 +58,41 @@ test('Settings never serialize tokens; seen-turn and portrait keys scoped to ser
  assert.notEqual(portraitStorageKey(server,'user_a'),portraitStorageKey(server,'user_b'));
  assert.notEqual(seenStorageKey(server,'a','user_a'),seenStorageKey('https://different.example','a','user_a'));
  assert.deepEqual(previousTurnKeys(storage,'missing'),[]);
+});
+
+const {discoverSocial, registerSocial,loginSocial}=await import('../src/protocol.js');
+test('Social discovery shows unsupported server without making any local store',async()=>{
+ const off=async()=>({status:404,ok:false,json:async()=>({})});
+ assert.deepEqual((await discoverSocial(server,off)).available,false);
+ const on=async(url)=>({status:200,ok:true,json:async()=>url.endsWith('/info')?({protocol:'looprd.social/1',auth:'social-accounts',registration:'see-capabilities'}):({ok:true,schema:'looprd.social.capabilities/v1',accounts:true,registration:true})});
+ assert.equal((await discoverSocial(server,on)).accounts,true);
+});
+test('Registration and login issue internal sessions; credentials never sent to game endpoint',async()=>{
+ let op,received;
+ const fake=async(url,options)=>{received={url,options};op=JSON.parse(options.body).op;return {ok:true,status:200,json:async()=>({ok:true,token:'z'.repeat(43)})};};
+ const first=await registerSocial(server,'alice','long passphrase 1234',fake);
+ assert.equal(op,'register'); assert.equal(first.token,'z'.repeat(43));
+ assert.equal(received.url,componentPath(server,'looprd-social','social'));
+ await loginSocial(server,'alice','long passphrase 1234',fake);assert.equal(op,'login');
+ assert(!JSON.stringify({server,games:['a']}).includes('long passphrase 1234'));
+});
+
+test('Messenger client uses buddy/conversation UI and never asks for a manual Social token',async()=>{
+ const fs=await import('node:fs/promises');
+ const main=await fs.readFile(new URL('../src/main.js',import.meta.url),'utf8');
+ const css=await fs.readFile(new URL('../src/style.css',import.meta.url),'utf8');
+ assert(main.includes('Friends. Games. Good times.')&&main.includes('data-peer=')&&main.includes('Create my account'));
+ assert(css.includes('.buddy-list')&&css.includes('.conversation')&&css.includes('.bubble'));
+ assert(!main.includes('id="social-token"')&&!main.includes('Token configured in Social'));
+});
+
+test('Games are scoped to the selected LoopRD server, never inherited by a different server',()=>{
+ const config={server,games:['jones'],gamesByServer:{}};
+ selectServerGames(config,'https://different.example');
+ assert.deepEqual(config.games,[]);
+ config.games.push('another-game');
+ selectServerGames(config,server);
+ assert.deepEqual(config.games,['jones']);
+ selectServerGames(config,'https://different.example');
+ assert.deepEqual(config.games,['another-game']);
 });

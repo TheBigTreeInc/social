@@ -1,35 +1,36 @@
-# LoopRD Social v0.2.3 — one repository, one ZipRunner project
+# LoopRD Social 0.3.0 — gaming messenger
 
-TheBigTreeInc/social is the **single repository** for the Social LoopRD component and its reusable game-oriented Windows/Android client.
+One repository, one ZipRunner project (`looprd-social`): Social server component and a compact MSN Messenger/Xfire-inspired client for Windows and Android.
 
-- **Server:** `looprd.yaml` generated from `server/looprd_handler.py` into a native LoopRD component named `looprd-social`; existing SQLite models/data and REST bridge remain intact.
-- **Client:** `client/` contains a Tauri v2 app for Windows, Android and a local web preview; supported games run as separate LoopRD components on the **same selected LoopRD server**.
-- **Art:** `client/` integrates TheBigTreeInc/assets Portrait Library 3.0.0; generator JS is pinned, fetched at build time and reviewed by PR. The registry and SHA-verified art are fetched online on launch.
-- **ZipRunner:** root `project.zr` and historical `looprd-social.zr` share project key `looprd-social`; `ziprunner.looprd.json` explicitly links the component by descriptor hash. Install `looprd-social-0.2.3-ziprunner.zip` in the existing project; **do not create a second project**. Workboard and manifest live at the archive root.
+## User onboarding
 
-## Existing Social API
+Open the client, enter the **LoopRD server origin** (HTTPS; localhost HTTP only for development) and select **Find Social**. The client checks `GET /looprd/looprd-social/v1/info`, then asks Social for `capabilities`. If Social isn't running there, it explains the missing component **without creating an account, storing chat data or falling back to another server**. A supported server offers **Register** and **Sign in**. Choose a unique username and a password of 12–128 characters. No admin-issued token and no OIDC provider are required. Social issues a random device session automatically; no token is shown to the user.
 
-Current LoopRD server route: `POST /looprd/looprd-social/v1/social`, with action `op` values `me`, `save_profile`, `chat_feed`, `chat_send`. The server's `auth.mode: public` is *not* sufficient authentication: the handler additionally validates server-configured development credentials in the JSON action body.
+The same credentials can sign in from Windows and Android (separate revocable sessions), with shared profile, buddy list and direct messages on that server only. Tokens are held **in process memory** in v0.3.0: sign in again after app restart. No account or password gets stored in client localStorage; password hashes and session-token hashes are stored in the Social component's database. Logout revokes only the current session.
 
-For a local trusted development setup, configure `LOOPRD_SOCIAL_DEV_TOKENS_JSON` **on the LoopRD runtime**, for example via a protected environment setting: a JSON map of 8–72-char test user IDs to independent random secret values at least 24 characters. Do not put them in source, logs or any ZIP. **Never expose this development credential mode to the public internet.**
+## Architecture and security
 
-`save_profile` now optionally accepts `portraitCode`, the exact canonical decimal text of the shared Portrait Library v3.0 numeric format. This is stored in existing `SocialProfile.data` JSON alongside `displayName` and legacy `appearance`. Older clients omitting `portraitCode` preserve an existing code on update. `looprd.yaml` keeps `database.schemaVersion: 1`, with no new database tables or migrations. The profile format remains `looprd.social.profile/v1`, additive only.
+- LoopRD is generic API, SQL storage, event and access infrastructure; Social owns usernames, password hashing, sessions, contacts and messages; games own game state and turns.
+- Existing `looprd/v1` component at `looprd.yaml`, component ID `looprd-social`; the descriptor is generated from `server/looprd_handler.py` using `python tools/generate-looprd.py` and hashed by `python tools/update-looprd-link.py`.
+- SQL schema version **2**, additive-only migration creating four new tables and indexes. Existing SocialProfile, SocialMessage, SocialPulse and old dev-token accounts remain unchanged. **Back up the component database before applying this migration.** LoopRD does not automatically downgrade schemas.
+- Social actions `register`, `login`, `logout`, `contact_list`, `contact_request`, `contact_accept`, `contact_remove`, `dm_feed`, `dm_send` are additional JSON operations at `POST /looprd/looprd-social/v1/social`. Existing `me`, `save_profile`, `chat_feed`, `chat_send` and opaque pulse events continue to work.
+- Passwords use salted standard-library scrypt; account logins lock temporarily after five failures; sessions are random, individually revocable and expire after 30 days. Generic LoopRD per-client rate limits are declared.
+- Contacts consent before DMs; message text is only returned to participants and only after a current accepted friendship check. Presence reflects recent authenticated activity, not arbitrary client claims. Public pulses contain no private content.
+- **Public registrations are enabled by default** for this first trial. The operator can set `LOOPRD_SOCIAL_ALLOW_REGISTRATION=false` on the LoopRD server to disable registration, retaining login. A publicly exposed service still needs abuse controls, moderation, recovery and security review before production deployment. Protect the LoopRD API with HTTPS.
+- Client and game components use the same selected server; Social credentials never go to game endpoints. No automatic federation, cross-server discovery, or sharing of game passwords.
+- Turn alerts require games to provide `looprd.game.activity/v1` (see `client/docs/GAME_ACTIVITY_CONTRACT.md`). Android notifications after app termination require push infrastructure not yet implemented.
+- Built-in portrait workshop remains sourced from official `TheBigTreeInc/assets` with reviewable updates. The numeric portrait value remains a canonical string stored on Social.
 
-Game state, turn computation and invitations remain game-owned, not LoopRD-owned. Social-owned accounts and device identity do **not** require any external OIDC provider. The legacy `game_ticket` action still refuses issuance until trusted application-owned identity and game validation exist. No cross-server federation is implemented or required.
-
-## Local tests (no native SDK)
+## Build / verify
 
 ```sh
 npm run test
 node client/tools/check-package.mjs
-python -m pip install -r requirements-dev.txt
 python tools/generate-looprd.py --check
-# After changing server/looprd_handler.py: run generator, then link updater
-# python tools/generate-looprd.py && python tools/update-looprd-link.py
 python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-## Local client web preview
+Local frontend development (Node 22+):
 
 ```sh
 cd client
@@ -38,36 +39,8 @@ npm run portrait:sync
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. Enter the *LoopRD server origin* and a development account token. The server must already have registered `looprd-social`, and CORS/origin settings must permit this client. Native app artifacts are produced via `.github/workflows/windows.yml` and `android.yml`; the generated Windows NSIS and Android ARM64 debug APK need operator/device acceptance. Android background push is **not** implemented: local turn alerts require a running client and a game implementing `GET /looprd/<game>/v1/activity`. See `client/docs/GAME_ACTIVITY_CONTRACT.md`.
+GitHub Actions: `.github/workflows/verify.yml`, `windows.yml` (Windows NSIS), `android.yml` (ARM64 debug APK), and `portrait-updates.yml`. The previous v0.2.3 Android attempt failed at Tauri initialization due to `bundle.targets:["apk"]`; v0.3.0 removes the unsupported configuration. Native builds have **not been completed for v0.3.0**.
 
-## Bridge compatibility
+## Deployment
 
-`bridge.mjs` still exposes the older Life Loop `GET/PUT /v1/me` and `GET/POST /v1/chat/lobby` on loopback port 8947, forwarding to the same Social LoopRD component. Set the local `LOOPRD_SOCIAL_LOOPRD_URL` to the native Social action URL and `LOOPRD_SOCIAL_ALLOWED_ORIGINS` to trusted local browser origins. The original `server.mjs` development-only server is retained for old local testing, not as the live source of truth. Avoid running `bridge.mjs` and `server.mjs` on the same port.
-
-## GitHub Actions
-
-- `verify.yml` — server and client Node tests, Python handler + YAML generation checks.
-- `windows.yml` — Windows NSIS installer from `client/`.
-- `android.yml` — Android ARM64 debug APK from `client/`.
-- `portrait-updates.yml` — weekly reviewable pull request for generator source. Do not automatically execute unreviewed generator changes at runtime.
-
-All are repository-root workflows and use the **same GitHub repository**. Root build verification doesn't need Rust or Android SDK. They have not been run on GitHub in this delivery.
-
-## Boundaries / security
-
-- Never ship live credentials, `.data/`, SQLite files, or local project state in the ZIP.
-- The client keeps tokens in process memory; it never sends a Social token to a game endpoint.
-- LoopRD owns generic API/data infrastructure; Social owns profile/chat/account behavior; each game owns game rules and turn state.
-- The next necessary server work is verified application-owned sessions, private social APIs and game-owned activity/invitation contracts. OIDC and cross-server service federation are not prerequisites.
-
-## CI build preflight repair (0.2.3)
-
-The native build workflows from 15 October initially failed **before native compilation**:
-Windows after generator synchronization due to CRLF-converted `looprd.yaml` changing its SHA-256,
-and Android during `setup-android@v3` because of the retired Android SDK `tools` package.
-Version 0.2.3 pins generated YAML to LF with `.gitattributes`, validates this in
-`client/tools/check-package.mjs`, and upgrades the Android action to `v4.0.4` with
-`packages: platform-tools`. See `evidence/ci-repair.md`.
-This release updates packaging/workflows; the generated LoopRD release marker is now 0.2.3
-so a source watcher may perform a harmless component reload. Handler logic and
-SQLite schemaVersion 1 are unchanged. New native CI runs and target-device acceptance are required.
+Use `looprd-social-0.3.0-ziprunner.zip` in the existing `looprd-social` ZipRunner project. Do not create a second project. Preserve existing credentials, SQLite database and node secrets. Deploy/activate the generated `looprd.yaml` in the LoopRD server separately under normal operator controls; installing a ZIP does not itself authorize a database migration. Configure allowed origins for the native Tauri app/web preview when required. Review `ZIPRUNNER_HANDOFF.md` and `evidence/auth-and-ux-tests.md` before release.

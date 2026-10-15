@@ -1,12 +1,24 @@
 # ZIPRUNNER_HANDOFF v1
 
-- Project: `looprd-social`
-- Version: `0.2.3`
-- File: `looprd-social-0.2.3-ziprunner.zip`
-- Scope: GitHub native workflow preflight fixes (.gitattributes LF policy; Android SDK setup v4); no change to deployed LoopRD component, app identity or SQLite schema.
-- SQLite data migration: **none** (`database.schemaVersion` remains 1).
-- Authentication: **development-only**; no OIDC requirement.
-- Validations: see `evidence/ci-repair.md` and `evidence/source-tests.txt`; source tests only, not a successful native GUI build.
-- Follow-up: review PR / upload source to existing `TheBigTreeInc/social` repository and existing ZipRunner project, run both native GitHub Actions and verify installer/APK on devices. LoopRD source watcher may reload the 0.2.3 release descriptor; it uses the same handler and unchanged SQLite schema.
-- Protected: `.git`, `.env`, `.data`, `secrets`, SQLite files, user configuration, build output.
-- Workboard: root `.ziprunner-workboard-update.json` is producer evidence only. Operator/QA gates remain mandatory.
+Project: `looprd-social`  
+Version: `0.3.0`  
+Artifact: `looprd-social-0.3.0-ziprunner.zip`  
+Repository target: https://github.com/TheBigTreeInc/social
+
+## Delivered / author tests
+
+- Social server account register/login/logout, password hashes, per-device session handling, account lockout, capability discovery; real friend-request/accept/remove and private direct-message contract.
+- Refactored desktop and mobile social client into MSN/Xfire-style compact buddy/chat interface with turns and portrait workshop, no manual Social token.
+- SQLite schema v1 -> v2 additive migration, old profile/lobby preserved; descriptor regenerated and SHA-256 link updated.
+- Android Tauri invalid `bundle.targets:["apk"]` removed; native workflows still need execution.
+- Source regression tests and ZIP structure checks are producer evidence, **not** operator-approved Done or live runtime health.
+
+## Operator checks
+
+Back up the Social component database, apply component descriptor through your normal LoopRD source process, confirm schema v2 migration and registration/sign-in on localhost or protected HTTPS, verify existing dev-token users and messages still work. Register separate accounts from Windows and Android, confirm friend consent/direct message privacy, and inspect Windows/Android GitHub builds. Rate-limit and account abuse controls need review before public exposure; no OIDC dependency.
+
+## Remaining
+
+Native installer and APK device acceptance, production recovery/moderation, secure remembered sessions, game-backed turn activity, background Android push, group chat, and game invitations.
+
+No git push, remote deploy or production migration is claimed by this package.

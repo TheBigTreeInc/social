@@ -1,7 +1,16 @@
-# LoopRD Social shared repository workboard — 0.2.2
+# Work board — Social 0.3.0
 
-This release retains `looprd-social` as both the LoopRD component and ZipRunner project key. Server code is at the repository root; the native app is in `client/`.
+ZipRunner reads `.ziprunner-workboard-update.json` using stable IDs.
 
-Existing stable IDs: LRS-001/002/003/005 source implemented previously; do not recreate or reset their operator-verified states. LRS-004 remains outstanding but **OIDC is NOT required**: Social owns user sessions and validation as the implementer. New LRS-006 stores canonical numeric portrait identity in the existing profile JSON. Client implementation evidence is SCL-001 through SCL-006, with private/group chat, game contracts, push, and device-native acceptance still outstanding.
+- SCL-013: implemented account register/login/session flow; operator deployment verification pending.
+- SCL-014: implemented buddy list, contact request/accept and direct messages; operator testing pending.
+- SCL-015: implemented Social component discovery and no-backend state; operator testing pending.
+- SCL-016: Android config corrected; GitHub native rerun pending.
+- LRS-004: account recovery and public abuse/production hardening deferred.
+- SCL-007: group conversations and trusted invitations deferred.
+- SCL-009: Android background push deferred.
+- SCL-010: native builds and device acceptance deferred.
+- SCL-011: game turn endpoint integration required from game developers.
+- SCL-017: secure persistent device login deferred.
 
-ZipRunner source build/import evidence is not QA or operator acceptance. Data, secrets and git history are preserved. See root `.ziprunner-workboard-update.json` for accepted work IDs and required operator checks.
+None of these author-implemented items should be marked Done solely from source tests; observe real server and native apps then approve.

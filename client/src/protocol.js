@@ -35,6 +35,44 @@ async function responseJson(response) {
   return body;
 }
 
+/** Probe one LoopRD origin. Missing Social means no local account or chat store. */
+export async function discoverSocial(origin, fetcher = fetch) {
+  const url = componentPath(origin, SOCIAL_COMPONENT, 'info');
+  const controller = new AbortController(), timer = setTimeout(()=>controller.abort(),12000);
+  try {
+    const response = await fetcher(url,{method:'GET',cache:'no-store',signal:controller.signal});
+    if (response.status===404 || response.status===503) return {available:false,reason:'The selected LoopRD server has no active Social component.'};
+    const data = await responseJson(response);
+    if (data?.protocol!=='looprd.social/1') return {available:false,reason:'This server does not provide a compatible Social component.'};
+    if(data.auth!=='social-accounts') return {available:true,registration:false,accounts:false,release:data.release||''};
+    const caps=await fetcher(componentPath(origin,SOCIAL_COMPONENT,'social'),{
+      method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:controller.signal,
+      body:JSON.stringify({op:'capabilities'})});
+    const check=await responseJson(caps);
+    if(check?.ok!==true||check.schema!=='looprd.social.capabilities/v1'||check.accounts!==true)
+      return {available:true,registration:false,accounts:false,release:data.release||''};
+    return {available:true,registration:check.registration===true,accounts:true,release:data.release||''};
+  } catch(error){if(error?.name==='AbortError') throw new ProtocolError('Server discovery timed out.');throw error;}
+  finally {clearTimeout(timer);}
+}
+
+async function accountCommand(origin, op, username, password, fetcher = fetch) {
+  const controller = new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  try {
+    const response=await fetcher(componentPath(origin,SOCIAL_COMPONENT,'social'),{
+      method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:controller.signal,
+      body:JSON.stringify({op,username,password})});
+    const body=await responseJson(response);
+    if(!body?.ok || typeof body.token!=='string' || body.token.length<32)
+      throw new ProtocolError(body?.error||'Social sign-in failed');
+    return new LooprdSocial(origin,body.token,fetcher);
+  } catch(error){if(error?.name==='AbortError')throw new ProtocolError('Social sign-in timed out.');throw error;}
+  finally{clearTimeout(timer);}
+}
+
+export const registerSocial=(origin,username,password,fetcher=fetch)=>accountCommand(origin,'register',username,password,fetcher);
+export const loginSocial=(origin,username,password,fetcher=fetch)=>accountCommand(origin,'login',username,password,fetcher);
+
 export class LooprdSocial {
   constructor(origin, token, fetcher = fetch) {
     this.origin = normalizeServer(origin);
@@ -63,6 +101,13 @@ export class LooprdSocial {
   saveProfile(profile, revision) { return this.command('save_profile', {profile, ifRevision: revision}); }
   feed() { return this.command('chat_feed'); }
   send(text) { return this.command('chat_send', {text}); }
+  contacts() {return this.command('contact_list');}
+  requestContact(username) {return this.command('contact_request',{username});}
+  acceptContact(peer) {return this.command('contact_accept',{peer});}
+  removeContact(peer) {return this.command('contact_remove',{peer});}
+  directFeed(peer) {return this.command('dm_feed',{peer});}
+  directSend(peer,text) {return this.command('dm_send',{peer,text});}
+  logout() {return this.command('logout');}
   /** Current Social public WS only broadcasts opaque pulse signals; never identities or chat payloads. */
   pulseUrl() { return componentPath(this.origin, SOCIAL_COMPONENT, 'events').replace(/^http/, 'ws'); }
 }
