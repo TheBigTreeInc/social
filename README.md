@@ -1,3 +1,19 @@
+## Canonical design / browser client (v0.3.3)
+
+The design is maintained in **`docs/DESIGN.adoc`** and the independent browser
+SDK contract in **`docs/JAVASCRIPT_CLIENT.adoc`**. Windows, Android and the web
+client share `client/sdk/looprd-social.js`. `client/src/protocol.js` re-exports
+that implementation. **Same Social username/password on the same LoopRD
+server = same account**, each device/tab receiving its own revocable session.
+The browser build is an independent GitHub Actions artifact named
+`social-web-client`, containing the static app and `sdk/looprd-social.js`.
+
+Build/test: `cd client && npm install && npm run portrait:sync && npm run web:build && npm run web:verify`. Serve `client/dist/` over HTTPS or localhost.
+Your LoopRD server must permit the web host's Origin (CORS). The JS SDK works
+without Tauri or native build dependencies. A browser login is not magically
+persistent across reloads: sign in again, and server-side profile/chat/contacts
+are restored. No local account is created if Social is missing.
+
 ## Classic MSN/Xfire-style client refresh (0.3.2)
 
 Desktop no longer uses three thick dashboard panels. The light-themed client has compact separate-looking roster and conversation panes, a real File/Contacts/Actions/Tools/Help menu, thin Windows-style chrome, collapsible Online/Offline contact groups, inline contact search, small game/turn listings, an old-style chat transcript, and a multiline message composer. Mobile displays roster and conversation separately. The underlying component, sessions, private chat, alerts, portrait generator and server permission boundary are unchanged. The chat panes remain inside one native window for this release.
@@ -68,3 +84,7 @@ GitHub Actions: `.github/workflows/verify.yml`, `windows.yml` (Windows NSIS), `a
 ## Deployment
 
 Use `looprd-social-0.3.2-ziprunner.zip` in the existing `looprd-social` ZipRunner project. Do not create a second project. Preserve existing credentials, SQLite database and node secrets. Deploy/activate the generated `looprd.yaml` in the LoopRD server separately under normal operator controls; installing a ZIP does not itself authorize a database migration. Configure allowed origins for the native Tauri app/web preview when required. Review `ZIPRUNNER_HANDOFF.md` and `evidence/auth-and-ux-tests.md` before release.
+
+## Windows classic-messenger shell (v0.3.4)
+
+The native Windows application now uses a narrow roster-sized main window rather than the older 1060-pixel-wide dashboard. Chats open in separate windows with no duplicated login credentials. `docs/DESIGN.adoc` is the authoritative UX acceptance contract. No server schema changes in this UI-only update.

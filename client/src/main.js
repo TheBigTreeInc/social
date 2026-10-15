@@ -3,9 +3,14 @@ import {LooprdSocial,discoverSocial,loginSocial,registerSocial,componentPath,gam
 import {readConfig,writeConfig,selectServerGames,seenStorageKey,previousTurnKeys} from './persistence.js';
 import {grantNotifications,notifyTurn} from './notifications.js';
 import {isTauri} from '@tauri-apps/api/core';
+import {WebviewWindow} from '@tauri-apps/api/webviewWindow';
+import {listen, emitTo} from '@tauri-apps/api/event';
+import {isValidChatPeer,chatWindowLabel} from './native-windows.js';
 import {openUrl} from '@tauri-apps/plugin-opener';
 
 const app=document.getElementById('app');
+const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
+if(nativeDesktop)document.documentElement.classList.add('native-shell');
 const config=readConfig();
 const state={api:null,profile:null,revision:0,connected:false,serverStatus:'',serverSupportsAccounts:false,
   step:'server',authTab:'register',panel:'messenger',peer:'lobby',contacts:[],lobby:[],direct:[],
@@ -29,7 +34,7 @@ function contactPane(){const accepted=state.contacts.filter(x=>x.status==='accep
 function activePeer(){return state.contacts.find(x=>x.id===state.peer);}
 function conversation(){const peer=activePeer();const lobby=state.peer==='lobby';const pending=!lobby&&peer?.status!=='accepted';const messages=lobby?state.lobby:state.direct;const title=lobby?'Community Lobby':(peer?.username||'Conversation');return `<section class="conversation classic-window" aria-label="Conversation with ${esc(title)}">${windowCaption(title+' – Conversation', '<button data-action="contacts" class="chrome-button mobile-back" title="Contacts">←</button>')}${menuBar(true)}<div class="conversation-tools"><button data-action="add-friend"><span>♧</span> Invite</button><button data-action="games"><span>♟</span> Games</button><button data-action="notifications"><span>♬</span> Alerts</button><button data-action="portrait"><span>☺</span> Picture</button>${!lobby&&peer?'<button data-action="remove-friend"><span>×</span> Remove</button>':''}</div><div class="chat-heading"><div class="chat-heading-left">${avatar(lobby?'#':title,peer?.online)}<div><h2>${esc(title)}</h2><small>${lobby?'Shared conversation on this server':pending?'Contact invitation pending':peer?.online?'Online':'Offline'}</small></div></div></div>${pending?`<div class="request-panel"><h3>${peer?.direction==='incoming'?'Friend request received':'Friend request sent'}</h3><p>${peer?.direction==='incoming'?'Accept to start a private conversation.':'Waiting for your friend to accept.'}</p>${peer?.direction==='incoming'?'<button class="solid" data-action="accept-friend">Accept request</button>':''}</div>`:`<div class="chat-content"><div class="chat-scroll" id="chat-scroll" role="log" aria-label="Messages" aria-live="off">${messages.length?messages.map(m=>{const mine=m.authorId===state.profile?.profileId;return `<div class="transcript-message"><div class="transcript-heading"><strong class="${mine?'mine':''}">${mine?'You':esc(m.displayName||title)}</strong><time>${stamp(m.at)}</time></div><div class="transcript-text">${esc(m.text)}</div></div>`;}).join(''):'<div class="empty-chat"><strong>Welcome to this conversation</strong><p>Messages will appear here.</p></div>'}</div><div class="participant-pane"><div class="participant-avatar">${avatar(lobby?'#':title,peer?.online)}</div><span>${esc(lobby?'Lobby':title)}</span><small>${lobby?'Community':peer?.online?'Online':'Contact'}</small></div></div><div class="compose-toolbar"><button title="Message formatting" type="button" data-action="format-help"><b style="font-family:Georgia,serif;font-size:17px">A</b> ▾</button><button type="button" data-action="portrait" title="Character portrait">☺ ▾</button><span>Enter to send · Shift+Enter for a new line</span></div><form id="message-form" class="composer"><textarea name="message" id="message" rows="3" maxlength="${lobby?'320':'1000'}" placeholder="Type your message here…" required>${esc(state.draft)}</textarea><div class="send-controls"><button class="solid" ${state.busy?'disabled':''}>Send</button></div></form>`}<div class="window-status"><span class="presence ${lobby||peer?.online?'online':''}"></span>${esc(lobby?'Public server lobby':'Private message')}${state.lastSyncAt?`<span class="status-right">Last update ${new Date(state.lastSyncAt).toLocaleTimeString()}</span>`:''}</div></section>`;}
 function gameSettings(){return `<section class="utility"><h2>Your games</h2><p>Games and notifications are available only for components hosted by this LoopRD server. Game credentials are separate from Social.</p><div class="row-actions"><button class="solid" data-action="add-game">+ Add component</button><button data-action="notifications">Enable notifications</button></div>${config.games.map(g=>`<div class="utility-row"><span>♜ &nbsp; ${esc(g)}</span><span>${esc(state.gameErrors[g]||'Turn monitoring enabled')}</span><button data-game-token="${esc(g)}">Credential</button><button data-remove-game="${esc(g)}">Remove</button></div>`).join('')}<p class="fineprint">Games require their own <code>GET /looprd/&lt;game&gt;/v1/activity</code> contract. Background push after Android closes is not yet implemented.</p></section>`;}
-function portrait(){return `<section class="utility portrait"><h2>Your character</h2><p>Portraits use the latest metadata from the official Portrait Library; the generator's executable source is reviewed and pinned to an upstream revision.</p><iframe title="Character portrait workshop" id="portrait-frame" src="/portrait/index.html" loading="lazy"></iframe><p>Portrait code saved in your Social profile: <code>${esc(state.avatarCode||'Not set')}</code></p></section>`;}
+function portrait(){return `<section class="utility portrait"><h2>Your character</h2><p>Portraits use the latest metadata from the official Portrait Library; the generator's executable source is reviewed and pinned to an upstream revision.</p><iframe title="Character portrait workshop" id="portrait-frame" src="./portrait/index.html" loading="lazy"></iframe><p>Portrait code saved in your Social profile: <code>${esc(state.avatarCode||'Not set')}</code></p></section>`;}
 function settings(){return `<section class="utility"><h2>Settings &amp; account</h2><p>Signed in as <b>${esc(state.profile?.profileId)}</b> on <b>${esc(state.api?.origin)}</b>.</p><form id="profile-form" class="auth-form"><label>Display name<input name="displayName" maxlength="24" required value="${esc(state.profile?.displayName)}"></label><button class="solid">Save profile</button></form><div class="row-actions"><button data-action="notifications">Enable notifications</button><button data-action="toggle-mute">${state.mute?'Unmute':'Mute'} alerts</button><button data-action="signout">Sign out of this device</button></div>${state.developerAllowed?`<div class="dev-toggle"><label class="dev-switch"><input id="developer-switch" type="checkbox" ${state.developerVisible?'checked':''}><span>Show developer tools</span></label><p>Access is granted by the Social server operator. This switch only controls visibility; it does not grant permission.</p></div>`:''}<p class="fineprint">You can log into the same account on a second device using its own session. We do not persist your password or session token in localStorage. There is no OIDC requirement.</p></section>`;}
 function developerPanel(){
  if(!state.developerAllowed || !state.developerVisible) return settings();
@@ -40,7 +45,7 @@ function developerPanel(){
  <div class="dev-stats">
  ${count('Social connection',state.connected?'connected':'offline')}
  ${count('LoopRD server',state.api?.origin||'—')}
- ${count('Client app','0.1.2')}${count('Social release','0.3.2')}
+ ${count('Client app','0.1.4')}${count('Social release','0.3.4')}
  ${count('WebSocket',state.pulseState)}
  ${count('Last client sync',state.lastSyncAt?new Date(state.lastSyncAt).toLocaleString():'Not yet')}
  ${count('Configured games',config.games.length)}
@@ -67,8 +72,15 @@ async function updateDeveloperInfo(){
  catch(e){if(state.api!==api)return;state.developerInfo=null;state.developerError=e.message;
    if(e.status===403||/DEVELOPER_ACCESS_DENIED/.test(e.message)) {state.developerAllowed=false;state.developerVisible=false;state.developerError='';if(state.panel==='developer')state.panel='settings';}}
 }
-function dashboard(){const chatting=state.panel==='messenger';const body=chatting?conversation():`<section class="classic-window auxiliary-window">${windowCaption(({games:'Games & turn alerts',portrait:'Your character',settings:'Options',developer:'Admin / Debug'})[state.panel]||'Social')} ${menuBar()}<div class="aux-content">${state.panel==='games'?gameSettings():state.panel==='portrait'?portrait():state.panel==='settings'?settings():developerPanel()}</div><div class="window-status">Social Messenger · ${esc(state.api?.origin||'')}</div></section>`;return `<div class="desktop-workspace"><div class="messenger ${state.mobileRoster?'show-roster':'show-conversation'}">${contactPane()}<main class="center">${body}</main></div><nav class="bottom-nav" aria-label="Mobile navigation"><button data-action="contacts" class="${state.mobileRoster?'on':''}">Contacts</button><button data-action="messenger" class="${!state.mobileRoster&&chatting?'on':''}">Chat</button><button data-action="games" class="${state.panel==='games'?'on':''}">Games</button><button data-action="settings" class="${state.panel==='settings'?'on':''}">Options</button></nav></div>`;}
-function render(){const entry=document.getElementById('message');if(entry&&document.activeElement===entry)state.draft=entry.value;const oldFrame=document.getElementById('portrait-frame');const filter=document.getElementById('roster-filter');const search=filter?.value||'';const focused=document.activeElement===entry?{start:entry.selectionStart,end:entry.selectionEnd}:null;const oldScroll=document.getElementById('chat-scroll');const nearBottom=!oldScroll||oldScroll.scrollHeight-oldScroll.scrollTop-oldScroll.clientHeight<90;const oldTop=oldScroll?.scrollTop;app.innerHTML=header()+(state.connected?dashboard():signIn())+(state.toast?`<div class="toast" role="status">${esc(state.toast)}</div>`:'');if(oldFrame&&state.panel==='portrait')document.getElementById('portrait-frame')?.replaceWith(oldFrame);wire();const newFilter=document.getElementById('roster-filter');if(newFilter){newFilter.value=search;applyContactFilter(search);}if(focused){const field=document.getElementById('message');if(field){field.focus();field.setSelectionRange(focused.start,focused.end);}}if(state.panel==='messenger'){const scroll=document.getElementById('chat-scroll');if(scroll){scroll.scrollTop=nearBottom?scroll.scrollHeight:oldTop;}}}
+function dashboard(){
+ const chatting=state.panel==='messenger';
+ const body=chatting?conversation():`<section class="classic-window auxiliary-window">${windowCaption(({games:'Games & turn alerts',portrait:'Your character',settings:'Options',developer:'Admin / Debug'})[state.panel]||'Social')} ${menuBar()}<div class="aux-content">${state.panel==='games'?gameSettings():state.panel==='portrait'?portrait():state.panel==='settings'?settings():developerPanel()}</div><div class="window-status">Social Messenger · ${esc(state.api?.origin||'')}</div></section>`;
+ // A real Windows messenger is a narrow, independent buddy list, NOT a fixed 1060px dashboard.
+ // Conversations are separate OS webview windows. Browser/mobile retain the shared responsive UI.
+ if(nativeDesktop)return `<div class="desktop-workspace native-workspace">${chatting?contactPane():`<section class="classic-window auxiliary-window">${windowCaption('Social Messenger · '+state.panel, '<button data-action="contacts" class="chrome-button">← Contacts</button>')}${menuBar()}<div class="aux-content">${state.panel==='games'?gameSettings():state.panel==='portrait'?portrait():state.panel==='settings'?settings():developerPanel()}</div></section>`}</div>`;
+ return `<div class="desktop-workspace"><div class="messenger ${state.mobileRoster?'show-roster':'show-conversation'}">${contactPane()}<main class="center">${body}</main></div><nav class="bottom-nav" aria-label="Mobile navigation"><button data-action="contacts" class="${state.mobileRoster?'on':''}">Contacts</button><button data-action="messenger" class="${!state.mobileRoster&&chatting?'on':''}">Chat</button><button data-action="games" class="${state.panel==='games'?'on':''}">Games</button><button data-action="settings" class="${state.panel==='settings'?'on':''}">Options</button></nav></div>`;
+}
+function render(){const entry=document.getElementById('message');if(entry&&document.activeElement===entry)state.draft=entry.value;const oldFrame=document.getElementById('portrait-frame');const filter=document.getElementById('roster-filter');const search=filter?.value||'';const focused=document.activeElement===entry?{start:entry.selectionStart,end:entry.selectionEnd}:null;const oldScroll=document.getElementById('chat-scroll');const nearBottom=!oldScroll||oldScroll.scrollHeight-oldScroll.scrollTop-oldScroll.clientHeight<90;const oldTop=oldScroll?.scrollTop;app.innerHTML=(nativeDesktop?'':header())+(state.connected?dashboard():signIn())+(state.toast?`<div class="toast" role="status">${esc(state.toast)}</div>`:'');if(oldFrame&&state.panel==='portrait')document.getElementById('portrait-frame')?.replaceWith(oldFrame);wire();const newFilter=document.getElementById('roster-filter');if(newFilter){newFilter.value=search;applyContactFilter(search);}if(focused){const field=document.getElementById('message');if(field){field.focus();field.setSelectionRange(focused.start,focused.end);}}if(state.panel==='messenger'){const scroll=document.getElementById('chat-scroll');if(scroll){scroll.scrollTop=nearBottom?scroll.scrollHeight:oldTop;}}}
 function applyContactFilter(query){const term=query.trim().toLowerCase();document.querySelectorAll('[data-contact-name]').forEach(node=>{node.hidden=!!term&&!node.dataset.contactName.includes(term);});}
 function stop(){if(pulse){pulse.onclose=null;pulse.close();pulse=null;}clearInterval(poll);poll=null;state.api=null;state.connected=false;state.profile=null;state.lobby=[];state.direct=[];state.contacts=[];state.avatarCode='';state.gameTokens.clear();state.turns=[];state.draft='';state.developerAllowed=false;state.developerVisible=false;state.developerInfo=null;state.developerError='';state.lastSyncAt=null;state.pulseState='disconnected';state.step='server';state.panel='messenger';state.mobileRoster=true;render();}
 async function activate(api){const me=await api.me();if(!me?.profile?.profileId)throw Error('Social did not return your profile');stop();state.api=api;state.connected=true;state.profile=me.profile;state.revision=me.revision;updateDeveloperPermission(me);state.avatarCode=me.profile.portraitCode||'';selectServerGames(config,api.origin);writeConfig(config);state.peer='lobby';state.mobileRoster=true;render();await refresh();startPulse();poll=setInterval(refresh,25000);}
@@ -87,10 +99,10 @@ function startPulse(){const api=state.api;let delay=1000;const open=()=>{if(stat
 async function openGame(path){if(!state.api||!path)return;const url=state.api.origin+path;try{if(isTauri())await openUrl(url);else window.open(url,'_blank','noopener,noreferrer');}catch{toast('Could not open game.');}}
 async function action(name){if(name==='developer'){if(!state.developerAllowed||!state.developerVisible)return;state.panel=name;await updateDeveloperInfo();render();return;}
  if(name==='developer-refresh'){await updateDeveloperInfo();render();return;}
- if(name==='contacts'){state.mobileRoster=true;render();return;}
- if(name==='about'){toast('Social Messenger 0.3.2 · powered by Social on LoopRD');return;}
+ if(name==='contacts'){state.panel='messenger';state.mobileRoster=true;render();return;}
+ if(name==='about'){toast('Social Messenger 0.3.4 · powered by Social on LoopRD');return;}
  if(name==='format-help'){toast('Plain text messages · Shift+Enter inserts a new line.');return;}
- if(name==='settings'||name==='messenger'||name==='games'||name==='portrait'){state.panel=name;state.mobileRoster=false;render();return;}
+ if(name==='settings'||name==='messenger'||name==='games'||name==='portrait'){if(name==='messenger'&&nativeDesktop){await openChatWindow(state.peer||'lobby');return;}state.panel=name;state.mobileRoster=false;render();return;}
  if(name==='refresh')return refresh();
  if(name==='notifications')return toast((await grantNotifications())?'Turn alerts enabled while app is open.':'Notification permission denied.');
  if(name==='toggle-mute'){state.mute=!state.mute;render();return;}
@@ -103,7 +115,7 @@ function wire(){document.querySelectorAll('[data-group]').forEach(el=>el.addEven
  const rosterFilter=document.getElementById('roster-filter');if(rosterFilter)rosterFilter.addEventListener('input',e=>applyContactFilter(e.target.value));
  document.querySelectorAll('[data-action]').forEach(el=>el.addEventListener('click',()=>action(el.dataset.action)));
  document.querySelectorAll('[data-auth]').forEach(el=>el.addEventListener('click',()=>{state.authTab=el.dataset.auth;render();}));
- document.querySelectorAll('[data-peer]').forEach(el=>el.addEventListener('click',async()=>{state.peer=el.dataset.peer;state.panel='messenger';state.mobileRoster=false;state.draft='';render();await refresh();}));
+ document.querySelectorAll('[data-peer]').forEach(el=>el.addEventListener('click',async()=>{const peer=el.dataset.peer;if(nativeDesktop){await openChatWindow(peer);return;}state.peer=peer;state.panel='messenger';state.mobileRoster=false;state.draft='';render();await refresh();}));
  document.querySelectorAll('[data-remove-game]').forEach(el=>el.addEventListener('click',()=>{config.games=config.games.filter(x=>x!==el.dataset.removeGame);writeConfig(config);refresh();}));
  document.querySelectorAll('[data-game-token]').forEach(el=>el.addEventListener('click',()=>{const text=prompt('Game bearer token (blank for public; held in memory only):');if(text!==null){state.gameTokens.set(el.dataset.gameToken,text);refresh();}}));
  document.querySelectorAll('[data-route]').forEach(el=>el.addEventListener('click',()=>openGame(el.dataset.route)));
@@ -114,6 +126,59 @@ function wire(){document.querySelectorAll('[data-group]').forEach(el=>el.addEven
  const msg=document.getElementById('message-form');if(msg)msg.addEventListener('submit',async e=>{e.preventDefault();if(state.busy)return;const value=msg.elements.message.value.trim();if(!value)return;state.busy=true;try{if(state.peer==='lobby')await state.api.send(value);else await state.api.directSend(state.peer,value);state.draft='';await refresh();}catch(e){toast(e.message);}finally{state.busy=false;}});
  const entry=document.getElementById('message');if(entry){entry.addEventListener('input',()=>{state.draft=entry.value;});entry.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();entry.form?.requestSubmit();}});}
  const profile=document.getElementById('profile-form');if(profile)profile.addEventListener('submit',async e=>{e.preventDefault();try{const result=await state.api.saveProfile({schema:'looprd.social.profile/v1',profileId:state.profile.profileId,displayName:profile.elements.displayName.value,appearance:state.profile.appearance||null,portraitCode:state.profile.portraitCode||null},state.revision);state.profile=result.profile;state.revision=result.revision;toast('Profile saved.');}catch(e){toast(e.message);}});
+}
+// Native chat windows NEVER receive Social credentials. The main webview is their
+// authenticated broker. Client-side identifiers are checked before every request;
+// Social still authorizes every private read/write on the server.
+let nativeBridgeReady=false;
+async function nativeChatSnapshot(peer){
+ if(!state.api)throw Error('Please sign in again from the contact list.');
+ if(!isValidChatPeer(peer))throw Error('Invalid conversation');
+ const contact=peer==='lobby'?null:state.contacts.find(c=>c.id===peer);
+ if(peer!=='lobby'&&!contact)throw Error('Contact not available on this account.');
+ const pending=peer!=='lobby'&&contact.status!=='accepted';
+ const result=pending?{messages:[]}:peer==='lobby'?await state.api.feed():await state.api.directFeed(peer);
+ return {peer,title:peer==='lobby'?'Community Lobby':contact.username,online:!!contact?.online,
+   pending:pending?(contact.direction==='incoming'?'incoming':'outgoing'):null,
+   messages:(result.messages||[]).slice(-100).map(m=>({authorId:m.authorId,displayName:m.displayName,text:m.text,at:m.at})),
+   myId:state.profile.profileId,server:new URL(state.api.origin).host};
+}
+async function initializeNativeChatBridge(){
+ if(!nativeDesktop||nativeBridgeReady)return;
+ nativeBridgeReady=true;
+ await listen('social-chat-request',async e=>{
+   const {label,peer,kind,text,requestId}=e.payload||{};
+   if(!/^chat-[a-zA-Z0-9_-]{1,72}$/.test(label||'')||chatWindowLabel(peer)!==label||!Number.isSafeInteger(requestId))return;
+   try{
+     if(!state.api)throw Error('Disconnected from Social.');
+     if(kind==='send'){
+       if(typeof text!=='string'||!text.trim()||text.length>1000)throw Error('Invalid message.');
+       if(peer==='lobby')await state.api.send(text.trim());
+       else {if(!state.contacts.some(c=>c.id===peer&&c.status==='accepted'))throw Error('Contact request not accepted.');await state.api.directSend(peer,text.trim());}
+     } else if(kind==='accept'){
+       if(!state.contacts.some(c=>c.id===peer&&c.status==='pending'&&c.direction==='incoming'))throw Error('No incoming request.');
+       await state.api.acceptContact(peer);
+     } else if(kind!=='snapshot')throw Error('Unknown conversation action.');
+     const snapshot=await nativeChatSnapshot(peer);
+     await emitTo(label,'social-chat-response',{requestId,ok:true,snapshot});
+     if(kind!=='snapshot')void refresh();
+   }catch(err){await emitTo(label,'social-chat-response',{requestId,ok:false,error:err.message||'Request failed.'}).catch(()=>{});}
+ });
+}
+async function openChatWindow(peer){
+ if(!nativeDesktop)return;
+ if(!state.api||!isValidChatPeer(peer)){toast('Conversation is not available.');return;}
+ if(peer!=='lobby'&&!state.contacts.some(c=>c.id===peer)){toast('Contact not found.');return;}
+ try{
+   await initializeNativeChatBridge();
+   const label=chatWindowLabel(peer);
+   const existing=await WebviewWindow.getByLabel(label);
+   if(existing){await existing.setFocus();return;}
+   const title=peer==='lobby'?'Community Lobby':(state.contacts.find(c=>c.id===peer)?.username||'Conversation');
+   const windowHandle=new WebviewWindow(label,{url:`chat.html?peer=${encodeURIComponent(peer)}`,title:`${title} - Social Messenger`,
+     width:585,height:525,minWidth:415,minHeight:370,resizable:true,center:true});
+   windowHandle.once('tauri://error',e=>toast('Could not open conversation window: '+String(e.payload)));
+ }catch(e){toast('Could not open conversation: '+e.message);}
 }
 window.addEventListener('message',async e=>{if(e.origin!==location.origin||e.source!==document.getElementById('portrait-frame')?.contentWindow||e.data?.type!=='looprd.portrait.selected/v1'||!state.api)return;const code=e.data.code;try{const result=await state.api.saveProfile({schema:'looprd.social.profile/v1',profileId:state.profile.profileId,displayName:state.profile.displayName,appearance:state.profile.appearance||null,portraitCode:code},state.revision);state.profile=result.profile;state.revision=result.revision;state.avatarCode=code;toast('Portrait saved to Social.');}catch(error){toast(error.message);}});
 window.addEventListener('focus',()=>{if(state.api)refresh();});render();

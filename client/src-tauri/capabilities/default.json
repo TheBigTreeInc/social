@@ -1,7 +1,17 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Minimal permissions for UI notifications and opening a trusted URL",
-  "windows": ["main"],
-  "permissions": ["core:default", "notification:default", "opener:allow-open-url"]
+  "description": "Main roster and authenticated broker; isolated chat windows only exchange scoped events (no tokens)",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "notification:default",
+    "opener:allow-open-url",
+    "core:webview:allow-create-webview-window",
+    "core:window:allow-set-focus",
+    "core:event:allow-listen",
+    "core:event:allow-emit-to"
+  ]
 }

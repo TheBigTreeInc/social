@@ -1,0 +1,7 @@
+Social v0.3.4 author-side checks
+
+Source tests: npm run test (4 Node server tests + 23 Node client tests).
+Python handler generation and tests run separately.
+Native Windows installer and GUI acceptance: NOT RUN (requires target runner).
+Vite static web output: NOT RUN (dependencies unavailable here).
+Distinct conversation window code: client/src/chat.js; native capabilities scoped in src-tauri/capabilities.

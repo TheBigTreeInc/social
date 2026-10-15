@@ -1,0 +1,36 @@
+name: Web browser client and JavaScript SDK
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  web:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser build dependencies
+        run: npm install --no-audit --no-fund
+      - name: Synchronize pinned official portrait generator
+        run: npm run portrait:sync
+      - name: Validate Social client and public JavaScript SDK
+        run: npm run check
+      - name: Build browser distribution with portable paths and unbundled SDK
+        run: npm run web:build
+      - name: Verify standalone browser files and SDK checksum
+        run: npm run web:verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: social-web-client
+          path: client/dist/
+          if-no-files-found: error
+          retention-days: 14

@@ -1,17 +1,19 @@
 {
   "name": "looprd-social-client",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "web:build": "vite build",
+    "web:build": "vite build --base ./ && node tools/emit-browser-sdk.mjs",
     "build": "npm run web:build",
     "test": "node --test",
     "check": "npm run test && node tools/check-package.mjs",
     "portrait:sync": "node tools/sync-portraits.mjs",
     "portrait:check": "node tools/sync-portraits.mjs --check",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "web:verify": "node tools/verify-web-dist.mjs",
+    "web:ci": "npm run check && npm run web:build && npm run web:verify"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

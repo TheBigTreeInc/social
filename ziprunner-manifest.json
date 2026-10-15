@@ -3,48 +3,58 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.2",
-    "base_version": "0.3.1"
+    "version": "0.3.4",
+    "base_version": "0.3.3"
   },
   "update": {
-    "id": "SCL-20261016-019",
+    "id": "SCL-20261016-021",
     "kind": "source_update",
-    "created_at": "2026-10-16T00:32:00+02:00",
-    "summary": "Compact Windows Messenger-style roster and conversations, preserving Social backend permissions and identity."
+    "created_at": "2026-10-16T00:55:00+02:00",
+    "summary": "Replace oversized native main window with classic compact buddy roster and independent chat windows; shared Social account preserved."
   },
   "planned_work": [
     {
-      "id": "SCL-019",
-      "title": "Classic messenger visual and interaction pass",
-      "acceptance_criteria": "No thick panel/dashboard; thin desktop contact/chat chrome, working controls, source tests and target native visual acceptance",
+      "id": "SCL-021",
+      "title": "Compact native Windows roster with separate conversation windows",
+      "acceptance_criteria": "Windows default width <=400, conversations use independent native windows with no token IPC, Android/web preserve same account contract, source regressions pass",
       "priority": "high"
     },
     {
       "id": "SCL-010",
-      "title": "GitHub native build and device acceptance",
-      "acceptance_criteria": "Both CI native artifacts compile and operators approve real Windows/Android interface",
+      "title": "Native and browser artifact and GUI acceptance",
+      "acceptance_criteria": "Windows NSIS, Android APK and Web artifacts built in GitHub and independently tested for login, native window layout, conversations and notifications",
       "priority": "high"
     }
   ],
   "done_work": [
     {
-      "id": "SCL-019",
-      "summary": "Implemented narrow roster window, conventional menu bar, classic compact transcript and mobile navigation in client source; awaiting independent GUI review",
+      "id": "SCL-021",
+      "summary": "Implemented compact main Tauri window, separate chat.html entrypoint and IPC request broker confined to main window; documented in AsciiDoc and checked in Node tests. Native runtime awaits CI acceptance.",
       "evidence": [
         {
           "kind": "source",
           "ref": "client/src/main.js",
-          "description": "Classic-window markup, buttons and keyboard interactions"
+          "description": "Native layout switching, chat-window creation and authenticated operation broker"
         },
         {
           "kind": "source",
-          "ref": "client/src/style.css",
-          "description": "Lightweight Windows-era color, border and typography styles"
+          "ref": "client/src/chat.js",
+          "description": "Independent conversation UI, no credential persistence or transmission"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src-tauri/tauri.conf.json",
+          "description": "Native default roster window dimensions"
         },
         {
           "kind": "test",
-          "ref": "client/tests/protocol.test.mjs",
-          "description": "Client protocol and structural UI regression suite"
+          "ref": "client/tests/native-windows.test.mjs",
+          "description": "Native window dimensions, labels and restricted app capabilities"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/DESIGN.adoc",
+          "description": "Canonical multi-window UX acceptance contract"
         }
       ]
     }
@@ -53,9 +63,9 @@
     {
       "id": "SCL-010",
       "status": "review",
-      "next_action": "Run Windows installer and Android APK GitHub jobs, perform GUI and device tests on packaged binaries",
+      "next_action": "Run Web/Windows/Android GitHub Actions, validate separate Windows chat windows on a real desktop, and confirm no regression to Android/web login and messages.",
       "blockers": [
-        "No installed Windows/Android native build has been tested for this source release"
+        "Native Windows UI and Vite web output could not be launched in this environment."
       ]
     }
   ],
@@ -63,53 +73,66 @@
     "model_reported": "partial",
     "checks": [
       {
-        "id": "SCL-019-NODE",
-        "description": "Social Node regression suite and client UI markup tests",
+        "id": "SCL-021-NODE",
+        "description": "Node server, client and native window contract tests",
         "status": "passed",
-        "command": "npm run test && node client/tools/check-package.mjs",
-        "environment": "Linux Node 22",
-        "evidence_ref": "evidence/classic-messenger-tests.md"
+        "command": "npm test && node client/tools/check-package.mjs",
+        "environment": "Linux Node v22",
+        "evidence_ref": "evidence/compact-windows-v034.txt"
       },
       {
-        "id": "SCL-019-PY",
-        "description": "Python Social backend tests",
+        "id": "SCL-021-PY",
+        "description": "Python Social model and LoopRD handler generation checks",
         "status": "passed",
         "command": "python tools/generate-looprd.py --check && python -m unittest discover -s tests -p test_*.py -q",
-        "environment": "Linux Python 3.13",
-        "evidence_ref": "evidence/classic-messenger-tests.md"
+        "environment": "Linux Python",
+        "evidence_ref": "evidence/compact-windows-v034.txt"
       },
       {
-        "id": "SCL-019-NATIVE",
-        "description": "Native Windows/Android build and visual acceptance",
+        "id": "SCL-021-WIN",
+        "description": "Actual Windows Tauri NSIS, two chat windows and OS window dimensions",
         "status": "not_run",
-        "reason": "Requires GitHub native runners and user device testing"
+        "reason": "Requires a Windows GitHub runner and human GUI acceptance"
+      },
+      {
+        "id": "SCL-021-WEB",
+        "description": "Vite output with both main and chat entrypoints",
+        "status": "not_run",
+        "reason": "Vite dependencies unavailable locally; GitHub web workflow required"
+      },
+      {
+        "id": "SCL-021-ANDROID",
+        "description": "Android native UI and APK smoke test",
+        "status": "not_run",
+        "reason": "Requires Android CI runner and device acceptance"
       }
     ]
   },
   "handover": {
-    "next_pass": "Run native GitHub Windows/Android builds; inspect redesigned desktop client with operator and fix any layout problems; diagnose existing LoopRD load ValueError from runtime log separately",
+    "next_pass": "Run Windows and Web Actions, install NSIS and validate compact single roster with real separate chat windows, Android/mobile parity, and messages against live Social schema v3.",
     "risks": [
-      "LoopRD diagnostic supplied 2026-10-15 shows cached Social 0.2.3 and a new-load ValueError, so newer backend activation is unverified",
-      "Server v3 migration from prior release must be activated safely before login on a production instance"
+      "Native IPC and independent windows are source-verified, not confirmed in a real Tauri Windows process.",
+      "Live LoopRD Social component was previously stuck at cached 0.2.3 with load: ValueError."
     ],
     "blockers": [
-      "Live LoopRD load ValueError reason requires runtime logs"
+      "Native Windows GUI/real chat popup tests, Vite compile and Android tests pending."
     ],
     "notes": [
-      "No new SQL columns or migrations were introduced beyond v0.3.1; this release is primarily UI-only.",
-      "The client remains one native Tauri window; chat panes are distinct sections, not separate OS windows."
+      "No database migration or Social handler behavior changes.",
+      "Web client and shared SDK still use the same per-server account and independent sessions.",
+      "Main window holds Social credentials; chat webviews never receive session tokens."
     ]
   },
   "operator_actions": [
     {
-      "id": "SCL-019-VISUAL",
-      "description": "Accept desktop and mobile window styling, and check the live backend load issue before deployment",
+      "id": "SCL-021-OP",
+      "description": "Build Windows installer and visually confirm new native window geometry and functioning separate conversations; check Web and Android artifacts.",
       "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Source-only and UI tests do not replace Windows/Android native acceptance."
+    "notes": "Source contract tests do not establish completed native GUI acceptance."
   }
 }

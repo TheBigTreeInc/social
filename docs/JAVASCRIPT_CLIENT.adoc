@@ -1,0 +1,88 @@
+= Social JavaScript Client Contract
+:revnumber: 1
+:toc: left
+
+== Supported independent artifact
+
+The stable source module is `client/sdk/looprd-social.js` (browser-standard ES
+module, no Node or Tauri imports). `client/src/protocol.js` re-exports it so
+the Windows, Android and web apps use exactly the same implementation.
+
+The GitHub *Web browser and JavaScript SDK* workflow builds `client/dist/` and
+uploads the `social-web-client` artifact. The browser distribution includes
+`dist/sdk/looprd-social.js` and `dist/social-client-manifest.json` with
+an SHA-256 checksum. The script tag example assumes you host the downloaded
+`dist/` folder at your own application origin:
+
+[source,html]
+----
+<script type="module">
+  import {discoverSocial, registerSocial, loginSocial} from '/sdk/looprd-social.js';
+  const server = 'https://your-looprd-server.example';
+  const capability = await discoverSocial(server);
+  if (!capability.available || !capability.accounts) throw Error('Social unavailable');
+  // The application presents its own username/password form.
+  const social = await loginSocial(server, usernameFromForm, passwordFromForm);
+  const me = await social.me();
+  console.log(me.profile.displayName); // Never log credentials or session tokens.
+  const friends = await social.contacts();
+  const lobby = await social.feed();
+  // social.send(message), social.directFeed(peer), social.directSend(peer, text)
+  // social.saveProfile(profile, revision), social.logout()
+</script>
+----
+
+For a nested static deployment such as `/social/`, use the relative import
+`./sdk/looprd-social.js` from the app's root HTML instead of a leading slash.
+The example variables `usernameFromForm` and `passwordFromForm` are placeholders.
+
+== Protocol
+
+[cols="1,2",options="header"]
+|===
+| API | Behavior
+| `normalizeServer(server)` | Validates an HTTPS origin, or localhost HTTP for dev
+| `discoverSocial(server)` | GET Social `/info`; POST unauthenticated `capabilities`; no local identity fallback
+| `registerSocial(server, username, password)` | Social-issued session in memory; creates account on this server
+| `loginSocial(server, username, password)` | Independent session for existing account
+| `social.me()` | Server-authoritative account profile and permissions
+| `social.contacts()` | Own server-side contacts and requests
+| `social.feed()`, `social.send(text)` | Social community lobby
+| `social.directFeed(peer)`, `social.directSend(peer,text)` | Server-checked private peer messages
+| `social.saveProfile(profile, revision)` | Server-side profile update with revision
+| `social.logout()` | Revoke this session only
+| `social.developerDiagnostics()` | Permission-checked sanitized diagnostics; denied unless account flag set
+| `gameActivity(origin, component, gameCredential)` | Separate game-owned access; no Social token forwarding
+|===
+
+All endpoints are under the selected LoopRD server origin. A Social session
+**must never** be assumed valid for a game component. Games must validate their
+own authentication mechanism. For server without `looprd-social`, registration
+and messages are unavailable. Sharing an identity between distinct LoopRD
+servers or providing federation is not supported.
+
+== Same account, separate sessions
+
+Windows, Android, browser, and embedded JavaScript authenticate against the same
+`looprd-social` database using one username/password. Every login produces an
+individually revocable session token. The token is not shared between devices,
+but server-side account ID, contacts, messages and portrait code are shared.
+
+The library takes an optional `fetcher` argument for testing/integrations, but
+callers MUST NOT capture or persist credentials in logs, URLs, or browser storage.
+`social.token` is currently accessible to the caller in memory; treat it as a
+secret. A page refresh intentionally discards it.
+
+== Browser host requirements
+
+* Serve `client/dist/` from HTTP localhost in development, or HTTPS in production.
+* Configure LoopRD allowed browser origins/CORS for your web host.
+* All users type/select the LoopRD origin; builds carry **no baked credentials**.
+* Portrait source is pinned and checked; browser requests official registry/art
+  online and may need network connectivity on first use.
+* Browser tab must remain open for foreground turn notifications. No push worker.
+* `npm run web:build` and `npm run web:verify` are release checks.
+
+== Desktop window presentation
+
+`client/vite.config.mjs` emits both `index.html` and `chat.html`. The reusable SDK is unchanged. Windows uses separate native Tauri windows with IPC mediated by the authenticated main webview, while the browser and Android use the same Social operations in responsive pages. No session secret is embedded in the chat HTML or window URL.

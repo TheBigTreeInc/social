@@ -1,0 +1,121 @@
+= Social Messenger: Design and Architecture
+TheBigTreeInc Social project
+:revnumber: 0.3.4
+:toc: left
+:sectnums:
+
+== Source of truth
+
+This AsciiDoc document is the canonical cross-client design specification for the
+`looprd-social` project. Repository root `looprd.yaml` is authoritative for the
+running Social API schema and actions; `server/looprd_handler.py` generates its handler.
+The two documents are complementary, and **this design must not redefine LoopRD core**.
+
+== Product identity and layout
+
+Social Messenger is a compact, game-oriented messenger, inspired by the dense
+contact-list and conversation conventions of MSN Messenger and Xfire. The desktop
+shell should use a narrow contact roster, small classic menus and toolbar controls,
+white message history, thin borders, and compact status indicators. Do not reintroduce
+a three-column dashboard or oversized rounded panels. A conversation has simple
+sender/time/text transcript lines. Mobile reuses the same data operations and
+switches between roster and conversation. On Windows, the main native window MUST be a roughly 355px-wide buddy roster, not a maximized dashboard or a small login panel inside an oversized host. Conversations MUST open in independent native windows and preserve the account session through the authenticated main window.
+
+== Mandatory client parity
+
+Every shipped release MUST contain all of these client targets from the **same
+canonical JavaScript Social API**:
+
+[cols="1,2,2",options="header"]
+|===
+| Target | Source/build | Distribution
+| Web browser | `client/src/` + `client/sdk/looprd-social.js` | Static `client/dist/` from `npm run web:build`; CI artifact `social-web-client`
+| Windows | Same JS UI + Tauri v2 shell | GitHub Actions NSIS installer
+| Android | Same JS UI + Tauri v2 shell | GitHub Actions Android APK
+| Embedded JS integration | `client/sdk/looprd-social.js` | Standalone ES module at `dist/sdk/looprd-social.js`
+|===
+
+Browser and native targets MUST share protocol logic rather than copy it. A failure
+in one native toolchain must not prevent generating the static web artifact. The
+`web.yml` workflow validates the reusable SDK and builds independently of Rust,
+Android SDK, and Tauri installer packaging.
+
+== LoopRD server relationship
+
+* One selected LoopRD **origin** at a time. The presence of the `looprd-social`
+  component is probed at `/looprd/looprd-social/v1/info` and then `capabilities`.
+* If Social is missing, the client displays Social unavailable: no fake accounts,
+  locally stored chats, substitute identity provider, or automatic federation.
+* Each game's activity endpoint is independently implemented by that game at the
+  same LoopRD origin. Social passwords and session tokens MUST NOT be sent to games.
+* LoopRD owns generic API, database, events and policy primitives. Social owns
+  users, sessions, contacts, messages, profile, and developer entitlements.
+  Games own turns, rooms and game state.
+
+== Same account on every device
+
+The account identity is assigned and persisted by the Social component on that
+LoopRD server. The browser, Windows app, and Android app use the same username and
+password and get *different revocable session tokens*, both pointing to the
+same server-side Social account. Contact list, profile, portrait decimal-string
+code and messages are server-backed and therefore shared. Session tokens stay
+in process memory in this release: a page reload or app restart requires login
+again. Do not mistake independent sessions for independent identities.
+
+If persistent login is later added, use an audited, secure platform-specific
+credential mechanism. Never copy a token into a query string, a game request,
+URL fragment, localStorage, generated bundle, or a ZipRunner package. A web
+client MUST require HTTPS for a non-local LoopRD origin. Production deployment
+must configure the permitted browser `Origin` on the LoopRD server (CORS).
+
+== Client features
+
+* Registered account discovery, sign-up, sign-in, current profile, and sign-out.
+* Online/offline buddy roster, requests/acceptance, DMs and public community lobby.
+* Game activity and foreground turn notifications where a game publishes its
+  optional `looprd.game.activity/v1` response.
+* Portrait library: verified official online metadata/artwork and reviewed,
+  pinned executable renderer source. Store canonical portrait code as **text**.
+* Optional server-granted developer mode (a per-account database flag, default
+  false). The UI setting appears only for a permitted account; diagnostics
+  requests are independently authorized by Social on every call.
+
+== Privacy, trust and failure states
+
+Social exposes no master LoopRD management credential. Browser static builds
+contain no configured account, token, database, private key, or server-specific
+secret. HTML messages are escaped. An offline/unreachable server does not
+trigger a local-account fallback. A missing game activity endpoint does not
+break messaging. Revoke only the requesting device session on sign-out.
+
+== Versioned design maintenance rule
+
+For **every** client change affecting layouts, APIs, account/session behavior,
+capabilities, or deployment: update this `.adoc` and
+`docs/JAVASCRIPT_CLIENT.adoc` where applicable, test the JavaScript SDK, and
+verify that `web.yml`, `windows.yml`, and `android.yml` remain maintained.
+The ZipRunner Work board must mention changes to these contracts. Do not
+consider a release complete unless static-web and SDK artifact checks pass;
+Windows/Android installer and physical-device acceptance remain separate gates.
+
+== Deployment and outstanding limitations
+
+`npm run web:build` from `client/` produces static `dist/` and an independent
+`dist/sdk/looprd-social.js` ES module. Serve the contents of `dist/` on HTTPS
+(or localhost for development); nested hosting paths are supported by relative
+asset paths. No Node service or Tauri shell is needed to host it.
+
+Web push while the browser is closed, terminated Android push, recovery, abuse
+controls and native independent chat windows are not implemented here. An
+upstream LoopRD component must actually activate the Social database schema
+before register/login can succeed; ZipRunner source installation alone does
+not activate or migrate the live backend.
+
+== Native Windows window geometry (v0.3.4)
+
+* Sign-in and buddy list are the *entire* native window, initially 355 x 630 logical pixels. The main window stays narrow; the desktop window decoration is provided by Windows, without a duplicate simulated caption. Do not fill a 1060-pixel shell with blue whitespace.
+* Selecting a contact or Community Lobby opens or focuses a separate 585 x 525 conversation window. Each conversation has its own message history and composer. Multiple windows may coexist.
+* The main window brokers authenticated Social requests over application-scoped Tauri events; credentials MUST stay in its process memory and MUST NOT be included in a chat-window URL, browser storage or an event payload. Social authorizes each private message at the server. Closing/signing out of the roster ends access to those sessions.
+* Settings, Games, and Portrait screens temporarily replace the roster in the narrow main window; Back to contacts restores the roster. Allow scrolling where required.
+* Browser remains a separately shipped HTML/JS build. Android remains single-window responsive navigation; do not open desktop popup webviews on phones.
+* Acceptance MUST verify actual native window dimensions and independent conversations in Windows Actions; HTML source checks alone cannot certify OS behavior.

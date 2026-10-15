@@ -2,3 +2,4 @@
 # Generated API descriptors are validated against their committed SHA-256.
 *.yaml text eol=lf
 *.yml text eol=lf
+*.adoc text eol=lf

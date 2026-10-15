@@ -1,20 +1,20 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.2",
-  "summary": "Replace the heavy three-panel dark dashboard with a compact classic Windows Messenger-inspired roster and conversation UI; preserve all Social, LoopRD and developer authorization behavior.",
+  "version": "0.3.4",
+  "summary": "Compact native Windows messenger shell: 355px independent sign-in/contact roster, real separate conversation windows and authenticated main-window broker; keep Android/web parity.",
   "implemented": [
     {
-      "id": "SCL-019",
-      "title": "Classic messenger window design and responsive roster",
-      "summary": "Slim Windows-style chrome, buddy groups with search/collapse, lightweight conversation transcript, traditional menus, compact game alerts and mobile roster/conversation navigation. Existing server actions retained; no new database migration.",
+      "id": "SCL-021",
+      "title": "Replace oversized Windows client with native buddy list and separate conversations",
+      "summary": "Windows main window is roster-sized instead of 1060px dashboard. Open individual Tauri chat windows and broker authenticated operations via main window without copying credentials. Build emits standalone chat page, leaves Android/web responsive, and adds native geometry/IPC checks.",
       "operator_checks": [
-        "Open the new Windows NSIS client and verify the roster is narrow and separate-looking from the conversation; no permanent right game sidebar or message bubbles.",
-        "Sign in and open public lobby and friend DMs; verify Enter sends, Shift+Enter inserts a newline, roster search and collapsing groups work.",
-        "Click menus and toolbar actions for Contacts, Games, Alerts, Portrait, Options and Logout; verify each acts or reports a clear error.",
-        "Resize to mobile width or install the Android build; confirm switching between contacts and conversation without clipped controls.",
-        "Verify non-developer users have no Admin/Debug controls; grant operator permission and confirm the existing toggle still works; revoke to hide it.",
-        "Compare against a real LoopRD Social v0.3.1+ deployment and confirm registration, messages, games and portraits were not affected."
+        "Install the Windows NSIS artifact; sign-in opens as a narrow 355×630 window, with no blue 1060px background or a duplicate app title bar.",
+        "Sign in with an existing Social account; the same window displays buddy groups and turn alerts; verify there is no permanent right-side panel.",
+        "Double-click a buddy or open Community Lobby: a separate approximately 585×525 Windows chat window opens, and reselecting the same buddy focuses it.",
+        "Send and receive a message in the native conversation; verify chat windows do not need another login and can open simultaneously.",
+        "Verify Settings/Games/Portrait and server-authorized developer switch work within the roster-sized native host.",
+        "Run the Web, Windows and Android workflows; confirm Android navigation and browser API/account parity remain functional."
       ]
     }
   ],
@@ -40,7 +40,7 @@
     {
       "id": "SCL-010",
       "title": "Native build and device acceptance",
-      "summary": "Rebuild Windows NSIS and Android debug APK for v0.3.2; perform visual and device acceptance. Source checks are not native build proof.",
+      "summary": "Rebuild Windows NSIS, Android APK and Web assets for 0.3.4; confirm native multi-window messaging and updated compact window geometry; independently validate login and visuals on target platforms.",
       "priority": "high"
     },
     {

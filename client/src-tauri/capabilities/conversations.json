@@ -1,0 +1,13 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "conversations",
+  "description": "Separate conversations: message requests only through the main authenticated window",
+  "windows": [
+    "chat-*"
+  ],
+  "permissions": [
+    "core:default",
+    "core:event:allow-listen",
+    "core:event:allow-emit-to"
+  ]
+}

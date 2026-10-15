@@ -1,6 +1,6 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.2",
+  "version": "0.3.4",
   "tests": [
     {
       "kind": "command",
@@ -17,6 +17,24 @@
       "definition_revision": "1",
       "rerun_policy": "every_update",
       "command": "node client/tools/check-package.mjs",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "social-web-sdk-parity",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "node --test client/tests/browser-sdk.test.mjs",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "social-classic-native-window-contract",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "node --test client/tests/native-windows.test.mjs",
       "attention_on_failure": true,
       "gating": false
     }

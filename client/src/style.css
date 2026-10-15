@@ -204,3 +204,25 @@ h1, h2, h3, p { margin: 0; }
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 
 .auth-menu-action { border: 0; box-shadow: none; background: transparent; padding: 2px 9px; font-size: 11px; }
+
+/* Native Windows: the outer OS window IS the messenger, no giant background. */
+.native-shell html,.native-shell body,.native-shell #app { width:100%;height:100%;min-width:0; }
+.native-shell .login-desktop,.native-shell .desktop-workspace {height:100dvh;width:100%;padding:0;display:flex;align-items:stretch;justify-content:stretch;overflow:hidden;background:#f6fbff;}
+.native-shell .welcome {width:100%;height:100%;min-width:0;max-width:none;max-height:none;overflow-y:auto;border:0;border-radius:0;box-shadow:none;}
+.native-shell .welcome-body {padding:17px 19px 16px;}
+.native-shell .welcome-icon {height:69px;width:76px;font-size:42px;}
+.native-shell .welcome-caption {margin-bottom:14px;}
+.native-shell .welcome .auth-form {max-width:none;}
+.native-shell .classic-window {border:0;border-radius:0;box-shadow:none;}
+.native-shell .window-titlebar {display:none;}
+.native-shell .roster-window {width:100%;height:100%;min-width:0;}
+.native-shell .auxiliary-window {width:100%;height:100%;}
+.native-shell .utility {padding:13px 15px;}
+.native-shell .portrait iframe {height: 58vh;}
+.native-shell .roster-toolbar {min-height:37px;}
+.native-shell .roster-profile {padding:8px;}
+.native-shell .roster-scroll {padding:2px 3px;}
+.native-shell .games-strip {max-height:180px;overflow:auto;}
+.native-shell .top {display:none;}
+.native-shell .toast {bottom:12px;left:8px;right:8px;width:auto;}
+@media(max-width:620px) { .native-shell .desktop-workspace {height:100dvh;} }

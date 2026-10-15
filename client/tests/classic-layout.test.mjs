@@ -12,7 +12,7 @@ function shell({connected=true,mobileRoster=false}={}) {
   const context={
     document:{getElementById:key=>key==='app'?app:null,querySelectorAll:()=>[]},
     localStorage:{getItem:()=>null},readConfig:()=>({server:'https://social.example.org',games:['jones'],gamesByServer:{}}),
-    clearTimeout(){},setTimeout(){},URL,Date,Map,JSON,String,console,
+    isTauri:()=>false,navigator:{userAgent:'Mozilla/5.0'},clearTimeout(){},setTimeout(){},URL,Date,Map,JSON,String,console,
   };
   const fixture=`
     state.connected=${connected};state.mobileRoster=${mobileRoster};
@@ -52,7 +52,7 @@ test('untrusted friend names/messages are escaped before inclusion',()=>{
   const context={
     document:{getElementById:key=>key==='app'?app:null,querySelectorAll:()=>[]},
     readConfig:()=>({server:'https://social.example.org',games:[],gamesByServer:{}}),
-    clearTimeout(){},setTimeout(){},URL,Date,Map,JSON,String,
+    isTauri:()=>false,navigator:{userAgent:'Mozilla/5.0'},clearTimeout(){},setTimeout(){},URL,Date,Map,JSON,String,
   };
   runInNewContext(source+`
   state.connected=true;state.api={origin:'https://social.example.org'};
