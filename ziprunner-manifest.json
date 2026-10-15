@@ -3,38 +3,48 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.1",
-    "base_version": "0.3.0"
+    "version": "0.3.2",
+    "base_version": "0.3.1"
   },
   "update": {
-    "id": "LRS-20261015-005",
+    "id": "SCL-20261016-019",
     "kind": "source_update",
-    "created_at": "2026-10-15T22:33:00+02:00",
-    "summary": "Add Social DB-granted developer-only read-only diagnostics and hidden Admin / Debug UI toggle."
+    "created_at": "2026-10-16T00:32:00+02:00",
+    "summary": "Compact Windows Messenger-style roster and conversations, preserving Social backend permissions and identity."
   },
   "planned_work": [
     {
-      "id": "SCL-018",
-      "title": "Server-gated Admin / Debug developer diagnostics",
-      "acceptance_criteria": "Registered accounts default to no developer access. Only server-host operator can grant/revoke in SQL; a granted client may toggle its read-only diagnostics view; revocation immediately blocks the endpoint. Existing SQL data survives v2->v3 migration.",
+      "id": "SCL-019",
+      "title": "Classic messenger visual and interaction pass",
+      "acceptance_criteria": "No thick panel/dashboard; thin desktop contact/chat chrome, working controls, source tests and target native visual acceptance",
       "priority": "high"
     },
     {
       "id": "SCL-010",
-      "title": "Native build and device acceptance",
-      "acceptance_criteria": "Rebuild NSIS and Android APK from v0.3.1 and inspect toggled diagnostics on target devices.",
+      "title": "GitHub native build and device acceptance",
+      "acceptance_criteria": "Both CI native artifacts compile and operators approve real Windows/Android interface",
       "priority": "high"
     }
   ],
   "done_work": [
     {
-      "id": "SCL-018",
-      "summary": "Database boolean entitlement, v3 additive migration, operator CLI, guarded diagnostics endpoint, conditional client toggle and authorization tests implemented; native/live LoopRD operator verification pending.",
+      "id": "SCL-019",
+      "summary": "Implemented narrow roster window, conventional menu bar, classic compact transcript and mobile navigation in client source; awaiting independent GUI review",
       "evidence": [
         {
+          "kind": "source",
+          "ref": "client/src/main.js",
+          "description": "Classic-window markup, buttons and keyboard interactions"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/style.css",
+          "description": "Lightweight Windows-era color, border and typography styles"
+        },
+        {
           "kind": "test",
-          "ref": "evidence/developer-access-tests.md",
-          "description": "Local backend/client privilege, revocation, migration and operator command regression results"
+          "ref": "client/tests/protocol.test.mjs",
+          "description": "Client protocol and structural UI regression suite"
         }
       ]
     }
@@ -43,9 +53,9 @@
     {
       "id": "SCL-010",
       "status": "review",
-      "next_action": "Run GitHub Windows and Android builds for v0.3.1 and verify on targets; activate component on backed-up LoopRD server.",
+      "next_action": "Run Windows installer and Android APK GitHub jobs, perform GUI and device tests on packaged binaries",
       "blockers": [
-        "Native installers, live LoopRD migration and device acceptance have not been run in this environment."
+        "No installed Windows/Android native build has been tested for this source release"
       ]
     }
   ],
@@ -53,72 +63,53 @@
     "model_reported": "partial",
     "checks": [
       {
-        "id": "SCL-018-PY",
-        "description": "SQL migration, operator CLI and authorization regression tests",
+        "id": "SCL-019-NODE",
+        "description": "Social Node regression suite and client UI markup tests",
         "status": "passed",
-        "command": "python -m unittest discover -s tests -p test_*.py -q",
-        "environment": "Linux Python 3.13",
-        "evidence_ref": "evidence/developer-access-tests.md"
-      },
-      {
-        "id": "SCL-018-NODE",
-        "description": "Social and protocol Node tests",
-        "status": "passed",
-        "command": "npm run test",
+        "command": "npm run test && node client/tools/check-package.mjs",
         "environment": "Linux Node 22",
-        "evidence_ref": "evidence/developer-access-tests.md"
+        "evidence_ref": "evidence/classic-messenger-tests.md"
       },
       {
-        "id": "SCL-018-GEN",
-        "description": "Generated descriptor plus ZipRunner source integrity",
+        "id": "SCL-019-PY",
+        "description": "Python Social backend tests",
         "status": "passed",
-        "command": "python tools/generate-looprd.py --check && node client/tools/check-package.mjs",
-        "environment": "Linux",
-        "evidence_ref": "evidence/developer-access-tests.md"
+        "command": "python tools/generate-looprd.py --check && python -m unittest discover -s tests -p test_*.py -q",
+        "environment": "Linux Python 3.13",
+        "evidence_ref": "evidence/classic-messenger-tests.md"
       },
       {
-        "id": "SCL-018-LIVE",
-        "description": "Production-backed DB migration, native UI and fresh CI artifacts",
+        "id": "SCL-019-NATIVE",
+        "description": "Native Windows/Android build and visual acceptance",
         "status": "not_run",
-        "reason": "Requires a running LoopRD deployment and GitHub/target-native runners"
+        "reason": "Requires GitHub native runners and user device testing"
       }
     ]
   },
   "handover": {
-    "next_pass": "Install ZIP in existing looprd-social project; backup LoopRD Social DB, deploy generated v3 component and use host-only CLI to enable a test account, then validate the authorized UI and native builds.",
+    "next_pass": "Run native GitHub Windows/Android builds; inspect redesigned desktop client with operator and fix any layout problems; diagnose existing LoopRD load ValueError from runtime log separately",
     "risks": [
-      "Component activation performs additive schema v2 to v3 migration; do not assume ZipRunner installation authorizes this.",
-      "Developer diagnostics intentionally do not include raw logs, personal chat content, secrets or LoopRD management capabilities.",
-      "Password/account hardening and native builds still require operator acceptance."
+      "LoopRD diagnostic supplied 2026-10-15 shows cached Social 0.2.3 and a new-load ValueError, so newer backend activation is unverified",
+      "Server v3 migration from prior release must be activated safely before login on a production instance"
     ],
     "blockers": [
-      "Live deployment and device acceptance pending"
+      "Live LoopRD load ValueError reason requires runtime logs"
     ],
     "notes": [
-      "No external OIDC provider or multi-server federation required.",
-      "Only operator with DB filesystem access can grant permission; no public elevation handler."
+      "No new SQL columns or migrations were introduced beyond v0.3.1; this release is primarily UI-only.",
+      "The client remains one native Tauri window; chat panes are distinct sections, not separate OS windows."
     ]
   },
   "operator_actions": [
     {
-      "id": "SCL-018-DEPLOY",
-      "description": "Back up LoopRD Social database and approve v3 schema activation",
-      "status": "required"
-    },
-    {
-      "id": "SCL-018-GRANT",
-      "description": "Grant developerEnabled only to explicitly authorized Social accounts using host CLI",
-      "status": "required"
-    },
-    {
-      "id": "SCL-018-NATIVE",
-      "description": "Review native GitHub builds and client UI behavior",
+      "id": "SCL-019-VISUAL",
+      "description": "Accept desktop and mobile window styling, and check the live backend load issue before deployment",
       "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Source-only validation; database activation and native UI verification are separate approvals."
+    "notes": "Source-only and UI tests do not replace Windows/Android native acceptance."
   }
 }

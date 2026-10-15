@@ -27,7 +27,7 @@ def verify(path):
                 raise ValueError('Unsafe archive path: '+f.filename)
             if (f.external_attr >> 16)&0o170000==0o120000:
                 raise ValueError('Symlink entry: '+f.filename)
-            if f.filename.startswith(('.git/','.data/','secrets/','client/node_modules/','client/src-tauri/target/')):
+            if f.filename.startswith(('.git/','.data/','secrets/','client/node_modules/','client/src-tauri/target/')) or '__pycache__' in p.parts or f.filename.endswith(('.pyc','.pyo')):
                 raise ValueError('Private/build-state file: '+f.filename)
         def load(name):return json.loads(arc.read(name))
         board=load('.ziprunner-workboard-update.json')

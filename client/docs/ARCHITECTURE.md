@@ -8,3 +8,7 @@
 - Remote servers require HTTPS; origin, component and game routes are validated. Game endpoints never receive Social credentials. Account session tokens and passwords are not stored in localStorage.
 - The same account can be used on two devices with two independently revocable sessions. Re-login is required after restarting a device in this release. A secure OS keychain-backed remembered-device feature is planned.
 - Open registration should be limited or protected at public deployment level; no password reset/email verification/invites/moderation yet. No Android background push after termination and no trusted game invitation issuer yet.
+
+## Classic desktop shell (v0.1.2)
+
+Contact roster and conversation are distinct slim bordered panes in a single Tauri window. No independent native chat windows are opened. Mobile displays one pane at a time, preserving existing calls and security checks. Developer controls are shown only when the `permissions.developer` server claim is true; the flag is rechecked by Social before returning any developer diagnostics.

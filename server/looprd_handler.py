@@ -1,4 +1,4 @@
-"""Looprd Social v0.3.1 native Looprd handler.
+"""Looprd Social v0.3.2 native Looprd handler.
 
 Self-contained in looprd.yaml by tools/generate-looprd.py.
 The verified Looprd v1 handler contract provides ctx.body, ctx.session_factory
@@ -270,7 +270,7 @@ def logout(db,token):
 # LoopRD management role. Checked on EVERY privileged request and profile refresh.
 # Development tokens cannot get this privilege, even when their subject resembles
 # a registered user; no public API path changes the flag.
-SOCIAL_RELEASE = '0.3.1'
+SOCIAL_RELEASE = '0.3.2'
 SOCIAL_SCHEMA_VERSION = 3
 
 def account_developer_permission(db, subject):

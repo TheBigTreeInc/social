@@ -1,11 +1,20 @@
-# Social Messenger client 0.3.1
+# Social Messenger client 0.1.2 — Classic windows pass
 
-Windows/Android source for the Social v0.3.1 server component. The compact buddy list, chat pane and turn sidebar are inspired by the interaction model of MSN Messenger and Xfire (not a copy of their artwork or branding).
+The client uses a **lightweight classic Windows Messenger-inspired layout**, not a modern dashboard. Desktop presents a narrow contact-list window alongside a distinct conversation window (currently two panes within one native Tauri app window; not independent OS windows). Chats use a simple transcript, with message author, time and text instead of large chat bubbles. The sign-in UI is a compact single-window dialog. Mobile shows roster and conversation one at a time with bottom navigation.
 
-Open the app, enter a LoopRD server origin, register an account or sign in using Social-owned credentials. There is no developer token field and no external OIDC provider. On a server without the `looprd-social` component, there is no local social-data store or automatic fallback. Contacts require consent before direct messages; use the + Add friend action. Your turns appear when games on this server expose the documented activity contract.
+Buttons and menus are wired to the existing Social client actions: contact requests, messages, games, alerts, settings, avatar generator and logout. `Enter` sends, `Shift+Enter` inserts a newline. A roster search filters displayed contacts without sending extra server requests. Group disclosure is client-local. Games and turn alerts occupy a compact section beneath the contacts, not a permanent right-side panel. Server-granted Admin/Debug remains hidden unless permitted.
 
-Sessions are memory-only and require re-login after restart; background Android push, account recovery, game invitations and group chat remain planned. `npm run test` runs the protocol suite, `npm run web:build` builds the Vite frontend when dependencies are installed, and native GitHub Actions build the app. The online portrait generator is pinned and updated through reviewable PRs.
+The initial design is inspired by the compact density, blue title bars, white list backgrounds and modest menu/toolbar patterns of Windows Live Messenger and Xfire. It doesn't bundle their trademarks, branded graphics, UI code or assets.
 
-## Admin / Debug mode
+## Test locally
 
-The Social server decides whether developer controls are available using the current registered account's `developerEnabled` database flag. The settings toggle is hidden for everyone else. Permitted users can switch the read-only Admin / Debug panel on/off; no secrets or private conversations are returned by the server's diagnostics operation. Any server-side revocation hides this panel on the next client refresh (25 seconds by default) or earlier failed diagnostics request. The toggle is not a privilege escalation control and is reset on sign-out. The operator grant/revoke CLI lives at `../tools/social-developer-access.py` and is for LoopRD-host use only.
+```bash
+cd client
+npm install
+npm run portrait:sync
+npm run dev
+```
+
+See repository `README.md` for Social deployment, account registration and native GitHub Actions builds. The social backend owns identity; games run as separate components on the same LoopRD server. This visual pass requires **no database schema changes** relative to v0.3.1.
+
+The UI shell stays one native Tauri window in v0.1.2. Actual separate native chat windows (including shared sessions and notification targeting) can be added as a later optional desktop capability without breaking Android navigation.

@@ -81,8 +81,10 @@ test('Messenger client uses buddy/conversation UI and never asks for a manual So
  const fs=await import('node:fs/promises');
  const main=await fs.readFile(new URL('../src/main.js',import.meta.url),'utf8');
  const css=await fs.readFile(new URL('../src/style.css',import.meta.url),'utf8');
- assert(main.includes('Friends. Games. Good times.')&&main.includes('data-peer=')&&main.includes('Create my account'));
- assert(css.includes('.buddy-list')&&css.includes('.conversation')&&css.includes('.bubble'));
+ assert(main.includes('Social Messenger')&&main.includes('data-peer=')&&main.includes('Create account'));
+ assert(css.includes('.roster-window')&&css.includes('.conversation')&&css.includes('.transcript-message'));
+ assert(main.includes('mobileRoster')&&main.includes('window-titlebar')&&main.includes('group-title'));
+ assert(!main.includes('sidePanel():')&&!main.includes('class=\"bubble-row'));
  assert(!main.includes('id="social-token"')&&!main.includes('Token configured in Social'));
 });
 

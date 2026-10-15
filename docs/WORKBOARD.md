@@ -1,14 +1,10 @@
-# Work board — Social 0.3.1
+# Work board — Social 0.3.2
 
-ZipRunner reads `.ziprunner-workboard-update.json` and reconciles stable task IDs.
-
-- SCL-018: server-gated DB developer access, operator CLI and hidden Admin / Debug client panel; source tests passed, operator activation/verification pending.
-- SCL-010: native GitHub and physical device checks for v0.3.1 pending.
-- SCL-013/014/015/016: retained from earlier v0.3.0 pass; existing approved state must not be overwritten.
-- LRS-004: hardened recovery/registration pending.
-- SCL-007: private groups and game invitations pending.
-- SCL-009: Android background turn push pending.
-- SCL-011: per-game turn activity implementation pending.
-- SCL-017: OS-secure persisted sign-in pending.
-
-Source tests do not imply LoopRD component activation or an operator-reviewed Done state.
+- SCL-019: classic slim Windows Messenger UI in source; awaiting native/operator visual acceptance.
+- SCL-018: server-gated developer mode implemented in 0.3.1 and preserved; no privilege changes this pass.
+- SCL-010: native GitHub Windows/Android build and device acceptance pending for this release.
+- LRS-004: account recovery / hardened public registration remains open.
+- SCL-007: private groups and trusted invites remain open.
+- SCL-009: Android background notifications remain open.
+- SCL-011: game activity contracts depend on game components.
+- SCL-017: secure remembered-device login remains open.

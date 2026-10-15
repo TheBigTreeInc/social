@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "LoopRD Social Messenger",
-  "version": "0.1.1",
+  "productName": "Social Messenger",
+  "version": "0.1.2",
   "identifier": "inc.thebigtree.looprdsocial",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -13,12 +13,12 @@
     "withGlobalTauri": false,
     "windows": [
       {
-        "title": "LoopRD Social Messenger",
-        "width": 1050,
-        "height": 730,
-        "minWidth": 680,
-        "minHeight": 560,
-        "backgroundColor": "#101920"
+        "title": "Social Messenger",
+        "width": 1060,
+        "height": 690,
+        "minWidth": 620,
+        "minHeight": 480,
+        "backgroundColor": "#dbe9f8"
       }
     ],
     "security": {
@@ -34,6 +34,6 @@
       "icons/icon.png",
       "icons/icon.ico"
     ],
-    "shortDescription": "Xfire-inspired friends, chat and game turn alerts"
+    "shortDescription": "Classic game-focused messenger and turn alerts"
   }
 }
