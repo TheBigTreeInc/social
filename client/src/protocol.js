@@ -90,7 +90,7 @@ export class LooprdSocial {
         cache: 'no-store',
       });
       const data = await responseJson(response);
-      if (!data || data.ok !== true) throw new ProtocolError(data?.error || 'Social request failed.');
+      if (!data || data.ok !== true) throw new ProtocolError(data?.error || 'Social request failed.', data?.code === 'DEVELOPER_ACCESS_DENIED' ? 403 : 0);
       return data;
     } catch (error) {
       if (error?.name === 'AbortError') throw new ProtocolError('Connection timed out.');
@@ -98,6 +98,7 @@ export class LooprdSocial {
     } finally { clearTimeout(timer); }
   }
   me() { return this.command('me'); }
+  developerDiagnostics() { return this.command('developer_diagnostics').then(validateDeveloperDiagnostics); }
   saveProfile(profile, revision) { return this.command('save_profile', {profile, ifRevision: revision}); }
   feed() { return this.command('chat_feed'); }
   send(text) { return this.command('chat_send', {text}); }
@@ -153,4 +154,26 @@ export function newTurnKeys(turns, previous = []) {
   const seen = new Set(previous);
   const active = turns.filter(t => t.status === 'your-turn').map(t => t.id);
   return {newIds: active.filter(id => !seen.has(id)), activeIds: active};
+}
+
+/** Bounded, typed diagnostic contract. Deliberately omits secrets and user content. */
+export function validateDeveloperDiagnostics(body) {
+  if (!body || body.ok !== true || body.schema !== 'looprd.social.developer-diagnostics/v1' ||
+      body.component !== SOCIAL_COMPONENT || body.apiVersion !== 'looprd/v1' ||
+      typeof body.release !== 'string' || body.release.length > 40 ||
+      !Number.isSafeInteger(body.databaseSchemaVersion) ||
+      !Number.isSafeInteger(body.serverTime) ||
+      !body.counts || typeof body.counts !== 'object')
+    throw new ProtocolError('Invalid developer diagnostics contract.');
+  const labels = ['accounts','profiles','contacts','directMessages','lobbyMessages','activeSessions'];
+  const counts = {};
+  for (const key of labels) {
+    if (!Number.isSafeInteger(body.counts[key]) || body.counts[key] < 0)
+      throw new ProtocolError('Invalid developer diagnostic counters.');
+    counts[key] = body.counts[key];
+  }
+  const features = Array.isArray(body.features) ? body.features.filter(x => typeof x === 'string' && /^[a-z0-9-]{1,48}$/.test(x)).slice(0,20) : [];
+  return {schema:body.schema,component:body.component,apiVersion:body.apiVersion,
+    release:body.release,serverTime:body.serverTime,databaseSchemaVersion:body.databaseSchemaVersion,
+    counts,features};
 }

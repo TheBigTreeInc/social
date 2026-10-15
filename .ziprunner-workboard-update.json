@@ -1,45 +1,19 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.0",
-  "summary": "Social account registration and sign-in without OIDC or manual tokens; Xfire/MSN-style friends and conversations; server-local discovery; additive v2 Social schema and Android Tauri config correction.",
+  "version": "0.3.1",
+  "summary": "Server-owned developer permission per registered account; hidden Admin / Debug option in Windows/Android client, protected read-only diagnostics, operator CLI, additive schema v3 migration and regression tests.",
   "implemented": [
     {
-      "id": "SCL-013",
-      "title": "Social-owned account registration and sign-in",
-      "summary": "Register/login on the selected LoopRD Social component using password hashing and revocable per-device sessions; no externally provisioned token or OIDC provider.",
+      "id": "SCL-018",
+      "title": "Server-gated Admin / Debug developer diagnostics",
+      "summary": "Add SocialAccount.developerEnabled (default false) and a local LoopRD host operator command to set/revoke it; server checks flag per diagnostics request. Client hides the switch and page for normal users and clears it on server revocation.",
       "operator_checks": [
-        "On an HTTPS LoopRD server hosting Social v0.3.0, register two accounts and sign into one from Windows and Android.",
-        "Verify an unknown server and one without Social do not create a local account and show a clear unavailable state.",
-        "Verify logout revokes the current session without revoking the other device."
-      ]
-    },
-    {
-      "id": "SCL-014",
-      "title": "Messenger contact roster and direct conversation",
-      "summary": "Introduce real contact requests, acceptance, presence and private direct messages with consent enforcement; rework the client UI into compact MSN/Xfire-inspired navigation.",
-      "operator_checks": [
-        "From account A add account B; confirm B must accept before either may direct-message.",
-        "Verify buddy online indicators after authenticated activity and the lobby chat still works.",
-        "Inspect the Windows UI and Android layout for compact contact roster and message composer."
-      ]
-    },
-    {
-      "id": "SCL-015",
-      "title": "Social component capability detection",
-      "summary": "Discover Social on the selected LoopRD server before account actions; no external account or chat persistence fallback.",
-      "operator_checks": [
-        "Connect to a server lacking the Social component; verify a readable explanation and no account registration.",
-        "Disable registration using LOOPRD_SOCIAL_ALLOW_REGISTRATION=false; verify only sign-in is offered."
-      ]
-    },
-    {
-      "id": "SCL-016",
-      "title": "Tauri Android configuration repair",
-      "summary": "Remove unsupported bundle.targets apk value from Android override; preserve GitHub Android workflow for follow-up native compilation.",
-      "operator_checks": [
-        "Run GitHub Android phone app workflow and verify initialization proceeds past tauri android init --ci.",
-        "Install resulting APK on a test device if build finishes; report any downstream Tauri/Gradle failures."
+        "Back up LoopRD Social SQLite database and activate the v3 additive migration; verify previously registered accounts retain sign-in and developerEnabled defaults to false.",
+        "Run tools/social-developer-access.py on the LoopRD host with --db, --user and --enable; sign in and check Settings gains Show developer tools, initially off.",
+        "Enable the UI switch; verify the read-only Admin / Debug tab shows sanitized platform release, schema, session counts and client connection diagnostics.",
+        "Disable the flag on the server; verify the client removes the diagnostics on the next sync or request and that direct developer_diagnostics calls fail even for previously enabled sessions.",
+        "Verify another account and a legacy development token cannot access developer_diagnostics or grant themselves developerEnabled."
       ]
     }
   ],
@@ -65,7 +39,7 @@
     {
       "id": "SCL-010",
       "title": "Native build and device acceptance",
-      "summary": "Windows build passed on upstream v0.2.3; Android failed on invalid Tauri config. Both v0.3.0 native artifacts and GUI acceptance remain unverified.",
+      "summary": "Current v0.3.1 native Windows/Android installers and GUI acceptance remain to be verified on GitHub/physical devices; source tests only are locally available.",
       "priority": "high"
     },
     {

@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.0
+release: 0.3.1
 api:
   version: v1
 auth:
@@ -13,7 +13,7 @@ limits:
   maxInFlight: 30
 database:
   backend: sqlite
-  schemaVersion: 2
+  schemaVersion: 3
   migrations:
   - version: 2
     statements:
@@ -29,6 +29,9 @@ database:
     - CREATE TABLE "SocialDirectMessage" ("id" INTEGER PRIMARY KEY, "leftId" VARCHAR(72) NOT NULL, "rightId" VARCHAR(72)
       NOT NULL, "senderId" VARCHAR(72) NOT NULL, "content" VARCHAR(1000) NOT NULL, "created" INTEGER NOT NULL)
     - CREATE INDEX "SocialDirectMessage_pair" ON "SocialDirectMessage" ("leftId", "rightId", "id")
+  - version: 3
+    statements:
+    - ALTER TABLE "SocialAccount" ADD COLUMN "developerEnabled" BOOLEAN NOT NULL DEFAULT 0
 models:
   SocialProfile:
     fields:
@@ -103,6 +106,9 @@ models:
         required: true
       lockedUntil:
         type: integer
+        required: true
+      developerEnabled:
+        type: boolean
         required: true
   SocialSession:
     fields:
@@ -207,7 +213,7 @@ handlers:
 - path: /social
   method: POST
   kind: python
-  source: "\"\"\"Looprd Social v0.3.0 native Looprd handler.\n\nSelf-contained in looprd.yaml by tools/generate-looprd.py.\n\
+  source: "\"\"\"Looprd Social v0.3.1 native Looprd handler.\n\nSelf-contained in looprd.yaml by tools/generate-looprd.py.\n\
     The verified Looprd v1 handler contract provides ctx.body, ctx.session_factory\nand ctx.publish. No unverified\
     \ request-header assumptions are used.\n\"\"\"\nimport hashlib\nimport hmac\nimport json\nimport os\nimport\
     \ re\nimport time\nimport sqlalchemy as sa\nfrom starlette.concurrency import run_in_threadpool\n\nSCHEMA =\
@@ -267,10 +273,10 @@ handlers:
     \ excludes identity, profile and chat.\n    return {'component':SOCIAL,'resource':'pulses','action':'updated','id':1,\n\
     \            'data':{'id':1,'signal':count}}\n\n\n\nimport base64\nimport hashlib\nimport hmac\nimport os\n\
     import re\nimport secrets\nimport time\nimport sqlalchemy as sa\n\nACCOUNT = sa.table('SocialAccount', sa.column('id',sa.Integer),sa.column('handle',sa.String),\n\
-    \    sa.column('passwordHash',sa.String),sa.column('created',sa.Integer),\n    sa.column('failedAttempts',sa.Integer),sa.column('lockedUntil',sa.Integer))\n\
-    SESSION = sa.table('SocialSession',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n    sa.column('tokenHash',sa.String),sa.column('created',sa.Integer),\n\
-    \    sa.column('expires',sa.Integer),sa.column('lastSeen',sa.Integer),sa.column('revoked',sa.Boolean))\nCONTACT\
-    \ = sa.table('SocialContact',sa.column('id',sa.Integer),sa.column('leftId',sa.String),\n    sa.column('rightId',sa.String),sa.column('requestedBy',sa.String),\n\
+    \    sa.column('passwordHash',sa.String),sa.column('created',sa.Integer),\n    sa.column('failedAttempts',sa.Integer),sa.column('lockedUntil',sa.Integer),\n\
+    \    sa.column('developerEnabled',sa.Boolean))\nSESSION = sa.table('SocialSession',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n\
+    \    sa.column('tokenHash',sa.String),sa.column('created',sa.Integer),\n    sa.column('expires',sa.Integer),sa.column('lastSeen',sa.Integer),sa.column('revoked',sa.Boolean))\n\
+    CONTACT = sa.table('SocialContact',sa.column('id',sa.Integer),sa.column('leftId',sa.String),\n    sa.column('rightId',sa.String),sa.column('requestedBy',sa.String),\n\
     \    sa.column('status',sa.String),sa.column('created',sa.Integer))\nDM = sa.table('SocialDirectMessage',sa.column('id',sa.Integer),sa.column('leftId',sa.String),\n\
     \    sa.column('rightId',sa.String),sa.column('senderId',sa.String),\n    sa.column('content',sa.String),sa.column('created',sa.Integer))\n\
     HANDLE = re.compile(r'^[a-z][a-z0-9_]{2,23}$')\nSESSION_AGE = 30*86400\nDUMMY_SALT = b'looprd-social-dummy-salt'\n\
@@ -295,7 +301,7 @@ handlers:
     \ not in ('true','1','yes'):\n        return {'ok':False,'error':'Registration is disabled on this Social server','code':'REGISTRATION_DISABLED'}\n\
     \    handle=username(body.get('username'))\n    password=body.get('password')\n    if db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==handle)).first():\n\
     \        return {'ok':False,'error':'This username is already registered','code':'USERNAME_TAKEN'}\n    digest=password_digest(password)\n\
-    \    id_=db.execute(sa.insert(ACCOUNT).values(handle=handle,passwordHash=digest,created=now,\n        failedAttempts=0,lockedUntil=0).returning(ACCOUNT.c.id)).scalar_one()\n\
+    \    id_=db.execute(sa.insert(ACCOUNT).values(handle=handle,passwordHash=digest,created=now,\n        failedAttempts=0,lockedUntil=0,developerEnabled=False).returning(ACCOUNT.c.id)).scalar_one()\n\
     \    subject='acct_'+str(id_)\n    db.execute(sa.insert(PROFILE).values(subjectId=subject,\n        data={'schema':SCHEMA,'profileId':subject,'displayName':handle,'appearance':None,'portraitCode':None},\n\
     \        revision=1,updated=now))\n    return {'ok':True,**new_session(db,subject,now),'profileId':subject}\n\
     \ndef login(db,body,now):\n    # Never reveal whether a username exists. Persistent per-account backoff and\n\
@@ -310,7 +316,24 @@ handlers:
     \ username or password','code':'INVALID_LOGIN'}\n    db.execute(sa.update(ACCOUNT).where(ACCOUNT.c.id==record['id']).values(failedAttempts=0,lockedUntil=0))\n\
     \    subject='acct_'+str(record['id'])\n    return {'ok':True,**new_session(db,subject,now),'profileId':subject}\n\
     \ndef logout(db,token):\n    if isinstance(token,str):\n        db.execute(sa.update(SESSION).where(SESSION.c.tokenHash==hashlib.sha256(token.encode()).hexdigest()).values(revoked=True))\n\
-    \    return {'ok':True}\n\ndef pair(a,b): return tuple(sorted((a,b)))\n\ndef contact_row(db,subject,other):\n\
+    \    return {'ok':True}\n\n# Social-specific development privilege: operator-set DB entitlement, never a\n#\
+    \ LoopRD management role. Checked on EVERY privileged request and profile refresh.\n# Development tokens cannot\
+    \ get this privilege, even when their subject resembles\n# a registered user; no public API path changes the\
+    \ flag.\nSOCIAL_RELEASE = '0.3.1'\nSOCIAL_SCHEMA_VERSION = 3\n\ndef account_developer_permission(db, subject):\n\
+    \    if not isinstance(subject, str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):\n        return\
+    \ False\n    account = db.execute(sa.select(ACCOUNT.c.developerEnabled).where(\n        ACCOUNT.c.id == int(subject[5:]))).first()\n\
+    \    return account is not None and account[0] is True\n\ndef developer_diagnostics(db, subject, now):\n   \
+    \ \"\"\"Deliberately aggregate-only: never include credentials, messages, or raw SQL.\"\"\"\n    if not account_developer_permission(db,\
+    \ subject):\n        return {'ok': False, 'error': 'Developer tools are not enabled for this account',\n   \
+    \             'code': 'DEVELOPER_ACCESS_DENIED'}\n    models = (('accounts', ACCOUNT), ('profiles', PROFILE),\
+    \ ('contacts', CONTACT),\n              ('directMessages', DM), ('lobbyMessages', MESSAGE))\n    counts = {label:\
+    \ db.execute(sa.select(sa.func.count()).select_from(table)).scalar_one()\n              for label, table in\
+    \ models}\n    counts['activeSessions'] = db.execute(sa.select(sa.func.count()).select_from(SESSION)\n     \
+    \   .where(SESSION.c.revoked.is_(False), SESSION.c.expires > now)).scalar_one()\n    return {'ok': True, 'schema':\
+    \ 'looprd.social.developer-diagnostics/v1',\n        'component': SOCIAL, 'release': SOCIAL_RELEASE,\n     \
+    \   'apiVersion': 'looprd/v1', 'databaseSchemaVersion': SOCIAL_SCHEMA_VERSION,\n        'serverTime': now, 'counts':\
+    \ counts,\n        'features': ['accounts', 'contacts', 'direct-messages', 'lobby', 'portraits',\n         \
+    \            'server-gated-developer-tools']}\n\ndef pair(a,b): return tuple(sorted((a,b)))\n\ndef contact_row(db,subject,other):\n\
     \    left,right=pair(subject,other)\n    return db.execute(sa.select(CONTACT).where(CONTACT.c.leftId==left,CONTACT.c.rightId==right)).mappings().first()\n\
     \ndef account_subject(db,handle):\n    row=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==handle)).first()\n\
     \    return 'acct_'+str(row[0]) if row else None\n\ndef contact_list(db,subject,now):\n    contacts=db.execute(sa.select(CONTACT).where(sa.or_(CONTACT.c.leftId==subject,CONTACT.c.rightId==subject))).mappings().all()\n\
@@ -350,23 +373,26 @@ handlers:
     \            if op=='register':\n                return register(db,body,now),None\n            if op=='login':\n\
     \                return login(db,body,now),None\n            subject=session_identity(db,body.get('token'),now)\
     \ or authorize(body.get('token'),tokens)\n            if not subject:\n                return error('Sign in\
-    \ to Social first'),None\n            if op=='logout':\n                return logout(db,body.get('token')),None\n\
-    \            if op=='contact_list':\n                return contact_list(db,subject,now),None\n            if\
-    \ op=='contact_request':\n                result=contact_request(db,subject,body.get('username'),now)\n    \
-    \            return result,event_signal(db) if result['ok'] else None\n            if op in ('contact_accept','contact_remove'):\n\
-    \                result=contact_action(db,subject,body.get('peer'),op)\n                return result,event_signal(db)\
-    \ if result['ok'] else None\n            if op=='dm_feed':\n                return direct_messages(db,subject,body.get('peer'),now),None\n\
-    \            if op=='dm_send':\n                result=direct_send(db,subject,body.get('peer'),body.get('text'),now)\n\
-    \                return result,event_signal(db) if result['ok'] else None\n            stored=db.execute(sa.select(PROFILE).where(PROFILE.c.subjectId==subject)).mappings().first()\n\
+    \ to Social first'),None\n            if op=='developer_diagnostics':\n                # Do not trust a client-supplied\
+    \ username or privilege claim.\n                return developer_diagnostics(db,subject,now),None\n        \
+    \    if op=='logout':\n                return logout(db,body.get('token')),None\n            if op=='contact_list':\n\
+    \                return contact_list(db,subject,now),None\n            if op=='contact_request':\n         \
+    \       result=contact_request(db,subject,body.get('username'),now)\n                return result,event_signal(db)\
+    \ if result['ok'] else None\n            if op in ('contact_accept','contact_remove'):\n                result=contact_action(db,subject,body.get('peer'),op)\n\
+    \                return result,event_signal(db) if result['ok'] else None\n            if op=='dm_feed':\n \
+    \               return direct_messages(db,subject,body.get('peer'),now),None\n            if op=='dm_send':\n\
+    \                result=direct_send(db,subject,body.get('peer'),body.get('text'),now)\n                return\
+    \ result,event_signal(db) if result['ok'] else None\n            stored=db.execute(sa.select(PROFILE).where(PROFILE.c.subjectId==subject)).mappings().first()\n\
     \            current=stored['data'] if stored else {'schema':SCHEMA,'profileId':subject,\n                 \
     \     'displayName':subject,'appearance':None,'portraitCode':None}\n            if op=='me':\n             \
-    \   return {'ok':True,'profile':current,'revision':stored['revision'] if stored else 0},None\n            if\
-    \ op=='save_profile':\n                incoming=body.get('profile')\n                if isinstance(incoming,dict)\
-    \ and stored and 'portraitCode' not in incoming:\n                    # Older clients can still rename accounts\
-    \ without removing v3 portraits.\n                    incoming={**incoming,'portraitCode':current.get('portraitCode')}\n\
-    \                p=clean_profile(subject,incoming)\n                before=stored['revision'] if stored else\
-    \ 0\n                if body.get('ifRevision') is not None and body.get('ifRevision')!=before:\n           \
-    \         return error('Profile revision conflict'),None\n                if stored:\n                    db.execute(sa.update(PROFILE).where(PROFILE.c.subjectId==subject).values(\n\
+    \   return {'ok':True,'profile':current,'revision':stored['revision'] if stored else 0,\n                  \
+    \  'permissions':{'developer':account_developer_permission(db,subject)}},None\n            if op=='save_profile':\n\
+    \                incoming=body.get('profile')\n                if isinstance(incoming,dict) and stored and 'portraitCode'\
+    \ not in incoming:\n                    # Older clients can still rename accounts without removing v3 portraits.\n\
+    \                    incoming={**incoming,'portraitCode':current.get('portraitCode')}\n                p=clean_profile(subject,incoming)\n\
+    \                before=stored['revision'] if stored else 0\n                if body.get('ifRevision') is not\
+    \ None and body.get('ifRevision')!=before:\n                    return error('Profile revision conflict'),None\n\
+    \                if stored:\n                    db.execute(sa.update(PROFILE).where(PROFILE.c.subjectId==subject).values(\n\
     \                        data=p,revision=before+1,updated=now))\n                else:\n                   \
     \ db.execute(sa.insert(PROFILE).values(subjectId=subject,data=p,\n                        revision=1,updated=now))\n\
     \                return {'ok':True,'profile':p,'revision':before+1},event_signal(db)\n            if op=='chat_feed':\n\
@@ -402,4 +428,5 @@ handlers:
     - direct-messages
     - lobby
     - portraits
-    release: 0.3.0
+    - server-gated-developer-tools
+    release: 0.3.1

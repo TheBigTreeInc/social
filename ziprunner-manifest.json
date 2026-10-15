@@ -3,89 +3,38 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.0",
-    "base_version": "0.2.3"
+    "version": "0.3.1",
+    "base_version": "0.3.0"
   },
   "update": {
-    "id": "LRS-20261015-004",
+    "id": "LRS-20261015-005",
     "kind": "source_update",
-    "created_at": "2026-10-15T19:43:00+02:00",
-    "summary": "Implement Social-owned user sessions, buddy roster, private DM and retro messenger UI, fix Android native config."
+    "created_at": "2026-10-15T22:33:00+02:00",
+    "summary": "Add Social DB-granted developer-only read-only diagnostics and hidden Admin / Debug UI toggle."
   },
   "planned_work": [
     {
-      "id": "SCL-013",
-      "title": "Social-owned account registration and sign-in",
-      "acceptance_criteria": "On an HTTPS LoopRD server hosting Social v0.3.0, register two accounts and sign into one from Windows and Android.",
-      "priority": "high"
-    },
-    {
-      "id": "SCL-014",
-      "title": "Messenger contact roster and direct conversation",
-      "acceptance_criteria": "From account A add account B; confirm B must accept before either may direct-message.",
-      "priority": "high"
-    },
-    {
-      "id": "SCL-015",
-      "title": "Social component capability detection",
-      "acceptance_criteria": "Connect to a server lacking the Social component; verify a readable explanation and no account registration.",
-      "priority": "high"
-    },
-    {
-      "id": "SCL-016",
-      "title": "Tauri Android configuration repair",
-      "acceptance_criteria": "Run GitHub Android phone app workflow and verify initialization proceeds past tauri android init --ci.",
+      "id": "SCL-018",
+      "title": "Server-gated Admin / Debug developer diagnostics",
+      "acceptance_criteria": "Registered accounts default to no developer access. Only server-host operator can grant/revoke in SQL; a granted client may toggle its read-only diagnostics view; revocation immediately blocks the endpoint. Existing SQL data survives v2->v3 migration.",
       "priority": "high"
     },
     {
       "id": "SCL-010",
       "title": "Native build and device acceptance",
-      "acceptance_criteria": "Run and install Windows and Android artifacts from current commit.",
+      "acceptance_criteria": "Rebuild NSIS and Android APK from v0.3.1 and inspect toggled diagnostics on target devices.",
       "priority": "high"
     }
   ],
   "done_work": [
     {
-      "id": "SCL-013",
-      "summary": "Register/login on the selected LoopRD Social component using password hashing and revocable per-device sessions; no externally provisioned token or OIDC provider.",
+      "id": "SCL-018",
+      "summary": "Database boolean entitlement, v3 additive migration, operator CLI, guarded diagnostics endpoint, conditional client toggle and authorization tests implemented; native/live LoopRD operator verification pending.",
       "evidence": [
         {
-          "kind": "documentation",
-          "ref": "evidence/auth-and-ux-tests.md",
-          "description": "Source and integration test evidence; native acceptance pending"
-        }
-      ]
-    },
-    {
-      "id": "SCL-014",
-      "summary": "Introduce real contact requests, acceptance, presence and private direct messages with consent enforcement; rework the client UI into compact MSN/Xfire-inspired navigation.",
-      "evidence": [
-        {
-          "kind": "documentation",
-          "ref": "evidence/auth-and-ux-tests.md",
-          "description": "Source and integration test evidence; native acceptance pending"
-        }
-      ]
-    },
-    {
-      "id": "SCL-015",
-      "summary": "Discover Social on the selected LoopRD server before account actions; no external account or chat persistence fallback.",
-      "evidence": [
-        {
-          "kind": "documentation",
-          "ref": "evidence/auth-and-ux-tests.md",
-          "description": "Source and integration test evidence; native acceptance pending"
-        }
-      ]
-    },
-    {
-      "id": "SCL-016",
-      "summary": "Remove unsupported bundle.targets apk value from Android override; preserve GitHub Android workflow for follow-up native compilation.",
-      "evidence": [
-        {
-          "kind": "documentation",
-          "ref": "evidence/auth-and-ux-tests.md",
-          "description": "Source and integration test evidence; native acceptance pending"
+          "kind": "test",
+          "ref": "evidence/developer-access-tests.md",
+          "description": "Local backend/client privilege, revocation, migration and operator command regression results"
         }
       ]
     }
@@ -94,9 +43,9 @@
     {
       "id": "SCL-010",
       "status": "review",
-      "next_action": "Run both native GitHub workflows on v0.3.0 and verify GUI/API on actual LoopRD server.",
+      "next_action": "Run GitHub Windows and Android builds for v0.3.1 and verify on targets; activate component on backed-up LoopRD server.",
       "blockers": [
-        "Native builds and target deployment unavailable to local test runtime"
+        "Native installers, live LoopRD migration and device acceptance have not been run in this environment."
       ]
     }
   ],
@@ -104,59 +53,72 @@
     "model_reported": "partial",
     "checks": [
       {
-        "id": "SCL-UNIT-PY",
-        "description": "Python backend tests plus SQLite additive migration verification",
+        "id": "SCL-018-PY",
+        "description": "SQL migration, operator CLI and authorization regression tests",
         "status": "passed",
-        "command": "python -m unittest discover -s tests -p 'test_*.py' -v",
-        "environment": "Local Linux Python 3.13",
-        "evidence_ref": "evidence/auth-and-ux-tests.md"
+        "command": "python -m unittest discover -s tests -p test_*.py -q",
+        "environment": "Linux Python 3.13",
+        "evidence_ref": "evidence/developer-access-tests.md"
       },
       {
-        "id": "SCL-UNIT-NODE",
-        "description": "Node protocol and backend tests",
+        "id": "SCL-018-NODE",
+        "description": "Social and protocol Node tests",
         "status": "passed",
         "command": "npm run test",
-        "environment": "Local Linux Node 22",
-        "evidence_ref": "evidence/auth-and-ux-tests.md"
+        "environment": "Linux Node 22",
+        "evidence_ref": "evidence/developer-access-tests.md"
       },
       {
-        "id": "SCL-REMOTE",
-        "description": "Live LoopRD activation, native installers and Android APK",
+        "id": "SCL-018-GEN",
+        "description": "Generated descriptor plus ZipRunner source integrity",
+        "status": "passed",
+        "command": "python tools/generate-looprd.py --check && node client/tools/check-package.mjs",
+        "environment": "Linux",
+        "evidence_ref": "evidence/developer-access-tests.md"
+      },
+      {
+        "id": "SCL-018-LIVE",
+        "description": "Production-backed DB migration, native UI and fresh CI artifacts",
         "status": "not_run",
-        "reason": "Requires GitHub build runners, active LoopRD component and target clients"
+        "reason": "Requires a running LoopRD deployment and GitHub/target-native runners"
       }
     ]
   },
   "handover": {
-    "next_pass": "Upload package to existing looprd-social ZipRunner project, validate migration on a backed-up LoopRD instance, and review Windows/Android GitHub builds plus account/DM UI.",
+    "next_pass": "Install ZIP in existing looprd-social project; backup LoopRD Social DB, deploy generated v3 component and use host-only CLI to enable a test account, then validate the authorized UI and native builds.",
     "risks": [
-      "Open registration needs additional abuse controls and account recovery before public launch.",
-      "Schema v2 requires a one-way additive SQL migration; back up databases first.",
-      "Android native build may reveal later setup issues once config is corrected."
+      "Component activation performs additive schema v2 to v3 migration; do not assume ZipRunner installation authorizes this.",
+      "Developer diagnostics intentionally do not include raw logs, personal chat content, secrets or LoopRD management capabilities.",
+      "Password/account hardening and native builds still require operator acceptance."
     ],
     "blockers": [
-      "No live LoopRD server credentials / physical Android device available for verification"
+      "Live deployment and device acceptance pending"
     ],
     "notes": [
-      "Do not treat source-pass as an approved production release.",
-      "No OIDC or cross-server federation required."
+      "No external OIDC provider or multi-server federation required.",
+      "Only operator with DB filesystem access can grant permission; no public elevation handler."
     ]
   },
   "operator_actions": [
     {
-      "id": "SCL-OP-DEPLOY",
-      "description": "Back up Social database, deploy revised LoopRD component and verify account registration",
+      "id": "SCL-018-DEPLOY",
+      "description": "Back up LoopRD Social database and approve v3 schema activation",
       "status": "required"
     },
     {
-      "id": "SCL-OP-BUILDS",
-      "description": "Review GitHub native workflows and test Windows installer and Android APK",
+      "id": "SCL-018-GRANT",
+      "description": "Grant developerEnabled only to explicitly authorized Social accounts using host CLI",
+      "status": "required"
+    },
+    {
+      "id": "SCL-018-NATIVE",
+      "description": "Review native GitHub builds and client UI behavior",
       "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Native and live server validation pending."
+    "notes": "Source-only validation; database activation and native UI verification are separate approvals."
   }
 }

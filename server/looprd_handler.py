@@ -1,4 +1,4 @@
-"""Looprd Social v0.3.0 native Looprd handler.
+"""Looprd Social v0.3.1 native Looprd handler.
 
 Self-contained in looprd.yaml by tools/generate-looprd.py.
 The verified Looprd v1 handler contract provides ctx.body, ctx.session_factory
@@ -166,7 +166,8 @@ import sqlalchemy as sa
 
 ACCOUNT = sa.table('SocialAccount', sa.column('id',sa.Integer),sa.column('handle',sa.String),
     sa.column('passwordHash',sa.String),sa.column('created',sa.Integer),
-    sa.column('failedAttempts',sa.Integer),sa.column('lockedUntil',sa.Integer))
+    sa.column('failedAttempts',sa.Integer),sa.column('lockedUntil',sa.Integer),
+    sa.column('developerEnabled',sa.Boolean))
 SESSION = sa.table('SocialSession',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),
     sa.column('tokenHash',sa.String),sa.column('created',sa.Integer),
     sa.column('expires',sa.Integer),sa.column('lastSeen',sa.Integer),sa.column('revoked',sa.Boolean))
@@ -231,7 +232,7 @@ def register(db,body,now):
         return {'ok':False,'error':'This username is already registered','code':'USERNAME_TAKEN'}
     digest=password_digest(password)
     id_=db.execute(sa.insert(ACCOUNT).values(handle=handle,passwordHash=digest,created=now,
-        failedAttempts=0,lockedUntil=0).returning(ACCOUNT.c.id)).scalar_one()
+        failedAttempts=0,lockedUntil=0,developerEnabled=False).returning(ACCOUNT.c.id)).scalar_one()
     subject='acct_'+str(id_)
     db.execute(sa.insert(PROFILE).values(subjectId=subject,
         data={'schema':SCHEMA,'profileId':subject,'displayName':handle,'appearance':None,'portraitCode':None},
@@ -264,6 +265,38 @@ def logout(db,token):
     if isinstance(token,str):
         db.execute(sa.update(SESSION).where(SESSION.c.tokenHash==hashlib.sha256(token.encode()).hexdigest()).values(revoked=True))
     return {'ok':True}
+
+# Social-specific development privilege: operator-set DB entitlement, never a
+# LoopRD management role. Checked on EVERY privileged request and profile refresh.
+# Development tokens cannot get this privilege, even when their subject resembles
+# a registered user; no public API path changes the flag.
+SOCIAL_RELEASE = '0.3.1'
+SOCIAL_SCHEMA_VERSION = 3
+
+def account_developer_permission(db, subject):
+    if not isinstance(subject, str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):
+        return False
+    account = db.execute(sa.select(ACCOUNT.c.developerEnabled).where(
+        ACCOUNT.c.id == int(subject[5:]))).first()
+    return account is not None and account[0] is True
+
+def developer_diagnostics(db, subject, now):
+    """Deliberately aggregate-only: never include credentials, messages, or raw SQL."""
+    if not account_developer_permission(db, subject):
+        return {'ok': False, 'error': 'Developer tools are not enabled for this account',
+                'code': 'DEVELOPER_ACCESS_DENIED'}
+    models = (('accounts', ACCOUNT), ('profiles', PROFILE), ('contacts', CONTACT),
+              ('directMessages', DM), ('lobbyMessages', MESSAGE))
+    counts = {label: db.execute(sa.select(sa.func.count()).select_from(table)).scalar_one()
+              for label, table in models}
+    counts['activeSessions'] = db.execute(sa.select(sa.func.count()).select_from(SESSION)
+        .where(SESSION.c.revoked.is_(False), SESSION.c.expires > now)).scalar_one()
+    return {'ok': True, 'schema': 'looprd.social.developer-diagnostics/v1',
+        'component': SOCIAL, 'release': SOCIAL_RELEASE,
+        'apiVersion': 'looprd/v1', 'databaseSchemaVersion': SOCIAL_SCHEMA_VERSION,
+        'serverTime': now, 'counts': counts,
+        'features': ['accounts', 'contacts', 'direct-messages', 'lobby', 'portraits',
+                     'server-gated-developer-tools']}
 
 def pair(a,b): return tuple(sorted((a,b)))
 
@@ -353,6 +386,9 @@ def execute(body,sessions,tokens=None,now=None):
             subject=session_identity(db,body.get('token'),now) or authorize(body.get('token'),tokens)
             if not subject:
                 return error('Sign in to Social first'),None
+            if op=='developer_diagnostics':
+                # Do not trust a client-supplied username or privilege claim.
+                return developer_diagnostics(db,subject,now),None
             if op=='logout':
                 return logout(db,body.get('token')),None
             if op=='contact_list':
@@ -372,7 +408,8 @@ def execute(body,sessions,tokens=None,now=None):
             current=stored['data'] if stored else {'schema':SCHEMA,'profileId':subject,
                       'displayName':subject,'appearance':None,'portraitCode':None}
             if op=='me':
-                return {'ok':True,'profile':current,'revision':stored['revision'] if stored else 0},None
+                return {'ok':True,'profile':current,'revision':stored['revision'] if stored else 0,
+                    'permissions':{'developer':account_developer_permission(db,subject)}},None
             if op=='save_profile':
                 incoming=body.get('profile')
                 if isinstance(incoming,dict) and stored and 'portraitCode' not in incoming:

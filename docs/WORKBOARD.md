@@ -1,16 +1,14 @@
-# Work board — Social 0.3.0
+# Work board — Social 0.3.1
 
-ZipRunner reads `.ziprunner-workboard-update.json` using stable IDs.
+ZipRunner reads `.ziprunner-workboard-update.json` and reconciles stable task IDs.
 
-- SCL-013: implemented account register/login/session flow; operator deployment verification pending.
-- SCL-014: implemented buddy list, contact request/accept and direct messages; operator testing pending.
-- SCL-015: implemented Social component discovery and no-backend state; operator testing pending.
-- SCL-016: Android config corrected; GitHub native rerun pending.
-- LRS-004: account recovery and public abuse/production hardening deferred.
-- SCL-007: group conversations and trusted invitations deferred.
-- SCL-009: Android background push deferred.
-- SCL-010: native builds and device acceptance deferred.
-- SCL-011: game turn endpoint integration required from game developers.
-- SCL-017: secure persistent device login deferred.
+- SCL-018: server-gated DB developer access, operator CLI and hidden Admin / Debug client panel; source tests passed, operator activation/verification pending.
+- SCL-010: native GitHub and physical device checks for v0.3.1 pending.
+- SCL-013/014/015/016: retained from earlier v0.3.0 pass; existing approved state must not be overwritten.
+- LRS-004: hardened recovery/registration pending.
+- SCL-007: private groups and game invitations pending.
+- SCL-009: Android background turn push pending.
+- SCL-011: per-game turn activity implementation pending.
+- SCL-017: OS-secure persisted sign-in pending.
 
-None of these author-implemented items should be marked Done solely from source tests; observe real server and native apps then approve.
+Source tests do not imply LoopRD component activation or an operator-reviewed Done state.

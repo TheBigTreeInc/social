@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {normalizeServer,componentPath,LooprdSocial,parseGameActivity,gameActivity,newTurnKeys} from '../src/protocol.js';
+import {normalizeServer,componentPath,LooprdSocial,parseGameActivity,gameActivity,newTurnKeys,validateDeveloperDiagnostics} from '../src/protocol.js';
 import {readConfig,writeConfig,selectServerGames,portraitStorageKey,seenStorageKey,previousTurnKeys} from '../src/persistence.js';
 
 const server='https://social.example.org';
@@ -95,4 +95,36 @@ test('Games are scoped to the selected LoopRD server, never inherited by a diffe
  assert.deepEqual(config.games,['jones']);
  selectServerGames(config,'https://different.example');
  assert.deepEqual(config.games,['another-game']);
+});
+
+test('developer diagnostics is server-gated and returns only safe aggregate fields',async()=>{
+ const counts={accounts:2,profiles:2,contacts:1,directMessages:4,lobbyMessages:5,activeSessions:2};
+ const body={ok:true,schema:'looprd.social.developer-diagnostics/v1',component:'looprd-social',
+   apiVersion:'looprd/v1',release:'0.3.1',serverTime:1000000,databaseSchemaVersion:3,counts,
+   features:['accounts','server-gated-developer-tools'],token:'THIS_MUST_NEVER_BE_RETURNED'};
+ const parsed=validateDeveloperDiagnostics(body);
+ assert.deepEqual(parsed.counts,counts);
+ assert.equal(parsed.token,undefined);
+ assert(!JSON.stringify(parsed).includes('THIS_MUST_NEVER_BE_RETURNED'));
+ assert.throws(()=>validateDeveloperDiagnostics({...body,counts:{...counts,accounts:'invalid'}}));
+ const calls=[];
+ const fake=async(url,init)=>{calls.push({url,init});return {status:200,ok:true,json:async()=>body};};
+ const api=new LooprdSocial(server,'k'.repeat(40),fake);
+ assert.equal((await api.developerDiagnostics()).release,'0.3.1');
+ assert.equal(JSON.parse(calls[0].init.body).op,'developer_diagnostics');
+ assert(!calls[0].url.includes('k'.repeat(40)));
+});
+test('developer diagnostics denies unauthorized sessions',async()=>{
+ const api=new LooprdSocial(server,'k'.repeat(40),async()=>({status:200,ok:true,
+   json:async()=>({ok:false,code:'DEVELOPER_ACCESS_DENIED',error:'Developer tools are not enabled'})}));
+ await assert.rejects(api.developerDiagnostics(),e=>e.status===403);
+});
+test('messenger developer UI cannot be promoted by a client-side toggle alone',async()=>{
+ const fs=await import('node:fs/promises');
+ const main=await fs.readFile(new URL('../src/main.js',import.meta.url),'utf8');
+ assert(main.includes('state.developerAllowed&&state.developerVisible'));
+ assert(main.includes("me?.permissions?.developer===true"));
+ assert(main.includes("if(!state.developerAllowed||!state.developerVisible)return"));
+ assert(main.includes('developer-switch'));
+ assert(main.includes('updateDeveloperPermission(me)'));
 });
