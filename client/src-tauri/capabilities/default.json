@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Minimal permissions for UI notifications and opening a trusted URL",
+  "windows": ["main"],
+  "permissions": ["core:default", "notification:default", "opener:allow-open-url"]
+}

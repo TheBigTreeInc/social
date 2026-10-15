@@ -1,0 +1,41 @@
+{
+  "schema": "ziprunner.zr/v1",
+  "project_key": "looprd-social",
+  "label": "LoopRD Social (backend + Windows/Android client)",
+  "match": [
+    "looprd-social-*-ziprunner.zip"
+  ],
+  "command_subdir": ".",
+  "stop": [],
+  "stop_ports": [],
+  "build": [
+    "npm run test",
+    "node client/tools/check-package.mjs"
+  ],
+  "start": [],
+  "build_window": "hidden",
+  "start_window": "managed",
+  "delete_missing": false,
+  "strip_single_root": false,
+  "protected_paths": [
+    ".git/**",
+    ".env",
+    ".env.*",
+    ".data/**",
+    "*.local.json",
+    "*.sqlite",
+    "*.sqlite3",
+    "node_modules/**",
+    "client/node_modules/**",
+    "client/dist/**",
+    "client/src-tauri/target/**",
+    "client/src-tauri/gen/**",
+    "state/**",
+    "secrets/**",
+    "ziprunner.config.json",
+    "ziprunner.project-state.json"
+  ],
+  "require_clean_git_before_overlay": false,
+  "mechanisms_require_build_success": true,
+  "post_build_mechanisms": []
+}

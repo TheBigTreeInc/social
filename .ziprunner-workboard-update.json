@@ -1,51 +1,103 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.2.1",
-  "summary": "Fix Looprd v1 loader validation: generated primary key for SocialPulse, with schema contract regression tests; existing profile/chat API unchanged.",
+  "version": "0.2.2",
+  "summary": "Merge native LoopRD Social v0.2.1 backend and Tauri Windows/Android client into one repository/ZipRunner project; retain SQLite schema and action protocol; support persistent server-side numeric portrait codes without schema migration; add unified CI and workflows.",
   "implemented": [
     {
-      "id": "LRS-001",
-      "title": "Native Looprd Social component and SQLite persistence",
-      "summary": "Create generated looprd.yaml from auditable Python handler; model shared profiles, bounded chat history and public signals, restrict mutations with per-account dev credentials.",
+      "id": "LRS-006",
+      "title": "Store shared Portrait Library 3 codes in Social profiles",
+      "summary": "Add backward-compatible canonical decimal portraitCode in SocialProfile JSON with structural format validation and revision-safe updates; existing profile and SQL schema remain v1.",
       "operator_checks": [
-        "Run node --test tests/*.test.mjs and verify looprd.yaml component and model schema."
+        "With a deployed LoopRD Social 0.2.2 component, save a numeric portrait from Windows and confirm Android reads the same code after login.",
+        "Update the display name from the older client and confirm the portrait value is retained."
       ]
     },
     {
-      "id": "LRS-002",
-      "title": "Local REST compatibility for Life Loop",
-      "summary": "Provide loopback-only bridge translating existing Life Loop REST profile and lobby calls to native Looprd POST /social without changing game simulation.",
+      "id": "SCL-001",
+      "title": "Integrated cross-platform Social client",
+      "summary": "Maintain Windows/Android Tauri client sources under client/ in existing looprd-social repository; preserve server runtime and original bridge.",
       "operator_checks": [
-        "Start Looprd component then bridge on loopback and test Life Loop Profile connection."
+        "After ZipRunner update, check server/looprd_handler.py, looprd.yaml and client/src/main.js are all present.",
+        "Run Windows and Android build workflows and install generated artifacts on actual devices."
       ]
     },
     {
-      "id": "LRS-003",
-      "title": "Secure deployment boundary and blocked game tickets",
-      "summary": "Protect profile/chat data against anonymous reads and prohibit game-room single sign-on without validated issuer and audience.",
+      "id": "SCL-002",
+      "title": "Social lobby and profile client integration",
+      "summary": "Use existing Social v1 JSON action route, dev bearer secret in memory, names and lobby; safe server-local game activity integration.",
       "operator_checks": [
-        "Confirm /social requires token and game_ticket refuses issuance."
+        "Connect via a deployed LoopRD origin and provisioned development token, then send a lobby message.",
+        "Confirm Social credential never reaches the game component."
       ]
     },
     {
-      "id": "LRS-005",
-      "title": "Fix SocialPulse generated primary key for Looprd validation",
-      "summary": "Mark SocialPulse.id generated: true to satisfy Looprd Column primaryKey constraints; ensure generated descriptor checks prevent recurrence.",
+      "id": "SCL-003",
+      "title": "Optional game turn alerts",
+      "summary": "Game-contract adapter for game-owned GET activity and deduplicated local alerts while the app runs, same-server paths only.",
       "operator_checks": [
-        "Run python tools/generate-looprd.py --check",
-        "Run Python loader contract test and Looprd validate looprd.yaml before deployment."
+        "Test with a game implementing activity/v1 and grant desktop/mobile notification permission.",
+        "Verify new turn ID alerts once and next new turn ID alerts again."
+      ]
+    },
+    {
+      "id": "SCL-004",
+      "title": "Portrait generator source and asset compatibility",
+      "summary": "Uses TheBigTreeInc/assets 3.0.0 canonical numeric portrait generator, pinned reviewed JavaScript modules and live SHA-verified assets; server shares code across devices.",
+      "operator_checks": [
+        "Run npm run portrait:sync inside client with network access, create a portrait and save it to Social.",
+        "Confirm second client restores the same exact decimal digits after connecting as the same identity."
+      ]
+    },
+    {
+      "id": "SCL-005",
+      "title": "Single-project ZipRunner package and GitHub workflows",
+      "summary": "Package client under the original looprd-social project identity, with root source workboard, full interchange manifest, preserved files, source workflow and Android/Windows build jobs.",
+      "operator_checks": [
+        "Import looprd-social-0.2.2-ziprunner.zip into existing looprd-social ZipRunner project.",
+        "Validate it against pac-labs/ziprunner-spec v2.1.1 and confirm old .data and secrets survive."
+      ]
+    },
+    {
+      "id": "SCL-006",
+      "title": "Integrated backend and client protocol tests",
+      "summary": "Existing Python/native tests plus Node backend/client tests, source checks and honest runner limitations.",
+      "operator_checks": [
+        "Run npm run test and python -m unittest discover -s tests -p test_*.py -v.",
+        "Check GitHub workflow artifacts are uploaded after successful native builds."
       ]
     }
   ],
   "remaining": [
     {
       "id": "LRS-004",
-      "title": "Production OIDC authentication and game ticket trust",
-      "summary": "Blocked: requires configured issuer, audience, token signature verification and game Looprd service changes.",
-      "operator_checks": [
-        "Do not expose dev token mode publicly; production implementation needs separate security review."
-      ]
+      "title": "Production-ready Social authentication and trusted game invitations",
+      "summary": "Replace development-only tokens with Social-owned, verified and revocable device sessions, game-specific trust and invitation contract. An external OIDC provider is NOT required.",
+      "priority": "high"
+    },
+    {
+      "id": "SCL-007",
+      "title": "Server-backed friends and private conversations",
+      "summary": "Extend Social component to support game-oriented friends, private/group chat and permissions without changing LoopRD domain logic.",
+      "priority": "high"
+    },
+    {
+      "id": "SCL-009",
+      "title": "Background Android push and turn notification delivery",
+      "summary": "Current local alerts work only while app is running; require implementer-owned device registration and push provider for terminated apps.",
+      "priority": "high"
+    },
+    {
+      "id": "SCL-010",
+      "title": "GitHub native build and device acceptance",
+      "summary": "Run Windows NSIS and Android ARM64 APK workflows in GitHub; install and test on devices. Local source test is not native compilation.",
+      "priority": "high"
+    },
+    {
+      "id": "SCL-011",
+      "title": "Game component activity integration",
+      "summary": "Implement the optional game-specific activity/v1 contract in supported game components; existing games may not expose it yet.",
+      "priority": "medium"
     }
   ]
 }

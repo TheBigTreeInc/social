@@ -36,7 +36,7 @@ class SocialLooprdTests(unittest.TestCase):
   s=self.spec
   self.assertEqual(s['apiVersion'],'looprd/v1')
   self.assertEqual(s['component'],'looprd-social')
-  self.assertEqual(s['release'],'0.2.1')
+  self.assertEqual(s['release'],'0.2.2')
   self.assertEqual(s['handlers'][0]['path'],'/social')
   self.assertEqual(s['handlers'][0]['source'],(ROOT/'server/looprd_handler.py').read_text())
   self.assertEqual(s['resources']['pulses']['operations'],['get'])
@@ -77,6 +77,24 @@ class SocialLooprdTests(unittest.TestCase):
   response,_=self.call(op='save_profile',profile=good)
   self.assertTrue(response['ok'])
   self.assertEqual(response['profile']['appearance']['choices']['body'],'compact')
+ def test_numeric_portrait_code_sync_is_canonical_and_non_destructive(self):
+  from looprd_handler import valid_portrait_code
+  code='229339173637451342422556259991010379162806200079620818744175464631779840998257666745902813043757393046312471610425942788336631437795834446214811746561882308690991'
+  self.assertEqual(valid_portrait_code(code),code)
+  first,_=self.call(op='save_profile',profile={'displayName':'Alex','portraitCode':code},ifRevision=0)
+  self.assertTrue(first['ok'],first)
+  self.assertEqual(first['profile']['portraitCode'],code)
+  synced,_=self.call(op='me')
+  self.assertEqual(synced['profile']['portraitCode'],code)
+  rename,_=self.call(op='save_profile',profile={'displayName':'Alice'},ifRevision=1)
+  self.assertEqual(rename['profile']['portraitCode'],code)
+  bob,_=self.call(as_user='user_bob',op='me')
+  self.assertIsNone(bob['profile']['portraitCode'])
+  for invalid in [3,'01', 'notdigits', '', '1', '2', '0'*50, code+'0',code[:-1], '9'*600]:
+   response,_=self.call(op='save_profile',profile={'displayName':'Test','portraitCode':invalid})
+   self.assertFalse(response['ok'], invalid)
+  self.assertEqual(self.call(op='me')[0]['profile']['portraitCode'],code)
+
  def test_chat_is_bounded_isolated_from_game_and_limited_by_time(self):
   sent,event=self.call(op='chat_send',text='Hello social lobby!')
   self.assertTrue(sent['ok'])

@@ -1,0 +1,24 @@
+{
+  "schema": "ziprunner.post-update-tests.v1",
+  "version": "0.2.2",
+  "tests": [
+    {
+      "kind": "command",
+      "semantic_id": "social-regression-suite",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "npm run test",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "integrated-client-project-check",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "node client/tools/check-package.mjs",
+      "attention_on_failure": true,
+      "gating": false
+    }
+  ]
+}

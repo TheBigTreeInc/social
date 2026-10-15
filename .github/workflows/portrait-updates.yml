@@ -1,0 +1,42 @@
+name: Review portrait library updates
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '42 8 * * 1'
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  update-portraits:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch current upstream generator modules
+        run: npm run portrait:sync -- --latest
+      - name: Validate generator source changes
+        run: |
+          node --check public/portrait/vendor/portrait-kit.js
+          node --check public/portrait/vendor/portraits.js
+          node --check public/portrait/vendor/portrait-wizard.js
+          npm run check
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: |
+            client/public/portrait/vendor/
+            client/portrait-source.lock.json
+          branch: automation/portrait-library-update
+          delete-branch: true
+          commit-message: 'chore: refresh official portrait workshop modules'
+          title: 'Review latest TheBigTreeInc portrait generator'
+          body: |
+            Automated upstream snapshot from TheBigTreeInc/assets main.
+            Review this code as executable application code before merging.
+            Artwork registry and content-hashed PNGs are still fetched at runtime.
+            No account or game data is affected.

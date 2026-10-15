@@ -1,5 +1,5 @@
 /** Looprd Social LOCAL DEVELOPMENT ADAPTER ONLY. Bind to loopback; not internet-ready.
- * Production must replace dev bearer tokens with proper OIDC access-token validation.
+ * Production must replace dev bearer tokens with Social-owned verified sessions and revocation. OIDC is optional, not required.
  */
 import {createServer} from 'node:http';
 import {readFileSync,writeFileSync,renameSync,mkdirSync} from 'node:fs';

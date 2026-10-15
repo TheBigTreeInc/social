@@ -1,4 +1,4 @@
-"""Looprd Social v0.2.0 native Looprd handler (DEVELOPMENT ONLY).
+"""Looprd Social v0.2.2 native Looprd handler (DEVELOPMENT ONLY).
 
 Self-contained in looprd.yaml by tools/generate-looprd.py.
 The verified Looprd v1 handler contract provides ctx.body, ctx.session_factory
@@ -15,6 +15,7 @@ from starlette.concurrency import run_in_threadpool
 
 SCHEMA = 'looprd.social.profile/v1'
 APPEARANCE_SCHEMA = 'modular-portraits.identity/v1'
+PORTRAIT_NUMBER = re.compile(r'^[1-9][0-9]{0,511}$')
 SOCIAL = 'looprd-social'
 PROFILE = sa.table('SocialProfile',
     sa.column('id', sa.Integer), sa.column('subjectId', sa.String),
@@ -59,10 +60,55 @@ def authorize(token, tokens):
     return identity
 
 
+def valid_portrait_code(code):
+    """Validate portable numeric portrait v1 framing, without owning online artwork IDs.
+
+    TheBigTreeInc/assets owns the registry and rendering. Social stores only the
+    canonical decimal *text*; no JavaScript number coercion or asset downloads.
+    """
+    if not isinstance(code, str) or not PORTRAIT_NUMBER.fullmatch(code):
+        raise ValueError('Portrait code must be canonical decimal text')
+    number = int(code)
+    value = number.to_bytes((number.bit_length()+7)//8, 'big')
+    pos = 0
+    def read(size):
+        nonlocal pos
+        if pos+size > len(value):
+            raise ValueError('Truncated portrait code')
+        part = int.from_bytes(value[pos:pos+size], 'big')
+        pos += size
+        return part
+    if read(1) != 1:
+        raise ValueError('Unsupported portrait encoding')
+    count = read(1)
+    if not 5 <= count <= 11:
+        raise ValueError('Invalid portrait part count')
+    parts = {}
+    previous = 0
+    for _ in range(count):
+        kind = read(2)
+        identity = read(4)
+        if not 1 <= kind <= 11 or kind <= previous or not identity:
+            raise ValueError('Invalid portrait part identity')
+        parts[kind] = identity
+        previous = kind
+    if not {1,2,3,4,6}.issubset(parts):
+        raise ValueError('Missing required portrait parts')
+    if read(1) != 7:
+        raise ValueError('Invalid portrait colour count')
+    for color in range(1,8):
+        if read(2) != color:
+            raise ValueError('Invalid portrait colour order')
+        read(3)
+    if pos != len(value) or str(number) != code:
+        raise ValueError('Noncanonical portrait code')
+    return code
+
+
 def clean_profile(subject, input):
     if not isinstance(input,dict) or input.get('schema',SCHEMA)!=SCHEMA:
         raise ValueError('Invalid shared profile')
-    if set(input)-{'schema','profileId','displayName','appearance'}:
+    if set(input)-{'schema','profileId','displayName','appearance','portraitCode'}:
         raise ValueError('Game state or unrecognized profile fields are not allowed')
     if input.get('profileId') not in (None,subject):
         raise ValueError('Cannot write another profile')
@@ -90,7 +136,10 @@ def clean_profile(subject, input):
                 raise ValueError('Portrait payload exceeds limit')
         except (ValueError,TypeError):
             raise ValueError('Invalid portrait payload')
-    return {'schema':SCHEMA,'profileId':subject,'displayName':name,'appearance':appearance}
+    portrait_code = input.get('portraitCode')
+    if portrait_code is not None:
+        portrait_code = valid_portrait_code(portrait_code)
+    return {'schema':SCHEMA,'profileId':subject,'displayName':name,'appearance':appearance,'portraitCode':portrait_code}
 
 
 def event_signal(db):
@@ -119,11 +168,15 @@ def execute(body,sessions,tokens=None,now=None):
         with sessions.begin() as db:
             stored=db.execute(sa.select(PROFILE).where(PROFILE.c.subjectId==subject)).mappings().first()
             current=stored['data'] if stored else {'schema':SCHEMA,'profileId':subject,
-                      'displayName':subject,'appearance':None}
+                      'displayName':subject,'appearance':None,'portraitCode':None}
             if op=='me':
                 return {'ok':True,'profile':current,'revision':stored['revision'] if stored else 0},None
             if op=='save_profile':
-                p=clean_profile(subject,body.get('profile'))
+                incoming=body.get('profile')
+                if isinstance(incoming,dict) and stored and 'portraitCode' not in incoming:
+                    # Older clients can still rename accounts without removing v3 portraits.
+                    incoming={**incoming,'portraitCode':current.get('portraitCode')}
+                p=clean_profile(subject,incoming)
                 before=stored['revision'] if stored else 0
                 if body.get('ifRevision') is not None and body.get('ifRevision')!=before:
                     return error('Profile revision conflict'),None
@@ -159,7 +212,7 @@ def execute(body,sessions,tokens=None,now=None):
                     'displayName':current['displayName'],'text':content.strip(),'at':now}
                 return {'ok':True,'message':message},event_signal(db)
             if op=='game_ticket':
-                return error('Game tickets require trusted OIDC and game-service validation; not implemented'),None
+                return error('Game tickets require application-owned verified identity and game-service validation; not implemented'),None
             return error('Unknown operation'),None
     except (ValueError,TypeError) as exc:
         return error(str(exc)),None

@@ -1,0 +1,123 @@
+Social merged package source tests; 2026-10-15. Producer execution only, not device acceptance.
+$ npm run verify
+
+> looprd-social@0.2.2 verify
+> npm run test && node client/tools/check-package.mjs
+
+
+> looprd-social@0.2.2 test
+> npm run test:server && npm run test:client
+
+
+> looprd-social@0.2.2 test:server
+> node --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: rejects unsupported remote HTTP upstreams and credentialed URL
+ok 1 - rejects unsupported remote HTTP upstreams and credentialed URL
+  ---
+  duration_ms: 0.957011
+  type: 'test'
+  ...
+# Subtest: bridge presents the existing game REST API but sends social actions to native Looprd
+ok 2 - bridge presents the existing game REST API but sends social actions to native Looprd
+  ---
+  duration_ms: 55.452077
+  type: 'test'
+  ...
+# Subtest: profile presentation data only; rejects wrong profile and malformed colors
+ok 3 - profile presentation data only; rejects wrong profile and malformed colors
+  ---
+  duration_ms: 1.056221
+  type: 'test'
+  ...
+# Subtest: local service isolates profile writes and offers social chat
+ok 4 - local service isolates profile writes and offers social chat
+  ---
+  duration_ms: 46.931967
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 174.104877
+
+> looprd-social@0.2.2 test:client
+> node --test client/tests/*.test.mjs
+
+TAP version 13
+# Subtest: HTTPS origin accepted, remote HTTP and injected paths/tokens rejected
+ok 1 - HTTPS origin accepted, remote HTTP and injected paths/tokens rejected
+  ---
+  duration_ms: 2.363519
+  type: 'test'
+  ...
+# Subtest: Social credential ONLY sent in Social body; correct profile and lobby operations
+ok 2 - Social credential ONLY sent in Social body; correct profile and lobby operations
+  ---
+  duration_ms: 0.773074
+  type: 'test'
+  ...
+# Subtest: Social action error and malformed payload are not silently accepted
+ok 3 - Social action error and malformed payload are not silently accepted
+  ---
+  duration_ms: 0.567424
+  type: 'test'
+  ...
+# Subtest: Game polling uses only its own bearer, not a social token
+ok 4 - Game polling uses only its own bearer, not a social token
+  ---
+  duration_ms: 0.320522
+  type: 'test'
+  ...
+# Subtest: Game activity rejects external/other-game/injected links and oversized shapes
+ok 5 - Game activity rejects external/other-game/injected links and oversized shapes
+  ---
+  duration_ms: 0.361194
+  type: 'test'
+  ...
+# Subtest: Notify exactly once per distinct actionable turn ID; next turn triggers again
+ok 6 - Notify exactly once per distinct actionable turn ID; next turn triggers again
+  ---
+  duration_ms: 0.706945
+  type: 'test'
+  ...
+# Subtest: Settings never serialize tokens; seen-turn and portrait keys scoped to server/user
+ok 7 - Settings never serialize tokens; seen-turn and portrait keys scoped to server/user
+  ---
+  duration_ms: 0.522557
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 70.057129
+Integrated Social server/client recipe, package and manifest are consistent.
+$ python tools/generate-looprd.py --check
+Looprd descriptor and handler in sync
+$ python -m unittest discover -s tests -p test_*.py -v
+test_chat_is_bounded_isolated_from_game_and_limited_by_time (test_looprd_social.SocialLooprdTests.test_chat_is_bounded_isolated_from_game_and_limited_by_time) ... ok
+test_native_descriptor_matches_exact_embedded_source_and_private_resources (test_looprd_social.SocialLooprdTests.test_native_descriptor_matches_exact_embedded_source_and_private_resources) ... ok
+test_no_automatic_game_room_ticket (test_looprd_social.SocialLooprdTests.test_no_automatic_game_room_ticket) ... ok
+test_no_embedded_dev_secrets (test_looprd_social.SocialLooprdTests.test_no_embedded_dev_secrets) ... ok
+test_numeric_portrait_code_sync_is_canonical_and_non_destructive (test_looprd_social.SocialLooprdTests.test_numeric_portrait_code_sync_is_canonical_and_non_destructive) ... ok
+test_profile_is_presentation_only_and_rejects_forged_fields (test_looprd_social.SocialLooprdTests.test_profile_is_presentation_only_and_rejects_forged_fields) ... ok
+test_requires_dev_credential_and_isolates_profiles (test_looprd_social.SocialLooprdTests.test_requires_dev_credential_and_isolates_profiles) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.113s
+
+OK
+PASS: Social descriptor generated-key, migration and Python syntax checks
+$ node --check client/src/main.js
+$ python -m compileall -q server tools tests

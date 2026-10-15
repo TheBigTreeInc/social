@@ -1,0 +1,7 @@
+{
+  "schema": "ziprunner.looprd-link/v1",
+  "project": "looprd-social",
+  "component": "looprd-social",
+  "specification": "looprd.yaml",
+  "specification_sha256": "a62267afcc4aab070fc7d74d769df4502fa51589e3bd2266fd72823c6329bc63"
+}

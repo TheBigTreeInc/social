@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "LoopRD Social",
+  "version": "0.1.0",
+  "identifier": "inc.thebigtree.looprdsocial",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:5173",
+    "beforeBuildCommand": "npm run web:build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [{"title": "LoopRD Social", "width": 1160, "height": 780, "minWidth": 760, "minHeight": 560, "backgroundColor": "#101920"}],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https: wss: http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*; frame-src 'self'; object-src 'none'"
+    }
+  },
+  "bundle": {"active": true, "targets": ["nsis"], "icon": ["icons/icon.png", "icons/icon.ico"], "shortDescription": "Game-focused communication and turn alerts"}
+}

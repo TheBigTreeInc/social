@@ -9,3 +9,8 @@ node_modules/
 *.db-*
 *.sqlite
 *.sqlite3
+
+client/dist/
+client/src-tauri/target/
+client/src-tauri/gen/
+client/node_modules/

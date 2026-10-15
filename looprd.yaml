@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.2.1
+release: 0.2.2
 api:
   version: v1
 auth:
@@ -74,27 +74,43 @@ handlers:
 - path: /social
   method: POST
   kind: python
-  source: "\"\"\"Looprd Social v0.2.0 native Looprd handler (DEVELOPMENT ONLY).\n\nSelf-contained in looprd.yaml\
+  source: "\"\"\"Looprd Social v0.2.2 native Looprd handler (DEVELOPMENT ONLY).\n\nSelf-contained in looprd.yaml\
     \ by tools/generate-looprd.py.\nThe verified Looprd v1 handler contract provides ctx.body, ctx.session_factory\n\
     and ctx.publish. No unverified request-header assumptions are used.\n\"\"\"\nimport hashlib\nimport hmac\nimport\
     \ json\nimport os\nimport re\nimport time\nimport sqlalchemy as sa\nfrom starlette.concurrency import run_in_threadpool\n\
-    \nSCHEMA = 'looprd.social.profile/v1'\nAPPEARANCE_SCHEMA = 'modular-portraits.identity/v1'\nSOCIAL = 'looprd-social'\n\
-    PROFILE = sa.table('SocialProfile',\n    sa.column('id', sa.Integer), sa.column('subjectId', sa.String),\n \
-    \   sa.column('data', sa.JSON), sa.column('revision', sa.Integer),\n    sa.column('updated', sa.Integer))\n\
-    MESSAGE = sa.table('SocialMessage',\n    sa.column('id', sa.Integer), sa.column('subjectId', sa.String),\n \
-    \   sa.column('displayName', sa.String), sa.column('content', sa.String),\n    sa.column('created', sa.Integer))\n\
-    PULSE = sa.table('SocialPulse', sa.column('id', sa.Integer),sa.column('signal', sa.Integer))\nSUBJECT = re.compile(r'^[a-zA-Z0-9_-]{8,72}$')\n\
-    SLOT = re.compile(r'^[a-z0-9-]{1,64}$')\nCOLOR = re.compile(r'^#[a-fA-F0-9]{6}$')\n\n\ndef error(message):\n\
-    \    return {'ok':False,'error':message}\n\n\ndef configured_tokens():\n    \"\"\"Dev identity->token mapping;\
-    \ provision via runtime environment/secret only.\"\"\"\n    raw = os.environ.get('LOOPRD_SOCIAL_DEV_TOKENS_JSON',\
-    \ '')\n    try:\n        found = json.loads(raw)\n    except (ValueError,TypeError):\n        return {}\n  \
-    \  if not isinstance(found,dict):\n        return {}\n    return {name:token for name,token in found.items()\n\
-    \            if isinstance(name,str) and SUBJECT.fullmatch(name)\n            and isinstance(token,str) and\
-    \ len(token)>=24 and len(token)<=256}\n\n\ndef authorize(token, tokens):\n    if not isinstance(token,str) or\
-    \ not 24<=len(token)<=256:\n        return None\n    value=hashlib.sha256(token.encode('utf8')).digest()\n \
-    \   identity=None\n    for name,secret in tokens.items():\n        if isinstance(secret,str) and hmac.compare_digest(value,hashlib.sha256(secret.encode('utf8')).digest()):\n\
-    \            identity=name\n    return identity\n\n\ndef clean_profile(subject, input):\n    if not isinstance(input,dict)\
-    \ or input.get('schema',SCHEMA)!=SCHEMA:\n        raise ValueError('Invalid shared profile')\n    if set(input)-{'schema','profileId','displayName','appearance'}:\n\
+    \nSCHEMA = 'looprd.social.profile/v1'\nAPPEARANCE_SCHEMA = 'modular-portraits.identity/v1'\nPORTRAIT_NUMBER\
+    \ = re.compile(r'^[1-9][0-9]{0,511}$')\nSOCIAL = 'looprd-social'\nPROFILE = sa.table('SocialProfile',\n    sa.column('id',\
+    \ sa.Integer), sa.column('subjectId', sa.String),\n    sa.column('data', sa.JSON), sa.column('revision', sa.Integer),\n\
+    \    sa.column('updated', sa.Integer))\nMESSAGE = sa.table('SocialMessage',\n    sa.column('id', sa.Integer),\
+    \ sa.column('subjectId', sa.String),\n    sa.column('displayName', sa.String), sa.column('content', sa.String),\n\
+    \    sa.column('created', sa.Integer))\nPULSE = sa.table('SocialPulse', sa.column('id', sa.Integer),sa.column('signal',\
+    \ sa.Integer))\nSUBJECT = re.compile(r'^[a-zA-Z0-9_-]{8,72}$')\nSLOT = re.compile(r'^[a-z0-9-]{1,64}$')\nCOLOR\
+    \ = re.compile(r'^#[a-fA-F0-9]{6}$')\n\n\ndef error(message):\n    return {'ok':False,'error':message}\n\n\n\
+    def configured_tokens():\n    \"\"\"Dev identity->token mapping; provision via runtime environment/secret only.\"\
+    \"\"\n    raw = os.environ.get('LOOPRD_SOCIAL_DEV_TOKENS_JSON', '')\n    try:\n        found = json.loads(raw)\n\
+    \    except (ValueError,TypeError):\n        return {}\n    if not isinstance(found,dict):\n        return {}\n\
+    \    return {name:token for name,token in found.items()\n            if isinstance(name,str) and SUBJECT.fullmatch(name)\n\
+    \            and isinstance(token,str) and len(token)>=24 and len(token)<=256}\n\n\ndef authorize(token, tokens):\n\
+    \    if not isinstance(token,str) or not 24<=len(token)<=256:\n        return None\n    value=hashlib.sha256(token.encode('utf8')).digest()\n\
+    \    identity=None\n    for name,secret in tokens.items():\n        if isinstance(secret,str) and hmac.compare_digest(value,hashlib.sha256(secret.encode('utf8')).digest()):\n\
+    \            identity=name\n    return identity\n\n\ndef valid_portrait_code(code):\n    \"\"\"Validate portable\
+    \ numeric portrait v1 framing, without owning online artwork IDs.\n\n    TheBigTreeInc/assets owns the registry\
+    \ and rendering. Social stores only the\n    canonical decimal *text*; no JavaScript number coercion or asset\
+    \ downloads.\n    \"\"\"\n    if not isinstance(code, str) or not PORTRAIT_NUMBER.fullmatch(code):\n       \
+    \ raise ValueError('Portrait code must be canonical decimal text')\n    number = int(code)\n    value = number.to_bytes((number.bit_length()+7)//8,\
+    \ 'big')\n    pos = 0\n    def read(size):\n        nonlocal pos\n        if pos+size > len(value):\n      \
+    \      raise ValueError('Truncated portrait code')\n        part = int.from_bytes(value[pos:pos+size], 'big')\n\
+    \        pos += size\n        return part\n    if read(1) != 1:\n        raise ValueError('Unsupported portrait\
+    \ encoding')\n    count = read(1)\n    if not 5 <= count <= 11:\n        raise ValueError('Invalid portrait\
+    \ part count')\n    parts = {}\n    previous = 0\n    for _ in range(count):\n        kind = read(2)\n     \
+    \   identity = read(4)\n        if not 1 <= kind <= 11 or kind <= previous or not identity:\n            raise\
+    \ ValueError('Invalid portrait part identity')\n        parts[kind] = identity\n        previous = kind\n  \
+    \  if not {1,2,3,4,6}.issubset(parts):\n        raise ValueError('Missing required portrait parts')\n    if\
+    \ read(1) != 7:\n        raise ValueError('Invalid portrait colour count')\n    for color in range(1,8):\n \
+    \       if read(2) != color:\n            raise ValueError('Invalid portrait colour order')\n        read(3)\n\
+    \    if pos != len(value) or str(number) != code:\n        raise ValueError('Noncanonical portrait code')\n\
+    \    return code\n\n\ndef clean_profile(subject, input):\n    if not isinstance(input,dict) or input.get('schema',SCHEMA)!=SCHEMA:\n\
+    \        raise ValueError('Invalid shared profile')\n    if set(input)-{'schema','profileId','displayName','appearance','portraitCode'}:\n\
     \        raise ValueError('Game state or unrecognized profile fields are not allowed')\n    if input.get('profileId')\
     \ not in (None,subject):\n        raise ValueError('Cannot write another profile')\n    value=input.get('displayName')\n\
     \    if not isinstance(value,str):\n        raise ValueError('Display name required')\n    name=re.sub(r'[\\\
@@ -109,7 +125,8 @@ handlers:
     \ and isinstance(v,str) and COLOR.fullmatch(v) for k,v in colors.items())):\n            raise ValueError('Invalid\
     \ portrait attributes')\n        try:\n            if len(json.dumps(appearance,separators=(',',':'),ensure_ascii=False))>16384:\n\
     \                raise ValueError('Portrait payload exceeds limit')\n        except (ValueError,TypeError):\n\
-    \            raise ValueError('Invalid portrait payload')\n    return {'schema':SCHEMA,'profileId':subject,'displayName':name,'appearance':appearance}\n\
+    \            raise ValueError('Invalid portrait payload')\n    portrait_code = input.get('portraitCode')\n \
+    \   if portrait_code is not None:\n        portrait_code = valid_portrait_code(portrait_code)\n    return {'schema':SCHEMA,'profileId':subject,'displayName':name,'appearance':appearance,'portraitCode':portrait_code}\n\
     \n\ndef event_signal(db):\n    current=db.execute(sa.select(PULSE).where(PULSE.c.id==1)).mappings().first()\n\
     \    count=(current['signal'] if current else 0)+1\n    if current:\n        db.execute(sa.update(PULSE).where(PULSE.c.id==1).values(signal=count))\n\
     \    else:\n        db.execute(sa.insert(PULSE).values(id=1,signal=count))\n    # Public websocket payload intentionally\
@@ -121,11 +138,14 @@ handlers:
     \ credential'),None\n    op=body.get('op')\n    now=int(time.time()) if now is None else int(now)\n    try:\n\
     \        with sessions.begin() as db:\n            stored=db.execute(sa.select(PROFILE).where(PROFILE.c.subjectId==subject)).mappings().first()\n\
     \            current=stored['data'] if stored else {'schema':SCHEMA,'profileId':subject,\n                 \
-    \     'displayName':subject,'appearance':None}\n            if op=='me':\n                return {'ok':True,'profile':current,'revision':stored['revision']\
-    \ if stored else 0},None\n            if op=='save_profile':\n                p=clean_profile(subject,body.get('profile'))\n\
-    \                before=stored['revision'] if stored else 0\n                if body.get('ifRevision') is not\
-    \ None and body.get('ifRevision')!=before:\n                    return error('Profile revision conflict'),None\n\
-    \                if stored:\n                    db.execute(sa.update(PROFILE).where(PROFILE.c.subjectId==subject).values(\n\
+    \     'displayName':subject,'appearance':None,'portraitCode':None}\n            if op=='me':\n             \
+    \   return {'ok':True,'profile':current,'revision':stored['revision'] if stored else 0},None\n            if\
+    \ op=='save_profile':\n                incoming=body.get('profile')\n                if isinstance(incoming,dict)\
+    \ and stored and 'portraitCode' not in incoming:\n                    # Older clients can still rename accounts\
+    \ without removing v3 portraits.\n                    incoming={**incoming,'portraitCode':current.get('portraitCode')}\n\
+    \                p=clean_profile(subject,incoming)\n                before=stored['revision'] if stored else\
+    \ 0\n                if body.get('ifRevision') is not None and body.get('ifRevision')!=before:\n           \
+    \         return error('Profile revision conflict'),None\n                if stored:\n                    db.execute(sa.update(PROFILE).where(PROFILE.c.subjectId==subject).values(\n\
     \                        data=p,revision=before+1,updated=now))\n                else:\n                   \
     \ db.execute(sa.insert(PROFILE).values(subjectId=subject,data=p,\n                        revision=1,updated=now))\n\
     \                return {'ok':True,'profile':p,'revision':before+1},event_signal(db)\n            if op=='chat_feed':\n\
@@ -145,9 +165,9 @@ handlers:
     \                if keep:db.execute(sa.delete(MESSAGE).where(MESSAGE.c.id.not_in(keep)))\n                message={'id':new_id,'authorId':subject,\n\
     \                    'displayName':current['displayName'],'text':content.strip(),'at':now}\n               \
     \ return {'ok':True,'message':message},event_signal(db)\n            if op=='game_ticket':\n               \
-    \ return error('Game tickets require trusted OIDC and game-service validation; not implemented'),None\n    \
-    \        return error('Unknown operation'),None\n    except (ValueError,TypeError) as exc:\n        return error(str(exc)),None\n\
-    \n\nasync def handle(ctx):\n    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory)\n\
+    \ return error('Game tickets require application-owned verified identity and game-service validation; not implemented'),None\n\
+    \            return error('Unknown operation'),None\n    except (ValueError,TypeError) as exc:\n        return\
+    \ error(str(exc)),None\n\n\nasync def handle(ctx):\n    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory)\n\
     \    if event is not None:\n        ctx.publish(event)\n    return result\n"
 - path: /info
   kind: response
