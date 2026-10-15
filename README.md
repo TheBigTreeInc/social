@@ -1,11 +1,11 @@
-# LoopRD Social v0.2.2 — one repository, one ZipRunner project
+# LoopRD Social v0.2.3 — one repository, one ZipRunner project
 
 TheBigTreeInc/social is the **single repository** for the Social LoopRD component and its reusable game-oriented Windows/Android client.
 
 - **Server:** `looprd.yaml` generated from `server/looprd_handler.py` into a native LoopRD component named `looprd-social`; existing SQLite models/data and REST bridge remain intact.
 - **Client:** `client/` contains a Tauri v2 app for Windows, Android and a local web preview; supported games run as separate LoopRD components on the **same selected LoopRD server**.
 - **Art:** `client/` integrates TheBigTreeInc/assets Portrait Library 3.0.0; generator JS is pinned, fetched at build time and reviewed by PR. The registry and SHA-verified art are fetched online on launch.
-- **ZipRunner:** root `project.zr` and historical `looprd-social.zr` share project key `looprd-social`; `ziprunner.looprd.json` explicitly links the component by descriptor hash. Install `looprd-social-0.2.2-ziprunner.zip` in the existing project; **do not create a second project**. Workboard and manifest live at the archive root.
+- **ZipRunner:** root `project.zr` and historical `looprd-social.zr` share project key `looprd-social`; `ziprunner.looprd.json` explicitly links the component by descriptor hash. Install `looprd-social-0.2.3-ziprunner.zip` in the existing project; **do not create a second project**. Workboard and manifest live at the archive root.
 
 ## Existing Social API
 
@@ -59,3 +59,15 @@ All are repository-root workflows and use the **same GitHub repository**. Root b
 - The client keeps tokens in process memory; it never sends a Social token to a game endpoint.
 - LoopRD owns generic API/data infrastructure; Social owns profile/chat/account behavior; each game owns game rules and turn state.
 - The next necessary server work is verified application-owned sessions, private social APIs and game-owned activity/invitation contracts. OIDC and cross-server service federation are not prerequisites.
+
+## CI build preflight repair (0.2.3)
+
+The native build workflows from 15 October initially failed **before native compilation**:
+Windows after generator synchronization due to CRLF-converted `looprd.yaml` changing its SHA-256,
+and Android during `setup-android@v3` because of the retired Android SDK `tools` package.
+Version 0.2.3 pins generated YAML to LF with `.gitattributes`, validates this in
+`client/tools/check-package.mjs`, and upgrades the Android action to `v4.0.4` with
+`packages: platform-tools`. See `evidence/ci-repair.md`.
+This release updates packaging/workflows; the generated LoopRD release marker is now 0.2.3
+so a source watcher may perform a harmless component reload. Handler logic and
+SQLite schemaVersion 1 are unchanged. New native CI runs and target-device acceptance are required.

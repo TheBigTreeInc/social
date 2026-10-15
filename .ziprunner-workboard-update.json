@@ -1,70 +1,16 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.2.2",
-  "summary": "Merge native LoopRD Social v0.2.1 backend and Tauri Windows/Android client into one repository/ZipRunner project; retain SQLite schema and action protocol; support persistent server-side numeric portrait codes without schema migration; add unified CI and workflows.",
+  "version": "0.2.3",
+  "summary": "CI repair: pin LoopRD descriptors to LF on Windows; upgrade Android SDK setup to v4 without the retired tools package; preserve Social server/data compatibility.",
   "implemented": [
     {
-      "id": "LRS-006",
-      "title": "Store shared Portrait Library 3 codes in Social profiles",
-      "summary": "Add backward-compatible canonical decimal portraitCode in SocialProfile JSON with structural format validation and revision-safe updates; existing profile and SQL schema remain v1.",
+      "id": "SCL-012",
+      "title": "Repair native CI pre-build failures",
+      "summary": "Ensure byte-exact LoopRD SHA-256 links on Windows checkouts and avoid retired Android SDK tools package; native Windows/Android compile is still unverified.",
       "operator_checks": [
-        "With a deployed LoopRD Social 0.2.2 component, save a numeric portrait from Windows and confirm Android reads the same code after login.",
-        "Update the display name from the older client and confirm the portrait value is retained."
-      ]
-    },
-    {
-      "id": "SCL-001",
-      "title": "Integrated cross-platform Social client",
-      "summary": "Maintain Windows/Android Tauri client sources under client/ in existing looprd-social repository; preserve server runtime and original bridge.",
-      "operator_checks": [
-        "After ZipRunner update, check server/looprd_handler.py, looprd.yaml and client/src/main.js are all present.",
-        "Run Windows and Android build workflows and install generated artifacts on actual devices."
-      ]
-    },
-    {
-      "id": "SCL-002",
-      "title": "Social lobby and profile client integration",
-      "summary": "Use existing Social v1 JSON action route, dev bearer secret in memory, names and lobby; safe server-local game activity integration.",
-      "operator_checks": [
-        "Connect via a deployed LoopRD origin and provisioned development token, then send a lobby message.",
-        "Confirm Social credential never reaches the game component."
-      ]
-    },
-    {
-      "id": "SCL-003",
-      "title": "Optional game turn alerts",
-      "summary": "Game-contract adapter for game-owned GET activity and deduplicated local alerts while the app runs, same-server paths only.",
-      "operator_checks": [
-        "Test with a game implementing activity/v1 and grant desktop/mobile notification permission.",
-        "Verify new turn ID alerts once and next new turn ID alerts again."
-      ]
-    },
-    {
-      "id": "SCL-004",
-      "title": "Portrait generator source and asset compatibility",
-      "summary": "Uses TheBigTreeInc/assets 3.0.0 canonical numeric portrait generator, pinned reviewed JavaScript modules and live SHA-verified assets; server shares code across devices.",
-      "operator_checks": [
-        "Run npm run portrait:sync inside client with network access, create a portrait and save it to Social.",
-        "Confirm second client restores the same exact decimal digits after connecting as the same identity."
-      ]
-    },
-    {
-      "id": "SCL-005",
-      "title": "Single-project ZipRunner package and GitHub workflows",
-      "summary": "Package client under the original looprd-social project identity, with root source workboard, full interchange manifest, preserved files, source workflow and Android/Windows build jobs.",
-      "operator_checks": [
-        "Import looprd-social-0.2.2-ziprunner.zip into existing looprd-social ZipRunner project.",
-        "Validate it against pac-labs/ziprunner-spec v2.1.1 and confirm old .data and secrets survive."
-      ]
-    },
-    {
-      "id": "SCL-006",
-      "title": "Integrated backend and client protocol tests",
-      "summary": "Existing Python/native tests plus Node backend/client tests, source checks and honest runner limitations.",
-      "operator_checks": [
-        "Run npm run test and python -m unittest discover -s tests -p test_*.py -v.",
-        "Check GitHub workflow artifacts are uploaded after successful native builds."
+        "Review GitHub Windows workflow and verify the manifest integrity step succeeds on Windows after CRLF-safe checkout.",
+        "Review GitHub Android workflow and verify SDK setup and app build reach compilation; install any resulting APK and NSIS artifacts on target devices."
       ]
     }
   ],
@@ -90,7 +36,7 @@
     {
       "id": "SCL-010",
       "title": "GitHub native build and device acceptance",
-      "summary": "Run Windows NSIS and Android ARM64 APK workflows in GitHub; install and test on devices. Local source test is not native compilation.",
+      "summary": "Native Windows and Android Actions initially failed before compilation on 2026-10-15; CI workflow fixes are included but require fresh GitHub runs and device acceptance.",
       "priority": "high"
     },
     {

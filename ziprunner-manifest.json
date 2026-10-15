@@ -3,288 +3,116 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.2.2",
-    "base_version": "0.2.1"
+    "version": "0.2.3",
+    "base_version": "0.2.2"
   },
   "update": {
-    "id": "LRS-20261015-002",
+    "id": "LRS-20261015-003",
     "kind": "source_update",
-    "created_at": "2026-10-15T18:32:00+02:00",
-    "summary": "Merge native LoopRD Social v0.2.1 backend and Tauri Windows/Android client into one repository/ZipRunner project; retain SQLite schema and action protocol; support persistent server-side numeric portrait codes without schema migration; add unified CI and workflows."
+    "created_at": "2026-10-15T19:43:00+02:00",
+    "summary": "Repair GitHub Windows SHA-256 checkout mismatch and Android deprecated SDK tools setup without modifying Social application data."
   },
   "planned_work": [
     {
-      "id": "LRS-006",
-      "title": "Store shared Portrait Library 3 codes in Social profiles",
-      "acceptance_criteria": "With a deployed LoopRD Social 0.2.2 component, save a numeric portrait from Windows and confirm Android reads the same code after login.",
-      "priority": "high"
-    },
-    {
-      "id": "SCL-001",
-      "title": "Integrated cross-platform Social client",
-      "acceptance_criteria": "After ZipRunner update, check server/looprd_handler.py, looprd.yaml and client/src/main.js are all present.",
-      "priority": "medium"
-    },
-    {
-      "id": "SCL-002",
-      "title": "Social lobby and profile client integration",
-      "acceptance_criteria": "Connect via a deployed LoopRD origin and provisioned development token, then send a lobby message.",
-      "priority": "medium"
-    },
-    {
-      "id": "SCL-003",
-      "title": "Optional game turn alerts",
-      "acceptance_criteria": "Test with a game implementing activity/v1 and grant desktop/mobile notification permission.",
-      "priority": "medium"
-    },
-    {
-      "id": "SCL-004",
-      "title": "Portrait generator source and asset compatibility",
-      "acceptance_criteria": "Run npm run portrait:sync inside client with network access, create a portrait and save it to Social.",
-      "priority": "medium"
-    },
-    {
-      "id": "SCL-005",
-      "title": "Single-project ZipRunner package and GitHub workflows",
-      "acceptance_criteria": "Import looprd-social-0.2.2-ziprunner.zip into existing looprd-social ZipRunner project.",
-      "priority": "medium"
-    },
-    {
-      "id": "SCL-006",
-      "title": "Integrated backend and client protocol tests",
-      "acceptance_criteria": "Run npm run test and python -m unittest discover -s tests -p test_*.py -v.",
-      "priority": "medium"
-    },
-    {
-      "id": "LRS-004",
-      "title": "Production-ready Social authentication and trusted game invitations",
-      "acceptance_criteria": "Replace development-only tokens with Social-owned, verified and revocable device sessions, game-specific trust and invitation contract. An external OIDC provider is NOT required.",
-      "priority": "high"
-    },
-    {
-      "id": "SCL-007",
-      "title": "Server-backed friends and private conversations",
-      "acceptance_criteria": "Extend Social component to support game-oriented friends, private/group chat and permissions without changing LoopRD domain logic.",
-      "priority": "high"
-    },
-    {
-      "id": "SCL-009",
-      "title": "Background Android push and turn notification delivery",
-      "acceptance_criteria": "Current local alerts work only while app is running; require implementer-owned device registration and push provider for terminated apps.",
+      "id": "SCL-012",
+      "title": "Repair native CI pre-build failures",
+      "acceptance_criteria": "Linux and Windows descriptor bytes have matching SHA-256, and Android SDK setup uses only supported packages; tests pass.",
       "priority": "high"
     },
     {
       "id": "SCL-010",
       "title": "GitHub native build and device acceptance",
-      "acceptance_criteria": "Run Windows NSIS and Android ARM64 APK workflows in GitHub; install and test on devices. Local source test is not native compilation.",
+      "acceptance_criteria": "Build Windows NSIS and Android ARM64 APK, upload artifacts and verify on physical devices.",
       "priority": "high"
-    },
-    {
-      "id": "SCL-011",
-      "title": "Game component activity integration",
-      "acceptance_criteria": "Implement the optional game-specific activity/v1 contract in supported game components; existing games may not expose it yet.",
-      "priority": "medium"
     }
   ],
   "done_work": [
     {
-      "id": "LRS-006",
-      "summary": "Add backward-compatible canonical decimal portraitCode in SocialProfile JSON with structural format validation and revision-safe updates; existing profile and SQL schema remain v1.",
+      "id": "SCL-012",
+      "summary": "Added LF checkout policy and explicit descriptor verification; upgraded Android SDK action and removed retired tools package. Source tests execute locally; GitHub native reruns pending.",
       "evidence": [
         {
-          "kind": "test",
-          "ref": "evidence/source-tests.txt",
-          "description": "Source-level Python and JavaScript regression execution; target device acceptance remains open."
-        }
-      ]
-    },
-    {
-      "id": "SCL-001",
-      "summary": "Maintain Windows/Android Tauri client sources under client/ in existing looprd-social repository; preserve server runtime and original bridge.",
-      "evidence": [
-        {
-          "kind": "test",
-          "ref": "evidence/source-tests.txt",
-          "description": "Source-level Python and JavaScript regression execution; target device acceptance remains open."
-        }
-      ]
-    },
-    {
-      "id": "SCL-002",
-      "summary": "Use existing Social v1 JSON action route, dev bearer secret in memory, names and lobby; safe server-local game activity integration.",
-      "evidence": [
-        {
-          "kind": "test",
-          "ref": "evidence/source-tests.txt",
-          "description": "Source-level Python and JavaScript regression execution; target device acceptance remains open."
-        }
-      ]
-    },
-    {
-      "id": "SCL-003",
-      "summary": "Game-contract adapter for game-owned GET activity and deduplicated local alerts while the app runs, same-server paths only.",
-      "evidence": [
-        {
-          "kind": "test",
-          "ref": "evidence/source-tests.txt",
-          "description": "Source-level Python and JavaScript regression execution; target device acceptance remains open."
-        }
-      ]
-    },
-    {
-      "id": "SCL-004",
-      "summary": "Uses TheBigTreeInc/assets 3.0.0 canonical numeric portrait generator, pinned reviewed JavaScript modules and live SHA-verified assets; server shares code across devices.",
-      "evidence": [
-        {
-          "kind": "test",
-          "ref": "evidence/source-tests.txt",
-          "description": "Source-level Python and JavaScript regression execution; target device acceptance remains open."
-        }
-      ]
-    },
-    {
-      "id": "SCL-005",
-      "summary": "Package client under the original looprd-social project identity, with root source workboard, full interchange manifest, preserved files, source workflow and Android/Windows build jobs.",
-      "evidence": [
-        {
-          "kind": "test",
-          "ref": "evidence/source-tests.txt",
-          "description": "Source-level Python and JavaScript regression execution; target device acceptance remains open."
-        }
-      ]
-    },
-    {
-      "id": "SCL-006",
-      "summary": "Existing Python/native tests plus Node backend/client tests, source checks and honest runner limitations.",
-      "evidence": [
-        {
-          "kind": "test",
-          "ref": "evidence/source-tests.txt",
-          "description": "Source-level Python and JavaScript regression execution; target device acceptance remains open."
+          "kind": "documentation",
+          "ref": "evidence/ci-repair.md",
+          "description": "Observed run IDs, exact failing steps, verified action fix and required native rerun"
         }
       ]
     }
   ],
   "todo_work": [
     {
-      "id": "LRS-004",
-      "status": "blocked",
-      "next_action": "Replace development-only tokens with Social-owned, verified and revocable device sessions, game-specific trust and invitation contract. An external OIDC provider is NOT required.",
-      "blockers": [
-        "Requires additional implementing application services."
-      ]
-    },
-    {
-      "id": "SCL-007",
-      "status": "planned",
-      "next_action": "Extend Social component to support game-oriented friends, private/group chat and permissions without changing LoopRD domain logic.",
-      "blockers": []
-    },
-    {
-      "id": "SCL-009",
-      "status": "blocked",
-      "next_action": "Current local alerts work only while app is running; require implementer-owned device registration and push provider for terminated apps.",
-      "blockers": [
-        "Requires additional implementing application services."
-      ]
-    },
-    {
       "id": "SCL-010",
-      "status": "planned",
-      "next_action": "Run Windows NSIS and Android ARM64 APK workflows in GitHub; install and test on devices. Local source test is not native compilation.",
-      "blockers": []
-    },
-    {
-      "id": "SCL-011",
-      "status": "planned",
-      "next_action": "Implement the optional game-specific activity/v1 contract in supported game components; existing games may not expose it yet.",
-      "blockers": []
+      "status": "review",
+      "next_action": "Run Windows and Android GitHub Actions after merging CI repair, then install and test NSIS/APK.",
+      "blockers": [
+        "Current run 38778840719 and 38778840452 failed before compilation."
+      ]
     }
   ],
   "validation": {
     "model_reported": "partial",
     "checks": [
       {
-        "id": "LRS-CHECK-NODE",
-        "description": "Social backend + Tauri client source tests",
+        "id": "SCL-012-NODE",
+        "description": "11 integrated Node source tests and ZipRunner package consistency check",
         "status": "passed",
-        "command": "npm run test",
-        "environment": "Local container Node 22",
-        "evidence_ref": "evidence/source-tests.txt"
+        "command": "npm run test && node client/tools/check-package.mjs",
+        "environment": "Linux Node 22",
+        "evidence_ref": "evidence/ci-repair.md"
       },
       {
-        "id": "LRS-CHECK-PYTHON",
-        "description": "Social native SQLite handler tests",
+        "id": "SCL-012-PY",
+        "description": "Generated LoopRD YAML plus 7 Python regression tests",
         "status": "passed",
-        "command": "python -m unittest discover -s tests -p test_*.py -v",
-        "environment": "Local container Python",
-        "evidence_ref": "evidence/source-tests.txt"
+        "command": "python tools/generate-looprd.py --check && python -m unittest discover -s tests -p test_*.py -v",
+        "environment": "Linux Python 3.13",
+        "evidence_ref": "evidence/ci-repair.md"
       },
       {
-        "id": "LRS-CHECK-DESC",
-        "description": "Generated LoopRD YAML matches embedded handler",
+        "id": "SCL-012-WIN-EOL",
+        "description": "Simulated Git for Windows core.autocrlf=true checkout preserves original LoopRD bytes",
         "status": "passed",
-        "command": "python tools/generate-looprd.py --check",
-        "environment": "Local container Python",
-        "evidence_ref": "evidence/source-tests.txt"
+        "command": "git -c core.autocrlf=true clone [local fixture] [temporary checkout] && compare SHA-256",
+        "environment": "Linux Git 2.47.3 with Windows-compatible checkout semantics",
+        "evidence_ref": "evidence/ci-repair.md"
       },
       {
-        "id": "LRS-CHECK-ZR",
-        "description": "Run external ZipRunner package validator v2.1.1",
+        "id": "SCL-012-WIN",
+        "description": "GitHub Windows NSIS native build and artifact",
         "status": "not_run",
-        "reason": "External validator repository not available in build container. Internal schema/zip checks performed."
+        "reason": "GitHub Windows runner required"
       },
       {
-        "id": "LRS-CHECK-WIN",
-        "description": "Compile Windows NSIS installer and install",
+        "id": "SCL-012-ANDROID",
+        "description": "GitHub Android APK native build and artifact",
         "status": "not_run",
-        "reason": "Requires Windows GitHub Actions runner and device"
-      },
-      {
-        "id": "LRS-CHECK-ANDROID",
-        "description": "Compile Android debug APK and sideload",
-        "status": "not_run",
-        "reason": "Requires Android SDK/NDK GitHub Actions runner and device"
+        "reason": "GitHub Android runner required"
       }
     ]
   },
   "handover": {
-    "next_pass": "Push merged source to TheBigTreeInc/social, run CI and native installers, test production-like Social device identity and user-turn game endpoint.",
+    "next_pass": "Run Windows and Android GitHub Actions, resolve any errors discovered after the earlier pre-build blockers, and review artifacts on devices.",
     "risks": [
-      "Social v0.2.2 still authenticates using per-user development tokens; do not expose publicly.",
-      "Legacy Life Loop bridge uses local-only REST adapter; ensure deployment-specific origin and secrets.",
-      "Native binary and target device testing has not yet happened.",
-      "Portrait generator JS must be synced online in client before UI build; reviewed upstream source, never unreviewed runtime JS."
+      "Native builds have not been observed past setup/contract checks.",
+      "Runtime Social authentication remains development-only, no OIDC requirement."
     ],
     "blockers": [
-      "Social account registration and secure device identity not yet implemented; no external OIDC needed.",
-      "Background push depends on future application-owned provider."
+      "Native CI and device acceptance are pending."
     ],
     "notes": [
-      "Same LoopRD server hosts Social and game components; no remote cross-host service calls are required.",
-      "SocialProfile JSON adds optional portraitCode without changing database.schemaVersion=1."
+      "LoopRD schema and handler remain unchanged; no database migration, no LoopRD restart required for CI-only changes."
     ]
   },
   "operator_actions": [
     {
-      "id": "LRS-OP-1",
-      "description": "Review and apply source archive to existing looprd-social project",
-      "status": "required"
-    },
-    {
-      "id": "LRS-OP-2",
-      "description": "Review GitHub Windows and Android workflow artifacts and install on test hardware",
-      "status": "required"
-    },
-    {
-      "id": "LRS-OP-3",
-      "description": "Approve server component 0.2.2 deployment with retained SQL data",
+      "id": "SCL-012-ACTION",
+      "description": "Review and merge workflow repair, inspect fresh CI native build artifacts",
       "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Operator controls pushes/deployments/releases; running source tests does not close workboard items."
+    "notes": "CI repair needs native CI and device acceptance prior to release."
   }
 }
