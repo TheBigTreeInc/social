@@ -1,5 +1,9 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
+cors:
+  allowedOrigins:
+    - https://thebigtreeinc.github.io
+    - http://tauri.localhost
 component: looprd-social
 release: 0.3.4
 api:
