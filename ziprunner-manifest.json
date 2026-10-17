@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.33",
-    "base_version": "0.3.32"
+    "version": "0.3.34",
+    "base_version": "0.3.33"
   },
   "update": {
-    "id": "TAVI-20261017-ANDROID-033",
+    "id": "TAVI-20261017-ANDROID-034",
     "kind": "source_update",
     "created_at": "2026-10-17T16:00:00+02:00",
-    "summary": "Android native DownloadManager and FileProvider package installer flow; in-app Update invokes validated platform bridge, requires Android approval."
+    "summary": "Repair Android release APK artifact detection: Tauri writes to universal/release; verify APK signature and copy into stable release artifact directory."
   },
   "planned_work": [
     {
@@ -137,6 +137,12 @@
       "id": "TAVI-UPDATES-003",
       "title": "Android native in-app signed APK update installation",
       "acceptance_criteria": "A signed Android release can download through DownloadManager and invoke Android package installer from in-client Update; GitHub CI builds native bridge; on-device installation and data preservation acceptance pending",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-ANDROID-034",
+      "title": "Fix signed Android APK artifact discovery",
+      "acceptance_criteria": "GitHub job validates generated universal/release APK with apksigner, stages one APK and releases it with the normal tag gate",
       "priority": "high"
     }
   ],
@@ -545,6 +551,18 @@
           "description": "Generated Android project overlay regression"
         }
       ]
+    },
+    {
+      "id": "TAVI-ANDROID-034",
+      "summary": "Normalized Tauri generated APK path, verified signature and staged release upload.",
+      "evidence": [
+        {
+          "ref": ".github/workflows/android.yml"
+        },
+        {
+          "ref": "tests/test_android_artifact_workflow.py"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -725,7 +743,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Validate release-signed Android 0.3.33 -> next version upgrade on device; handle download cancellation, app lifecycle and system installer confirmation; preserve account data.",
+    "next_pass": "Confirm GitHub signed Android APK job and GitHub Release gate succeed for v0.3.34; test native updater on Android with next released version.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -750,7 +768,7 @@
     },
     {
       "id": "TAVI-UPDATES-003-OP",
-      "description": "Set the four signing secrets; push v0.3.33; confirm Android Actions signed APK build; install release-signed APK, then test update to v0.3.34 on Android while retaining user session.",
+      "description": "Push v0.3.34, verify Android APK generated under universal/release, signature verified with apksigner, artifact uploaded and release gate passes; run on-device update test on following release.",
       "status": "required"
     }
   ],

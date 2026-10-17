@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.33",
+  "version": "0.3.34",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",

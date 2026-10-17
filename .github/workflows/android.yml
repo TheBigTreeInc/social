@@ -77,12 +77,18 @@ jobs:
       - name: Verify signed release APK exists
         if: github.event_name != 'pull_request'
         run: |
-          find src-tauri/gen/android/app/build/outputs/apk/release -type f -name '*.apk' -size +1M -print -quit | grep -q .
+          set -euo pipefail
+          APK='src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk'
+          test -s "$APK"
+          test "$(stat -c %s "$APK")" -gt 1000000
+          "${ANDROID_HOME}/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK"
+          mkdir -p src-tauri/gen/android/app/build/outputs/tavi-release
+          cp "$APK" src-tauri/gen/android/app/build/outputs/tavi-release/tavi-android-arm64-release.apk
       - uses: actions/upload-artifact@v4
         if: github.event_name != 'pull_request'
         with:
           name: tavi-android-arm64-signed-release
-          path: client/src-tauri/gen/android/app/build/outputs/apk/release/*.apk
+          path: client/src-tauri/gen/android/app/build/outputs/tavi-release/*.apk
           if-no-files-found: error
           retention-days: 30
       - uses: actions/upload-artifact@v4

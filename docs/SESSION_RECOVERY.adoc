@@ -1,5 +1,5 @@
 = Tavi device-session recovery and reconnect
-:revnumber: 0.3.33
+:revnumber: 0.3.34
 
 == Scope
 

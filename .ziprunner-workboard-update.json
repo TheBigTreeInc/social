@@ -1,16 +1,26 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.33",
-  "summary": "Tavi 0.3.33: native Android DownloadManager installer handoff for signed GitHub Release APKs; Android system approval required; device acceptance pending.",
+  "version": "0.3.34",
+  "summary": "Tavi v0.3.34: fix GitHub Android signed-release build artifact verification path; verify signature and publish normalized APK.",
   "implemented": [
+    {
+      "id": "TAVI-ANDROID-034",
+      "title": "Repair Android signed APK GitHub artifact path",
+      "summary": "Find Tauri APK in universal/release, verify apksigner signature, and stage it for stable GitHub Actions artifact upload. No change to app runtime or Social database.",
+      "operator_checks": [
+        "Push v0.3.34 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
+        "Confirm tavi-android-arm64-signed-release uploaded as a ZIP containing exactly one APK.",
+        "Confirm gated GitHub Release attaches direct v0.3.34 Android APK asset."
+      ]
+    },
     {
       "id": "TAVI-RELEASE-001",
       "title": "Verified GitHub release gate and version tags",
       "summary": "GitHub workflow_run gate waits for 7 required CI workflows on the same current main SHA; checks artifact completeness, creates immutable vX.Y.Z release with downloadable Windows, Android, Linux, macOS, web and SDK/OpenClaw bundles. Pages hosting remains independent.",
       "operator_checks": [
-        "Push 0.3.33 to main and confirm seven required workflows complete successfully.",
-        "Check Publish verified Tavi release creates tag v0.3.33 and a release containing six ZIP assets.",
+        "Push 0.3.34 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.34 and a release containing six ZIP assets.",
         "Force a build failure in a later test branch and confirm no release is created.",
         "Confirm rerunning an already-released commit never overwrites an existing tag or release."
       ]
@@ -271,7 +281,7 @@
       "summary": "Checks published GitHub Releases at startup and every six hours; displays a download notice and Help action. No automatic installer execution. Live platform acceptance pending.",
       "priority": "high",
       "operator_checks": [
-        "After GitHub Release v0.3.33 is published, start v0.3.33 Tavi and confirm the update notice appears.",
+        "After GitHub Release v0.3.34 is published, start v0.3.34 Tavi and confirm the update notice appears.",
         "Choose Download update and verify it opens the official GitHub Release, without installing anything.",
         "Check Help > Check for updates with an unavailable network and confirm messaging remains usable."
       ]
@@ -382,7 +392,7 @@
     {
       "id": "TAVI-AGENT-002",
       "title": "Native OpenClaw channel plugin and game actions",
-      "summary": "The v0.3.33 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
+      "summary": "The v0.3.34 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
       "priority": "high"
     },
     {
