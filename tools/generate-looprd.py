@@ -11,6 +11,7 @@ source=(root/'server/looprd_handler.py').read_text(encoding='utf8')
 verifier=(root/'server/looprd_verifier.py').read_text(encoding='utf8')
 admin_events=(root/'server/admin_event_service.py').read_text(encoding='utf8')
 admin_role=(root/'server/admin_role_service.py').read_text(encoding='utf8')
+game_events=(root/'server/game_event_service.py').read_text(encoding='utf8')
 def string(max_len,required=False,unique=False):
     return dict(type='string',maxLength=max_len,**({'required':True} if required else {}),**({'unique':True} if unique else {}))
 def integer(required=False,primary=False,generated=False):
@@ -26,7 +27,7 @@ spec={
  'push':{'transport':'unifiedpush','scopes':['push:manage'],
          'deviceLifetimeSeconds':86400,'maxDevicesPerPrincipal':8},
  'limits':{'requestsPerMinute':180,'authAttemptsPerMinute':90,'burstPerSecond':15,'maxInFlight':30},
-  'database':{'backend':'sqlite','schemaVersion':6,'migrations':[{'version':2,'statements':[
+  'database':{'backend':'sqlite','schemaVersion':7,'migrations':[{'version':2,'statements':[
   'CREATE TABLE "SocialAccount" ("id" INTEGER PRIMARY KEY, "handle" VARCHAR(32) NOT NULL UNIQUE, "passwordHash" VARCHAR(255) NOT NULL, "created" INTEGER NOT NULL, "failedAttempts" INTEGER NOT NULL, "lockedUntil" INTEGER NOT NULL)',
   'CREATE TABLE "SocialSession" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "tokenHash" VARCHAR(64) NOT NULL UNIQUE, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL, "lastSeen" INTEGER NOT NULL, "revoked" BOOLEAN NOT NULL)',
   'CREATE TABLE "SocialContact" ("id" INTEGER PRIMARY KEY, "leftId" VARCHAR(72) NOT NULL, "rightId" VARCHAR(72) NOT NULL, "requestedBy" VARCHAR(72) NOT NULL, "status" VARCHAR(16) NOT NULL, "created" INTEGER NOT NULL)',
@@ -43,6 +44,12 @@ spec={
   'CREATE UNIQUE INDEX "SocialConversationRead_subject_peer" ON "SocialConversationRead" ("subjectId", "peerId")'
   ]},{'version':6,'statements':[
   'ALTER TABLE "SocialAccount" ADD COLUMN "ecosystemAdmin" BOOLEAN NOT NULL DEFAULT 0'
+  ]},{'version':7,'statements':[
+  'CREATE TABLE "SocialGameSubscription" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "publisher" VARCHAR(48) NOT NULL, "gameId" VARCHAR(96) NOT NULL, "matchId" VARCHAR(128) NOT NULL, "enabled" BOOLEAN NOT NULL, "updated" INTEGER NOT NULL)',
+  'CREATE TABLE "SocialGameDelivery" ("id" INTEGER PRIMARY KEY, "publisher" VARCHAR(48) NOT NULL, "eventId" VARCHAR(96) NOT NULL, "recipient" VARCHAR(72) NOT NULL, "digest" VARCHAR(64) NOT NULL, "interactionId" INTEGER NOT NULL, "created" INTEGER NOT NULL)',
+  'CREATE INDEX "SocialGameSubscription_subject" ON "SocialGameSubscription" ("subjectId","enabled")',
+  'CREATE UNIQUE INDEX "SocialGameSubscription_unique" ON "SocialGameSubscription" ("subjectId","publisher","gameId","matchId")',
+  'CREATE UNIQUE INDEX "SocialGameDelivery_unique" ON "SocialGameDelivery" ("publisher","eventId","recipient")'
   ]}]},
  'models':{
     'SocialProfile':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True,True),'data':{'type':'json','required':True},'revision':integer(True),'updated':integer(True)}},
@@ -52,6 +59,8 @@ spec={
     'SocialSession':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'tokenHash':string(64,True,True),'created':integer(True),'expires':integer(True),'lastSeen':integer(True),'revoked':{'type':'boolean','required':True}}},
     'SocialContact':{'fields':{'id':integer(primary=True,generated=True),'leftId':string(72,True),'rightId':string(72,True),'requestedBy':string(72,True),'status':string(16,True),'created':integer(True)},'indexes':[{'name':'SocialContact_pair','fields':['leftId','rightId'],'unique':True}]},
     'SocialInteraction':{'fields':{'id':integer(primary=True,generated=True),'recipient':string(72,True),'publisher':string(72,True),'topic':string(96,True),'title':string(120,True),'data':{'type':'json','required':True},'status':string(16,True),'response':{'type':'json'},'created':integer(True),'expires':integer(True)},'indexes':[{'name':'SocialInteraction_recipient','fields':['recipient','id']}]},
+    'SocialGameSubscription':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'publisher':string(48,True),'gameId':string(96,True),'matchId':string(128,True),'enabled':{'type':'boolean','required':True},'updated':integer(True)},'indexes':[{'name':'SocialGameSubscription_subject','fields':['subjectId','enabled']},{'name':'SocialGameSubscription_unique','fields':['subjectId','publisher','gameId','matchId'],'unique':True}]},
+    'SocialGameDelivery':{'fields':{'id':integer(primary=True,generated=True),'publisher':string(48,True),'eventId':string(96,True),'recipient':string(72,True),'digest':string(64,True),'interactionId':integer(True),'created':integer(True)},'indexes':[{'name':'SocialGameDelivery_unique','fields':['publisher','eventId','recipient'],'unique':True}]},
     'SocialConversationRead':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'peerId':string(72,True),'readId':integer(True),'updated':integer(True)},'indexes':[{'name':'SocialConversationRead_subject_peer','fields':['subjectId','peerId'],'unique':True}]},
     'SocialDirectMessage':{'fields':{'id':integer(primary=True,generated=True),'leftId':string(72,True),'rightId':string(72,True),'senderId':string(72,True),'content':string(1000,True),'created':integer(True)},'indexes':[{'name':'SocialDirectMessage_pair','fields':['leftId','rightId','id']}]}
     },
@@ -88,6 +97,24 @@ spec={
        'response':{'type':'object','required':['accepted','recipients'],
            'additionalProperties':False,'properties':{'accepted':{'type':'boolean'},
              'recipients':{'type':'integer','minimum':0},'reason':{'type':'string','maxLength':48}}}}},
+    {'path':'/ecosystem/game-event','method':'POST','kind':'python','scopes':['social:service'],
+     'source':game_events,'contract':{
+       'name':'tavi-game-event','version':1,'serviceOnly':True,
+       'request':{'type':'object','required':['schema','eventId','kind','gameId','matchId','turnIndex','recipient'],
+           'additionalProperties':False,
+           'properties':{'schema':{'type':'string','enum':['tavi.game-event/v1']},
+               'eventId':{'type':'string','minLength':8,'maxLength':96},
+               'kind':{'type':'string','enum':['turn.ready','turn.reminder','match.completed']},
+               'gameId':{'type':'string','minLength':2,'maxLength':96},
+               'matchId':{'type':'string','minLength':12,'maxLength':128},
+               'turnIndex':{'type':'integer','minimum':0},
+               'recipient':{'type':'object','required':['issuer','subject'],'additionalProperties':False,
+                   'properties':{'issuer':{'type':'string','minLength':1,'maxLength':128},
+                                 'subject':{'type':'string','minLength':6,'maxLength':72}}}}},
+       'response':{'type':'object','required':['accepted','delivery'],'additionalProperties':False,
+           'properties':{'accepted':{'type':'boolean'},
+               'delivery':{'type':'string','enum':['created','duplicate','rejected']},
+               'reason':{'type':'string','maxLength':80}}}}},
     {'path':'/ecosystem/admin-role','method':'POST','kind':'python','scopes':['social:service'],
      'source':admin_role,'contract':{
        'name':'tavi-admin-role','version':1,'serviceOnly':True,
@@ -95,7 +122,7 @@ spec={
            'properties':{'subject':{'type':'string','minLength':6,'maxLength':72}}},
        'response':{'type':'object','required':['admin'],'additionalProperties':False,
            'properties':{'admin':{'type':'boolean'}}}}},
-    {'path':'/info','kind':'response','scopes':['social:api'],'response':{'protocol':'looprd.social/1','auth':'social-accounts','registration':'see-capabilities','features':['contacts','direct-messages','lobby','portraits','server-gated-developer-tools'],'release':version}},
+    {'path':'/info','kind':'response','scopes':['social:api'],'response':{'protocol':'looprd.social/1','auth':'social-accounts','registration':'see-capabilities','features':['contacts','direct-messages','lobby','portraits','server-gated-developer-tools','game-event-inbox-v1'],'release':version}},
  ]}
 output='# Generated from server/looprd_handler.py. Do not edit by hand.\n'+yaml.safe_dump(spec,sort_keys=False,allow_unicode=True,width=110)
 if '--check' in sys.argv:

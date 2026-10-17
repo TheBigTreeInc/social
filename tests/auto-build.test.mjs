@@ -14,15 +14,15 @@ test('ZipRunner gates auto-build after verification and enables Windows by defau
   assert.match(script,/tavi-last-good-nsis/);
   assert.doesNotMatch(script,/git push|git commit|push origin/);
 });
-test('admin-entitlements release upgrades Social database schema to 6',async()=>{
+test('Social game-event release adds schema 7 without losing existing capabilities',async()=>{
   const pkg=JSON.parse(await read('package.json'));
   const server=JSON.parse(await read('server/looprd-release.json'));
   const spec=await read('looprd.yaml');
-  assert.equal(pkg.version,'0.3.38');
-  assert.equal(server.release,'0.3.38');
-  assert.match(spec,/release: 0\.3\.38/);
+  assert.equal(pkg.version,'0.3.40');
+  assert.equal(server.release,'0.3.40');
+  assert.match(spec,/release: 0\.3\.40/);
   assert.match(spec,/mode: verified/);
   assert.match(spec,/transport: unifiedpush/);
-  assert.match(spec,/schemaVersion: 6/);
+  assert.match(spec,/schemaVersion: 7/);
   assert.match(spec,/management:/);
 });

@@ -1,0 +1,105 @@
+= Tavi / Social — Game Invitations, Turn Inbox and OpenClaw API Play Adjustment
+:revnumber: 0.1-draft
+:revdate: 2026-10-18
+:toc: left
+:sectnums:
+
+== Product boundary and status
+
+Planning adjustment for `TheBigTreeInc/social`: Social owns identities, profiles, friendships, notifications and recipient policy; *Tavi is and remains a chat client*. Atrium owns game catalog, launch and lobby presentation. Life or another game owns multiplayer sessions, state, turns and game rules. This is a proposal, NOT a deployed service contract or a permission for the Tavi OpenClaw companion to control games.
+
+Fold accepted decisions into `docs/DESIGN.adoc`, `docs/GAME_CATALOG.adoc`, `docs/INTERACTIVE_EVENTS.adoc`, `docs/PUSH_TRANSPORT.adoc`, `docs/ECOSYSTEM_ADMIN.adoc`, `integrations/openclaw/README.md`, `integrations/openclaw/OPENCLAW_SKILL.md`, `PROJECT_PLAN.adoc` and generated LoopRD metadata/code when implementation begins.
+
+Current state: Tavi has a narrow chat UI, authenticated Social SDK, per-account DMs, recipient-scoped interactive events, durable pulses and UnifiedPush service wiring. It has an operator-provided `tavi.game-catalog/v1` and historical embedded Windows game window, which are legacy implementation surfaces under the new product boundary. Existing `tavi-admin-notify/v1` reaches *ecosystem admins*, not arbitrary players. The OpenClaw bridge provides authenticated separate-account chat and `games` discovery but explicitly reports `agentPlaySupported: false`; it does not have permission or a gameplay API today.
+
+== Target user experience
+
+* Tavi main UI remains buddies, conversations and a very small app launcher (first-iPhone-scale optional layout). Atrium is an app/link. There is NO second game catalog, no game lobby board, no gameplay panel or game state database inside Tavi.
+* A sender shares an Atrium lobby invitation to an accepted contact. Tavi shows a structured, safe card in the existing DM/inbox, e.g. `Life — Join private game`, with an **Open in Atrium** action.
+* When a player completes a turn and the next player becomes active, Social creates a durable recipient-only notification: `It's your turn in Life`. On click, open the approved Atrium game/match route, with no token/room secret in the URL.
+* Tavi clients can be offline for days and still fetch notifications from Social on next login. Device push is an optional wake-up hint, not the notification store. Browser/Windows/Android must share the same data/API semantics; OS-level closed-app push is verified separately by platform.
+* Non-Social standalone Life remains playable; lack of Tavi push may suppress external alerts but never block a game turn.
+
+== Required service: game turn and invite delivery
+
+Create a **new** versioned service contract, proposed name `tavi-game-event/v1`. Do not repurpose `tavi-admin-notify` or grant a game ecosystem-admin rights. Only preapproved components/machine callers may invoke it using a private scoped service identity. For same-runtime components use existing declared `dependencies[]` and `ctx.call`. Distinct LoopRD hosts require a reviewed, authenticated remote delivery bridge; DAPI's local service call does not cross hosts.
+
+Proposed request envelope (schema fields and component names illustrative, not live):
+
+[source,json]
+----
+{
+  "schema": "tavi.game-event/v1",
+  "eventId": "opaque-game-event-id",
+  "gameId": "life.loop",
+  "matchId": "opaque-match-id",
+  "turnIndex": 42,
+  "kind": "turn.ready",
+  "recipient": {"issuer": "TRUSTED_SOCIAL_ISSUER", "subject": "acct_123"},
+  "action": {"type": "open-atrium", "gameId": "life.loop", "matchId": "opaque-match-id"}
+}
+----
+
+Other kinds may include `invite.created`, `invite.revoked`, `turn.reminder`, `match.completed`. Provide a bounded, versioned allowlist. Do NOT accept arbitrary caller-controlled remote action URLs or arbitrary message content for trusted UI rendering. Derive labels from reviewed game metadata and safe text templates; validate the event recipient against a trusted game participant/invitation assertion or authorized game-issued proof. Merely knowing `acct_123` does not grant authority to spam that account. Check player blocks/preferences and abuse limits; prevent arbitrary service-to-user notifications. Social never trusts a client-submitted sender ID.
+
+Implement unique `(callerIdentity, eventId, recipient)` inbox deduplication, recipient-scoped rows, dismissed/read status, non-destructive retention, limited rate/size quotas, and stable retry responses. The Social transaction commits inbox + opaque durable event + `ctx.notify` for eligible active verified devices. Cross-component game outbox and Social inbox must survive independent restarts, repeated delivery and Redis outages.
+
+Social notifications must not expose opponent private game state, server location, game authorization credentials, private lobby codes, or push topic endpoints. Game event links are opaque references resolved by Atrium after the user re-authenticates to Social and obtains an audience-scoped game grant.
+
+== Identity and game access grants
+
+Create or integrate a *real* short-lived Social game-scoped grant issuer (`gameId`, `audience`, verified `issuer+subject`, `expiresAt`, nonce/jti, optional `matchId`, optional agent/delegated seat authorization). Define a verification method available to a trusted game service and revocation/rotation policy. This is a separate work item; Life's old `game_ticket` placeholder is not working SSO. Current `acct_N` identifiers are unique only within their trusted issuer/realm. No client/game may share Tavi passwords or reusable Social session bearer credentials.
+
+Game-specific authorization belongs to Life; receipt of a notification does not automatically grant membership. Invitation acceptance does not change the game seat until Life verifies the invite and agrees. A Tavi friendship is not automatically a game authorization grant. If user is blocked or invite withdrawn, the action cannot create membership.
+
+== OpenClaw must be a real, limited player, not a privileged chat automation
+
+The existing `integrations/openclaw/tavi-agent.mjs` is a working **chat/contacts/games-discovery** CLI with its own Tavi account. Its documented `games` response intentionally says `agentPlaySupported:false`. Preserve that warning until end-to-end headless certification succeeds.
+
+Add optional, separately approved commands backed by `looprd.game-play/v1`, for example `game-list`, `game-matches`, `game-join`, `game-state`, `game-legal-actions`, `game-act`, `game-end-turn` and `game-resume`. They must call the *game's* verified LoopRD API directly using a game-scoped actor grant, not route moves through Tavi DM messages, manipulate a DOM, or borrow a human user's Social session. Any thin OpenClaw CLI may live in Social or game repo; keep the contract reusable across most Atrium games. Do not add a game engine to Tavi.
+
+OpenClaw operator controls: provision a distinct Social account or explicitly authorized delegated seat, approve invited matches/allowed peers, choose allowed games, rate-limit actions, avoid autonomous unsolicited invites, keep game grants private, and require game-server validation of all moves. Treat messages, game text and action metadata as untrusted input, not instructions that override the agent's tool policy. A future agent badge should distinguish non-human accounts without impersonating a user. The Atrium public listing advertises `agentPlaySupported` only after the game itself proves API-only legal moves and headless resumption.
+
+== Tavi client changes (small, chat-first)
+
+. Show an `Open Atrium` app icon/link in the small optional app launcher; use supported navigation behavior on web/Windows/Android. Retain the existing contact roster and conversation windows.
+. Interpret server-generated `tavi.game-event/v1` interaction cards with safe localized templates. The card never embeds the full game, requests a match's room token or exposes a new permanent game dashboard.
+. Display actionable, recipient-only unread turn/invite badges inside existing notification/inbox surfaces; avoid notification storms by coalescing repeated turn updates.
+. On click, open Atrium's approved `gameId` + opaque `matchId` route and let Atrium perform authentication and session resolution. If no Atrium deployment binding exists, report an actionable not-available state without inventing a URL.
+. Sync on startup, reconnect, foreground and receipt of LoopRD push; message/inbox HTTP query remains authoritative. Time-based 60-hour turn expiry is enforced by Life, not Tavi.
+. Prefer deprecating the operator `TAVI_GAME_CATALOG_JSON` and embedded Windows game window as legacy paths after Atrium parity is accepted; do not delete stored data or break current installations during transition without an explicit operator migration decision.
+. Surface notification consent and per-game mute controls without preventing turn progression on the server.
+
+== Push limitations and honest status
+
+Social's LoopRD UnifiedPush plumbing already exists, but current documentation says native Android terminated-app receiver/distributor integration has not been end-to-end verified. Do not claim closed-app Android/desktop delivery merely because `ctx.notify` queues a hint. Device registrations may expire (current example default one day); clients must handle renewal and fallback HTTP inbox recovery. The persistent notification MUST remain visible even if push never arrives. Web Push/APNS/FCM are not magically provided by DAPI's UnifiedPush contract.
+
+== Implementation tasks
+
+[cols="1,2,4",options="header"]
+|===
+|Task |Dependencies |Acceptance
+|`SOC-GAME-01` |None |Review identity grant design, issuer namespace, audiences, game verifier and revocation; test wrong realm/subject and expired grant
+|`SOC-GAME-02` |01 + Life game contract |Implement `tavi-game-event/v1`, recipient proof, inbox dedupe, durable event and wake hint; no administrator privilege required
+|`SOC-GAME-03` |02 + Atrium routes |Tavi invitation and turn card, safe Atrium handoff on Windows/Web/Android foreground, chat shell unchanged
+|`SOC-GAME-04` |01 + Life API |Extend OpenClaw CLI with approved scoped game actions and machine-readable output; do not set supported true until complete gameplay test
+|`SOC-GAME-05` |02–04 |Offline/reconnect and live deployment acceptance; verify push separately; deprecate old Tavi games presentation after parity
+|===
+
+== Acceptance and negative tests
+
+* An authenticated ordinary account receives a Life `turn.ready`; non-recipient cannot read it and non-admin user does not need ecosystem-admin promotion.
+* Same game event retried 10 times yields one logical inbox record; server restart/outage does not lose it.
+* Cross-runtime request without approved machine authentication is denied; same-runtime caller lacking `social:service` is denied.
+* Fabricated match/recipient/invite does not create valid Social notification or game seat.
+* Tavi offline for 60+ hours: authenticated resync still exposes the correct invitation/turn, even if Redis and all push delivery were unavailable.
+* An OpenClaw account can complete a full Life turn by explicitly allowed API calls without Tavi client/DOM; unauthorized agent cannot act for another seat.
+* Tavi layout, DMs, notification unread count and Android/Windows/browser parity remain functional; no second game browser or lobby UI appears inside Tavi.
+
+== References
+
+* `https://github.com/TheBigTreeInc/social/blob/main/integrations/openclaw/README.md`
+* `https://github.com/TheBigTreeInc/social/blob/main/integrations/openclaw/OPENCLAW_SKILL.md`
+* `https://github.com/TheBigTreeInc/social/blob/main/docs/ECOSYSTEM_ADMIN.adoc`
+* `https://github.com/TheBigTreeInc/social/blob/main/docs/PUSH_TRANSPORT.adoc`
+* `https://github.com/pac-labs/dapi/blob/main/docs/push-and-sync.md`

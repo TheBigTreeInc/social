@@ -1,6 +1,8 @@
 = Tavi game catalog: operator deployment
 :revnumber: 0.3.8
 
+NOTE: This document describes the *legacy* Social-hosted game catalog and player-window workflow, not the target UX. Atrium owns game browsing, lobbies and launching in the target architecture. See `docs/ATRIUM_INTEGRATION.adoc`. Do not add new game UX to Tavi through this mechanism.
+
 The Social component returns a read-only `tavi.game-catalog/v1` via a public `game_catalog` operation.
 This is server-advertised metadata, *not* federated discovery or a game login flow.
 

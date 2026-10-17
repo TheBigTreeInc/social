@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.38
+release: 0.3.40
 api:
   version: v1
 cors:
@@ -74,7 +74,7 @@ limits:
   maxInFlight: 30
 database:
   backend: sqlite
-  schemaVersion: 6
+  schemaVersion: 7
   migrations:
   - version: 2
     statements:
@@ -107,6 +107,17 @@ database:
   - version: 6
     statements:
     - ALTER TABLE "SocialAccount" ADD COLUMN "ecosystemAdmin" BOOLEAN NOT NULL DEFAULT 0
+  - version: 7
+    statements:
+    - CREATE TABLE "SocialGameSubscription" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "publisher"
+      VARCHAR(48) NOT NULL, "gameId" VARCHAR(96) NOT NULL, "matchId" VARCHAR(128) NOT NULL, "enabled" BOOLEAN NOT
+      NULL, "updated" INTEGER NOT NULL)
+    - CREATE TABLE "SocialGameDelivery" ("id" INTEGER PRIMARY KEY, "publisher" VARCHAR(48) NOT NULL, "eventId" VARCHAR(96)
+      NOT NULL, "recipient" VARCHAR(72) NOT NULL, "digest" VARCHAR(64) NOT NULL, "interactionId" INTEGER NOT NULL,
+      "created" INTEGER NOT NULL)
+    - CREATE INDEX "SocialGameSubscription_subject" ON "SocialGameSubscription" ("subjectId","enabled")
+    - CREATE UNIQUE INDEX "SocialGameSubscription_unique" ON "SocialGameSubscription" ("subjectId","publisher","gameId","matchId")
+    - CREATE UNIQUE INDEX "SocialGameDelivery_unique" ON "SocialGameDelivery" ("publisher","eventId","recipient")
 models:
   SocialProfile:
     fields:
@@ -288,6 +299,81 @@ models:
       fields:
       - recipient
       - id
+  SocialGameSubscription:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      subjectId:
+        type: string
+        maxLength: 72
+        required: true
+      publisher:
+        type: string
+        maxLength: 48
+        required: true
+      gameId:
+        type: string
+        maxLength: 96
+        required: true
+      matchId:
+        type: string
+        maxLength: 128
+        required: true
+      enabled:
+        type: boolean
+        required: true
+      updated:
+        type: integer
+        required: true
+    indexes:
+    - name: SocialGameSubscription_subject
+      fields:
+      - subjectId
+      - enabled
+    - name: SocialGameSubscription_unique
+      fields:
+      - subjectId
+      - publisher
+      - gameId
+      - matchId
+      unique: true
+  SocialGameDelivery:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      publisher:
+        type: string
+        maxLength: 48
+        required: true
+      eventId:
+        type: string
+        maxLength: 96
+        required: true
+      recipient:
+        type: string
+        maxLength: 72
+        required: true
+      digest:
+        type: string
+        maxLength: 64
+        required: true
+      interactionId:
+        type: integer
+        required: true
+      created:
+        type: integer
+        required: true
+    indexes:
+    - name: SocialGameDelivery_unique
+      fields:
+      - publisher
+      - eventId
+      - recipient
+      unique: true
   SocialConversationRead:
     fields:
       id:
@@ -578,7 +664,7 @@ handlers:
     \    return {'ok':True}\n\n# Social-specific development privilege: operator-set DB entitlement, never a\n#\
     \ LoopRD management role. Checked on EVERY privileged request and profile refresh.\n# Development tokens cannot\
     \ get this privilege, even when their subject resembles\n# a registered user; no public API path changes the\
-    \ flag.\nSOCIAL_RELEASE = '0.3.38'\nSOCIAL_SCHEMA_VERSION = 6\n\ndef account_developer_permission(db, subject):\n\
+    \ flag.\nSOCIAL_RELEASE = '0.3.39'\nSOCIAL_SCHEMA_VERSION = 6\n\ndef account_developer_permission(db, subject):\n\
     \    if not isinstance(subject, str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):\n        return\
     \ False\n    account = db.execute(sa.select(ACCOUNT.c.developerEnabled).where(\n        ACCOUNT.c.id == int(subject[5:]))).first()\n\
     \    return account is not None and account[0] is True\n\ndef account_ecosystem_admin(db, subject):\n    \"\"\
@@ -603,8 +689,11 @@ handlers:
     \        if not peer.startswith('acct_'): continue\n        account=db.execute(sa.select(ACCOUNT.c.handle).where(ACCOUNT.c.id==int(peer[5:]))).first()\n\
     \        if not account:continue\n        online=db.execute(sa.select(SESSION.c.id).where(SESSION.c.subjectId==peer,\n\
     \            SESSION.c.lastSeen>=now-100,SESSION.c.expires>now,SESSION.c.revoked.is_(False)).limit(1)).first()\
-    \ is not None\n        result.append({'id':peer,'username':account[0],'status':link['status'],\n           \
-    \ 'direction':'outgoing' if link['requestedBy']==subject else 'incoming',\n            'online':online,'game':None})\n\
+    \ is not None\n        # Display names are profile choices; handles are stable account identifiers.\n      \
+    \  # Only return the peer's profile data for an existing contact relationship.\n        profile=db.execute(sa.select(PROFILE.c.data).where(PROFILE.c.subjectId==peer)).scalar_one_or_none()\n\
+    \        chosen=profile.get('displayName') if isinstance(profile,dict) else None\n        display_name=chosen\
+    \ if isinstance(chosen,str) and 1<=len(chosen)<=24 else account[0]\n        result.append({'id':peer,'username':account[0],'displayName':display_name,'status':link['status'],\n\
+    \            'direction':'outgoing' if link['requestedBy']==subject else 'incoming',\n            'online':online,'game':None})\n\
     \    return {'ok':True,'contacts':sorted(result,key=lambda v:(v['status']!='accepted',not v['online'],v['username']))}\n\
     \ndef contact_request(db,subject,handle,now):\n    peer=account_subject(db,username(handle))\n    if not peer\
     \ or peer==subject:return {'ok':False,'error':'User not found or unavailable'}\n    existing=contact_row(db,subject,peer)\n\
@@ -669,7 +758,40 @@ handlers:
     \ or host.endswith(('.local','.internal','.localhost')):continue\n            import ipaddress\n           \
     \ try:\n                if not ipaddress.ip_address(host).is_global:continue\n            except ValueError:pass\n\
     \        except ValueError:continue\n        seen.add(key)\n        games.append({'id':key,'name':name.strip(),'type':'web','url':url,'embedded':item.get('embedded')\
-    \ is True,'external':True})\n    return games\n\n\ndef execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):\n\
+    \ is True,'external':True})\n    return games\n\n\n# Account-consented game notifications: only the account\
+    \ can opt in to a match.\nGAME_ID = re.compile(r'^[a-z][a-z0-9.]{1,95}$')\nMATCH_ID = re.compile(r'^[A-Za-z0-9_-]{12,128}$')\n\
+    COMPONENT_ID = re.compile(r'^[a-z][a-z0-9-]{1,47}$')\n\ndef approved_game_publishers():\n    try: mapping=json.loads(os.getenv('LOOPRD_TAVI_GAME_CALLERS_JSON','{}'))\n\
+    \    except (ValueError,TypeError):return {}\n    if not isinstance(mapping,dict) or len(mapping)>32:return\
+    \ {}\n    return {k:set(v) for k,v in mapping.items() if isinstance(k,str) and COMPONENT_ID.fullmatch(k)\n \
+    \           and isinstance(v,list) and 0<len(v)<=32 and all(isinstance(g,str) and GAME_ID.fullmatch(g) for g\
+    \ in v)}\n\ndef set_game_subscription(db,subject,body,now):\n    if not re.fullmatch(r'acct_[1-9][0-9]{0,18}',subject):return\
+    \ error('Verified user required')\n    publisher=body.get('publisher'); game=body.get('gameId'); match=body.get('matchId');\
+    \ enabled=body.get('enabled')\n    if (not isinstance(publisher,str) or not COMPONENT_ID.fullmatch(publisher)\n\
+    \            or not isinstance(game,str) or not GAME_ID.fullmatch(game)\n            or not isinstance(match,str)\
+    \ or not MATCH_ID.fullmatch(match)\n            or type(enabled) is not bool or game not in approved_game_publishers().get(publisher,set())):\n\
+    \        return error('Game subscription not approved')\n    keys={'subject':subject,'publisher':publisher,'game':game,'match':match}\n\
+    \    existing=db.execute(sa.text('''SELECT id FROM \"SocialGameSubscription\"\n        WHERE subjectId=:subject\
+    \ AND publisher=:publisher AND gameId=:game AND matchId=:match'''),keys).scalar_one_or_none()\n    if existing\
+    \ is not None:\n        db.execute(sa.text('UPDATE \"SocialGameSubscription\" SET enabled=:enabled,updated=:now\
+    \ WHERE id=:id'),\n                   {'enabled':enabled,'now':now,'id':existing})\n    else:\n        db.execute(sa.text('''INSERT\
+    \ INTO \"SocialGameSubscription\"\n            (subjectId,publisher,gameId,matchId,enabled,updated)\n      \
+    \      VALUES (:subject,:publisher,:game,:match,:enabled,:now)'''),\n            {**keys,'enabled':enabled,'now':now})\n\
+    \    return {'ok':True,'schema':'tavi.game-subscription/v1','enabled':enabled}\n\ndef game_event_feed(db,subject,body):\n\
+    \    after=body.get('after',0)\n    if type(after) is not int or after<0:return error('Invalid feed cursor')\n\
+    \    rows=db.execute(sa.text('''SELECT id,publisher,topic,title,data,status,response,created,expires\n     \
+    \   FROM \"SocialInteraction\" WHERE recipient=:subject AND publisher LIKE 'game:%' AND id>:after\n        ORDER\
+    \ BY id ASC LIMIT 101'''),{'subject':subject,'after':after}).mappings().all()\n    entries=[]\n    for row in\
+    \ rows[:100]:\n        item=dict(row)\n        if isinstance(item['data'],str):item['data']=json.loads(item['data'])\n\
+    \        entries.append({'id':item['id'],'publisher':item['publisher'],'topic':item['topic'],\n            \
+    \           **item['data'],'status':item['status'],'created':item['created'],'expires':item['expires']})\n \
+    \   return {'ok':True,'schema':'tavi.game-events/v1','events':entries,'next':entries[-1]['id'] if entries else\
+    \ after,\n            'hasMore':len(rows)>100}\n\ndef atrium_app_url():\n    base=os.getenv('LOOPRD_TAVI_ATRIUM_BASE_URL','')\n\
+    \    if not base or len(base)>512 or not base.endswith('/') or any(ord(c)<33 or c=='\\\\' for c in base):return\
+    \ None\n    from urllib.parse import urlsplit\n    import ipaddress\n    try:\n        u=urlsplit(base)\n  \
+    \      if u.scheme!='https' or not u.hostname or u.username or u.password or u.query or u.fragment or u.port\
+    \ not in (None,443):return None\n        if u.hostname in ('localhost','localhost.localdomain') or u.hostname.endswith(('.localhost','.local','.internal')):return\
+    \ None\n        try:\n            if not ipaddress.ip_address(u.hostname).is_global:return None\n        except\
+    \ ValueError:pass\n    except (ValueError,TypeError):return None\n    return base\n\ndef execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):\n\
     \    \"\"\"Returns (response, optional notification), after SQLite commit.\"\"\"\n    if not isinstance(body,dict):\n\
     \        return error('Invalid request'),None\n    tokens=configured_tokens() if tokens is None else tokens\n\
     \    op=body.get('op')\n    now=int(time.time()) if now is None else int(now)\n    try:\n        with (nullcontext(db)\
@@ -685,20 +807,22 @@ handlers:
     \                    'accounts':True,'registration':os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower()\
     \ in ('true','1','yes'),\n                    'contacts':True,'directMessages':True,'conversationSummaries':True,'readSync':True,'sessionSeconds':SESSION_AGE,\n\
     \                    'push':{'schema':'looprd-push/v1','transport':'unifiedpush','deviceRegistration':True,\n\
-    \                            'requiresVerifiedSession':True}},None\n            if op=='register':\n       \
-    \         return register(db,body,now),None\n            if op=='login':\n                return login(db,body,now),None\n\
-    \            subject=session_identity(db,body.get('token'),now) or authorize(body.get('token'),tokens)\n   \
-    \         if not subject:\n                return error('Sign in to Social first'),None\n            if op=='interaction_feed':\n\
-    \                return interaction_feed(db,subject,now),None\n            if op=='interaction_reply':\n   \
-    \             result=interaction_reply(db,subject,body,now)\n                return result,event_signal(db)\
-    \ if result['ok'] else None\n            if op=='interaction_dismiss':\n                result=interaction_dismiss(db,subject,body,now)\n\
-    \                return result,event_signal(db) if result['ok'] else None\n            if op=='interaction_publish':\n\
-    \                # Development/initial integration publisher: only operator-authorized developer accounts.\n\
-    \                if not account_developer_permission(db,subject):\n                    return error('Publisher\
-    \ permission denied'),None\n                recipient=body.get('recipient')\n                if not isinstance(recipient,str)\
-    \ or not re.fullmatch(r'[a-z][a-z0-9_]{2,23}',recipient):return error('Invalid recipient'),None\n          \
-    \      target=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==recipient)).first()\n             \
-    \   if not target:return error('Recipient not found'),None\n                clean=validate_interaction(body.get('interaction'))\n\
+    \                            'requiresVerifiedSession':True},\n                    'atriumUrl':atrium_app_url()},None\n\
+    \            if op=='register':\n                return register(db,body,now),None\n            if op=='login':\n\
+    \                return login(db,body,now),None\n            subject=session_identity(db,body.get('token'),now)\
+    \ or authorize(body.get('token'),tokens)\n            if not subject:\n                return error('Sign in\
+    \ to Social first'),None\n            if op=='interaction_feed':\n                return interaction_feed(db,subject,now),None\n\
+    \            if op=='game_subscription_set':\n                return set_game_subscription(db,subject,body,now),None\n\
+    \            if op=='game_event_feed':\n                return game_event_feed(db,subject,body),None\n     \
+    \       if op=='interaction_reply':\n                result=interaction_reply(db,subject,body,now)\n       \
+    \         return result,event_signal(db) if result['ok'] else None\n            if op=='interaction_dismiss':\n\
+    \                result=interaction_dismiss(db,subject,body,now)\n                return result,event_signal(db)\
+    \ if result['ok'] else None\n            if op=='interaction_publish':\n                # Development/initial\
+    \ integration publisher: only operator-authorized developer accounts.\n                if not account_developer_permission(db,subject):\n\
+    \                    return error('Publisher permission denied'),None\n                recipient=body.get('recipient')\n\
+    \                if not isinstance(recipient,str) or not re.fullmatch(r'[a-z][a-z0-9_]{2,23}',recipient):return\
+    \ error('Invalid recipient'),None\n                target=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==recipient)).first()\n\
+    \                if not target:return error('Recipient not found'),None\n                clean=validate_interaction(body.get('interaction'))\n\
     \                expiry=now+min(7*86400,max(60,int(body.get('ttlSeconds',86400))))\n                db.execute(sa.insert(INTERACTION).values(recipient='acct_'+str(target[0]),publisher=subject,\n\
     \                    topic=clean['topic'],title=clean['title'],data=clean,status='open',response=None,created=now,expires=expiry))\n\
     \                return {'ok':True},event_signal(db)\n            if op=='developer_diagnostics':\n        \
@@ -853,6 +977,164 @@ handlers:
         reason:
           type: string
           maxLength: 48
+- path: /ecosystem/game-event
+  method: POST
+  kind: python
+  scopes:
+  - social:service
+  source: "\"\"\"Reviewed game component -> individual Tavi account turn delivery.\n\nNever use this for arbitrary\
+    \ recipient targeting. A player must have explicitly\nsubscribed to (publisher, game, match) through their authenticated\
+    \ Social session.\nThe caller is an operator-admitted LoopRD service credential, not a user token.\n\"\"\"\n\
+    import hashlib\nimport json\nimport os\nimport re\nimport time\nfrom urllib.parse import urlencode, urlsplit\n\
+    \nimport sqlalchemy as sa\nfrom starlette.concurrency import run_in_threadpool\n\nGAME_ID = re.compile(r'^[a-z][a-z0-9.]{1,95}$')\n\
+    MATCH_ID = re.compile(r'^[A-Za-z0-9_-]{12,128}$')\nEVENT_ID = re.compile(r'^[A-Za-z0-9_-]{8,96}$')\nCOMPONENT_ID\
+    \ = re.compile(r'^[a-z][a-z0-9-]{1,47}$')\nSUBJECT = re.compile(r'^acct_[1-9][0-9]{0,18}$')\nALLOWED_KINDS =\
+    \ {'turn.ready', 'turn.reminder', 'match.completed'}\n\n\ndef configured_publishers():\n    \"\"\"Operator-only\
+    \ allowlist of game IDs per service caller. Empty = deny.\"\"\"\n    try:\n        data = json.loads(os.environ.get('LOOPRD_TAVI_GAME_CALLERS_JSON',\
+    \ '{}'))\n    except (ValueError, TypeError):\n        return {}\n    if not isinstance(data, dict) or len(data)\
+    \ > 32:\n        return {}\n    return {key: tuple(value) for key, value in data.items()\n            if isinstance(key,\
+    \ str) and COMPONENT_ID.fullmatch(key)\n            and isinstance(value, list) and 0 < len(value) <= 32\n \
+    \           and all(isinstance(item, str) and GAME_ID.fullmatch(item) for item in value)}\n\n\ndef approved_game_label(game_id):\n\
+    \    # Operator-reviewed presentation metadata; never accept title/body from game payload.\n    try:\n     \
+    \   names = json.loads(os.environ.get('LOOPRD_TAVI_GAME_LABELS_JSON', '{}'))\n    except (ValueError, TypeError):\n\
+    \        return game_id\n    if not isinstance(names, dict) or len(names) > 100:\n        return game_id\n \
+    \   name = names.get(game_id)\n    return name.strip() if isinstance(name, str) and 1 <= len(name.strip()) <=\
+    \ 64 and not any(ord(c) < 32 for c in name) else game_id\n\n\ndef approved_atrium_url(game_id, match_id):\n\
+    \    \"\"\"Derive navigation from a private operator binding, never from game payload.\"\"\"\n    base = os.environ.get('LOOPRD_TAVI_ATRIUM_BASE_URL',\
+    \ '')\n    if not base or len(base) > 512 or any(ord(c) < 33 or c == '\\\\' for c in base):\n        return\
+    \ None\n    try:\n        url = urlsplit(base)\n        if (url.scheme != 'https' or not url.hostname or url.username\
+    \ or url.password or url.query or url.fragment\n                or url.port not in (None, 443) or not base.endswith('/')\n\
+    \                or url.hostname in ('localhost', 'localhost.localdomain') or url.hostname.endswith(('.localhost',\
+    \ '.local', '.internal'))):\n            return None\n        import ipaddress\n        try:\n            ip\
+    \ = ipaddress.ip_address(url.hostname)\n            if not ip.is_global:\n                return None\n    \
+    \    except ValueError:\n            pass\n    except (ValueError, TypeError):\n        return None\n    # An\
+    \ opaque match reference is NOT a room access token. Atrium must authorize it.\n    return base + '?' + urlencode({'game':\
+    \ game_id, 'match': match_id})\n\n\ndef game_interaction(kind, game_id, match_id, caller, event_id=None, turn_index=None):\n\
+    \    title = {'turn.ready': \"It's your turn\", 'turn.reminder': 'Turn reminder',\n             'match.completed':\
+    \ 'Game completed', 'invite.created': 'Game invitation'}[kind]\n    title += ' · ' + approved_game_label(game_id)\n\
+    \    link = approved_atrium_url(game_id, match_id)\n    actions = ([{'id': 'open-atrium', 'type': 'open-url',\
+    \ 'label': 'Open in Atrium',\n                 'url': link, 'presentation': 'external-browser'}] if link else\n\
+    \               [{'id': 'acknowledge', 'type': 'reply', 'label': 'Acknowledge', 'fields': []}])\n    return\
+    \ {'title': title, 'topic': 'game.' + kind, 'body': ('Open Atrium to continue.' if link else\n            'Atrium\
+    \ is not configured on this Social server yet.'), 'actions': actions,\n            'game': {'schema': 'tavi.game-event/v1',\
+    \ 'kind': kind, 'gameId': game_id,\n                     'matchId': match_id, 'publisher': caller, 'eventId':\
+    \ event_id,\n                     'turnIndex': turn_index}}\n\n\ndef validate_event(body, caller):\n    if not\
+    \ isinstance(body, dict) or set(body) != {'schema', 'eventId', 'kind', 'gameId', 'matchId', 'turnIndex', 'recipient'}:\n\
+    \        return None\n    recipient = body.get('recipient')\n    issuer = os.environ.get('LOOPRD_TAVI_SOCIAL_ISSUER',\
+    \ '')\n    if (body.get('schema') != 'tavi.game-event/v1' or body.get('kind') not in ALLOWED_KINDS\n       \
+    \     or not isinstance(body.get('gameId'), str) or not GAME_ID.fullmatch(body['gameId'])\n            or not\
+    \ isinstance(body.get('matchId'), str) or not MATCH_ID.fullmatch(body['matchId'])\n            or not isinstance(body.get('eventId'),\
+    \ str) or not EVENT_ID.fullmatch(body['eventId'])\n            or type(body.get('turnIndex')) is not int or\
+    \ not 0 <= body['turnIndex'] <= 10000000\n            or not isinstance(recipient, dict) or set(recipient) !=\
+    \ {'issuer', 'subject'}\n            or not isinstance(recipient.get('subject'), str) or not SUBJECT.fullmatch(recipient['subject'])\n\
+    \            or not issuer or len(issuer) > 128 or recipient.get('issuer') != issuer\n            or body['gameId']\
+    \ not in configured_publishers().get(caller, ())):\n        return None\n    return body\n\n\ndef principal_id(subject):\n\
+    \    return hashlib.sha256(('tavi-social\\0' + subject).encode()).hexdigest()\n\n\ndef deliver(ctx):\n    caller\
+    \ = getattr(ctx.principal, 'subject', None)\n    if getattr(ctx.principal, 'kind', None) != 'service' or not\
+    \ isinstance(caller, str) or not COMPONENT_ID.fullmatch(caller):\n        return {'accepted': False, 'delivery':\
+    \ 'rejected', 'reason': 'service_identity_required'}\n    body = validate_event(ctx.body, caller)\n    if body\
+    \ is None:\n        return {'accepted': False, 'delivery': 'rejected', 'reason': 'invalid_or_unapproved_event'}\n\
+    \    recipient = body['recipient']['subject']\n    now = int(time.time())\n    fingerprint = hashlib.sha256(json.dumps(body,\
+    \ sort_keys=True, separators=(',', ':')).encode()).hexdigest()\n    with ctx.transaction() as session:\n   \
+    \     prior = session.execute(sa.text('''SELECT digest FROM \"SocialGameDelivery\"\n            WHERE publisher=:publisher\
+    \ AND eventId=:eventId AND recipient=:recipient'''),\n            {'publisher': caller, 'eventId': body['eventId'],\
+    \ 'recipient': recipient}).scalar_one_or_none()\n        if prior is not None:\n            if prior != fingerprint:\n\
+    \                return {'accepted': False, 'delivery': 'rejected', 'reason': 'event_id_conflict'}\n       \
+    \     return {'accepted': True, 'delivery': 'duplicate'}\n        # Proof of consent is an authenticated Social\
+    \ subscription, NOT knowledge of an account ID.\n        eligible = session.execute(sa.text('''SELECT id FROM\
+    \ \"SocialGameSubscription\"\n            WHERE subjectId=:subject AND publisher=:publisher AND gameId=:gameId\n\
+    \              AND matchId=:matchId AND enabled=1'''),\n            {'subject': recipient, 'publisher': caller,\
+    \ 'gameId': body['gameId'], 'matchId': body['matchId']}).first()\n        if not eligible:\n            return\
+    \ {'accepted': False, 'delivery': 'rejected', 'reason': 'recipient_not_subscribed'}\n        data = game_interaction(body['kind'],\
+    \ body['gameId'], body['matchId'], caller,\n                                body['eventId'], body['turnIndex'])\n\
+    \        stored = session.execute(sa.text('''INSERT INTO \"SocialInteraction\"\n            (recipient,publisher,topic,title,data,status,response,created,expires)\n\
+    \            VALUES (:recipient,:publisher,:topic,:title,:data,'open',NULL,:created,:expires)\n            RETURNING\
+    \ id'''), {'recipient': recipient, 'publisher': 'game:' + caller,\n                               'topic': data['topic'],\
+    \ 'title': data['title'], 'data': json.dumps(data),\n                               'created': now, 'expires':\
+    \ now + 366 * 86400}).scalar_one()\n        session.execute(sa.text('''INSERT INTO \"SocialGameDelivery\" (publisher,eventId,recipient,digest,interactionId,created)\n\
+    \            VALUES (:publisher,:eventId,:recipient,:digest,:interactionId,:created)'''),\n            {'publisher':\
+    \ caller, 'eventId': body['eventId'], 'recipient': recipient,\n             'digest': fingerprint, 'interactionId':\
+    \ stored, 'created': now})\n        row = session.execute(sa.text('SELECT signal FROM \"SocialPulse\" WHERE\
+    \ id=1')).first()\n        if row:\n            signal = row[0] + 1\n            session.execute(sa.text('UPDATE\
+    \ \"SocialPulse\" SET signal=:n WHERE id=1'), {'n': signal})\n        else:\n            signal = 1\n      \
+    \      session.execute(sa.text('INSERT INTO \"SocialPulse\" (id,signal) VALUES (1,1)'))\n        ctx.emit(session,\
+    \ {'resource': 'pulses', 'action': 'updated', 'id': 1, 'data': {'id': 1, 'signal': signal}})\n        if ctx.notify\
+    \ is not None:\n            ctx.notify(session, principal_id(recipient))\n    return {'accepted': True, 'delivery':\
+    \ 'created'}\n\n\nasync def handle(ctx):\n    return await run_in_threadpool(deliver, ctx)\n"
+  contract:
+    name: tavi-game-event
+    version: 1
+    serviceOnly: true
+    request:
+      type: object
+      required:
+      - schema
+      - eventId
+      - kind
+      - gameId
+      - matchId
+      - turnIndex
+      - recipient
+      additionalProperties: false
+      properties:
+        schema:
+          type: string
+          enum:
+          - tavi.game-event/v1
+        eventId:
+          type: string
+          minLength: 8
+          maxLength: 96
+        kind:
+          type: string
+          enum:
+          - turn.ready
+          - turn.reminder
+          - match.completed
+        gameId:
+          type: string
+          minLength: 2
+          maxLength: 96
+        matchId:
+          type: string
+          minLength: 12
+          maxLength: 128
+        turnIndex:
+          type: integer
+          minimum: 0
+        recipient:
+          type: object
+          required:
+          - issuer
+          - subject
+          additionalProperties: false
+          properties:
+            issuer:
+              type: string
+              minLength: 1
+              maxLength: 128
+            subject:
+              type: string
+              minLength: 6
+              maxLength: 72
+    response:
+      type: object
+      required:
+      - accepted
+      - delivery
+      additionalProperties: false
+      properties:
+        accepted:
+          type: boolean
+        delivery:
+          type: string
+          enum:
+          - created
+          - duplicate
+          - rejected
+        reason:
+          type: string
+          maxLength: 80
 - path: /ecosystem/admin-role
   method: POST
   kind: python
@@ -901,4 +1183,5 @@ handlers:
     - lobby
     - portraits
     - server-gated-developer-tools
-    release: 0.3.38
+    - game-event-inbox-v1
+    release: 0.3.40

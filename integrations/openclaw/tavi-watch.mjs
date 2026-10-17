@@ -41,7 +41,7 @@ export async function reconcileInbox({api,checkpoint,onMessage,bootstrap='latest
   }
   const messages=inboundFromFeed(c.id,response.messages,selfId,next.peers[c.id]);
   for(const item of messages){
-   await onMessage({...item,peerName:c.username});
+   await onMessage({...item,peerName:c.displayName||c.username,peerUsername:c.username});
    next.peers[c.id]=item.id;
    if(path)await persistCheckpoint(path,next);
   }

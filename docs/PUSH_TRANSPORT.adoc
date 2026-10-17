@@ -120,3 +120,7 @@ service contract with a mounted machine credential. Tavi persists one interactio
 per promoted administrator in the same transaction as an opaque durable pulse
 and `ctx.notify` per recipient. This does not send event content in push payloads.
 Native Android distributor registration and closed-app acceptance remain open.
+
+== Game-turn wake hints (0.3.40 source candidate)
+
+Social game notifications commit persistent recipient inbox + game-event dedupe + durable pulse + optional `ctx.notify` in the same database transaction. Redis Pub/Sub and closed-app device push are NOT the inbox. The consumer must always recover from `game_event_feed` or the authenticated interaction feed after reconnecting. Native Android terminated-app push remains independently unverified; `docs/GAME_EVENT_IMPLEMENTATION.adoc` describes the setup and tests.

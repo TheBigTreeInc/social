@@ -363,7 +363,7 @@ def logout(db,token):
 # LoopRD management role. Checked on EVERY privileged request and profile refresh.
 # Development tokens cannot get this privilege, even when their subject resembles
 # a registered user; no public API path changes the flag.
-SOCIAL_RELEASE = '0.3.38'
+SOCIAL_RELEASE = '0.3.39'
 SOCIAL_SCHEMA_VERSION = 6
 
 def account_developer_permission(db, subject):
@@ -419,7 +419,12 @@ def contact_list(db,subject,now):
         if not account:continue
         online=db.execute(sa.select(SESSION.c.id).where(SESSION.c.subjectId==peer,
             SESSION.c.lastSeen>=now-100,SESSION.c.expires>now,SESSION.c.revoked.is_(False)).limit(1)).first() is not None
-        result.append({'id':peer,'username':account[0],'status':link['status'],
+        # Display names are profile choices; handles are stable account identifiers.
+        # Only return the peer's profile data for an existing contact relationship.
+        profile=db.execute(sa.select(PROFILE.c.data).where(PROFILE.c.subjectId==peer)).scalar_one_or_none()
+        chosen=profile.get('displayName') if isinstance(profile,dict) else None
+        display_name=chosen if isinstance(chosen,str) and 1<=len(chosen)<=24 else account[0]
+        result.append({'id':peer,'username':account[0],'displayName':display_name,'status':link['status'],
             'direction':'outgoing' if link['requestedBy']==subject else 'incoming',
             'online':online,'game':None})
     return {'ok':True,'contacts':sorted(result,key=lambda v:(v['status']!='accepted',not v['online'],v['username']))}
@@ -562,6 +567,69 @@ def published_games():
     return games
 
 
+# Account-consented game notifications: only the account can opt in to a match.
+GAME_ID = re.compile(r'^[a-z][a-z0-9.]{1,95}$')
+MATCH_ID = re.compile(r'^[A-Za-z0-9_-]{12,128}$')
+COMPONENT_ID = re.compile(r'^[a-z][a-z0-9-]{1,47}$')
+
+def approved_game_publishers():
+    try: mapping=json.loads(os.getenv('LOOPRD_TAVI_GAME_CALLERS_JSON','{}'))
+    except (ValueError,TypeError):return {}
+    if not isinstance(mapping,dict) or len(mapping)>32:return {}
+    return {k:set(v) for k,v in mapping.items() if isinstance(k,str) and COMPONENT_ID.fullmatch(k)
+            and isinstance(v,list) and 0<len(v)<=32 and all(isinstance(g,str) and GAME_ID.fullmatch(g) for g in v)}
+
+def set_game_subscription(db,subject,body,now):
+    if not re.fullmatch(r'acct_[1-9][0-9]{0,18}',subject):return error('Verified user required')
+    publisher=body.get('publisher'); game=body.get('gameId'); match=body.get('matchId'); enabled=body.get('enabled')
+    if (not isinstance(publisher,str) or not COMPONENT_ID.fullmatch(publisher)
+            or not isinstance(game,str) or not GAME_ID.fullmatch(game)
+            or not isinstance(match,str) or not MATCH_ID.fullmatch(match)
+            or type(enabled) is not bool or game not in approved_game_publishers().get(publisher,set())):
+        return error('Game subscription not approved')
+    keys={'subject':subject,'publisher':publisher,'game':game,'match':match}
+    existing=db.execute(sa.text('''SELECT id FROM "SocialGameSubscription"
+        WHERE subjectId=:subject AND publisher=:publisher AND gameId=:game AND matchId=:match'''),keys).scalar_one_or_none()
+    if existing is not None:
+        db.execute(sa.text('UPDATE "SocialGameSubscription" SET enabled=:enabled,updated=:now WHERE id=:id'),
+                   {'enabled':enabled,'now':now,'id':existing})
+    else:
+        db.execute(sa.text('''INSERT INTO "SocialGameSubscription"
+            (subjectId,publisher,gameId,matchId,enabled,updated)
+            VALUES (:subject,:publisher,:game,:match,:enabled,:now)'''),
+            {**keys,'enabled':enabled,'now':now})
+    return {'ok':True,'schema':'tavi.game-subscription/v1','enabled':enabled}
+
+def game_event_feed(db,subject,body):
+    after=body.get('after',0)
+    if type(after) is not int or after<0:return error('Invalid feed cursor')
+    rows=db.execute(sa.text('''SELECT id,publisher,topic,title,data,status,response,created,expires
+        FROM "SocialInteraction" WHERE recipient=:subject AND publisher LIKE 'game:%' AND id>:after
+        ORDER BY id ASC LIMIT 101'''),{'subject':subject,'after':after}).mappings().all()
+    entries=[]
+    for row in rows[:100]:
+        item=dict(row)
+        if isinstance(item['data'],str):item['data']=json.loads(item['data'])
+        entries.append({'id':item['id'],'publisher':item['publisher'],'topic':item['topic'],
+                       **item['data'],'status':item['status'],'created':item['created'],'expires':item['expires']})
+    return {'ok':True,'schema':'tavi.game-events/v1','events':entries,'next':entries[-1]['id'] if entries else after,
+            'hasMore':len(rows)>100}
+
+def atrium_app_url():
+    base=os.getenv('LOOPRD_TAVI_ATRIUM_BASE_URL','')
+    if not base or len(base)>512 or not base.endswith('/') or any(ord(c)<33 or c=='\\' for c in base):return None
+    from urllib.parse import urlsplit
+    import ipaddress
+    try:
+        u=urlsplit(base)
+        if u.scheme!='https' or not u.hostname or u.username or u.password or u.query or u.fragment or u.port not in (None,443):return None
+        if u.hostname in ('localhost','localhost.localdomain') or u.hostname.endswith(('.localhost','.local','.internal')):return None
+        try:
+            if not ipaddress.ip_address(u.hostname).is_global:return None
+        except ValueError:pass
+    except (ValueError,TypeError):return None
+    return base
+
 def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
     """Returns (response, optional notification), after SQLite commit."""
     if not isinstance(body,dict):
@@ -588,7 +656,8 @@ def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
                     'accounts':True,'registration':os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower() in ('true','1','yes'),
                     'contacts':True,'directMessages':True,'conversationSummaries':True,'readSync':True,'sessionSeconds':SESSION_AGE,
                     'push':{'schema':'looprd-push/v1','transport':'unifiedpush','deviceRegistration':True,
-                            'requiresVerifiedSession':True}},None
+                            'requiresVerifiedSession':True},
+                    'atriumUrl':atrium_app_url()},None
             if op=='register':
                 return register(db,body,now),None
             if op=='login':
@@ -598,6 +667,10 @@ def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
                 return error('Sign in to Social first'),None
             if op=='interaction_feed':
                 return interaction_feed(db,subject,now),None
+            if op=='game_subscription_set':
+                return set_game_subscription(db,subject,body,now),None
+            if op=='game_event_feed':
+                return game_event_feed(db,subject,body),None
             if op=='interaction_reply':
                 result=interaction_reply(db,subject,body,now)
                 return result,event_signal(db) if result['ok'] else None

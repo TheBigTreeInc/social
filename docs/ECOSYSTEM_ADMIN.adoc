@@ -67,3 +67,7 @@ A separate dependency entry is needed for `tavi-admin-role` if the app checks ro
 . Attempt to call the service contract using a normal Tavi session, and to access `/operator-accounts` as a normal user or service. Both must be forbidden.
 
 No fake service credentials or test accounts are bundled. A local source test passing does not prove that the remote LoopRD generation, ntfy provider, Windows or Android clients have accepted the release.
+
+== Separate game notifications, implemented source candidate 0.3.40
+
+The `tavi-game-event/v1` handler at `/ecosystem/game-event` is NOT an admin notification and never checks/promotes `ecosystemAdmin`. Approved service callers are limited by `LOOPRD_TAVI_GAME_CALLERS_JSON` to explicitly allowed games. A recipient must consent with their own authenticated `game_subscription_set` for an exact match. Persisted interaction/delivery rows, dedupe, durable event and content-free push hint are transactional. Review the migration and controls in `docs/GAME_EVENT_IMPLEMENTATION.adoc`. The preexisting administrator service contract retains all prior semantics.

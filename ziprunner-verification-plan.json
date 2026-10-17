@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.38",
+  "version": "0.3.40",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -266,6 +266,35 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SOC-GAME-02A",
+      "criteria": [
+        {
+          "id": "SOC-GAME-02A-AC1",
+          "description": "Trusted service only; authenticated match subscription and issuer verification prevent unsolicited turn delivery.",
+          "mode": "automated",
+          "checks": [
+            "SOC-GAME-02A-PY"
+          ]
+        },
+        {
+          "id": "SOC-GAME-02A-AC2",
+          "description": "Client SDK and messenger display a safe approved Atrium link without sending Social credentials.",
+          "mode": "automated",
+          "checks": [
+            "SOC-GAME-02A-JS"
+          ]
+        },
+        {
+          "id": "SOC-GAME-02A-AC3",
+          "description": "Additive schema 7, mounted service credential, durable events and push provider validated on actual LoopRD runtime.",
+          "mode": "manual",
+          "checks": [
+            "SOC-GAME-02A-LIVE"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -445,7 +474,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"
@@ -489,6 +518,38 @@
         "No unrecognized actors or unbounded payloads"
       ],
       "test_ref": "client/tests/nearby-local-session.test.mjs"
+    },
+    {
+      "id": "SOC-GAME-02A-PY",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Game-event identity, consent, unique delivery, private inbox, transaction rollback and schema tests",
+      "runner_ref": "tavi-game-events-python",
+      "assertions": [
+        "Unapproved service, wrong issuer, unsubscribed target rejected.",
+        "Same ID submitted twice creates exactly one inbox event.",
+        "Failed durable emit or push queue rolls back the inbox write."
+      ],
+      "test_ref": "tests/test_game_events.py"
+    },
+    {
+      "id": "SOC-GAME-02A-JS",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Canonical JS SDK browser/native game-event commands",
+      "runner_ref": "tavi-game-events-sdk",
+      "assertions": [
+        "Only authenticated Social endpoint called.",
+        "Invalid match or pagination cursor rejected."
+      ],
+      "test_ref": "client/tests/game-events-sdk.test.mjs"
+    },
+    {
+      "id": "SOC-GAME-02A-LIVE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Operator verifies live Social schema migration, service binding and real device notification",
+      "instructions": "Back up Social data, deploy LoopRD schema 7 on staging, configure private service credential/caller/issuer, consent as player, send duplicate event, verify one inbox event and a push hint, restart client and Redis, and confirm replay. Never mark Life gameplay or Android terminated delivery complete."
     }
   ]
 }

@@ -129,6 +129,20 @@ export class LooprdSocial {
     } finally { clearTimeout(timer); }
   }
   interactions() { return this.command('interaction_feed'); }
+  /** Game event inbox remains Social-owned; the game state stays in Life/Atrium. */
+  gameEvents(after = 0) {
+    if (!Number.isSafeInteger(after) || after < 0) throw new ProtocolError('Invalid game-event cursor');
+    return this.command('game_event_feed', {after});
+  }
+  /** Consent is bound to this authenticated Social account, not a caller-supplied subject. */
+  setGameNotification(publisher, gameId, matchId, enabled = true) {
+    if (!/^[a-z][a-z0-9-]{1,47}$/.test(publisher || '') ||
+        !/^[a-z][a-z0-9.]{1,95}$/.test(gameId || '') ||
+        !/^[A-Za-z0-9_-]{12,128}$/.test(matchId || '') || typeof enabled !== 'boolean')
+      throw new ProtocolError('Invalid game notification selection');
+    return this.command('game_subscription_set', {publisher, gameId, matchId, enabled});
+  }
+
   replyInteraction(id, action, values) { return this.command('interaction_reply', {id,action,values}); }
   dismissInteraction(id) { return this.command('interaction_dismiss', {id}); }
   publishInteraction(recipient, interaction, ttlSeconds = 86400) { return this.command('interaction_publish', {recipient,interaction,ttlSeconds}); }

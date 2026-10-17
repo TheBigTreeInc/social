@@ -1,4 +1,4 @@
-# Tavi clients and GitHub distribution — 0.3.38
+# Tavi clients and GitHub distribution — 0.3.39
 
 ## GitHub Pages
 
@@ -26,8 +26,8 @@ The OpenClaw account is an ordinary Tavi account with no administrator entitleme
 The opt-in `.github/workflows/desktop-cross-platform.yml` attempts unsigned Tauri bundles on Ubuntu 24.04 and macOS 14 when manually dispatched or when a version tag is pushed. It does not promise macOS notarization, signing, auto-update, or tested installer behavior. Review CI artifacts before distributing.
 
 
-## Tavi 0.3.38 — GitHub Actions coverage repair
+## Tavi 0.3.39 — GitHub Actions coverage repair
 
-The 0.3.27 GitHub Pages run failed **after successful Vite build** because the GitHub Pages site was not configured: `actions/configure-pages@v5` returned 404. In 0.3.38 the web client is always uploaded as a downloadable build artifact; Pages deployment still requires the repository owner to select **Settings → Pages → Build and deployment → GitHub Actions**. The deployment job is intentionally allowed to fail visibly until Pages is enabled.
+The 0.3.27 GitHub Pages run failed **after successful Vite build** because the GitHub Pages site was not configured: `actions/configure-pages@v5` returned 404. In 0.3.39 the web client is always uploaded as a downloadable build artifact; Pages deployment still requires the repository owner to select **Settings → Pages → Build and deployment → GitHub Actions**. The deployment job is intentionally allowed to fail visibly until Pages is enabled.
 
 The Linux/macOS native workflow now runs on main pushes and relevant PRs, producing a Linux amd64 `.deb` and macOS Apple Silicon `.dmg` subject to CI success. The SDK source-package workflow produces JavaScript, Python, Go, C# and OpenClaw bridge ZIPs, without implying binary distributions for language libraries. Artifacts are retained for 30 days. Native Linux/macOS workflows require remote GitHub runner verification. Social DB schema remains 6.

@@ -1,6 +1,6 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.38",
+  "version": "0.3.40",
   "tests": [
     {
       "kind": "command",
@@ -35,6 +35,15 @@
       "definition_revision": "1",
       "rerun_policy": "every_update",
       "command": "node --test client/tests/native-windows.test.mjs",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "tavi-game-event-transport-contract",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "python -m unittest discover -s tests -p test_game_events.py -v",
       "attention_on_failure": true,
       "gating": false
     }

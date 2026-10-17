@@ -1,0 +1,87 @@
+= Tavi–Atrium Boundaries, Launch and Lobby Contract
+:revnumber: 1.0-draft
+:toc: left
+:sectnums:
+
+== Status and ownership
+
+This document defines the *target architecture*, not a claim that the current clients or servers already implement it. Implementation work requires compatible Atrium, Social, and game-side changes. Existing Social `game_catalog` / Windows game-window behavior is legacy and MUST NOT be treated as the desired product model.
+
+* *Tavi* is a chat-first personal communications client: contacts, DMs, community chat, notifications, and a small app launcher. It does not own game discovery, lobby management, player matchmaking, game rules, or gameplay screens.
+* *Atrium* is the gaming destination: catalog, game pages, lobbies, invitation entry points, resume, and game launch presentation. It can be opened independently of Tavi.
+* *Game services*, such as Life, remain authoritative for game-specific rules, settings, player slots, ready state, turn sequencing, game state, and validation.
+* *LoopRD* supplies generic deployable component hosting, discovery, identity/service primitives where actually available, and component endpoints. A `looprd.yaml` must stay deployment-portable.
+
+== Tavi product boundaries
+
+Tavi MUST open to communications, not games or a general-purpose dashboard. It MAY contain a lightweight first-generation-phone-inspired app surface with simple icons for Atrium and selected useful apps; this is navigation, not an attempt to host full app workflows inside messenger views. The app surface MUST NOT displace contact list and chat as the default experience. Mobile MAY use a compact launcher screen or drawer, while Windows preserves its narrow roster and separate conversation windows. Apps MUST open dedicated views/windows or their own browser/native targets. An app store/catalog, if implemented, advertises approved app entrypoints and permissions; it does not make Tavi an app runtime or a second game catalog.
+
+Invitations are social messages or actionable notifications containing a *reference* to a game invitation, not an embedded game, private game credential, or trusted instruction to invoke arbitrary native executables. Tavi can present a game name, inviter, invitation state and a Join action. Tavi does not supply matchmaking, room chat state, game rules, or game-specific ready controls.
+
+== User journeys
+
+=== Start directly from Atrium
+
+. Open the Atrium site or app, from its URL, bookmark, or optional Tavi app shortcut.
+. Authenticate using a supported identity session and account linking/authorization contract (to be finalized against real server capabilities). Do not assume that sharing a UUID automatically shares bearer-token authority.
+. Browse catalog, choose Life, and select Play / Create / Join / Resume as supported.
+. Atrium consults game-advertised capabilities and game-session APIs; the game creates/authorizes its own session.
+. Show the lobby inside Atrium (when the game offers one). The game remains authoritative for ready state, slots, settings, invite redemption, and start.
+. Launch the game in an Atrium-controlled frame ONLY if the game explicitly permits embedding and required origin restrictions allow it; otherwise hand off to the game's own page/app. The user's chat session is unaffected.
+
+=== Join from a Tavi conversation
+
+. An authorized player issues a lobby invite through a game/Atrium integration.
+. Tavi receives a structured invitation notification/message; notification transport contains no game bearer token.
+. The recipient selects Join. Tavi opens an Atrium route with an opaque invitation reference (e.g. `/invite/<opaque-reference>`). This example is a route shape, *not* a declared live endpoint.
+. Atrium authenticates the recipient, resolves invitation status server-side, verifies audience, expiry, server, game, and lobby, and asks the game to authorize joining.
+. Atrium displays the game's lobby or a clear denial/expired/full state. Tavi never determines admission from its own client state.
+
+=== Return and continuity
+
+Atrium provides Recent / Resume when the corresponding game supports it. Tavi may show presence, invite status, or turn alerts via separately authorized published activity contracts, but never proxies gameplay or becomes the source of truth for state.
+
+== Lobby presentation
+
+Atrium owns the consistent lobby shell: game identity and artwork, host, participants, open/private visibility, slots, Join/Leave, status, Invite and Start where applicable. Fields are optional and capability-advertised; an asynchronous single-player game might offer Resume instead of a multiplayer waiting room. Game-defined extensions may render inside an Atrium-approved area or game-owned view; Atrium does not infer Life-specific rules or duplicate them in Tavi.
+
+A generic lobby may show room ID (display-only), player roster, ready indicators, game options, invite affordance and launch status. Mutations MUST execute against the authoritative game service with per-player authorization. Avoid showing debug, internal component IDs, raw service URL or developer metadata in ordinary player UI.
+
+== Discovery and registration
+
+A deployment reads a component's portable `looprd.yaml` to learn the effective deployed endpoint. If an adjacent `atriumd.yaml` exists and passes validation, an Atrium registration/reconciliation step can publish the component's game metadata and declared Atrium-compatible UI capabilities. `atriumd.yaml` MUST NOT hardcode its own deployment URL; the registrar binds it to the endpoint resolved from `looprd.yaml` at deployment time. No `atriumd.yaml` means no automatic Atrium registration. The registration operation MUST be idempotent and scoped to the actual deployed component identity.
+
+Games with their own LoopRD deployment and integration keep their existing game API and game-managed auth. Atrium does not intercept, rewrite or proxy their game logic. Equal UUIDs across Social, Atrium and a game are correlation data, not proof of access. A permissioned identity/assertion or separate game-owned authorization handshake is required for SSO or admission. This section is a proposed registrar contract pending adoption by the Atrium and LoopRD implementations.
+
+== Interface contracts to standardize
+
+[cols="1,2,2",options="header"]
+|===
+| Contract | Producer/owner | Consumer and responsibility
+| Game listing / capabilities | Game metadata registered by Atrium registrar | Atrium shows game availability and supported play flows
+| Lobby lifecycle and game session | Game service | Atrium presents generic lobby navigation and game-specific extension points
+| Invite creation and redemption | Game/Atrium integration | Tavi displays message/action; Atrium resolves and redeems
+| Identity and authorization | Deployed identity infrastructure plus game authority | Tavi, Atrium and game maintain bounded, separately authorized sessions
+| Activity and turn updates | Game component | Atrium updates game lists; Tavi may surface optional notifications
+| App directory (optional) | Approved app catalog | Tavi launcher shows an Atrium shortcut, not individual games
+|===
+
+No endpoint name in this design should be interpreted as deployed unless independently present in the actual component descriptors and handlers. Protocol/version specifics and threat-model tests must be finalized before implementation.
+
+== Safety and UX constraints
+
+* Use HTTPS and validate deep-link origin / allowlisted destination; prevent open redirects and untrusted executable launches.
+* Treat invite references as opaque and short-lived; enforce audience, expiration, replay and full-room handling server-side. Do not put long-lived bearer credentials in links, push payloads, chat text or analytics.
+* Embedded games receive no Tavi session token, local Tauri privileges or Tavi communication API implicitly.
+* Switching from Tavi to Atrium MUST preserve Tavi conversation state. Ending/leaving a game MUST NOT close Tavi or sign the user out of Social.
+* Tavi's existing public `community lobby` is a chat channel and MUST NOT be relabeled as a game-session lobby.
+* A direct Atrium link to the same game lobby MUST work without opening Tavi.
+
+== Rollout and acceptance
+
+. Keep the current `game_catalog` handler and Windows external game view operational as legacy until a migration is approved; do not silently remove deployed behavior from a documentation-only pass.
+. Implement Atrium-owned game catalog and generic lobby shell, connecting at least Life's real game-specific APIs.
+. Introduce and validate adjacent `atriumd.yaml` discovery/registration without adding absolute deployment URLs to portable manifests.
+. Specify and test safe Tavi-to-Atrium invitation route resolution, independently authorized game admission, expiration and denial.
+. Move game browsing/launch affordances out of Tavi's Games screen into a single Atrium launcher shortcut. Keep contacts and chats primary on every target.
+. Test desktop, web and mobile: start directly in Atrium; accept invitation from Tavi; return to chat; resume game; block forged/expired invitation; deny frame embedding safely.

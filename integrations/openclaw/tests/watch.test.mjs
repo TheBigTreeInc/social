@@ -9,3 +9,13 @@ test('first contact sync baselines history without sending old content',async()=
 test('failed consumer does not advance cursor',async()=>{const api={origin:'https://example.com',me:async()=>({profile:{profileId:me}}),contacts:async()=>({contacts:[{id:'acct_2',status:'accepted',username:'bob'}]}),directFeed:async()=>({messages:feed})};const cp={schema:'tavi.openclaw.inbox/v1',origin:api.origin,selfId:me,peers:{acct_2:0}};await assert.rejects(reconcileInbox({api,checkpoint:cp,onMessage:async()=>{throw Error('not accepted');}}),/not accepted/);assert.equal(cp.peers.acct_2,0);});
 test('wrong account checkpoint fails closed',async()=>{await assert.rejects(reconcileInbox({api:{origin:'https://example.com',me:async()=>({profile:{profileId:me}}),contacts:async()=>({contacts:[]})},checkpoint:{origin:'https://example.com',selfId:'acct_9',peers:{}},onMessage:async()=>{}}),/another Tavi account/);});
 test('wake parses only pulse events; poll bound',()=>{assert(pulseWake({data:'{"resource":"pulses"}'}));assert(!pulseWake({data:'{"resource":"messages"}'}));assert.equal(clampPoll(1),5000);});
+
+test('forwarded Tavi sender has chosen display name and verified username',async()=>{
+ const seen=[];
+ const api={origin:'https://example.com',me:async()=>({profile:{profileId:me}}),contacts:async()=>({contacts:[{id:'acct_2',status:'accepted',username:'dorbian',displayName:'Dorbian'}]}),directFeed:async()=>({messages:[{id:4,authorId:'acct_2',text:'hello',at:9}]})};
+ const checkpoint={schema:'tavi.openclaw.inbox/v1',origin:api.origin,selfId:me,peers:{acct_2:0}};
+ await reconcileInbox({api,checkpoint,onMessage:async m=>seen.push(m)});
+ assert.equal(seen[0].peerName,'Dorbian');
+ assert.equal(seen[0].peerUsername,'dorbian');
+ assert.equal(seen[0].peer,'acct_2');
+});

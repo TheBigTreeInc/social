@@ -51,7 +51,7 @@ class PushIdentityTests(unittest.TestCase):
         self.assertIn('push:manage',spec['auth']['scopes'])
         self.assertIn('push.unifiedpush',spec['requires'])
         self.assertEqual(spec['realtime']['delivery'],'durable')
-        self.assertEqual(spec['database']['schemaVersion'],6)
+        self.assertEqual(spec['database']['schemaVersion'],7)
         self.assertEqual(spec['auth']['verifier']['source'],(ROOT/'server/looprd_verifier.py').read_text())
         self.assertIn('http://tauri.localhost',spec['cors']['allowedOrigins'])
         self.assertEqual(spec['resources']['pulses']['permissions']['get'],['events:read'])

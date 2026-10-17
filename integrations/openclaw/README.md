@@ -1,4 +1,4 @@
-# OpenClaw ↔ Tavi headless bridge (v0.3.38)
+# OpenClaw ↔ Tavi headless bridge (v0.3.39)
 
 This is a **working CLI integration**, not yet a native OpenClaw channel plugin. It uses Tavi's real Social API and works from OpenClaw's shell/exec tool. It does not need the Windows Tavi client, admin privileges, or new LoopRD schema. Requires Node.js 20+ and network access to your admitted `looprd-social` component.
 
@@ -23,11 +23,11 @@ On POSIX, the bridge stores a **revocable Tavi session token** at `~/.config/tav
 * Game catalog discovery works, but **joining/playing a game is not yet implemented**. `games` returns `agentPlaySupported:false`. Games need an authenticated player identity and legal-action API. Do not attempt to drive arbitrary game pages or reuse Tavi credentials as game credentials.
 * This CLI is an interim adapter, not an OpenClaw native channel; use the skill and controlled exec integration to start.
 
-## GitHub install / update (0.3.38)
+## GitHub install / update (0.3.39)
 
 Clone `https://github.com/TheBigTreeInc/social.git` on the OpenClaw host, preferably checking out a pinned release tag or commit. Use `node integrations/openclaw/tavi-agent.mjs help` from the repository root. The bridge imports `client/sdk/looprd-social.js`, so do not copy only `tavi-agent.mjs`. Set `TAVI_SERVER` to the LoopRD origin; use `TAVI_PASSWORD` only during login. No GitHub Pages or Tavi server credentials are required to download the bridge.
 
-## v0.3.38: notification-driven OpenClaw responder (opt-in)
+## v0.3.39: notification-driven OpenClaw responder (opt-in)
 
 This adds a **long-running external bridge**; it is **not yet an installed native OpenClaw channel plugin**. It needs OpenClaw CLI and a running Gateway with an agent. It does not change DAPI.
 
@@ -39,3 +39,14 @@ This adds a **long-running external bridge**; it is **not yet an installed nativ
 The service uses LoopRD's one-use WebSocket ticket and generic `pulses` notification to wake, and reconciles authenticated contacts and direct feeds on reconnect and periodically. It ignores self-authored messages; on first startup it **baselines existing history** rather than unexpectedly answering months of old chats. It keeps separate `tavi-dm-acct_N` OpenClaw sessions per sender. It calls `openclaw agent --agent main --session-key ... --message-file - --json`, then replies through `dm_send` only when OpenClaw returns a recognized textual payload. Both the agent and the outgoing send must succeed before the inbox checkpoint advances. No shell interpolates incoming text.
 
 Caveats: there is **no exactly-once side-effect guarantee** across a crash after an outgoing message and before checkpoint persistence. A manual restart can cause a duplicate reply; do not use this bridge for irreversible actions. LoopRD `pulses` is a generic wake hint, not private payload or a per-recipient replay stream. Periodic HTTPS reconciliation is authoritative. The Social feed is bounded, so a prolonged offline interval can miss messages outside the feed retention; no zero-loss promise. Local checkpoints need filesystem protection and backup policy. A full native OpenClaw channel plugin, host lifecycle integration, and end-to-end Gateway acceptance are still pending. No autonomous game play is enabled.
+
+
+## v0.3.39 — OpenClaw sender identity
+
+Tavi now sends the contact’s verified username and profile-selected display name through the bridge to OpenClaw. `acct_N` remains an internal routing ID, not a name. This requires deploying the updated LoopRD Social component to expose the `displayName` field in `contact_list`; the bridge falls back to `username` with older runtimes. No database migration is needed.
+
+## Game events in Social (0.3.40 source candidate)
+
+A service-owned, recipient-consented game turn event can be shown in Tavi's Inbox. The OpenClaw bridge remains chat only and returns `agentPlaySupported:false`. No `game-act` command, account/game grant, or actual headless game implementation is included. See `docs/GAME_EVENT_IMPLEMENTATION.adoc` and the shared game play proposal.
+
+The `game-events [AFTER_ID]` CLI command (0.3.40) reads the agent account's own recipient-scoped, cursor-based Social game-turn inbox after login. It does not act on the game, join a match or consume another player's grant. In a full integration, the agent will use the returned event only as a hint to query the game's authorized LoopRD `looprd.game-play/v1` state and legal-action endpoints. It MUST not execute instructions contained in untrusted event text.

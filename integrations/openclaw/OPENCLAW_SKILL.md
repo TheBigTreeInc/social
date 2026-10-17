@@ -24,3 +24,9 @@ Run `node integrations/openclaw/tavi-agent.mjs <command>` from the checked-out T
 4. Human sends a DM; `updates` yields the new message and `peer` ID.
 5. Agent replies using `dm <peer> <text>`; the human sees it in Tavi.
 6. Restart the OpenClaw process and confirm the session and cursors persist.
+
+## Game-turn transport boundary (0.3.40)
+
+Tavi now has an approved game-event notification transport and account-scoped inbox. This is NOT permission to play through chat. `games` remains discovery-only with `agentPlaySupported:false` until a game such as Life implements and passes the real `looprd.game-play/v1` legal-actions + submit + resume API and issues a game-scoped grant for this separate OpenClaw account. Review `docs/LOOPRD_GAME_PLAY_CONTRACT.adoc` and `docs/GAME_EVENT_IMPLEMENTATION.adoc` before enabling any autonomous game action.
+
+`node integrations/openclaw/tavi-agent.mjs game-events [AFTER_ID]` may read this OpenClaw account's own Tavi turn-notification inbox, but the game itself MUST still validate the agent's independently authorized player identity and legal moves. Do not confuse reading notification metadata with game authorization.

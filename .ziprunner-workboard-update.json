@@ -1,9 +1,30 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.38",
-  "summary": "OpenClaw pulse-driven inbox service on existing DAPI, per-peer sessions, allowlisted replies and reconnect reconciliation.",
+  "version": "0.3.40",
+  "summary": "First Tavi game-event transport: consented match subscriptions, service-only transactional game turn notifications, idempotent delivery and safe Atrium navigation. Cross-project match/game validation is pending.",
   "implemented": [
+    {
+      "id": "SOC-GAME-02A",
+      "title": "Game-turn notification transport and account-scoped consent",
+      "summary": "Server-only reviewed game caller delivery, publisher/game allowlist, issuer verification, private match opt-in, additive schema 7, stable event ID dedupe, durable Social inbox, transactional pulse+UnifiedPush hint, bounded pagination and Tavi SDK/link. No real Life game grant or Atrium route yet.",
+      "operator_checks": [
+        "Back up the Social database then validate/reconcile LoopRD social schema 7 with approved runtime.",
+        "Provision LOOPRD_TAVI_SOCIAL_ISSUER, LOOPRD_TAVI_GAME_CALLERS_JSON, and a private game service credential mapped by existing LOOPRD_SOCIAL_SERVICE_SECRETS_JSON.",
+        "From a signed-in account set a subscription to an approved match; submit a service turn.ready event twice, verify one inbox entry and one push queue write; reject nonconsenting recipient and nonservice caller.",
+        "Close Tavi and re-open after the event; inbox remains visible independently from Redis; test against Atrium only when its route resolves."
+      ]
+    },
+    {
+      "id": "TAVI-AGENT-004",
+      "title": "OpenClaw sender display identity",
+      "summary": "Server contacts expose chosen displayName; bridge forwards it and verified username to OpenClaw, preserving account ID solely for routing and per-peer sessions. Existing contacts fallback to username.",
+      "operator_checks": [
+        "Deploy updated LoopRD Social component",
+        "Update and restart OpenClaw Tavi bridge",
+        "DM from a contact with distinct display name and username; verify OpenClaw uses the display name"
+      ]
+    },
     {
       "id": "TAVI-AGENT-003",
       "title": "OpenClaw notification-to-agent bridge",
@@ -41,9 +62,9 @@
       "title": "Repair Android signed APK GitHub artifact path",
       "summary": "Find Tauri APK in universal/release, verify apksigner signature, and stage it for stable GitHub Actions artifact upload. No change to app runtime or Social database.",
       "operator_checks": [
-        "Push v0.3.38 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
+        "Push v0.3.39 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
         "Confirm tavi-android-arm64-signed-release uploaded as a ZIP containing exactly one APK.",
-        "Confirm gated GitHub Release attaches direct v0.3.38 Android APK asset."
+        "Confirm gated GitHub Release attaches direct v0.3.39 Android APK asset."
       ]
     },
     {
@@ -51,8 +72,8 @@
       "title": "Verified GitHub release gate and version tags",
       "summary": "GitHub workflow_run gate waits for 7 required CI workflows on the same current main SHA; checks artifact completeness, creates immutable vX.Y.Z release with downloadable Windows, Android, Linux, macOS, web and SDK/OpenClaw bundles. Pages hosting remains independent.",
       "operator_checks": [
-        "Push 0.3.38 to main and confirm seven required workflows complete successfully.",
-        "Check Publish verified Tavi release creates tag v0.3.38 and a release containing six ZIP assets.",
+        "Push 0.3.39 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.39 and a release containing six ZIP assets.",
         "Force a build failure in a later test branch and confirm no release is created.",
         "Confirm rerunning an already-released commit never overwrites an existing tag or release."
       ]
@@ -62,9 +83,9 @@
       "title": "Replace oversized Windows client with native buddy list and separate conversations",
       "summary": "Windows main window is roster-sized instead of 1060px dashboard. Open individual Tauri chat windows and broker authenticated operations via main window without copying credentials. Build emits standalone chat page, leaves Android/web responsive, and adds native geometry/IPC checks.",
       "operator_checks": [
-        "Install the Windows NSIS artifact; sign-in opens as a narrow 355\u00d7630 window, with no blue 1060px background or a duplicate app title bar.",
+        "Install the Windows NSIS artifact; sign-in opens as a narrow 355×630 window, with no blue 1060px background or a duplicate app title bar.",
         "Sign in with an existing Social account; the same window displays buddy groups and turn alerts; verify there is no permanent right-side panel.",
-        "Double-click a buddy or open Community Lobby: a separate approximately 585\u00d7525 Windows chat window opens, and reselecting the same buddy focuses it.",
+        "Double-click a buddy or open Community Lobby: a separate approximately 585×525 Windows chat window opens, and reselecting the same buddy focuses it.",
         "Send and receive a message in the native conversation; verify chat windows do not need another login and can open simultaneously.",
         "Verify Settings/Games/Portrait and server-authorized developer switch work within the roster-sized native host.",
         "Run the Web, Windows and Android workflows; confirm Android navigation and browser API/account parity remain functional."
@@ -265,7 +286,7 @@
     {
       "id": "TAVI-SESSION-RECOVERY-025",
       "title": "Resilient session restore and automatic offline reconnection",
-      "summary": "Introduces client-side session-recovery policy, expiring-token rejection on HTTP 401 only, saved credential retention on HTTP 403 and network/5xx failures, bounded 8\u201360s reconnect attempts, online/focus recovery, manual Retry and Use another account, cancel-on-login/signout, and compact copy fix.",
+      "summary": "Introduces client-side session-recovery policy, expiring-token rejection on HTTP 401 only, saved credential retention on HTTP 403 and network/5xx failures, bounded 8–60s reconnect attempts, online/focus recovery, manual Retry and Use another account, cancel-on-login/signout, and compact copy fix.",
       "operator_checks": [
         "With Remember enabled, close Tavi and reopen while LoopRD is unreachable: confirm the DPAPI session is not deleted and manual Retry appears.",
         "Restore network; confirm Tavi retries without needing a restart and opens the same account roster only after server-side verification.",
@@ -313,7 +334,7 @@
       "summary": "Checks published GitHub Releases at startup and every six hours; displays a download notice and Help action. No automatic installer execution. Live platform acceptance pending.",
       "priority": "high",
       "operator_checks": [
-        "After GitHub Release v0.3.38 is published, start v0.3.38 Tavi and confirm the update notice appears.",
+        "After GitHub Release v0.3.39 is published, start v0.3.39 Tavi and confirm the update notice appears.",
         "Choose Download update and verify it opens the official GitHub Release, without installing anything.",
         "Check Help > Check for updates with an unavailable network and confirm messaging remains usable."
       ]
@@ -341,6 +362,11 @@
     }
   ],
   "remaining": [
+    {
+      "id": "SOC-GAME-02B",
+      "title": "Game identity grant, invitation and full Atrium interaction",
+      "summary": "Integrate trusted match membership proof, Social game-grant issuer and safe real invite route. Life game backend plus Atrium must authorize actual join/resume. Add recipient-specific invite creation and native OS background delivery acceptance."
+    },
     {
       "id": "LRS-004",
       "title": "Account recovery and hardened public registration",
@@ -434,7 +460,7 @@
     {
       "id": "TAVI-AGENT-002",
       "title": "Native OpenClaw channel plugin and game actions",
-      "summary": "The v0.3.38 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
+      "summary": "The v0.3.39 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
       "priority": "high"
     },
     {

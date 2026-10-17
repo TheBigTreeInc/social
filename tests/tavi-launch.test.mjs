@@ -14,3 +14,11 @@ test('ZipRunner builds and starts native Tavi app',async()=>{
  const build=await read('tools/auto-build.mjs');
  assert.match(build,/TAVI_EXECUTABLE_READY/);
 });
+
+test('game turn notifications remain chat-first with an optional Atrium launcher',async()=>{
+ const src=await (await import('node:fs/promises')).readFile(new URL('../client/src/main.js',import.meta.url),'utf8');
+ assert.match(src,/Open Atrium/);
+ assert.match(src,/state\.atriumUrl/);
+ assert.match(src,/isSafeAtriumUrl/);
+ assert.doesNotMatch(src,/game-tickets.*implemented/);
+});

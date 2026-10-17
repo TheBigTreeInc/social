@@ -1,4 +1,4 @@
-# Tavi Nearby / Atrium local-session contract — foundation v0.3.38
+# Tavi Nearby / Atrium local-session contract — foundation v0.3.39
 
 **Status:** offline journal implemented and tested, BLE transport / device pairing / account trust / UI / game integrations / cloud upload NOT implemented. No LoopRD database/API changes.
 
@@ -24,7 +24,7 @@ This initial prototype uses a bounded browser-compatible key-value storage adapt
 Atrium supplies an authoritative game-rule reducer and serializable game-state snapshots; per-game opt-in to nearby; online session ID mapping and transactional sync endpoint with conflict response; deterministic versioned move schema. No claim that existing games have these capabilities today.
 
 ## Acceptance milestones
-1. Offline engine: hash-chain, history persistence and divergent-sync regressions — v0.3.38.
+1. Offline engine: hash-chain, history persistence and divergent-sync regressions — v0.3.39.
 2. Two Android devices: pairing, channel encryption, discovery permissions and secure chat — pending native builds / device acceptance.
 3. One Atrium turn-based game using this engine and rules validator — pending game contract.
 4. Airplane-mode train scenario: resume after device restart, host reconnect and eventual server sync without duplicate moves — pending end-to-end validation.

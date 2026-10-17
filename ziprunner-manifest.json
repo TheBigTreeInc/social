@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.38",
-    "base_version": "0.3.38"
+    "version": "0.3.40",
+    "base_version": "0.3.39"
   },
   "update": {
-    "id": "TAVI-20261017-OPENCLAW-WAKE-038",
+    "id": "TAVI-20261018-GAME-EVENT-040",
     "kind": "source_update",
-    "created_at": "2026-10-17T16:00:00+02:00",
-    "summary": "OpenClaw persistent background responder using existing LoopRD WebSocket pulse + HTTP inbox reconciliation, accepted-contact allowlist, per-peer agent sessions and checkpointing. No new DAPI capability or Social schema."
+    "created_at": "2026-10-18T01:00:00+02:00",
+    "summary": "First Social game event transport: consent, private trusted game component delivery, durable inbox, dedupe, SDK and Atrium app navigation."
   },
   "planned_work": [
     {
@@ -179,6 +179,18 @@
       "id": "TAVI-AGENT-003",
       "title": "OpenClaw background notification consumer and opt-in agent responder",
       "acceptance_criteria": "Authenticated WebSocket pulse wake, bounded HTTP mailbox reconciliation, explicit account allowlist, per-sender OpenClaw CLI sessions, fail-closed checkpoint tests; native channel remains follow-up",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-AGENT-004",
+      "title": "Human-friendly OpenClaw sender identity",
+      "acceptance_criteria": "OpenClaw prompt has Tavi contact display name and username; acct_N stays routing identity; fallback works and regression tests pass",
+      "priority": "high"
+    },
+    {
+      "id": "SOC-GAME-02A",
+      "title": "Consented turn alerts via trusted component service",
+      "acceptance_criteria": "Additive SQL migration, operator-approved component/game mapping, issuer check, per-match consent, exactly-once inbox effect on repeated ID, durable Social event and optional push hint, client navigation and tests.",
       "priority": "high"
     }
   ],
@@ -685,6 +697,41 @@
           "description": "Allowlist and response routing tests"
         }
       ]
+    },
+    {
+      "id": "TAVI-AGENT-004",
+      "summary": "Expose chosen displayName in contact_list; forward name/handle to OpenClaw; assert identity prompt.",
+      "evidence": [
+        {
+          "ref": "integrations/openclaw/tests/service.test.mjs",
+          "kind": "test"
+        },
+        {
+          "ref": "integrations/openclaw/tests/watch.test.mjs",
+          "kind": "test"
+        }
+      ]
+    },
+    {
+      "id": "SOC-GAME-02A",
+      "summary": "Source implements reviewed game event service, subscriber opt in/out, dedupe, durable push/event, cursor inbox, SDK and client Atrium shortcut; installation/deployment unverified.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "server/game_event_service.py",
+          "description": "Trusted notification service handler"
+        },
+        {
+          "kind": "source",
+          "ref": "server/looprd_handler.py",
+          "description": "Per-account subscriber and game-event pagination"
+        },
+        {
+          "kind": "test",
+          "ref": "tests/test_game_events.py",
+          "description": "Local service authorization/dedupe/rollback tests"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -869,11 +916,25 @@
         "description": "Release-signed APK in-app install on Android 13/14/15",
         "status": "not_run",
         "reason": "Requires GitHub signing secrets and an Android device."
+      },
+      {
+        "id": "SOC-GAME-02A-PY",
+        "description": "Game event service authorization and deduplication tests",
+        "status": "passed",
+        "command": "python -m unittest discover -s tests -p test_game_events.py -q",
+        "environment": "Container-local Python 3.13, SQLAlchemy 2.0",
+        "evidence_ref": "evidence/game-event-source-tests.md"
+      },
+      {
+        "id": "SOC-GAME-02A-LIVE",
+        "description": "Real LoopRD schema 7 and Life-to-Social live integration",
+        "status": "not_run",
+        "reason": "Requires operator-managed staging deployment, Life game turn API and match authorization."
       }
     ]
   },
   "handover": {
-    "next_pass": "Validate real OpenClaw Gateway CLI JSON contract and bridge on live host; then package native OpenClaw channel plugin using channel-core runtime SDK.",
+    "next_pass": "Add recipient-verified game invitations and Social-issued game-scoped identity grants; integrate Life participant assertions and actual Atrium game/match deep links before production activation.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -881,17 +942,19 @@
       "Android in-app Kotlin bridge has unit-tested generated source overlay but no native Gradle compilation or device acceptance in author environment.",
       "SHA journal checks detect corruption but do not authenticate other participants; pairing/signatures are not implemented.",
       "Generic LoopRD pulses remain wake hints, not message payloads; Tavi Social DMs are custom handler tables and are not available as LoopRD generic _sync snapshots. Periodic authenticated summary reconciliation remains authoritative.",
-      "Bridge is an external supervised OpenClaw CLI service, not a native OpenClaw channel. Native Gateway acceptance and exactly-once downstream delivery are unverified."
+      "Bridge is an external supervised OpenClaw CLI service, not a native OpenClaw channel. Native Gateway acceptance and exactly-once downstream delivery are unverified.",
+      "Game receipt proves consenting Social account but not game-seat membership; Life must validate participant before requesting delivery."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
       "Android UnifiedPush distributor and device testing not delivered in this pass.",
-      "No device BLE implementation or Atrium server sync contract in v0.3.38."
+      "No device BLE implementation or Atrium server sync contract in v0.3.39.",
+      "Atrium does not yet resolve game/match deep links; Life has not shipped game-turn outbox and caller integration."
     ],
     "notes": [
       "Client-side resume logic and minimal login UI only; Social database schema 6 unchanged.",
-      "The LoopRD descriptor release label is bumped to 0.3.25 for consistency, with no new Social API handler/migration.",
-      "Neither the build scripts nor the ZIP push Git or alter local runtime/private state."
+      "Neither the build scripts nor the ZIP push Git or alter local runtime/private state.",
+      "New Social schema 7 is additive, requires backup/migration and operator approval; no automatic Git push."
     ]
   },
   "operator_actions": [
@@ -902,7 +965,7 @@
     },
     {
       "id": "TAVI-UPDATES-003-OP",
-      "description": "Push v0.3.38, verify Android APK generated under universal/release, signature verified with apksigner, artifact uploaded and release gate passes; run on-device update test on following release.",
+      "description": "Push v0.3.39, verify Android APK generated under universal/release, signature verified with apksigner, artifact uploaded and release gate passes; run on-device update test on following release.",
       "status": "required"
     },
     {
@@ -919,6 +982,6 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Client-only offline journal foundation; no native nearby connectivity or real game sync. LoopRD Social database schema 6."
+    "notes": "Game-event service is opt-in and disabled without operator allowlist/issuer/credential; not a claim of end-to-end Life/Atrium play."
   }
 }

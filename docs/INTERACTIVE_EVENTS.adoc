@@ -33,3 +33,7 @@ service-origin events and denies responses. See `docs/ECOSYSTEM_ADMIN.adoc`.
 A LoopRD management key is NOT a client admin identity. No generic LoopRD-wide
 role directory, third-party SSO, arbitrary admin database operations, or embedded
 origin-bound privileged web panel is implemented. HTTPS links open externally.
+
+== Account-scoped game events (0.3.40 source candidate)
+
+Game turn notifications are created via a separate private `tavi-game-event/v1` LoopRD service contract. They reuse the existing interaction inbox and independent `game_event_feed` cursor API. Unlike `service:<component>` administrator interactions, `game:<component>` event records are visible only to their explicitly addressed account after opt-in, and do not require ecosystem-admin promotion. Details and pending invite/SSO work are in `docs/GAME_EVENT_IMPLEMENTATION.adoc`.

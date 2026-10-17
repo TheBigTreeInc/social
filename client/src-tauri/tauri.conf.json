@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Tavi",
-  "version": "0.3.38",
+  "version": "0.3.40",
   "identifier": "inc.thebigtree.looprdsocial",
   "build": {
     "beforeDevCommand": "npm run dev",

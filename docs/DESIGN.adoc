@@ -1,6 +1,6 @@
 = Tavi: Design and Architecture
 TheBigTreeInc Social project
-:revnumber: 0.3.34
+:revnumber: 0.3.40
 :toc: left
 :sectnums:
 
@@ -10,6 +10,16 @@ This AsciiDoc document is the canonical cross-client design specification for th
 `looprd-social` project. Repository root `looprd.yaml` is authoritative for the
 running Social API schema and actions; `server/looprd_handler.py` generates its handler.
 The two documents are complementary, and **this design must not redefine LoopRD core**.
+
+== Target boundary: Atrium owns gaming
+
+Tavi is a *chat-first messenger*, optionally with a small phone-like app launcher.
+Atrium, opened independently or via a Tavi shortcut/invitation, owns game
+catalog, lobbies, game launching, and player game discovery. Games retain
+rule/state authority. The previous in-Tavi Games panel and Windows game iframe
+are legacy implementation details, *not* the desired product direction.
+See `docs/ATRIUM_INTEGRATION.adoc` for target flows, portable registration,
+security boundaries and a staged migration plan.
 
 == Product identity and layout
 
@@ -137,7 +147,9 @@ Phase 1: verified HTTPS discovery document and signed server identity with expli
 
 Do not allow arbitrary remote URL fetching from client-supplied addresses (SSRF). Never trust unsigned remote claims, never replicate password hashes or session tokens, and do not treat federation as implemented until end-to-end tests across two independent servers pass.
 
-== Promoted games and the player window (0.3.8)
+== Legacy: promoted games and the player window (0.3.8)
+
+NOTE: The following section describes currently shipped/historical functionality and is superseded as target design by `docs/ATRIUM_INTEGRATION.adoc`. Do not extend this model for new games.
 
 * Social handles `game_catalog` with a public read-only `tavi.game-catalog/v1` response. The operator sets `TAVI_GAME_CATALOG_JSON` to an array of reviewed `id`, `name`, `url`, `embedded` entries; empty by default. Only public HTTPS URLs without credentials, fragments or local-network hosts are accepted. The server is authoritative; no client may publish its own game.
 * Windows opens a separate local `game.html` webview for an operator-promoted `embedded` web game, leaving Tavi's compact roster active. A sandboxed external game iframe is a display surface only. It receives no Social token or Tauri API. The local player uses an event broker in the main authenticated webview for shared server lobby feed/send only.
@@ -222,3 +234,7 @@ an explicit Use another account action; bounded automatic recovery starts on
 network restoration and applies exponential backoff while offline. HTTP 401 is
 credential rejection; HTTP 403 is not grounds to erase a device's credential.
 No local fake/offline account is fabricated. See `docs/SESSION_RECOVERY.adoc`.
+
+== Game notifications (source candidate 0.3.40)
+
+The Social component, not Tavi client, owns per-recipient game turn alerts. Only approved game component service identities can call `tavi-game-event/v1`; a Social user must explicitly opt into an approved game and match before service delivery. Social transactionally stores the inbox event, durable pulse and optional content-free push hint. Tavi only renders the existing inbox and safe Atrium shortcut. Atrium lobbies and Life game-seat authorization remain outside this component. This partial implementation does not grant game-scoped actor credentials or implement game invitations; see `docs/GAME_EVENT_IMPLEMENTATION.adoc`.

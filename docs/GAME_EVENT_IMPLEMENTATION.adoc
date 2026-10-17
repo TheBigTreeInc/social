@@ -1,0 +1,90 @@
+= Tavi / Social Game Events — Implementation Pass 0.3.40
+:revnumber: 0.3.40
+:revdate: 2026-10-18
+:toc: left
+:sectnums:
+
+== Status and authority
+
+This is a *source implementation candidate*, not evidence of a deployed LoopRD generation, a working Atrium match route, or complete Life/OpenClaw game play. The source is based on the operator-supplied Social 0.3.39 package. Social/Tavi remains a messenger, not a game registry or game-state service. Atrium owns discovery/lobby/launch; Life owns match membership, seed, rules, turn deadlines and legal actions. This pass implements only Social's *account-consented turn event transport*, and prepares one optional Atrium launcher link.
+
+The prior `tavi-admin-notify/v1` has intentionally NOT been changed or repurposed: its operator-only audience and role revocation semantics remain intact. No privilege or developer flag makes a human user into a game service. The historical Tavi promoted-game window/catalog remains present for compatibility but is not target design. See `docs/ATRIUM_INTEGRATION.adoc` and `docs/GAME_CATALOG.adoc`.
+
+== Implemented contracts
+
+=== Trusted delivery
+
+New LoopRD service contract `tavi-game-event/v1` uses `POST /looprd/looprd-social/v1/ecosystem/game-event`, with `social:service`, `serviceOnly: true` and the existing trusted component-to-service credential mechanism. A game must be explicitly admitted by the operator and must declare a matching LoopRD dependency. Cross-runtime `ctx.call` is NOT available; a separately authenticated, retryable remote bridge must be designed for remote game instances.
+
+Request, illustrative values only:
+
+[source,json]
+----
+{
+  "schema": "tavi.game-event/v1",
+  "eventId": "turn_event_000042",
+  "kind": "turn.ready",
+  "gameId": "life.loop",
+  "matchId": "match_test_012345",
+  "turnIndex": 42,
+  "recipient": {
+    "issuer": "social-local-issuer",
+    "subject": "acct_123"
+  }
+}
+----
+
+The service currently accepts only `turn.ready`, `turn.reminder` and `match.completed`; server-generated templates are used. `invite.created` is intentionally not implemented in this first pass. Returns `{accepted: true, delivery: "created"}` or `delivery: "duplicate"`; denied requests return `{accepted: false, delivery: "rejected", reason: "..."}`. The transport does NOT grant match membership. Life must verify actual participant eligibility and current turn before creating its own notification outbox event.
+
+The `(publisher,eventId,recipient)` delivery key has a unique SQL index. Repeated event IDs and identical bodies are accepted without a second inbox event or push hint; a repeated ID with different content is rejected. The same Social database transaction persists a recipient-scoped `SocialInteraction`, `SocialGameDelivery`, an opaque durable pulse and a content-free device hint via `ctx.notify` when available. Redis is optional and never authoritative. No raw game state or credentials appear in an inbox event or push payload. Source code: `server/game_event_service.py`.
+
+=== Authenticated consent and recovery
+
+The existing signed-in Social API `POST /looprd/looprd-social/v1/social` adds:
+
+* `{op:"game_subscription_set", publisher, gameId, matchId, enabled}`: creates/updates consent for the *authenticated caller only*. `enabled:false` mutes that game/match without affecting game progression. It does not assert actual Life membership or create a game grant.
+* `{op:"game_event_feed", after:0}`: cursor-based, recipient-filtered ascending game events, up to 100 at a time, with `next` and `hasMore`. The existing `interaction_feed`, dismiss/reply behavior and inbox UI also show current game-event cards.
+
+Shared JS SDK methods `LooprdSocial.setGameNotification()` and `LooprdSocial.gameEvents()` use the same protocol for web, Windows and Android. The Tavi menu offers Open Atrium when an operator-approved HTTPS base is configured. No SSO credential enters the URL. The match links contain only `game` and `match` references; Atrium must independently validate the authenticated user and match access when its route implementation exists. Absent a valid binding, an event shows a non-navigation acknowledgement instead of inventing a destination.
+
+=== Additive schema 7
+
+Social adds `SocialGameSubscription` and `SocialGameDelivery` plus narrow indexes. It retains all older tables and history, including `SocialInteraction` and prior `ecosystemAdmin` assignments. Preserve the active database; back it up before activation, validate the generated descriptor against the installed LoopRD version and rehearse migrations using disposable data. Do NOT down-migrate a production database when reverting source. Existing stored game-event interactions remain visible after any push-device expiration.
+
+== Operator-owned configuration (not source files)
+
+`LOOPRD_SOCIAL_SERVICE_SECRETS_JSON` already maps an approved component to a private LoopRD secret. A matching game deployment declares the `tavi-game-event` dependency with the same credential reference. The following values are non-secret examples only; *do not paste private credentials into source*:
+
+[source,shell]
+----
+LOOPRD_SOCIAL_SERVICE_SECRETS_JSON='{"the-life-loop":"tavi/services/the-life-loop"}'
+LOOPRD_TAVI_GAME_LABELS_JSON='{"life.loop":"The Life Loop"}'
+LOOPRD_TAVI_GAME_CALLERS_JSON='{"the-life-loop":["life.loop"]}'
+LOOPRD_TAVI_SOCIAL_ISSUER='social-local-issuer'
+LOOPRD_TAVI_ATRIUM_BASE_URL='https://your-reviewed-atrium.example/atrium/'
+----
+
+The issuer must be a stable trusted Social deployment identity and must match the recipient identity sent from the game; do not assume a bare `acct_N` is globally unique. Set the Atrium base only after the real URL/path is reviewed and accepts the `?game=...&match=...` route. If that route isn't implemented yet, leave the base unset so notifications remain readable but do not present a nonfunctional Play action. A service credential proves the *calling component*, not the recipient's membership: a subscribed recipient still requires Life-side match authorization. The service caller's allowed game IDs are never user-controlled.
+
+== First-pass local test sequence
+
+. Run `python tools/generate-looprd.py --check` and `npm run verify` from project root.
+. Run `python -m unittest discover -s tests -p test_game_events.py -v`; test user A + B consent, wrong callers/issuers, duplicate bodies, changed duplicate ID, rollback on failed durable event or push queue, and account-isolated catch-up.
+. Back up Social SQLite; validate/activate release 0.3.40 and observe schema 7 on a disposable LoopRD server. Import through ZipRunner with source-only operator approval.
+. Provision a scoped Life service identity in the private secret store, configure the allowlist and issuer, register Social account A and B.
+. From account A, call `setGameNotification('the-life-loop','life.loop','match_test_012345',true)` or the equivalent Social API; the game component then submits the contract request with A's own verified issuer + subject. Inspect A's game-event feed and normal Inbox; B should see none.
+. Repeat the same event; verify only one stored event, one durable event and one device hint. Disable the subscription; new event IDs must be rejected.
+. Simulate Redis outage, close Tavi, then reconnect and check historical inbox via HTTP; an expired push-device registration must not delete the stored notification.
+. Test a *real* Atrium page, authentication and Life match authorization only after their pending counterparts exist.
+
+== Explicit next passes
+
+* `SOC-GAME-01`: issue/verifiably exchange short-lived Social account-game grants (issuer, subject, audience, nonce, expiry, match scope, agent account). Do not send normal Tavi bearer tokens into Life or Atrium.
+* `SOC-GAME-02B`: server-derived recipient-safe `invite.created` from a verified friend/game assertion; recipient blocking and coalescing; Atrium invitation references. Do not let a game service blindly claim to speak for another user.
+* `SOC-GAME-03`: verified actual Atrium route/deep link and a small recipient action. User-visible game launch remains Atrium-owned.
+* `SOC-GAME-04`: native Android UnifiedPush distributor and terminated-app delivery acceptance; supported client parity and renewed device registrations.
+* `SOC-GAME-05`: OpenClaw should only play games through the game-owned `looprd.game-play/v1` API when game-specific legal actions, identity and headless resume tests pass. Tavi's existing OpenClaw `agentPlaySupported:false` MUST remain until then; no game-playing via DMs or browser scraping.
+
+== Scope limitations
+
+This source alone cannot finish the end-to-end Life use case. Life still uses host-side calculation and a 48-hour inactive room expiry; its migration to persistent seeded action journals is separate. Atrium's game/match query route is proposed, not verified. The current game notification subscription expresses *consent*, not cryptographic proof of seat membership; game code MUST check actual seat membership before sending. Runtime Redis availability and native closed-app notification delivery were not tested in this source-only pass. No production deploy, Git commit/push or Android/Windows installer test is claimed.

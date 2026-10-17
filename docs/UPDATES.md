@@ -1,4 +1,4 @@
-# Tavi update notifications (v0.3.38)
+# Tavi update notifications (v0.3.39)
 
 The client checks `https://api.github.com/repos/TheBigTreeInc/social/releases/latest` when started and every six hours while running. It compares strict three-part numeric versions to the built-in client version, ignoring prereleases and drafts. An available stable update appears in the roster and in Help > Download Tavi, with a manual Help > Check for updates action.
 
