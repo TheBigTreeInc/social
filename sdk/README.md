@@ -1,4 +1,4 @@
-# Tavi client SDKs (v0.3.27)
+# Tavi client SDKs (v0.3.29)
 
 All SDKs target the **same** `POST /looprd/looprd-social/v1/social` endpoint. They run on Windows, macOS, and Linux wherever their language runtime is installed; this is not a claim of compiled OS binaries.
 

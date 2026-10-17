@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.27
+release: 0.3.29
 api:
   version: v1
 cors:
@@ -577,7 +577,7 @@ handlers:
     \    return {'ok':True}\n\n# Social-specific development privilege: operator-set DB entitlement, never a\n#\
     \ LoopRD management role. Checked on EVERY privileged request and profile refresh.\n# Development tokens cannot\
     \ get this privilege, even when their subject resembles\n# a registered user; no public API path changes the\
-    \ flag.\nSOCIAL_RELEASE = '0.3.27'\nSOCIAL_SCHEMA_VERSION = 6\n\ndef account_developer_permission(db, subject):\n\
+    \ flag.\nSOCIAL_RELEASE = '0.3.29'\nSOCIAL_SCHEMA_VERSION = 6\n\ndef account_developer_permission(db, subject):\n\
     \    if not isinstance(subject, str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):\n        return\
     \ False\n    account = db.execute(sa.select(ACCOUNT.c.developerEnabled).where(\n        ACCOUNT.c.id == int(subject[5:]))).first()\n\
     \    return account is not None and account[0] is True\n\ndef account_ecosystem_admin(db, subject):\n    \"\"\
@@ -900,4 +900,4 @@ handlers:
     - lobby
     - portraits
     - server-gated-developer-tools
-    release: 0.3.27
+    release: 0.3.29

@@ -117,7 +117,7 @@ content-free UnifiedPush wake hints to verified enrolled admin devices.
 
 `client/src/device-session.js` chooses an async Windows-native credential store for the main Tauri webview and preserves the existing web/Android fallback. `client/src-tauri/src/lib.rs` provides guarded Tauri commands backed by Windows user-scoped DPAPI, never accessible to `chat-*` or `game-*` windows. The JS adapter migrates an existing remembered localStorage record exactly once, then removes the old plaintext copy. On transient `me` failures a saved credential is retained; HTTP 401/403 revokes local saved state. Browser and Android have no OS-backed vault in this pass.
 
-== Client session resilience (v0.3.27)
+== Client session resilience (v0.3.29)
 
 The shared JavaScript client continues to use the Social account/session protocol.
 The Tavi shell's `session-recovery.js` classifies credential rejection separately

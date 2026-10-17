@@ -53,9 +53,21 @@ Delivered in v0.3.24: `tools/stop-running-tavi.ps1` path-specific stop, called f
 
 == TAVI-SESSION-RECOVERY-025 — Resilient remembered-session reconnection
 
-Source-delivered in v0.3.27: preserve Windows OS-vault credentials during 403,
+Source-delivered in v0.3.29: preserve Windows OS-vault credentials during 403,
 429, 5xx and network errors; allow explicit retry or alternate account; bounded
 8/16/32/60-second retries and event-based acceleration without overlapping
 attempts; cancellation on successful login or sign-out. Node unit tests cover
 failure classification and timer behavior. Windows runtime DPAPI/reconnect and
 native chat acceptance still require the operator's device.
+
+
+## Tavi 0.3.29 — GitHub Actions coverage repair
+
+The 0.3.27 GitHub Pages run failed **after successful Vite build** because the GitHub Pages site was not configured: `actions/configure-pages@v5` returned 404. In 0.3.29 the web client is always uploaded as a downloadable build artifact; Pages deployment still requires the repository owner to select **Settings → Pages → Build and deployment → GitHub Actions**. The deployment job is intentionally allowed to fail visibly until Pages is enabled.
+
+The Linux/macOS native workflow now runs on main pushes and relevant PRs, producing a Linux amd64 `.deb` and macOS Apple Silicon `.dmg` subject to CI success. The SDK source-package workflow produces JavaScript, Python, Go, C# and OpenClaw bridge ZIPs, without implying binary distributions for language libraries. Artifacts are retained for 30 days. Native Linux/macOS workflows require remote GitHub runner verification. Social DB schema remains 6.
+
+
+## Tavi 0.3.29 — Native conversation history fix
+
+Windows chat-window peer validation previously required at least eight characters, but the server issues short IDs such as `acct_1`. Notifications worked through the main roster, while the native chat window rejected those IDs before loading history. The validator now accepts only the server-issued `acct_[1-9][0-9]{0,18}` form (and `lobby`), with regression tests for short IDs and malformed inputs. No schema migration or backend API change.

@@ -5,7 +5,7 @@ import {isValidChatPeer,chatWindowLabel} from '../src/native-windows.js';
 const read = path => readFile(new URL(path,import.meta.url),'utf8');
 test('lobby and server-issued contact IDs map deterministically to Tauri labels',()=>{
  assert.equal(chatWindowLabel('lobby'),'chat-lobby');
- assert.equal(chatWindowLabel('user_alex'),'chat-user_alex');
+ assert.equal(chatWindowLabel('acct_1'),'chat-acct_1');
  for(const peer of ['..','foo/bar','http://evil.test','user%2Fadmin','','bob']){
    assert.equal(isValidChatPeer(peer),false);
    assert.throws(()=>chatWindowLabel(peer));

@@ -1,4 +1,4 @@
-# v0.3.27 session recovery acceptance evidence
+# v0.3.29 session recovery acceptance evidence
 
 Automated source tests: `node --test client/tests/session-recovery.test.mjs client/tests/secure-session-contract.test.mjs`. The policy test classifies 401, 403, and transient failures. Scheduler tests check bounded delay, coalescing, disabling on account switch and guards after rejection.
 

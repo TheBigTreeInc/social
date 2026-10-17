@@ -1,17 +1,17 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.27",
-  "summary": "Tavi 0.3.27: GitHub-first distribution with Pages deployment for the existing browser client, reusable JavaScript/Python/Go/C# SDK source, OpenClaw clone-and-run instructions, and cross-platform CI verification. Server schema remains 6.",
+  "version": "0.3.29",
+  "summary": "Tavi 0.3.29: fix native Windows chat-window validation for short Social account IDs, so selecting contacts opens message history; schema 6 unchanged.",
   "implemented": [
     {
       "id": "SCL-021",
       "title": "Replace oversized Windows client with native buddy list and separate conversations",
       "summary": "Windows main window is roster-sized instead of 1060px dashboard. Open individual Tauri chat windows and broker authenticated operations via main window without copying credentials. Build emits standalone chat page, leaves Android/web responsive, and adds native geometry/IPC checks.",
       "operator_checks": [
-        "Install the Windows NSIS artifact; sign-in opens as a narrow 355×630 window, with no blue 1060px background or a duplicate app title bar.",
+        "Install the Windows NSIS artifact; sign-in opens as a narrow 355\u00d7630 window, with no blue 1060px background or a duplicate app title bar.",
         "Sign in with an existing Social account; the same window displays buddy groups and turn alerts; verify there is no permanent right-side panel.",
-        "Double-click a buddy or open Community Lobby: a separate approximately 585×525 Windows chat window opens, and reselecting the same buddy focuses it.",
+        "Double-click a buddy or open Community Lobby: a separate approximately 585\u00d7525 Windows chat window opens, and reselecting the same buddy focuses it.",
         "Send and receive a message in the native conversation; verify chat windows do not need another login and can open simultaneously.",
         "Verify Settings/Games/Portrait and server-authorized developer switch work within the roster-sized native host.",
         "Run the Web, Windows and Android workflows; confirm Android navigation and browser API/account parity remain functional."
@@ -212,7 +212,7 @@
     {
       "id": "TAVI-SESSION-RECOVERY-025",
       "title": "Resilient session restore and automatic offline reconnection",
-      "summary": "Introduces client-side session-recovery policy, expiring-token rejection on HTTP 401 only, saved credential retention on HTTP 403 and network/5xx failures, bounded 8–60s reconnect attempts, online/focus recovery, manual Retry and Use another account, cancel-on-login/signout, and compact copy fix.",
+      "summary": "Introduces client-side session-recovery policy, expiring-token rejection on HTTP 401 only, saved credential retention on HTTP 403 and network/5xx failures, bounded 8\u201360s reconnect attempts, online/focus recovery, manual Retry and Use another account, cancel-on-login/signout, and compact copy fix.",
       "operator_checks": [
         "With Remember enabled, close Tavi and reopen while LoopRD is unreachable: confirm the DPAPI session is not deleted and manual Retry appears.",
         "Restore network; confirm Tavi retries without needing a restart and opens the same account roster only after server-side verification.",
@@ -241,6 +241,17 @@
         "Push source to TheBigTreeInc/social and enable GitHub Actions Pages; verify static client opens from /social/ and connects to the deployed LoopRD origin.",
         "Clone repository on OpenClaw host; run tavi-agent help and authenticate its dedicated account.",
         "Run Python, Go and .NET client compile/test checks on their supported platforms."
+      ]
+    },
+    {
+      "id": "TAVI-CI-028",
+      "title": "GitHub Actions desktop coverage and independent distributables",
+      "summary": "Enable Linux/macOS CI on main and PR changes; validate Pages site independently; distribute reusable SDK source bundles and OpenClaw bridge artifacts. Pages hosting remains an operator setting.",
+      "operator_checks": [
+        "Enable GitHub Pages via Settings > Pages > GitHub Actions then rerun Pages deployment.",
+        "Verify the tavi-web-client-pages-ready workflow artifact exists even if Pages deployment is disabled.",
+        "Check Linux DEB and macOS DMG workflow results and download artifacts after CI completes.",
+        "Verify the sdk-distributions workflow emits 5 ZIPs with JavaScript, Python, Go, C# and OpenClaw sources."
       ]
     }
   ],
@@ -338,7 +349,7 @@
     {
       "id": "TAVI-AGENT-002",
       "title": "Native OpenClaw channel plugin and game actions",
-      "summary": "The v0.3.27 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
+      "summary": "The v0.3.29 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
       "priority": "high"
     }
   ]

@@ -1,8 +1,12 @@
-name: Experimental macOS and Linux Tavi desktop builds
+name: Linux and macOS desktop installers
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     tags: ['v*']
+    paths: ['client/**', '.github/workflows/desktop-cross-platform.yml', 'package.json']
+  pull_request:
+    paths: ['client/**', '.github/workflows/desktop-cross-platform.yml', 'package.json']
 permissions:
   contents: read
 jobs:
@@ -12,10 +16,15 @@ jobs:
       matrix:
         include:
           - os: ubuntu-24.04
-            name: linux
+            name: linux-deb
+            bundles: deb
           - os: macos-14
-            name: macos
+            name: macos-dmg
+            bundles: dmg
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: client
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,15 +34,46 @@ jobs:
       - name: Linux system dependencies
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+        working-directory: .
       - name: Install client dependencies
         run: npm install --no-audit --no-fund
-        working-directory: client
-      - name: Build Tauri desktop bundle
-        run: npm run tauri -- build
-        working-directory: client
-      - uses: actions/upload-artifact@v4
+      - name: Verify client source
+        run: npm run check
+      - name: Prepare macOS app icon
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p src-tauri/icons/tavi.iconset
+          sips -s format png -z 16 16 src-tauri/icons/icon.png --out src-tauri/icons/tavi.iconset/icon_16x16.png >/dev/null
+          sips -s format png -z 32 32 src-tauri/icons/icon.png --out src-tauri/icons/tavi.iconset/icon_16x16@2x.png >/dev/null
+          sips -s format png -z 32 32 src-tauri/icons/icon.png --out src-tauri/icons/tavi.iconset/icon_32x32.png >/dev/null
+          sips -s format png -z 64 64 src-tauri/icons/icon.png --out src-tauri/icons/tavi.iconset/icon_32x32@2x.png >/dev/null
+          sips -s format png -z 128 128 src-tauri/icons/icon.png --out src-tauri/icons/tavi.iconset/icon_128x128.png >/dev/null
+          sips -s format png -z 256 256 src-tauri/icons/icon.png --out src-tauri/icons/tavi.iconset/icon_128x128@2x.png >/dev/null
+          sips -s format png -z 256 256 src-tauri/icons/icon.png --out src-tauri/icons/tavi.iconset/icon_256x256.png >/dev/null
+          sips -s format png -z 512 512 src-tauri/icons/icon.png --out src-tauri/icons/tavi.iconset/icon_256x256@2x.png >/dev/null
+          sips -s format png -z 512 512 src-tauri/icons/icon.png --out src-tauri/icons/tavi.iconset/icon_512x512.png >/dev/null
+          sips -s format png -z 1024 1024 src-tauri/icons/icon.png --out src-tauri/icons/tavi.iconset/icon_512x512@2x.png >/dev/null
+          iconutil -c icns src-tauri/icons/tavi.iconset -o src-tauri/icons/icon.icns
+          python3 - <<'PY2'
+          import json
+          from pathlib import Path
+          p=Path('src-tauri/tauri.conf.json'); data=json.loads(p.read_text());data['bundle']['icon'].append('icons/icon.icns');p.write_text(json.dumps(data,indent=2)+'\n')
+          PY2
+      - name: Build installer
+        run: npm run tauri -- build --bundles ${{ matrix.bundles }}
+      - name: Upload Linux DEB
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
         with:
-          name: tavi-${{ matrix.name }}-unsigned
-          path: client/src-tauri/target/release/bundle/
+          name: tavi-linux-amd64-deb
+          path: client/src-tauri/target/release/bundle/deb/*.deb
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
+      - name: Upload macOS DMG
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tavi-macos-apple-silicon-dmg
+          path: client/src-tauri/target/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+          retention-days: 30

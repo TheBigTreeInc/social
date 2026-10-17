@@ -1,4 +1,4 @@
-# Tavi 0.3.27 — Resilient remembered sessions (client pass)
+# Tavi 0.3.29 — Resilient remembered sessions (client pass)
 
 This version allows remembered sign-ins to recover when LoopRD was offline at
 startup: bounded retries, immediate retry on network restoration/focus, visible
@@ -7,7 +7,7 @@ on HTTP 403 or transient failures. Only HTTP 401 or explicit session removal
 clears rejected credentials. Fixes duplicated trusted-device help copy. Windows
 uses its existing DPAPI vault; native acceptance remains required.
 
-LoopRD descriptor release is stamped **0.3.27** for version consistency; the Social
+LoopRD descriptor release is stamped **0.3.29** for version consistency; the Social
 database remains **schema 6** with no data migration and no new server handlers.
 The client changes work without redeploying the server, although the descriptor
 must be pushed/reconciled for LoopRD to show the new release ID. See
@@ -155,10 +155,22 @@ Windows now persists opt-in Tavi sessions using a per-user DPAPI-encrypted file 
 Windows builds now close only this project's running `client/src-tauri/target/release/looprd-social-client.exe` before Cargo replaces it. The pre-build helper attempts a graceful close then, if necessary, forces termination of the path-verified PID; unrelated installed copies are unaffected. Native acceptance required. See `ZIPRUNNER_HANDOFF.md` and `docs/LOCAL_BUILD.adoc`. Schema 6 unchanged.
 
 
-## OpenClaw integration v0.3.27
+## OpenClaw integration v0.3.29
 
 A standalone headless Tavi account CLI and copyable OpenClaw agent instructions are in `integrations/openclaw/`. Use a dedicated Tavi user and private session. Chat and contacts are supported; game discovery is read-only until games implement agent-specific player/action contracts. The integration is a CLI adapter (not yet a native OpenClaw channel plugin). LoopRD schema 6 unchanged.
 
-## v0.3.27 — GitHub clients, SDKs and Pages
+## v0.3.29 — GitHub clients, SDKs and Pages
 
 See [docs/PUBLIC_CLIENTS.md](docs/PUBLIC_CLIENTS.md) and [sdk/README.md](sdk/README.md). Pages is opt-in through repository Settings; publishing the source alone does not activate Pages.
+
+
+## Tavi 0.3.29 — GitHub Actions coverage repair
+
+The 0.3.27 GitHub Pages run failed **after successful Vite build** because the GitHub Pages site was not configured: `actions/configure-pages@v5` returned 404. In 0.3.29 the web client is always uploaded as a downloadable build artifact; Pages deployment still requires the repository owner to select **Settings → Pages → Build and deployment → GitHub Actions**. The deployment job is intentionally allowed to fail visibly until Pages is enabled.
+
+The Linux/macOS native workflow now runs on main pushes and relevant PRs, producing a Linux amd64 `.deb` and macOS Apple Silicon `.dmg` subject to CI success. The SDK source-package workflow produces JavaScript, Python, Go, C# and OpenClaw bridge ZIPs, without implying binary distributions for language libraries. Artifacts are retained for 30 days. Native Linux/macOS workflows require remote GitHub runner verification. Social DB schema remains 6.
+
+
+## Tavi 0.3.29 — Native conversation history fix
+
+Windows chat-window peer validation previously required at least eight characters, but the server issues short IDs such as `acct_1`. Notifications worked through the main roster, while the native chat window rejected those IDs before loading history. The validator now accepts only the server-issued `acct_[1-9][0-9]{0,18}` form (and `lobby`), with regression tests for short IDs and malformed inputs. No schema migration or backend API change.

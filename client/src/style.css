@@ -293,7 +293,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .native-shell .aux-content{overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;}
 .native-shell .settings-account-actions{grid-template-columns:1fr;}
 
-/* v0.3.27: inline, compact remembered-session recovery at sign-in. */
+/* v0.3.29: inline, compact remembered-session recovery at sign-in. */
 .session-retry { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 8px; margin-top: 8px; border: 1px solid #b8d4c9; background: #f1faf6; }
 .session-retry span { flex: 1 1 100%; min-width: 0; font-size: 11px; color: #366454; overflow-wrap: anywhere; }
 .session-retry button { font-size: 11px; min-height: 26px; padding: 4px 8px; }
