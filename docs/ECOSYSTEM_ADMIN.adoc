@@ -1,5 +1,5 @@
 = Tavi ecosystem-admin delivery
-:revnumber: 0.3.22
+:revnumber: 0.3.23
 :toc:
 
 == Purpose and boundaries
@@ -10,7 +10,7 @@ The canonical service interface belongs to `looprd-social` (the admitted Tavi co
 
 == LoopRD management integration
 
-v0.3.22 declares `requires: [management.data, service.contracts, ...]` and schema 6, adding `SocialAccount.ecosystemAdmin BOOLEAN NOT NULL DEFAULT 0`. The `accounts` managed resource projects only `handle`, `created`, `developerEnabled` and `ecosystemAdmin`; password hashes and login fields are not exposed. The ordinary `/operator-accounts` CRUD facade requires `social:operator`, a scope issued to NO Tavi guest, user, or service. It is needed solely as a declared resource for LoopRD management. Neither users nor trusted services receive the management bearer key.
+v0.3.23 declares `requires: [management.data, service.contracts, ...]` and schema 6, adding `SocialAccount.ecosystemAdmin BOOLEAN NOT NULL DEFAULT 0`. The `accounts` managed resource projects only `handle`, `created`, `developerEnabled` and `ecosystemAdmin`; password hashes and login fields are not exposed. The ordinary `/operator-accounts` CRUD facade requires `social:operator`, a scope issued to NO Tavi guest, user, or service. It is needed solely as a declared resource for LoopRD management. Neither users nor trusted services receive the management bearer key.
 
 In `/_looprd/panel/` -> Data & actions -> `looprd-social` -> Tavi accounts, select an existing account and invoke **Promote to ecosystem admin** or **Revoke ecosystem admin**, supply an operator reason, review and confirm. Named actions are audited and idempotent by LoopRD; `ecosystemAdmin` is not a self-editable account/profile field. A separate developer entitlement remains editable from the management panel.
 
@@ -59,7 +59,7 @@ A separate dependency entry is needed for `tavi-admin-role` if the app checks ro
 == Operator acceptance after pushing to Git
 
 . Confirm LoopRD runtime supports `management.data`, `service.contracts`, verified auth, durable events and UnifiedPush, with `LOOPRD_ALLOW_PYTHON=true`. Preserve the existing configured ntfy provider and secret mounts.
-. Back up the Social DB, push `looprd.yaml` and `server/` sources to the existing `TheBigTreeInc/social` repository, and reconcile the admitted component. Confirm active release **0.3.22**, schema **6**, and no descriptor errors.
+. Back up the Social DB, push `looprd.yaml` and `server/` sources to the existing `TheBigTreeInc/social` repository, and reconcile the admitted component. Confirm active release **0.3.23**, schema **6**, and no descriptor errors.
 . Create two Tavi accounts through normal Tavi login/registration. Promote only one via Data & actions; never edit passwords in the management workspace.
 . Confirm `me.permissions.ecosystemAdmin` differs between accounts; check the management audit.
 . Provision a private test caller credential and its `LOOPRD_SOCIAL_SERVICE_SECRETS_JSON` mapping, then call `tavi-admin-notify` with a valid HTTPS link from the approved service. Only the admin account should see the new inbox event. If the admin has an active verified UnifiedPush device, LoopRD should queue a content-free sync wake.

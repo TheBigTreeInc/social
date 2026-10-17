@@ -1,6 +1,6 @@
 = Tavi: Design and Architecture
 TheBigTreeInc Social project
-:revnumber: 0.3.22
+:revnumber: 0.3.24
 :toc: left
 :sectnums:
 
@@ -184,7 +184,7 @@ separate deployment/device concerns, not built-in magic. See
 limitations and release acceptance.
 
 
-== Ecosystem administrator event delivery (0.3.22)
+== Ecosystem administrator event delivery (0.3.23)
 
 LoopRD admission and the protected operator workspace remain the only administration
 surface. The Social component explicitly exposes a safe `accounts` management
@@ -200,3 +200,15 @@ uses one transactional event and push outbox. On revocation, previously delivere
 service-origin events become inaccessible and no longer actionable on the Social
 API. The Inbox is dynamic, not an always-visible administration screen. Details
 and operator acceptance: `docs/ECOSYSTEM_ADMIN.adoc`.
+
+== Windows secure remembered-device credential storage (v0.3.23)
+
+* The native Windows main window alone can read and write an OS-account-scoped, Windows DPAPI-protected session file in Tavi local application data; no plaintext Social token remains in localStorage after successful migration.
+* An invalid server session is discarded only on confirmed authorization rejection or local expiration. Offline startup preserves the encrypted record for a later retry.
+* Browser and Android retain their existing WebView-backed storage until dedicated platform credential adapters are implemented.
+* Session storage failures are visible; a successful login is not relabeled a registration failure. Signing out clears the local credential and requests server revocation.
+* Compact Settings remain scrollable and show optional notification controls in collapsible sections, with no always-visible administration panel.
+
+== Windows rebuild lifecycle (v0.3.24)
+
+ZipRunner builds must stop only the exact running Tauri binary in the project `target/release` path before Rust overwrites it. Stop is a best-effort graceful window close followed by forceful termination of only that verified PID. Existing installed Tavi clients at other paths are not forcibly stopped. Do not remove compiled artifacts, local state or earlier working NSIS installers as a workaround. The Windows build acceptance check must confirm real behavior and test DPAPI session persistence.

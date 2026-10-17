@@ -18,9 +18,9 @@ test('admin-entitlements release upgrades Social database schema to 6',async()=>
   const pkg=JSON.parse(await read('package.json'));
   const server=JSON.parse(await read('server/looprd-release.json'));
   const spec=await read('looprd.yaml');
-  assert.equal(pkg.version,'0.3.22');
-  assert.equal(server.release,'0.3.22');
-  assert.match(spec,/release: 0\.3\.22/);
+  assert.equal(pkg.version,'0.3.24');
+  assert.equal(server.release,'0.3.24');
+  assert.match(spec,/release: 0\.3\.24/);
   assert.match(spec,/mode: verified/);
   assert.match(spec,/transport: unifiedpush/);
   assert.match(spec,/schemaVersion: 6/);

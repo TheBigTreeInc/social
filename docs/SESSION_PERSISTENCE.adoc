@@ -1,21 +1,29 @@
-= Tavi remembered-device sessions
+= Tavi remembered-device sessions (v0.3.23)
 
-== Client behavior
+== Windows desktop
 
-Tavi remembers the selected LoopRD server in existing local preferences. After login, a user can explicitly enable *Keep me signed in on this device*. The client saves its server-issued, revocable Social device token locally, not the account password. When not selected, the token is held in session storage to survive a same-tab reload.
+The user can check *Keep me signed in on this device* during sign-in or use *Remember this device* from Settings. Tavi stores the server-issued, revocable Social session token in a Windows DPAPI-encrypted file under its per-user local application-data directory (`app_local_data_dir/remembered-session.v1.dpapi`). Encryption is scoped to the current Windows account and machine by DPAPI; no secret key is included in the ZIP or committed to Git. The record includes the selected HTTPS LoopRD origin, profile identifier and saved timestamp, never the account password.
 
-On restart, the client calls the server `me` operation with the remembered token before displaying the contact list. A rejected or expired token is deleted and sign-in is requested. The remembered entry expires client-side after 29 days; the backend controls the actual validity period. Sign out first deletes the local token and then sends a server logout to revoke it; other devices are independent. A Settings action allows the user to enable or disable persistent local storage.
+Only the Tauri `main` window may call `tavi_session_load`, `tavi_session_save` or `tavi_session_clear`. Isolated chat and game windows cannot use the vault. Windows native sessions are NOT copied into browser localStorage. Existing v0.3.14–0.3.22 localStorage remembered sessions are migrated only after the protected write succeeds; the legacy copy is then cleared. A vault error never silently falls back to plaintext persistence.
 
-== Security boundaries
+On startup, Tavi loads the record and calls the authenticated Social `me` method before showing any user data. Server HTTP 401/403 rejects the token and clears the saved record. A temporary outage or timeout keeps the token for later retry instead of silently forgetting the account. The local age cap remains 29 days; server expiry/revocation is authoritative. Explicit sign-out deletes the vault entry and requests server-side logout, affecting only this device session. Turning off remembering retains the active session in ephemeral WebView session storage until application exit.
 
-The currently implemented persistence uses browser localStorage/sessionStorage within the Tavi web origin, including Tauri WebView storage. The token is accessible to scripts running in that origin; this is *not* OS credential vault protection. Require TLS, a strict content security policy, no untrusted same-origin scripts, and XSS audits before production. Native OS-secure storage is a follow-up project. Never put Social tokens in game URLs, iframe messages, browser logs, or external game domains.
+== Browser and Android
 
-This provides session continuation for the standalone Web client on its own origin, not cross-site SSO. An external Life game, other sites and federated servers MUST NOT reuse or receive the Social token. Future integration requires scoped, short-lived game authorization tickets or a standard authorization flow designed and implemented server-side.
+The standalone web client retains its existing optional same-origin localStorage mechanism (sessionStorage when not opted in). Android currently uses origin-scoped WebView storage, not a native Android Keystore integration. These are not equivalent to Windows DPAPI protection; Android Keystore is future work. Never transmit Social tokens in URLs, game iframes, logs, public events or push payloads.
 
-== Acceptance
+== UI behavior
 
-. Register/sign in with Remember unchecked; reload current web tab; session restores. Close browser session or Tavi and reopen: a new session prompts for login (browser session restore behavior may differ).
-. Sign in with Remember checked; restart Tavi or reload the same-site Web app; contact list reappears after server verification.
-. Revoke the token on server; restart; saved token is purged and no authenticated UI is shown.
-. Sign out; restart; no automatic login, and independent device sessions remain valid.
-. Confirm no password or game token is stored in remembered-session record.
+Settings on compact Windows roster remains internally scrollable, with Notifications and Background delivery as collapsible sections. The remembered-device state displayed in Settings reflects the actual last successful vault operation, not the presence of a WebView localStorage key. Errors saving or removing the credential are shown, not misreported as login failures.
+
+== Operator acceptance (native Windows outstanding)
+
+. Install Windows v0.3.23, sign in with *Keep me signed in*, close the entire application, relaunch; observe automatic sign-in after authenticated `me()` validation.
+. Confirm a DPAPI ciphertext file exists in the Windows per-user local application-data directory and that `tavi.social.session.v1` no longer contains the token in localStorage.
+. Upgrade a Windows client with a v0.3.22 remembered session and verify one-time migration, including removal of its old localStorage token.
+. Disconnect network before restart; confirm the saved sign-in remains. Restore network and relaunch to recover without entering a password.
+. Sign out (or choose *Stop remembering this device*) and relaunch; verify sign-in is required, and a different device remains signed in.
+. Try invoking the vault from a separate chat/game webview: calls must be denied.
+. Verify Settings can scroll and notifications are discoverable in compact 355px Windows window; run Windows NSIS and Android build acceptance separately.
+
+The Linux source test runner validates JS storage behavior and checks native Rust source structure but does not compile the Windows DPAPI implementation; native Windows compilation and OS integration must be validated on the target machine.

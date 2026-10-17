@@ -51,6 +51,11 @@ if ($Target -ne 'Verify') {
         if ($Target -in @('All','Windows')) {
             if ($env:OS -ne 'Windows_NT') { throw 'Windows NSIS build requires Windows. Use -Target Web on other platforms.' }
             Need 'cargo'; Need 'rustc'
+            # Cargo cannot replace a running Windows .exe (os error 5). Stop only
+            # the exact executable in this project's generated release folder.
+            # The helper first requests a graceful close, then forces that PID
+            # only if needed. Installed copies elsewhere are left untouched.
+            & (Join-Path $PSScriptRoot 'tools/stop-running-tavi.ps1') -ExecutablePath (Join-Path $PSScriptRoot 'client/src-tauri/target/release/looprd-social-client.exe')
             Run $npmCommand @('run','tauri','--','build','--bundles','nsis')
             Write-Host ('Windows installers: ' + (Join-Path $PWD 'src-tauri/target/release/bundle/nsis')) -ForegroundColor Green
         }

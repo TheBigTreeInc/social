@@ -281,3 +281,14 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
   .composer button {min-height:44px;}
   .utility {padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));}
 }
+/* v0.3.23: compact settings for the 355px Windows roster-sized window. */
+.settings-disclosure{margin:10px 0;padding:8px 10px;}
+.settings-disclosure summary{font-weight:650;font-size:12px;color:#246352;cursor:pointer;list-style-position:inside;min-height:23px;line-height:23px;}
+.settings-disclosure[open] summary{border-bottom:1px solid #d0e5dc;margin-bottom:7px;}
+.settings-disclosure .row-actions{margin-bottom:3px;}
+.settings-account-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0;}
+.settings-account-actions button{white-space:normal;min-height:31px;text-align:center;}
+.native-shell .utility{padding:12px 14px;}
+.native-shell .utility h2{font-size:15px;margin-bottom:6px;}
+.native-shell .aux-content{overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;}
+.native-shell .settings-account-actions{grid-template-columns:1fr;}

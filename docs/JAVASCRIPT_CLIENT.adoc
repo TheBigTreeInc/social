@@ -103,7 +103,7 @@ endpoints, WebSocket query parameters, local preference storage or push
 notification payloads. See `docs/PUSH_TRANSPORT.adoc`.
 
 
-== Ecosystem administrator inbox (0.3.22)
+== Ecosystem administrator inbox (0.3.23)
 
 `me.permissions.ecosystemAdmin` is informational, not a local authorization
 grant. It comes from the Social server's current `SocialAccount` state and is
@@ -112,3 +112,7 @@ reuse the existing Inbox, dynamic reply actions and external HTTPS links.
 No admin configuration panel, management API call or LoopRD operator credential
 is allowed in the browser, Android or Windows client. The same server may send
 content-free UnifiedPush wake hints to verified enrolled admin devices.
+
+== Native session persistence (v0.3.23)
+
+`client/src/device-session.js` chooses an async Windows-native credential store for the main Tauri webview and preserves the existing web/Android fallback. `client/src-tauri/src/lib.rs` provides guarded Tauri commands backed by Windows user-scoped DPAPI, never accessible to `chat-*` or `game-*` windows. The JS adapter migrates an existing remembered localStorage record exactly once, then removes the old plaintext copy. On transient `me` failures a saved credential is retained; HTTP 401/403 revokes local saved state. Browser and Android have no OS-backed vault in this pass.

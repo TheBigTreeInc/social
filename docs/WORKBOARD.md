@@ -1,4 +1,4 @@
-## TAVI-ADMIN-001 — Ecosystem administrator event delivery (0.3.22)
+## TAVI-ADMIN-001 — Ecosystem administrator event delivery (0.3.23)
 
 Implemented in source: LoopRD protected Tavi accounts management declarations,
 operator-audited promote/revoke actions, additive schema 6 administrator flag,
@@ -40,3 +40,13 @@ Client preparation v0.3.19 now includes default-off per-device consent, strict c
 ## TAVI-PUSH-001 — Provider-independent push client preparation (0.3.19)
 
 Implemented client-side readiness and tests; no new server operations or database changes. **Do not mark as verified** before checking OS notification UI and Android resume behavior on devices. See `docs/PUSH_TRANSPORT.adoc` and `client/tests/push-readiness.test.mjs`.
+
+== TAVI-SESSION-002 — Windows secure device sign-in (0.3.23)
+
+* Implemented: main-window-only Tauri commands for Windows DPAPI-encrypted local session file; async client adapter; migration of existing saved localStorage sessions; explicit signout/disable; offline restore retains vault; collapsible settings sections and focused regression tests.
+* Acceptance remaining: Windows NSIS compilation and real OS DPAPI save/restore, secondary webview access denial, offline/revoked session, compact Settings scrolling. Android Keystore is not included in this pass.
+* Git/LoopRD: all version metadata is 0.3.23; descriptor application schema remains 6. Review/push the generated `looprd.yaml` to keep server revision synchronized; no database schema bump.
+
+== TAVI-BUILD-LOCK-024 — Windows target executable build lock
+
+Delivered in v0.3.24: `tools/stop-running-tavi.ps1` path-specific stop, called from `BUILD-LOCAL.ps1` before Tauri/Rust NSIS compilation. Source test `client/tests/windows-build-lifecycle.test.mjs` added. Windows native acceptance remains required: rebuild while previous target/release Tavi is running and confirm generated NSIS succeeds, without terminating unrelated installations or deleting local/generated state.

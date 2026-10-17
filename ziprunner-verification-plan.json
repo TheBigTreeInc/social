@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.22",
+  "version": "0.3.24",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -115,6 +115,49 @@
           "mode": "manual",
           "checks": [
             "ADMIN-OP-1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-SESSION-002",
+      "criteria": [
+        {
+          "id": "TAVI-SESSION-002-AC1",
+          "description": "Native Windows remembered sessions go through a main-window-only encrypted device vault and never fall back to plaintext localStorage.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-SESSION-002-JS",
+            "TAVI-SESSION-002-RUST-STATIC"
+          ]
+        },
+        {
+          "id": "TAVI-SESSION-002-AC2",
+          "description": "Windows upgrade migrates old sessions, authenticated restoration persists over temporary outages, and logout clears/revokes device sessions.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-SESSION-002-WIN"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-BUILD-LOCK-024",
+      "criteria": [
+        {
+          "id": "TAVI-BUILD-LOCK-024-AC-1",
+          "description": "Windows build releases exactly the Cargo output exe before Tauri compilation, without stopping unrelated installed Tavi clients.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-BUILD-LOCK-024-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-BUILD-LOCK-024-AC-2",
+          "description": "Real Windows ZipRunner build succeeds while previous development binary is running, preserves user state, and produces version 0.3.24 installer.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-BUILD-LOCK-024-WINDOWS"
           ]
         }
       ]
@@ -235,7 +278,59 @@
       "kind": "manual",
       "stage": "acceptance",
       "description": "Live LoopRD Data & actions and service contract smoke",
-      "instructions": "Push reviewed 0.3.22 source; reconcile LoopRD with management.data and service.contracts; back up DB and confirm schema6. Promote one test account in management panel, configure a mounted machine credential and calling-component dependency, publish one HTTPS-link notification, verify admin-only inbox and service-only authorization, revoke role, and check audit and removal of event access. Do not claim native closed-app Android delivery."
+      "instructions": "Push reviewed 0.3.24 source; reconcile LoopRD with management.data and service.contracts; back up DB and confirm schema6. Promote one test account in management panel, configure a mounted machine credential and calling-component dependency, publish one HTTPS-link notification, verify admin-only inbox and service-only authorization, revoke role, and check audit and removal of event access. Do not claim native closed-app Android delivery."
+    },
+    {
+      "id": "TAVI-SESSION-002-JS",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Device vault adapter, WebView migration, no downgrade and session-only fallback",
+      "runner_ref": "tavi-device-session-node",
+      "assertions": [
+        "Windows persisted tokens are not written to WebView localStorage.",
+        "Existing remembered localStorage sessions migrate only after protected save succeeds.",
+        "Failed OS secure storage does not silently downgrade to plaintext."
+      ],
+      "test_ref": "client/tests/device-session.test.mjs"
+    },
+    {
+      "id": "TAVI-SESSION-002-RUST-STATIC",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Main-only Tauri DPAPI command source guard",
+      "runner_ref": "tavi-native-session-contract",
+      "assertions": [
+        "Only the main webview may access the vault commands.",
+        "Windows DPAPI protects per-user local app data and the implementation never emits credentials to a browser-visible storage API."
+      ],
+      "test_ref": "client/tests/secure-session-contract.test.mjs"
+    },
+    {
+      "id": "TAVI-SESSION-002-WIN",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Native Windows DPAPI, login and compact-Settings acceptance",
+      "instructions": "Build Windows client from ZipRunner with Rust/MSVC; verify close/reopen, migration, offline restore, sign out, vault denial from chat/game windows, and Settings scrolling. Native acceptance is not implied by source tests."
+    },
+    {
+      "id": "TAVI-BUILD-LOCK-024-NODE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Windows build helper is invoked before Cargo and targets only the exact executable path",
+      "runner_ref": "tavi-client-windows-build-lifecycle",
+      "assertions": [
+        "Build invokes targeted helper before tauri build.",
+        "Helper matches process executable full path (not name alone) and requests graceful close before targeted forced stop.",
+        "Installer fallback remains intact and stop helper participates in build digest."
+      ],
+      "test_ref": "client/tests/windows-build-lifecycle.test.mjs"
+    },
+    {
+      "id": "TAVI-BUILD-LOCK-024-WINDOWS",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "ZipRunner rebuild with prior Tavi build-output executable running",
+      "instructions": "Run the target/release/looprd-social-client.exe produced by a previous version, import v0.3.24 in ZipRunner, and confirm TAVI_BUILD_STOP_* in build log, compilation/NSIS completes, previously installed Tavi elsewhere stays running, and no user configuration or database is changed. If Access denied persists, check antivirus or Windows ACLs."
     }
   ]
 }

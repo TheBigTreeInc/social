@@ -48,3 +48,7 @@ The local auto-builder does not commit or push. It also cannot detect whether an
 == ZipRunner desktop launch (v0.3.11)
 
 The project start command is `node tools/launch-tavi.mjs`; it launches the compiled `client/src-tauri/target/release/looprd-social-client.exe` as a managed foreground process. The build hook now requires the executable *and* NSIS installer before claiming Windows success. Importing a source ZIP or building an installer alone does not install it or automatically start it outside ZipRunner's configured start lifecycle. Local project configuration may override the bundled `.zr` descriptors. Run `node tools/launch-tavi.mjs` manually to distinguish missing binary, spawn failure and normal exit.
+
+== Windows Cargo executable lock (v0.3.24)
+
+`BUILD-LOCAL.ps1 -Target Windows` calls `tools/stop-running-tavi.ps1` before `tauri build`. Rust cannot replace an executable that is still running on Windows (error 5). The helper only targets the exact `client/src-tauri/target/release/looprd-social-client.exe` path: it first requests graceful window close and, after a short wait, forcibly stops only that verified process. Other installed Tavi copies and all local settings, databases, build output and previous NSIS installers are preserved. Close your old development Tavi normally first to avoid unsaved draft loss. If no process is found yet access is denied, inspect Windows Defender, locks and ACLs rather than deleting build files.

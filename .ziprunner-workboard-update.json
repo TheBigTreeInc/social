@@ -1,8 +1,8 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.22",
-  "summary": "Tavi 0.3.22: ecosystem admin promotion and secure cross-service events (schema 6), with repaired mandatory ZipRunner workboard metadata and incremented release identifiers. Supersedes rejected 0.3.21.",
+  "version": "0.3.24",
+  "summary": "Tavi 0.3.24: fix native Windows Cargo rebuild blocked by running target/release executable (WinError 5). Scoped pre-build shutdown closes only this project build binary before NSIS compile; preserves local configuration, user data and previous installer. No database migration (schema 6).",
   "implemented": [
     {
       "id": "SCL-021",
@@ -167,7 +167,7 @@
       "title": "LoopRD operator-granted ecosystem admin notifications",
       "summary": "Data & actions exposes safe accounts projection and promote/revoke operations; approved private machine callers can broadcast administrator events or check Tavi role. Events persist and wake recipient devices transactionally; revocation removes access to previous service-origin events.",
       "operator_checks": [
-        "Back up the Social DB and push looprd.yaml plus server sources to the existing Git repository; confirm LoopRD activates release 0.3.22/schema 6 and management.data capability.",
+        "Back up the Social DB and push looprd.yaml plus server sources to the existing Git repository; confirm LoopRD activates release 0.3.23/schema 6 and management.data capability.",
         "Create two Tavi accounts. Promote one using LoopRD Data & actions, with an operator reason; verify the audit entry and per-account me.permissions.ecosystemAdmin.",
         "Configure a private caller secret reference and LOOPRD_SOCIAL_SERVICE_SECRETS_JSON mapping; call tavi-admin-notify from the approved LoopRD component using ctx.call.",
         "Confirm only the promoted account gets the inbox event. An active enrolled device should receive a content-free sync wake; native Android closed-app behavior is still pending.",
@@ -178,11 +178,35 @@
     {
       "id": "TAVI-RELEASE-022",
       "title": "Correct ZipRunner workboard and advance version after packaging fix",
-      "summary": "Correct the mandatory remaining-item summary shape that blocked ZipRunner 1.2.304.92 before source overlay; advance client, server, LoopRD descriptor, handoff and verification metadata to 0.3.22 without changing application behavior. Supersedes rejected release 0.3.21.",
+      "summary": "Correct the mandatory remaining-item summary shape that blocked ZipRunner 1.2.304.92 before source overlay; advance client, server, LoopRD descriptor, handoff and verification metadata to 0.3.23 without changing application behavior. Supersedes rejected release 0.3.21.",
       "operator_checks": [
-        "Import 0.3.22 into the existing looprd-social ZipRunner project and confirm mandatory workboard gate succeeds.",
-        "Confirm the active package metadata and built Tavi client version read 0.3.22.",
-        "Push the reviewed source and verify LoopRD reports release 0.3.22 with schema 6; complete previously listed administrator acceptance checks."
+        "Import 0.3.23 into the existing looprd-social ZipRunner project and confirm mandatory workboard gate succeeds.",
+        "Confirm the active package metadata and built Tavi client version read 0.3.23.",
+        "Push the reviewed source and verify LoopRD reports release 0.3.23 with schema 6; complete previously listed administrator acceptance checks."
+      ]
+    },
+    {
+      "id": "TAVI-SESSION-002",
+      "title": "OS-protected Windows remembered-device sessions and compact Settings UX",
+      "summary": "Added Windows DPAPI-encrypted application-data session vault restricted to Tauri main window, migrated legacy localStorage entries after protected save, preserved saved credentials on transient offline failures, and collapsed notification settings. Browser/Android existing storage behavior retained. JavaScript integration is tested; Windows compilation and on-device acceptance are outstanding.",
+      "operator_checks": [
+        "Sign in to Windows Tavi with Remember enabled, completely close the app, reopen, and verify automatic authenticated restoration without entering a password.",
+        "Inspect the per-user Tavi local app-data file remembered-session.v1.dpapi and confirm old localStorage no longer contains a Social token after migration.",
+        "Disconnect server/network, restart Tavi and verify encrypted credentials remain; reconnect and verify successful restoration.",
+        "Sign out and restart; verify account prompts for sign-in. Confirm separate chat and game webviews cannot invoke main-only native session commands.",
+        "Inspect 355px wide Settings on Windows: sections expand/collapse and scrolling keeps account controls reachable."
+      ]
+    },
+    {
+      "id": "TAVI-BUILD-LOCK-024",
+      "title": "Close running build-directory Tavi before Windows NSIS compilation",
+      "summary": "The Windows build now checks for a running release/looprd-social-client.exe at the exact project target path, requests graceful shutdown, and terminates only that path-verified PID when necessary before the Tauri/Rust compilation. Installed copies at other paths are unaffected. Existing NSIS installer rollback stays in place.",
+      "operator_checks": [
+        "Import 0.3.24 and verify ZipRunner Work board metadata passes before overlay and build.",
+        "Run an earlier Tavi executable directly from client/src-tauri/target/release, then apply this version. Confirm the pre-build log reports TAVI_BUILD_STOP_* and the running build-target copy closes before Cargo overwrites it.",
+        "Verify that the newly built Windows NSIS installer and executable report 0.3.24, then launch Tavi normally.",
+        "Confirm an independently installed Tavi executable at a different path is not stopped by this build script, and that app settings and runtime data remain unchanged.",
+        "If Rust still reports Access denied with no matching process, investigate antivirus or folder permissions rather than deleting target/release or changing folder ACLs."
       ]
     }
   ],
@@ -262,7 +286,19 @@
     {
       "id": "TAVI-ADMIN-002",
       "title": "Live admin notifications acceptance",
-      "summary": "Awaiting operator acceptance after the 0.3.22 Git revision is pushed and LoopRD reconciles schema 6. Verify promotion/revocation in protected Data & actions, privately enrolled service-to-Tavi administrator notifications, recipient-only inbox access, and ntfy wake delivery. Requires a running compatible LoopRD instance and private service credential enrollment; these live checks are not claimed complete.",
+      "summary": "Awaiting operator acceptance after the 0.3.24 Git revision is pushed and LoopRD reconciles schema 6. Verify promotion/revocation in protected Data & actions, privately enrolled service-to-Tavi administrator notifications, recipient-only inbox access, and ntfy wake delivery. Requires a running compatible LoopRD instance and private service credential enrollment; these live checks are not claimed complete.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-SESSION-003",
+      "title": "Windows native DPAPI and compact Settings acceptance",
+      "summary": "Windows source tests pass, but v0.3.23 NSIS failed replacing a running target/release executable (WinError 5). v0.3.24 adds a path-specific pre-build close/stop; repeat native build and then validate DPAPI session restoration, logout, outage behavior and chat window isolation. Android Keystore is separate.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-BUILD-LOCK-025",
+      "title": "Windows native rebuild acceptance after targeted process shutdown",
+      "summary": "Requires an actual ZipRunner Windows build with a running prior Tavi target executable to prove file-lock handling. Confirm accurate stop diagnostics, successful NSIS compilation, previous-installer rollback, and no unrelated process termination. The author environment cannot run Windows PowerShell or Rust NSIS builds.",
       "priority": "high"
     }
   ]

@@ -12,7 +12,7 @@ const cfg=JSON.parse(await readFile(join(root,'tavi-build.json'),'utf8'));
 if(cfg.schema!=='tavi.auto-build-config/v1'||!cfg.targets||Object.values(cfg.targets).some(v=>typeof v!=='boolean'))throw Error('Invalid tavi-build.json target configuration');
 const state={schema:'tavi.local-build/v1',timestamp:new Date().toISOString(),results:{}};
 const files=[];
-const sources=['client/src','client/sdk','client/src-tauri/src','client/src-tauri/capabilities','client/src-tauri/icons','client/public','client/tools','client/index.html','client/chat.html','client/game.html','client/vite.config.mjs','client/package.json','client/src-tauri/Cargo.toml','client/src-tauri/build.rs','client/src-tauri/tauri.conf.json','client/src-tauri/tauri.android.conf.json','tavi-build.json','BUILD-LOCAL.ps1','tools/auto-build.mjs'];
+const sources=['client/src','client/sdk','client/src-tauri/src','client/src-tauri/capabilities','client/src-tauri/icons','client/public','client/tools','client/index.html','client/chat.html','client/game.html','client/vite.config.mjs','client/package.json','client/src-tauri/Cargo.toml','client/src-tauri/build.rs','client/src-tauri/tauri.conf.json','client/src-tauri/tauri.android.conf.json','tavi-build.json','BUILD-LOCAL.ps1','tools/auto-build.mjs','tools/stop-running-tavi.ps1'];
 async function walk(path){const st=await stat(path).catch(()=>null);if(!st)return;if(st.isDirectory()){for(const entry of (await readdir(path)).sort())await walk(join(path,entry));}else if(st.isFile())files.push(path)}
 for(const path of sources)await walk(join(root,path));
 const hash=createHash('sha256');for(const path of files.sort()){hash.update(relative(root,path).replaceAll('\\','/'));hash.update(await readFile(path))}const digest=hash.digest('hex');

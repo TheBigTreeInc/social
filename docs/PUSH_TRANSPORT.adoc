@@ -113,7 +113,7 @@ Social's mailbox API.
   its own private projected resource contract.
 
 
-== Admin event delivery (0.3.22)
+== Admin event delivery (0.3.23)
 
 Approved other LoopRD components may call Tavi's `tavi-admin-notify/v1`
 service contract with a mounted machine credential. Tavi persists one interaction

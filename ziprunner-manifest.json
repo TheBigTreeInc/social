@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.22",
-    "base_version": "0.3.20"
+    "version": "0.3.24",
+    "base_version": "0.3.23"
   },
   "update": {
-    "id": "TAVI-20261017-ADMIN-022",
+    "id": "TAVI-20261017-BUILDLOCK-024",
     "kind": "source_update",
-    "created_at": "2026-10-17T10:30:00+02:00",
-    "summary": "Add opt-in LoopRD management for promoting/revoking Tavi ecosystem administrators; trusted service contracts deliver per-admin inbox events and provide current-role lookup. Social schema 6. Reissued at 0.3.22: corrected mandatory workboard remaining-item summary and synchronized all release identifiers."
+    "created_at": "2026-10-17T13:25:00+02:00",
+    "summary": "Windows NSIS rebuild fix: gracefully close exact running Tavi Cargo output executable before compile (WinError 5); narrow process path matching, regression test and release bump to 0.3.24. Social schema 6 unchanged."
   },
   "planned_work": [
     {
@@ -77,6 +77,18 @@
       "id": "TAVI-ADMIN-001",
       "title": "Operator-granted Tavi ecosystem administrator delivery",
       "acceptance_criteria": "LoopRD management can promote/revoke existing account with audit reason; verified approved services deliver inbox notifications only to admins and query current role; revoked user cannot view old service events; schema 6 and outbox rollback tests pass.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-SESSION-002",
+      "title": "Secure Windows remembered-device session",
+      "acceptance_criteria": "Remembered sessions are DPAPI-encrypted in user local app data, migrated from WebView localStorage, denied to secondary windows, persisted across restarts, and correctly revoked or retained as appropriate; native acceptance pending.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-BUILD-LOCK-024",
+      "title": "Targeted Windows Cargo executable unlock before Tauri build",
+      "acceptance_criteria": "Do not terminate unrelated same-name installed Tavi; attempt graceful close, force only path-matched target PID, run before compile, keep installer backup; check source behavior and real Windows ZipRunner build.",
       "priority": "high"
     }
   ],
@@ -313,6 +325,63 @@
           "description": "Live deployment, private caller configuration and acceptance"
         }
       ]
+    },
+    {
+      "id": "TAVI-SESSION-002",
+      "summary": "Implemented Windows main-only native DPAPI token vault and async JavaScript storage adapter; migration and outage-safe restore, compact Settings and focused Node tests. Native Rust toolchain not available in the authoring environment.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src-tauri/src/lib.rs",
+          "description": "Windows DPAPI-encrypted credential file, main-window-only Tauri commands and atomic replacement"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/device-session.js",
+          "description": "Async vault adapter and migration"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/device-session.test.mjs",
+          "description": "Secure credential adapter and migration tests"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/secure-session-contract.test.mjs",
+          "description": "Native command and crypto source invariants"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/SESSION_PERSISTENCE.adoc",
+          "description": "Security model and Windows acceptance steps"
+        }
+      ]
+    },
+    {
+      "id": "TAVI-BUILD-LOCK-024",
+      "summary": "Added tools/stop-running-tavi.ps1 and wired it into BUILD-LOCAL.ps1 immediately before Windows Tauri/NSIS compilation; tagged helper in auto-build source digest and added source-level regression. Windows native run remains pending.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "tools/stop-running-tavi.ps1",
+          "description": "Targeted path-validated process shutdown (graceful then forced matching PID only)"
+        },
+        {
+          "kind": "source",
+          "ref": "BUILD-LOCAL.ps1",
+          "description": "Windows build lifecycle calls helper before Tauri build"
+        },
+        {
+          "kind": "source",
+          "ref": "tools/auto-build.mjs",
+          "description": "Build-state digest includes stop helper and previous installer rollback retained"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/windows-build-lifecycle.test.mjs",
+          "description": "Static safety and invocation ordering regression"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -327,7 +396,7 @@
     {
       "id": "TAVI-041",
       "status": "review",
-      "next_action": "Verify automatic local build uses the effective persisted ZipRunner project recipe and produces Windows installer.",
+      "next_action": "Apply v0.3.24 via ZipRunner while old target/release Tavi executable is running, confirm targeted stop and successful NSIS. No local settings or build output should be removed.",
       "blockers": [
         "ZipRunner installed project config may override source recipe."
       ]
@@ -341,9 +410,17 @@
     {
       "id": "TAVI-ADMIN-002",
       "status": "review",
-      "next_action": "Push reviewed 0.3.22 source and descriptor to TheBigTreeInc/social, confirm LoopRD latest management and service contracts, provision approved service credential mounts privately, promote a test account, deliver a test notification and revoke role.",
+      "next_action": "Push reviewed 0.3.23 source and descriptor to TheBigTreeInc/social, confirm LoopRD latest management and service contracts, provision approved service credential mounts privately, promote a test account, deliver a test notification and revoke role.",
       "blockers": [
         "Live LoopRD instance and service secrets not accessible from source test environment."
+      ]
+    },
+    {
+      "id": "TAVI-SESSION-003",
+      "status": "review",
+      "next_action": "Build and run Windows Tavi in ZipRunner with Rust/MSVC and validate live native DPAPI persistence, reconnection after outage, account signout, and separated webview access checks.",
+      "blockers": [
+        "Windows Rust/Tauri build and Windows OS testing cannot run in current Linux source environment."
       ]
     }
   ],
@@ -417,11 +494,39 @@
         "description": "Windows/Android inbox and ntfy wake acceptance",
         "status": "not_run",
         "reason": "Requires native apps and deployed LoopRD provider"
+      },
+      {
+        "id": "TAVI-SESSION-002-JS",
+        "description": "Windows DPAPI session adapter, legacy migration, browser behavior",
+        "status": "passed",
+        "command": "node --test client/tests/device-session.test.mjs",
+        "environment": "Linux Node 22",
+        "evidence_ref": "client/tests/device-session.test.mjs"
+      },
+      {
+        "id": "TAVI-SESSION-002-WIN",
+        "description": "Windows native DPAPI credential file compilation and end-to-end acceptance",
+        "status": "not_run",
+        "reason": "No Rust/Windows build environment; requires Windows ZipRunner native build and OS acceptance"
+      },
+      {
+        "id": "TAVI-BUILD-LOCK-024-NODE",
+        "description": "Windows lifecycle helper path scope and before-build invocation checks",
+        "status": "not_run",
+        "command": "node --test client/tests/windows-build-lifecycle.test.mjs",
+        "environment": "Linux Node.js",
+        "evidence_ref": "client/tests/windows-build-lifecycle.test.mjs"
+      },
+      {
+        "id": "TAVI-BUILD-LOCK-024-WINDOWS",
+        "description": "Native Win32 process shutdown and Cargo NSIS build acceptance",
+        "status": "not_run",
+        "reason": "Requires native Windows host, running previous build executable and Rust/Tauri NSIS build."
       }
     ]
   },
   "handover": {
-    "next_pass": "After Git push: run live LoopRD Data & actions promotion, private service-to-Tavi admin-notify call, admin-only inbox delivery and revocation acceptance; later add native Android UnifiedPush receiver.",
+    "next_pass": "Windows ZipRunner 0.3.24 build acceptance: run old release executable during rebuild, confirm TAVI_BUILD_STOP_* and NSIS artifact, then test DPAPI remembered sessions.",
     "risks": [
       "Changing LoopRD Social auth.mode from public to verified breaks older clients that do not provide guest/user Authorization headers. Operator reports no active users.",
       "LoopRD host must enable trusted Python verifier, advertise the required capabilities, and configure ntfy if device registration is desired.",
@@ -435,10 +540,12 @@
       "looprd.yaml changed to server release 0.3.20, auth verified/durable push, with unchanged application schema version 5; operator Git review/push and LoopRD deployment required.",
       "Both source packages and post-update test stamps declare v0.3.20.",
       "Client WebSocket uses one-time ticket; account tokens never enter WS URLs or game endpoints.",
-      "LoopRD Social release is 0.3.22 and schema is 6, with management.data and service.contracts capability requirements.",
+      "LoopRD Social release is 0.3.23 and schema is 6, with management.data and service.contracts capability requirements.",
       "Trusted service contracts are available in descriptor, but outside applications must declare dependencies and operators must provision matching secret references.",
       "No native administrator dashboard or generic LoopRD administrator role capability was added.",
-      "Versioning policy: increment release for all changes, including metadata-only packaging repairs. 0.3.22 supersedes the ZipRunner-rejected 0.3.21; no need to install 0.3.21 first."
+      "Versioning policy: increment release for all changes, including metadata-only packaging repairs. 0.3.23 supersedes the ZipRunner-rejected 0.3.21; no need to install 0.3.21 first.",
+      "v0.3.23: Windows secure vault source implemented, no database schema bump; Windows NSIS/DPAPI acceptance pending. Existing Web/Android behavior unchanged.",
+      "v0.3.24: fixed Windows target executable lock during Cargo build; Node source tests are not native Windows/NSIS acceptance. Database schema 6 unchanged; prior working NSIS rollback stays in place."
     ]
   },
   "operator_actions": [
@@ -451,6 +558,6 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Tavi server component release 0.3.22/schema 6 must be pushed and reconciled in LoopRD; source tests passed, live credential routing and native device acceptance remain outstanding."
+    "notes": "Tavi 0.3.24 application and LoopRD descriptor release; schema 6 unchanged. Windows rebuild locks previous Tavi executable in Cargo target/release; new path-scoped build preflight closes it before Rust compilation. Live Windows acceptance pending."
   }
 }

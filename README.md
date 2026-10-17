@@ -1,8 +1,8 @@
-# Tavi 0.3.22 — Ecosystem administration subscriptions
+# Tavi 0.3.24 — Windows rebuild reliability and ecosystem administration subscriptions
 
 Tavi accounts can now be promoted or demoted through **LoopRD -> Data & actions -> looprd-social -> Tavi accounts** using audited, named management actions. The `ecosystemAdmin` flag is false by default (additive Social schema 6). Trusted, privately configured LoopRD service callers can publish bounded HTTPS-link or acknowledgement notifications to all current admins through `tavi-admin-notify/v1`, and check current roles through `tavi-admin-role/v1`. The existing dynamic Inbox handles these events; no permanent admin UI is added. `docs/ECOSYSTEM_ADMIN.adoc` documents deployment and the private service secret mapping. Server push and native Android receiver remain separate acceptance gates.
 
-**Server publication required:** this package's `looprd.yaml` changes to release 0.3.22/schema 6; push source through Git and reconcile the LoopRD component. Do not push credentials, databases or state. The source tests passed locally but the live LoopRD runtime is not yet verified.
+**Server publication required:** this package's `looprd.yaml` declares release 0.3.24/schema 6; push source through Git and reconcile the LoopRD component. Do not push credentials, databases or state. The source tests passed locally but the live LoopRD runtime is not yet verified.
 
 Tavi 0.3.18: server-backed conversation previews and cross-device read state (Social schema 5). Requires reviewed LoopRD descriptor publication. See docs/CONVERSATION_SYNC.adoc.
 
@@ -119,7 +119,7 @@ Interactive events: see `docs/INTERACTIVE_EVENTS.adoc`; LoopRD deployment and sc
 This pass adds opt-in background-notification preferences, an explicit server-capability check, a bounded native wakeup contract, OS notification tests and Android resume synchronization. **No UnifiedPush distributor enrollment and no background delivery are implemented yet.** See `docs/PUSH_TRANSPORT.adoc`. `looprd.yaml` and Social schema 5 are unchanged from v0.3.18; no Git push required for this source/client change.
 
 
-## Tavi 0.3.22 — LoopRD UnifiedPush backend contract
+## Tavi 0.3.23 — LoopRD UnifiedPush backend contract
 
 This source ZIP upgrades Social from public component auth to `auth.mode:
 verified` with guest-scoped registration/login, durable events, and the
@@ -128,3 +128,11 @@ publish `looprd.yaml` before expecting device enrollment**. There are no
 existing users to migrate, but the new verified client credential contract
 is a compatibility change for older clients. A real Android distributor
 receiver is **not yet implemented**; see `docs/PUSH_TRANSPORT.adoc`.
+
+## v0.3.23 — Windows remembered-device reliability
+
+Windows now persists opt-in Tavi sessions using a per-user DPAPI-encrypted file in application data instead of WebView localStorage. Existing remembered tokens migrate on successful protected save; chat/game windows cannot read the native vault. Temporary offline startup retains saved credentials. Settings notification sections collapse to improve usability at the native roster size. Web/Android continue using existing origin-scoped storage. No Social schema migration is necessary (schema 6); native Windows DPAPI compilation/acceptance must still be completed through ZipRunner on Windows.
+
+## Tavi 0.3.24 — Windows NSIS file-lock fix
+
+Windows builds now close only this project's running `client/src-tauri/target/release/looprd-social-client.exe` before Cargo replaces it. The pre-build helper attempts a graceful close then, if necessary, forces termination of the path-verified PID; unrelated installed copies are unaffected. Native acceptance required. See `ZIPRUNNER_HANDOFF.md` and `docs/LOCAL_BUILD.adoc`. Schema 6 unchanged.
