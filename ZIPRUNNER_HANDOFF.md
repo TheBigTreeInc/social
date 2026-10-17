@@ -1,28 +1,48 @@
-ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.24|file=looprd-social-0.3.24-windows-build-lock-fix-ziprunner.zip
+ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.27|file=looprd-social-0.3.27-github-clients-ziprunner.zip
 
-# Tavi 0.3.24 — Windows build executable lock fix
+# Tavi 0.3.27 — Remembered session recovery
 
-This source update replaces v0.3.23, whose ZipRunner build failed when Cargo could not replace `client/src-tauri/target/release/looprd-social-client.exe` because the previous executable was running (Windows error 5). All 70 client tests and the Vite build passed in the failing user log. The error was confined to native Windows executable replacement.
+This source ZIP supersedes v0.3.24. Import it into the existing **looprd-social**
+ZipRunner project. Every packaged source/manifest release label is 0.3.27.
 
-## Fix
+## Delivered
 
-- `BUILD-LOCAL.ps1` now calls `tools/stop-running-tavi.ps1` immediately before Windows Tauri/NSIS compilation.
-- The helper identifies Windows processes by their full executable path, **not by process name alone**. Only the project's `target/release/looprd-social-client.exe` may be stopped. An independently installed Tavi process elsewhere is untouched.
-- It attempts to close the native window normally for up to five seconds. Only if that exact process remains does it force termination of the matching PID. Unsaved drafts in a previously running development build may be lost if it must be forced closed; close Tavi normally first when possible.
-- No program files, installers, user data, private configuration, `.env`, databases, or generated Rust target files are deleted. The existing auto-build backup of last-good NSIS installers remains.
-- Changes to the stop helper invalidate the existing native build cache. Version advanced to **0.3.24** throughout project/client/Cargo/Tauri/LoopRD metadata. The Social database remains **schema 6**; no migration.
+* New bounded (8/16/32/60 second) auto-reconnect on temporary startup failure,
+  and explicit Retry saved sign-in / Use another account controls in the narrow login window.
+* Saved session is retained on HTTP 403 and temporary errors, cleared on confirmed
+  401 invalid credential. Restored identity still comes from the server.
+* Coalescing/cancellation of retries on sign-in, sign-out and account switching.
+* Corrected duplicated trusted-device copy; no changes to DPAPI file format,
+  server authentication handlers or Social data model.
 
-## ZipRunner operator acceptance
+## Acceptance on Windows
 
-1. Import `looprd-social-0.3.24-windows-build-lock-fix-ziprunner.zip` into the existing project (do not create a second project).
-2. Optionally start the prior built `client/src-tauri/target/release/looprd-social-client.exe` to reproduce the former lock. A running installed copy at another location does not need to close.
-3. Watch ZipRunner's build log for `TAVI_BUILD_STOP_REQUESTED`, `TAVI_BUILD_STOP_CLOSED` or `TAVI_BUILD_STOP_FORCED`, then `TAVI_BUILD_STOP_READY`. If no matching process is running, READY reports zero.
-4. Confirm the Rust/NSIS build produces v0.3.24, then launch Tavi. Retest Windows DPAPI remembered sign-in, which has not changed since v0.3.23.
-5. If error 5 continues without a matched running executable, inspect Defender/antivirus quarantine, ACLs and open handles. Do not delete `target/`, loosen file permissions globally, or kill unrelated apps.
-6. A Git push is not necessary to test this local Windows fix. If keeping LoopRD active release in sync, review/push source and `looprd.yaml` after a successful build; schema 6 is unchanged.
+1. Import the ZIP and observe the ZipRunner build. Confirm the pre-build shutdown
+   from v0.3.24 still runs and Cargo/NSIS can build successfully.
+2. Log in and select Remember this device. Close Tavi, disconnect your network,
+   reopen Tavi. Confirm saved sign-in warning and Retry button without losing vault.
+3. Restore network; verify the roster reconnects without restarting or entering a
+   password. Click Retry for an immediate manual test.
+4. Sign out and reopen; verify session was revoked and is no longer restored.
+5. Confirm normal chat, contacts, interactive inbox and separate chat windows still work.
 
-## Validation boundaries
+## Validation boundary
 
-Run `npm run verify`, `python tools/generate-looprd.py --check` and `python -m unittest discover -s tests -p 'test_*.py' -q`. The new source-level `client/tests/windows-build-lifecycle.test.mjs` verifies helper call order and restrictive process selection. A native Windows Rust/NSIS build still must be executed and accepted on your ZipRunner host.
+Run `npm run verify`, `python tools/generate-looprd.py --check`, and
+`python -m unittest discover -s tests -p 'test_*.py' -q`. Native Windows
+compilation/DPAPI and live LoopRD acceptance are **not** claimed by author-side
+tests. The new source file is `client/src/session-recovery.js`; tests are in
+`client/tests/session-recovery.test.mjs`.
 
-No private credentials, runtime state or generated build output are bundled.
+Server release label changes to 0.3.27 but schema remains **6**, with no new SQL
+migration. No private secrets, local configuration, runtime state or generated
+build output are included. Git publishing remains a separate operator decision.
+
+
+## OpenClaw integration v0.3.27
+
+A standalone headless Tavi account CLI and copyable OpenClaw agent instructions are in `integrations/openclaw/`. Use a dedicated Tavi user and private session. Chat and contacts are supported; game discovery is read-only until games implement agent-specific player/action contracts. The integration is a CLI adapter (not yet a native OpenClaw channel plugin). LoopRD schema 6 unchanged.
+
+## v0.3.27 — GitHub distribution
+
+Includes `.github/workflows/pages.yml`, SDKs for Python/Go/C#, and OpenClaw GitHub install instructions. No new database migration; schema 6. After Git push enable GitHub Actions Pages in repository settings. Pages deployment and native cross-OS installers have not been executed here.

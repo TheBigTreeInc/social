@@ -1,0 +1,46 @@
+= Tavi device-session recovery and reconnect
+:revnumber: 0.3.27
+
+== Scope
+
+Tavi has a single selected LoopRD Social server per active account. Native Windows
+stores explicitly remembered Social session records using the existing main-window-only
+DPAPI vault; web/Android continue their previous origin-scoped storage mode. No new
+secret, saved password, local account database or server identity provider is introduced.
+This pass is a client change; Social database schema remains 6.
+
+== Startup and reconnection
+
+At startup Tavi loads a saved record and calls the authenticated Social `me` operation
+before displaying account data. A 401 means the credential was rejected and the client
+clears it; it does not retry the rejected credential automatically. A 403 indicates a
+server authorization or configuration problem, not proof that the credential was
+revoked: retain the record and offer manual retry. Network failures, 429, 5xx and
+other transient failures retain the record, expose manual **Retry saved sign-in**,
+and schedule bounded retries at 8, 16, 32 then 60 second intervals.
+
+When network connectivity returns or the inactive sign-in window regains focus,
+Tavi tries promptly. Automatic retry is coalesced: there cannot be overlapping
+restoration attempts, and account switching/disconnecting cancels the timer.
+All HTTP requests still authenticate normally with the server; saved tokens alone
+do not bypass server permission checks. The retry view shows only the server host
+and status, never the credential.
+
+The **Use another account** action cancels background retries without deleting a
+legitimate saved credential. Signing in again overwrites the remembered credential
+only according to the new login's explicit remember choice. Signing out from a
+signed-in account clears local credentials and revokes that device's server session.
+
+== Acceptance
+
+* On Windows, with Remember enabled, relaunch Tavi while LoopRD is unavailable.
+  Verify it does not lose the DPAPI vault and offers Retry plus Use another account.
+* Restore network without restarting Tavi; verify automatically opening the buddy
+  roster after a bounded retry, with contacts/messages loaded from Social.
+* Repeat with 403 and 401 from Social: 403 retains the saved credential for manual
+  retry, while 401 removes it and shows the login form.
+* Verify no background reconnect continues after sign-in with a different account,
+  no credential is placed into a chat/game-window URL, and no repeated OS alerts
+  are emitted for previously fetched chat history.
+* Build the Windows NSIS client on the operator's Windows host. Client unit tests
+  alone are not native DPAPI or Windows lifecycle acceptance.

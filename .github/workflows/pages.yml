@@ -1,0 +1,43 @@
+name: Publish Tavi web client to GitHub Pages
+on:
+  push:
+    branches: [main]
+    paths: ['client/**', 'sdk/**', 'integrations/openclaw/**', '.github/workflows/pages.yml', 'docs/PUBLIC_CLIENTS.md']
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: tavi-pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+        working-directory: client
+      - run: npm run web:build && npm run web:verify
+        working-directory: client
+      - run: |
+          mkdir -p client/dist/docs client/dist/sdk
+          cp docs/PUBLIC_CLIENTS.md client/dist/docs/README.md
+          cp sdk/README.md client/dist/sdk/README.md
+          touch client/dist/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: client/dist
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-24.04
+    needs: build
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

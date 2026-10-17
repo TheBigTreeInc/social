@@ -18,7 +18,10 @@ test('Tavi login opts into vault and transient server outages do not delete cred
  assert.match(main,/sessionStore\.save/);
  assert.match(main,/sessionStore\.load/);
  assert.match(main,/sessionStore\.clear/);
- assert.match(main,/if\(error\.status===401\|\|error\.status===403\)/);
- assert.match(main,/Saved sign-in was kept/);
+ assert.match(main,/classifySessionFailure\(error\)/);
+ assert.match(main,/sessionRetry\.enable\(\)/);
+ assert.match(main,/state\.retryAvailable/);
+ assert.match(main,/if\(category==='rejected'\)/);
+ assert.match(main,/saved sign-in is safe/);
  assert.match(main,/settings-disclosure/);
 });

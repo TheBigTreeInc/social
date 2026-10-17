@@ -1,3 +1,20 @@
+# Tavi 0.3.27 — Resilient remembered sessions (client pass)
+
+This version allows remembered sign-ins to recover when LoopRD was offline at
+startup: bounded retries, immediate retry on network restoration/focus, visible
+manual retry and account switching, and preservation of OS-protected credentials
+on HTTP 403 or transient failures. Only HTTP 401 or explicit session removal
+clears rejected credentials. Fixes duplicated trusted-device help copy. Windows
+uses its existing DPAPI vault; native acceptance remains required.
+
+LoopRD descriptor release is stamped **0.3.27** for version consistency; the Social
+database remains **schema 6** with no data migration and no new server handlers.
+The client changes work without redeploying the server, although the descriptor
+must be pushed/reconciled for LoopRD to show the new release ID. See
+`docs/SESSION_RECOVERY.adoc` and `ZIPRUNNER_HANDOFF.md`.
+
+---
+
 # Tavi 0.3.24 — Windows rebuild reliability and ecosystem administration subscriptions
 
 Tavi accounts can now be promoted or demoted through **LoopRD -> Data & actions -> looprd-social -> Tavi accounts** using audited, named management actions. The `ecosystemAdmin` flag is false by default (additive Social schema 6). Trusted, privately configured LoopRD service callers can publish bounded HTTPS-link or acknowledgement notifications to all current admins through `tavi-admin-notify/v1`, and check current roles through `tavi-admin-role/v1`. The existing dynamic Inbox handles these events; no permanent admin UI is added. `docs/ECOSYSTEM_ADMIN.adoc` documents deployment and the private service secret mapping. Server push and native Android receiver remain separate acceptance gates.
@@ -136,3 +153,12 @@ Windows now persists opt-in Tavi sessions using a per-user DPAPI-encrypted file 
 ## Tavi 0.3.24 — Windows NSIS file-lock fix
 
 Windows builds now close only this project's running `client/src-tauri/target/release/looprd-social-client.exe` before Cargo replaces it. The pre-build helper attempts a graceful close then, if necessary, forces termination of the path-verified PID; unrelated installed copies are unaffected. Native acceptance required. See `ZIPRUNNER_HANDOFF.md` and `docs/LOCAL_BUILD.adoc`. Schema 6 unchanged.
+
+
+## OpenClaw integration v0.3.27
+
+A standalone headless Tavi account CLI and copyable OpenClaw agent instructions are in `integrations/openclaw/`. Use a dedicated Tavi user and private session. Chat and contacts are supported; game discovery is read-only until games implement agent-specific player/action contracts. The integration is a CLI adapter (not yet a native OpenClaw channel plugin). LoopRD schema 6 unchanged.
+
+## v0.3.27 — GitHub clients, SDKs and Pages
+
+See [docs/PUBLIC_CLIENTS.md](docs/PUBLIC_CLIENTS.md) and [sdk/README.md](sdk/README.md). Pages is opt-in through repository Settings; publishing the source alone does not activate Pages.

@@ -50,3 +50,12 @@ Implemented client-side readiness and tests; no new server operations or databas
 == TAVI-BUILD-LOCK-024 — Windows target executable build lock
 
 Delivered in v0.3.24: `tools/stop-running-tavi.ps1` path-specific stop, called from `BUILD-LOCAL.ps1` before Tauri/Rust NSIS compilation. Source test `client/tests/windows-build-lifecycle.test.mjs` added. Windows native acceptance remains required: rebuild while previous target/release Tavi is running and confirm generated NSIS succeeds, without terminating unrelated installations or deleting local/generated state.
+
+== TAVI-SESSION-RECOVERY-025 — Resilient remembered-session reconnection
+
+Source-delivered in v0.3.27: preserve Windows OS-vault credentials during 403,
+429, 5xx and network errors; allow explicit retry or alternate account; bounded
+8/16/32/60-second retries and event-based acceleration without overlapping
+attempts; cancellation on successful login or sign-out. Node unit tests cover
+failure classification and timer behavior. Windows runtime DPAPI/reconnect and
+native chat acceptance still require the operator's device.

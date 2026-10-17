@@ -1,8 +1,8 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.24",
-  "summary": "Tavi 0.3.24: fix native Windows Cargo rebuild blocked by running target/release executable (WinError 5). Scoped pre-build shutdown closes only this project build binary before NSIS compile; preserves local configuration, user data and previous installer. No database migration (schema 6).",
+  "version": "0.3.27",
+  "summary": "Tavi 0.3.27: GitHub-first distribution with Pages deployment for the existing browser client, reusable JavaScript/Python/Go/C# SDK source, OpenClaw clone-and-run instructions, and cross-platform CI verification. Server schema remains 6.",
   "implemented": [
     {
       "id": "SCL-021",
@@ -202,11 +202,45 @@
       "title": "Close running build-directory Tavi before Windows NSIS compilation",
       "summary": "The Windows build now checks for a running release/looprd-social-client.exe at the exact project target path, requests graceful shutdown, and terminates only that path-verified PID when necessary before the Tauri/Rust compilation. Installed copies at other paths are unaffected. Existing NSIS installer rollback stays in place.",
       "operator_checks": [
-        "Import 0.3.24 and verify ZipRunner Work board metadata passes before overlay and build.",
+        "Import 0.3.25 and verify ZipRunner Work board metadata passes before overlay and build.",
         "Run an earlier Tavi executable directly from client/src-tauri/target/release, then apply this version. Confirm the pre-build log reports TAVI_BUILD_STOP_* and the running build-target copy closes before Cargo overwrites it.",
-        "Verify that the newly built Windows NSIS installer and executable report 0.3.24, then launch Tavi normally.",
+        "Verify that the newly built Windows NSIS installer and executable report 0.3.25, then launch Tavi normally.",
         "Confirm an independently installed Tavi executable at a different path is not stopped by this build script, and that app settings and runtime data remain unchanged.",
         "If Rust still reports Access denied with no matching process, investigate antivirus or folder permissions rather than deleting target/release or changing folder ACLs."
+      ]
+    },
+    {
+      "id": "TAVI-SESSION-RECOVERY-025",
+      "title": "Resilient session restore and automatic offline reconnection",
+      "summary": "Introduces client-side session-recovery policy, expiring-token rejection on HTTP 401 only, saved credential retention on HTTP 403 and network/5xx failures, bounded 8–60s reconnect attempts, online/focus recovery, manual Retry and Use another account, cancel-on-login/signout, and compact copy fix.",
+      "operator_checks": [
+        "With Remember enabled, close Tavi and reopen while LoopRD is unreachable: confirm the DPAPI session is not deleted and manual Retry appears.",
+        "Restore network; confirm Tavi retries without needing a restart and opens the same account roster only after server-side verification.",
+        "Verify a revoked session (HTTP 401) is removed from remembered storage and login is required, while HTTP 403 retains the record for manual retry.",
+        "Use another account while recovery is pending; confirm no old-account automatic restoration takes over the new login.",
+        "Build Windows NSIS through ZipRunner; check separate chats, unread badges, interactive inbox and legacy DPAPI migration still work."
+      ]
+    },
+    {
+      "id": "TAVI-AGENT-001",
+      "title": "OpenClaw headless Tavi account bridge",
+      "summary": "Standalone Node.js CLI uses a separate Tavi account for contacts, DM/lobby send, inbound cursor polling and game discovery. Includes copyable OpenClaw instructions, secret/session handling and regression tests. This is a CLI integration, not a native OpenClaw channel plugin or game action API.",
+      "operator_checks": [
+        "Provision a dedicated Tavi account; configure TAVI_SERVER and private session on the OpenClaw host without committing credentials.",
+        "Run me, contacts, request/accept and dm commands; verify normal Tavi user sees the bot account and replies.",
+        "Send a DM to the agent; run updates twice; verify first response has new inbound message and second suppresses duplicate cursor.",
+        "Run games and confirm promoted catalog is visible but no unsupported game actions are claimed.",
+        "Test OpenClaw exec tool with OPENCLAW_SKILL.md; verify no secrets or management credentials appear in tool output."
+      ]
+    },
+    {
+      "id": "TAVI-OPENCLAW-027",
+      "title": "GitHub-first cross-platform clients and Pages",
+      "summary": "Add Pages workflow publishing Vite web client, GitHub-based OpenClaw installation guidance, and Python/Go/C# standard-library SDKs alongside canonical JavaScript SDK. No new server schema or game action API.",
+      "operator_checks": [
+        "Push source to TheBigTreeInc/social and enable GitHub Actions Pages; verify static client opens from /social/ and connects to the deployed LoopRD origin.",
+        "Clone repository on OpenClaw host; run tavi-agent help and authenticate its dedicated account.",
+        "Run Python, Go and .NET client compile/test checks on their supported platforms."
       ]
     }
   ],
@@ -286,19 +320,25 @@
     {
       "id": "TAVI-ADMIN-002",
       "title": "Live admin notifications acceptance",
-      "summary": "Awaiting operator acceptance after the 0.3.24 Git revision is pushed and LoopRD reconciles schema 6. Verify promotion/revocation in protected Data & actions, privately enrolled service-to-Tavi administrator notifications, recipient-only inbox access, and ntfy wake delivery. Requires a running compatible LoopRD instance and private service credential enrollment; these live checks are not claimed complete.",
+      "summary": "Awaiting operator acceptance after the 0.3.25 Git revision is pushed and LoopRD reconciles schema 6. Verify promotion/revocation in protected Data & actions, privately enrolled service-to-Tavi administrator notifications, recipient-only inbox access, and ntfy wake delivery. Requires a running compatible LoopRD instance and private service credential enrollment; these live checks are not claimed complete.",
       "priority": "high"
     },
     {
       "id": "TAVI-SESSION-003",
       "title": "Windows native DPAPI and compact Settings acceptance",
-      "summary": "Windows source tests pass, but v0.3.23 NSIS failed replacing a running target/release executable (WinError 5). v0.3.24 adds a path-specific pre-build close/stop; repeat native build and then validate DPAPI session restoration, logout, outage behavior and chat window isolation. Android Keystore is separate.",
+      "summary": "Windows DPAPI source and v0.3.25 bounded reconnection tests pass, but native Windows save/restore, network outage to recovered sign-in, HTTP 401 vs 403 behavior, chat window isolation and compact Settings/login UX require operator acceptance. Android Keystore is separate.",
       "priority": "high"
     },
     {
       "id": "TAVI-BUILD-LOCK-025",
       "title": "Windows native rebuild acceptance after targeted process shutdown",
       "summary": "Requires an actual ZipRunner Windows build with a running prior Tavi target executable to prove file-lock handling. Confirm accurate stop diagnostics, successful NSIS compilation, previous-installer rollback, and no unrelated process termination. The author environment cannot run Windows PowerShell or Rust NSIS builds.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-AGENT-002",
+      "title": "Native OpenClaw channel plugin and game actions",
+      "summary": "The v0.3.27 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
       "priority": "high"
     }
   ]

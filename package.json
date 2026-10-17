@@ -1,11 +1,11 @@
 {
   "name": "looprd-social",
-  "version": "0.3.24",
+  "version": "0.3.27",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test": "npm run test:server && npm run test:client",
+    "test": "npm run test:server && npm run test:client && npm run test:openclaw",
     "verify": "npm run test && node client/tools/check-package.mjs",
     "start:bridge": "node bridge.mjs",
     "check:looprd": "python tools/generate-looprd.py --check",
@@ -15,7 +15,8 @@
     "client:build": "cd client && npm run web:build",
     "client:sync-portraits": "cd client && npm run portrait:sync",
     "client:web": "cd client && npm run web:build",
-    "client:web-verify": "cd client && npm run web:verify"
+    "client:web-verify": "cd client && npm run web:verify",
+    "test:openclaw": "node --test integrations/openclaw/tests/*.test.mjs"
   },
   "description": "Social-owned accounts, buddies, direct messages and game alerts on LoopRD with Windows/Android clients"
 }

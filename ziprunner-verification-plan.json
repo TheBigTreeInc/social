@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.24",
+  "version": "0.3.27",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -154,10 +154,60 @@
         },
         {
           "id": "TAVI-BUILD-LOCK-024-AC-2",
-          "description": "Real Windows ZipRunner build succeeds while previous development binary is running, preserves user state, and produces version 0.3.24 installer.",
+          "description": "Real Windows ZipRunner build succeeds while previous development binary is running, preserves user state, and produces version 0.3.25 installer.",
           "mode": "manual",
           "checks": [
             "TAVI-BUILD-LOCK-024-WINDOWS"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-SESSION-RECOVERY-025",
+      "criteria": [
+        {
+          "id": "TAVI-SESSION-RECOVERY-025-AC-1",
+          "description": "Saved credentials are cleared only after confirmed server rejection and never after temporary outages or 403 permission errors.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-SESSION-RECOVERY-025-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-SESSION-RECOVERY-025-AC-2",
+          "description": "Retry scheduling and cancellation are bounded, coalesced and do not run after login or user switching.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-SESSION-RECOVERY-025-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-SESSION-RECOVERY-025-AC-3",
+          "description": "A real Windows host can reconnect after loss of network without retyping the password.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-SESSION-RECOVERY-025-WIN"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-AGENT-001",
+      "criteria": [
+        {
+          "id": "TAVI-AGENT-001-AC-1",
+          "description": "Headless bridge supports isolated Tavi account, inbound cursor and send operations without leaked tokens.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-AGENT-001-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-001-AC-2",
+          "description": "OpenClaw operator accepts inbound DM and replies through bridge.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-001-LIVE"
           ]
         }
       ]
@@ -330,7 +380,47 @@
       "kind": "manual",
       "stage": "acceptance",
       "description": "ZipRunner rebuild with prior Tavi build-output executable running",
-      "instructions": "Run the target/release/looprd-social-client.exe produced by a previous version, import v0.3.24 in ZipRunner, and confirm TAVI_BUILD_STOP_* in build log, compilation/NSIS completes, previously installed Tavi elsewhere stays running, and no user configuration or database is changed. If Access denied persists, check antivirus or Windows ACLs."
+      "instructions": "Run the target/release/looprd-social-client.exe produced by a previous version, import v0.3.25 in ZipRunner, and confirm TAVI_BUILD_STOP_* in build log, compilation/NSIS completes, previously installed Tavi elsewhere stays running, and no user configuration or database is changed. If Access denied persists, check antivirus or Windows ACLs."
+    },
+    {
+      "id": "TAVI-SESSION-RECOVERY-025-NODE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Classify auth recovery failures and validate bounded retry scheduling, cancellation and login hooks",
+      "runner_ref": "tavi-client-session-recovery",
+      "assertions": [
+        "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
+        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
+        "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
+      ],
+      "test_ref": "client/tests/session-recovery.test.mjs"
+    },
+    {
+      "id": "TAVI-SESSION-RECOVERY-025-WIN",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Windows DPAPI session resilience and live connectivity recovery",
+      "instructions": "Build v0.3.25 native Windows in ZipRunner. Save session, shut down, start offline, inspect Retry UI, reconnect and verify automatic server-authorized roster activation; verify 401 clearing, 403 retention, signout, different-account login, and independent chats. Native result unverified by producer."
+    },
+    {
+      "id": "TAVI-AGENT-001-NODE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "OpenClaw headless CLI and cursor tests",
+      "runner_ref": "tavi-openclaw-bridge",
+      "assertions": [
+        "Inbound cursor filtering avoids duplicate delivery.",
+        "CLI help requires no credentials.",
+        "Missing server settings fail closed."
+      ],
+      "test_ref": "integrations/openclaw/tests/bridge.test.mjs"
+    },
+    {
+      "id": "TAVI-AGENT-001-LIVE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Live Tavi/OpenClaw chat acceptance",
+      "instructions": "On an OpenClaw host, provision a dedicated Tavi account, run me, contacts and updates, then send and receive a DM using the bridge. Verify token isolation and no game-play claims."
     }
   ]
 }
