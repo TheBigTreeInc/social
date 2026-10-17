@@ -14,7 +14,7 @@ import {listen, emitTo} from '@tauri-apps/api/event';
 import {isValidChatPeer,chatWindowLabel} from './native-windows.js';
 import {openUrl} from '@tauri-apps/plugin-opener';
 
-const CLIENT_VERSION='0.3.29';
+const CLIENT_VERSION='0.3.30';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';

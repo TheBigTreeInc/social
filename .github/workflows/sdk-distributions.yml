@@ -3,8 +3,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    tags: ['v*']
-    paths: ['sdk/**', 'client/sdk/**', 'integrations/openclaw/**', '.github/workflows/sdk-distributions.yml']
   pull_request:
     paths: ['sdk/**', 'client/sdk/**', 'integrations/openclaw/**', '.github/workflows/sdk-distributions.yml']
 permissions:

@@ -11,7 +11,7 @@ test('Tavi branding belongs to client without breaking compact native geometry',
  assert.match(main,/welcome-mark/);
  assert.match(css,/tavi-mark\.svg/);
  assert.equal(config.productName,'Tavi');
- assert.equal(config.version,'0.3.29');
+ assert.equal(config.version,'0.3.30');
  assert.equal(config.app.windows[0].width,355);
  assert.equal(config.bundle.targets[0],'nsis');
 });

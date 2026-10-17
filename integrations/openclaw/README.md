@@ -1,4 +1,4 @@
-# OpenClaw ↔ Tavi headless bridge (v0.3.29)
+# OpenClaw ↔ Tavi headless bridge (v0.3.30)
 
 This is a **working CLI integration**, not yet a native OpenClaw channel plugin. It uses Tavi's real Social API and works from OpenClaw's shell/exec tool. It does not need the Windows Tavi client, admin privileges, or new LoopRD schema. Requires Node.js 20+ and network access to your admitted `looprd-social` component.
 
@@ -23,6 +23,6 @@ On POSIX, the bridge stores a **revocable Tavi session token** at `~/.config/tav
 * Game catalog discovery works, but **joining/playing a game is not yet implemented**. `games` returns `agentPlaySupported:false`. Games need an authenticated player identity and legal-action API. Do not attempt to drive arbitrary game pages or reuse Tavi credentials as game credentials.
 * This CLI is an interim adapter, not an OpenClaw native channel; use the skill and controlled exec integration to start.
 
-## GitHub install / update (0.3.29)
+## GitHub install / update (0.3.30)
 
 Clone `https://github.com/TheBigTreeInc/social.git` on the OpenClaw host, preferably checking out a pinned release tag or commit. Use `node integrations/openclaw/tavi-agent.mjs help` from the repository root. The bridge imports `client/sdk/looprd-social.js`, so do not copy only `tavi-agent.mjs`. Set `TAVI_SERVER` to the LoopRD origin; use `TAVI_PASSWORD` only during login. No GitHub Pages or Tavi server credentials are required to download the bridge.

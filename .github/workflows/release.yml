@@ -1,0 +1,57 @@
+name: Publish verified Tavi release
+on:
+  workflow_run:
+    workflows:
+      - Verify Social server and client source
+      - Windows desktop app
+      - Android phone app
+      - Linux and macOS desktop installers
+      - Web browser client and JavaScript SDK
+      - SDK cross-platform checks
+      - SDK source packages and OpenClaw bridge
+    types: [completed]
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: tavi-release-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify every required workflow and collect release artifacts
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+          GH_REPO: ${{ github.repository }}
+        run: python tools/release-gate.py
+      - name: Publish immutable version tag and GitHub Release
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          version="$(python -c 'import json; print(json.load(open("package.json"))["version"])')"
+          tag="v${version}"
+          if gh release view "$tag" -R "$GH_REPO" >/dev/null 2>&1; then
+            echo "Release $tag already exists; leaving it untouched."
+            exit 0
+          fi
+          if gh api "repos/$GH_REPO/git/ref/tags/$tag" >/dev/null 2>&1; then
+            echo "Tag $tag already exists without a release; refusing to overwrite it." >&2
+            exit 1
+          fi
+          gh release create "$tag" release-assets/* -R "$GH_REPO" \
+            --target "$RELEASE_SHA" --title "Tavi $tag" \
+            --notes-file release-assets-notes.md
