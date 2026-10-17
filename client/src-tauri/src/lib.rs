@@ -1,7 +1,7 @@
 //! Native device-session vault. The Social token never enters browser localStorage
 //! on Windows. Windows DPAPI encrypts it for the current OS account, then the
 //! ciphertext is stored under Tavi's local application-data directory.
-use tauri::{AppHandle, WebviewWindow};
+use tauri::{AppHandle, WebviewWindow, Manager};
 
 fn main_window_only(window: &WebviewWindow) -> Result<(), String> {
     if window.label() == "main" { Ok(()) }
@@ -130,10 +130,46 @@ fn tavi_session_clear(window: WebviewWindow, app: AppHandle) -> Result<(), Strin
     { let _ = app; Err("OS-protected device session is not yet available on this platform".into()) }
 }
 
+
+// Only the authenticated main WebView may initiate an Android package update.
+// The native Android plugin validates the GitHub Release URL again, independently
+// of any client-side JavaScript input, before starting DownloadManager.
+#[tauri::command]
+fn tavi_android_install_update(window: WebviewWindow, app: AppHandle, url: String) -> Result<(), String> {
+    main_window_only(&window)?;
+    #[cfg(target_os = "android")]
+    {
+        let plugin = app.state::<AndroidUpdater>();
+        plugin.0.run_mobile_plugin::<()>("installRelease", serde_json::json!({"url": url}))
+            .map_err(|e| format!("Android installer unavailable: {e}"))
+    }
+    #[cfg(not(target_os = "android"))]
+    { let _ = (app, url); Err("Only Android supports this installer".into()) }
+}
+
+#[cfg(target_os = "android")]
+struct AndroidUpdater(tauri::plugin::PluginHandle<tauri::Wry>);
+
+fn android_updater_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
+    tauri::plugin::Builder::<tauri::Wry>::new("tavi-android-updater")
+        .setup(|app, api| {
+            #[cfg(target_os = "android")]
+            {
+                let handle = api.register_android_plugin("inc.thebigtree.looprdsocial", "TaviUpdaterPlugin")?;
+                app.manage(AndroidUpdater(handle));
+            }
+            #[cfg(not(target_os = "android"))]
+            { let _ = (app, api); }
+            Ok(())
+        })
+        .build()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![tavi_session_load, tavi_session_save, tavi_session_clear])
+        .invoke_handler(tauri::generate_handler![tavi_session_load, tavi_session_save, tavi_session_clear, tavi_android_install_update])
+        .plugin(android_updater_plugin())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .run(tauri::generate_context!())

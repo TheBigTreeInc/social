@@ -13,7 +13,7 @@ import sys
 REQUIRED = {
     'Verify Social server and client source': (),
     'Windows desktop app': ('looprd-social-windows-nsis',),
-    'Android phone app': ('looprd-social-android-arm64-debug-apk',),
+    'Android phone app': ('tavi-android-arm64-signed-release',),
     'Linux and macOS desktop installers': ('tavi-linux-amd64-deb', 'tavi-macos-apple-silicon-dmg'),
     'Web browser client and JavaScript SDK': ('social-web-client',),
     'SDK cross-platform checks': (),
@@ -88,14 +88,27 @@ def gate():
             raise RuntimeError(f'Invalid asset {target}')
         import shutil
         shutil.rmtree(directory)
+    # Direct APK for in-client Android update; keep ZIP for reproducible source artifacts.
+    import hashlib
+    android_bundle=out/f'tavi-android-arm64-signed-release-{version}.zip'
+    with zipfile.ZipFile(android_bundle) as bundle:
+        apks=[n for n in bundle.namelist() if n.endswith('.apk')]
+        if len(apks)!=1:
+            raise RuntimeError('Signed Android release must contain exactly one APK')
+        direct_apk=out/f'tavi-android-arm64-v{version}.apk'
+        direct_apk.write_bytes(bundle.read(apks[0]))
+    if direct_apk.stat().st_size < 1_000_000:
+        raise RuntimeError('Android APK unexpectedly small')
+    checksums=''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n' for p in sorted(out.iterdir()) if p.is_file())
+    (out/'SHA256SUMS.txt').write_text(checksums)
     if len(list(out.glob('*.zip'))) != 6:
         raise RuntimeError('Expected 6 release bundles')
     lines = [f'Automated release of Tavi {version} from `{sha}`.', '',
              'All required tests and platform builds succeeded for the same commit.', '',
-             'Downloads include Windows NSIS, Android ARM64 debug APK, Linux DEB, macOS DMG,',
+             'Downloads include Windows NSIS, signed Android ARM64 release APK, Linux DEB, macOS DMG,',
              'web client, and SDK/OpenClaw sources. Each asset is a ZIP containing the original build output.',
              '', 'GitHub Pages deployment is independent and is not part of this release gate.',
-             'Android is a debug APK; macOS may require manual approval because builds are unsigned.']
+             'Android requires a consistent release keystore and user approval to install; existing debug installations cannot be upgraded in place by the new release key. macOS may require manual approval because builds are unsigned.']
     Path('release-assets-notes.md').write_text('\n'.join(lines) + '\n')
     with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
         output.write('ready=true\n')

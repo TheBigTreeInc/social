@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.30",
+  "version": "0.3.33",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -211,6 +211,27 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-UPDATES-001",
+      "criteria": [
+        {
+          "id": "TAVI-UPDATES-001-AC-1",
+          "description": "Compare stable release versions numerically and reject untrusted download URLs",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/release-updates.test.mjs"
+          ]
+        },
+        {
+          "id": "TAVI-UPDATES-001-AC-2",
+          "description": "Windows, Android, Linux, macOS and web clients show the update banner and open GitHub Releases after user action",
+          "mode": "manual",
+          "checks": [
+            "Operator GUI acceptance"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -390,7 +411,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"

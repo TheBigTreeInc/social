@@ -1,16 +1,16 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.30",
-  "summary": "Tavi 0.3.30: gate GitHub version tags and downloadable releases on successful same-commit platform builds, SDK checks and artifacts; schema 6 unchanged.",
+  "version": "0.3.33",
+  "summary": "Tavi 0.3.33: native Android DownloadManager installer handoff for signed GitHub Release APKs; Android system approval required; device acceptance pending.",
   "implemented": [
     {
       "id": "TAVI-RELEASE-001",
       "title": "Verified GitHub release gate and version tags",
       "summary": "GitHub workflow_run gate waits for 7 required CI workflows on the same current main SHA; checks artifact completeness, creates immutable vX.Y.Z release with downloadable Windows, Android, Linux, macOS, web and SDK/OpenClaw bundles. Pages hosting remains independent.",
       "operator_checks": [
-        "Push 0.3.30 to main and confirm seven required workflows complete successfully.",
-        "Check Publish verified Tavi release creates tag v0.3.30 and a release containing six ZIP assets.",
+        "Push 0.3.33 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.33 and a release containing six ZIP assets.",
         "Force a build failure in a later test branch and confirm no release is created.",
         "Confirm rerunning an already-released commit never overwrites an existing tag or release."
       ]
@@ -264,6 +264,28 @@
         "Check Linux DEB and macOS DMG workflow results and download artifacts after CI completes.",
         "Verify the sdk-distributions workflow emits 5 ZIPs with JavaScript, Python, Go, C# and OpenClaw sources."
       ]
+    },
+    {
+      "id": "TAVI-UPDATES-001",
+      "title": "Safe in-client release update notifications",
+      "summary": "Checks published GitHub Releases at startup and every six hours; displays a download notice and Help action. No automatic installer execution. Live platform acceptance pending.",
+      "priority": "high",
+      "operator_checks": [
+        "After GitHub Release v0.3.33 is published, start v0.3.33 Tavi and confirm the update notice appears.",
+        "Choose Download update and verify it opens the official GitHub Release, without installing anything.",
+        "Check Help > Check for updates with an unavailable network and confirm messaging remains usable."
+      ]
+    },
+    {
+      "id": "TAVI-UPDATES-003",
+      "title": "Android-native in-app update download and installation handoff",
+      "summary": "Tauri Android bridge uses official release APK and Android DownloadManager/FileProvider package installer; hardware acceptance pending",
+      "priority": "high",
+      "operator_checks": [
+        "Configure signing secrets and confirm GitHub Actions builds Android signed release APK.",
+        "Install a release-signed Tavi build on Android; then update to a future version from inside Tavi and verify account/session data stays intact.",
+        "Confirm Android handles unknown-sources permission and APK installation confirmation; test cancellation and download failures."
+      ]
     }
   ],
   "remaining": [
@@ -360,8 +382,14 @@
     {
       "id": "TAVI-AGENT-002",
       "title": "Native OpenClaw channel plugin and game actions",
-      "summary": "The v0.3.30 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
+      "summary": "The v0.3.33 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
       "priority": "high"
+    },
+    {
+      "id": "TAVI-UPDATES-002",
+      "title": "Signed native in-app updater",
+      "summary": "Needs Tauri updater signing keys, platform-specific signed artifacts, trusted update manifest and user-approved restart.",
+      "priority": "medium"
     }
   ]
 }

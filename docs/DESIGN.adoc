@@ -1,6 +1,6 @@
 = Tavi: Design and Architecture
 TheBigTreeInc Social project
-:revnumber: 0.3.30
+:revnumber: 0.3.33
 :toc: left
 :sectnums:
 
@@ -213,7 +213,7 @@ and operator acceptance: `docs/ECOSYSTEM_ADMIN.adoc`.
 
 ZipRunner builds must stop only the exact running Tauri binary in the project `target/release` path before Rust overwrites it. Stop is a best-effort graceful window close followed by forceful termination of only that verified PID. Existing installed Tavi clients at other paths are not forcibly stopped. Do not remove compiled artifacts, local state or earlier working NSIS installers as a workaround. The Windows build acceptance check must confirm real behavior and test DPAPI session persistence.
 
-== Resilient device sign-in (v0.3.30)
+== Resilient device sign-in (v0.3.33)
 
 The classic narrow Windows roster remains unchanged. A remembered Windows session
 uses only the DPAPI-protected per-user app-data record. If the LoopRD host is

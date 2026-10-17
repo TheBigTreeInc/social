@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.30",
-    "base_version": "0.3.29"
+    "version": "0.3.33",
+    "base_version": "0.3.32"
   },
   "update": {
-    "id": "TAVI-20261017-RELEASE-030",
+    "id": "TAVI-20261017-ANDROID-033",
     "kind": "source_update",
     "created_at": "2026-10-17T16:00:00+02:00",
-    "summary": "Add same-commit verified GitHub Release automation, version tagging and downloadable platform/SDK artifacts; schema 6 unchanged."
+    "summary": "Android native DownloadManager and FileProvider package installer flow; in-app Update invokes validated platform bridge, requires Android approval."
   },
   "planned_work": [
     {
@@ -113,6 +113,30 @@
       "id": "TAVI-SESSION-003",
       "title": "TAVI-SESSION-003",
       "acceptance_criteria": "Build and run Windows Tavi in ZipRunner with Rust/MSVC and validate live native DPAPI persistence, reconnection after outage, account signout, and separated webview access checks.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-UPDATES-001",
+      "title": "Safe in-client release update notifications",
+      "acceptance_criteria": "Stable GitHub release comparison, user-controlled download action, no automatic execution, version tests and operator acceptance",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-UPDATES-002",
+      "title": "Signed native in-app updater",
+      "acceptance_criteria": "Tauri updater plugin, private signing key in GitHub Secrets, signed platform bundles, signature verification, explicit install/restart and rollback validation",
+      "priority": "medium"
+    },
+    {
+      "id": "TAVI-CI-028",
+      "title": "GitHub Actions desktop coverage and independent distributables",
+      "acceptance_criteria": "Linux/macOS installers, independent Pages artifact and SDK source packages are built in CI",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-UPDATES-003",
+      "title": "Android native in-app signed APK update installation",
+      "acceptance_criteria": "A signed Android release can download through DownloadManager and invoke Android package installer from in-client Update; GitHub CI builds native bridge; on-device installation and data preservation acceptance pending",
       "priority": "high"
     }
   ],
@@ -484,6 +508,43 @@
           "description": "SDK source distribution bundles"
         }
       ]
+    },
+    {
+      "id": "TAVI-UPDATES-001",
+      "summary": "Stable GitHub release version check and user-controlled update link in the Tavi client.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/release-updates.js",
+          "description": "Trusted release discovery and version comparison"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/release-updates.test.mjs",
+          "description": "Version and trust-boundary regressions"
+        }
+      ]
+    },
+    {
+      "id": "TAVI-UPDATES-003",
+      "summary": "Added Android Tauri Rust/Kotlin native download-install bridge and CI integration; acceptance on Android hardware outstanding.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src-tauri/src/lib.rs",
+          "description": "Native Tauri Android update command and mobile plugin registration"
+        },
+        {
+          "kind": "source",
+          "ref": "tools/android-update/TaviUpdaterPlugin.kt",
+          "description": "Android DownloadManager and FileProvider installer handoff"
+        },
+        {
+          "kind": "test",
+          "ref": "tests/test_android_updater.py",
+          "description": "Generated Android project overlay regression"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -523,6 +584,14 @@
       "next_action": "Build and run Windows Tavi in ZipRunner with Rust/MSVC and validate live native DPAPI persistence, reconnection after outage, account signout, and separated webview access checks.",
       "blockers": [
         "Windows Rust/Tauri build and Windows OS testing cannot run in current Linux source environment."
+      ]
+    },
+    {
+      "id": "TAVI-UPDATES-002",
+      "status": "planned",
+      "next_action": "Implement signed Tauri updater and trusted manifest after provisioning CI signing keys and validating native restart/rollback.",
+      "blockers": [
+        "Requires private signing keys and platform-specific acceptance."
       ]
     }
   ],
@@ -638,15 +707,30 @@
         "description": "Windows NSIS build and DPAPI device session reconnection after offline startup",
         "status": "not_run",
         "reason": "Requires Windows host and live LoopRD instance; only source tests were executed."
+      },
+      {
+        "id": "TAVI-UPDATES-003-OVERLAY",
+        "description": "Android Kotlin/manifest FileProvider source overlay generated and testable without SDK",
+        "status": "passed",
+        "command": "python -m unittest discover -s tests -p test_*.py",
+        "environment": "Linux CPython",
+        "evidence_ref": "tests/test_android_updater.py"
+      },
+      {
+        "id": "TAVI-UPDATES-003-DEVICE",
+        "description": "Release-signed APK in-app install on Android 13/14/15",
+        "status": "not_run",
+        "reason": "Requires GitHub signing secrets and an Android device."
       }
     ]
   },
   "handover": {
-    "next_pass": "Build a native OpenClaw channel adapter against verified OpenClaw plugin SDK; implement optional bot account badge and game-specific agent action contracts.",
+    "next_pass": "Validate release-signed Android 0.3.33 -> next version upgrade on device; handle download cancellation, app lifecycle and system installer confirmation; preserve account data.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
-      "Android closed-app UnifiedPush distributor integration still requires native device work."
+      "Android closed-app UnifiedPush distributor integration still requires native device work.",
+      "Android in-app Kotlin bridge has unit-tested generated source overlay but no native Gradle compilation or device acceptance in author environment."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -662,6 +746,11 @@
     {
       "id": "TAVI-SESSION-RECOVERY-025-OP",
       "description": "Build Windows NSIS in ZipRunner, test cold offline launch and reconnection with DPAPI saved credential, sign-out, 401 rejection and 403 preservation.",
+      "status": "required"
+    },
+    {
+      "id": "TAVI-UPDATES-003-OP",
+      "description": "Set the four signing secrets; push v0.3.33; confirm Android Actions signed APK build; install release-signed APK, then test update to v0.3.34 on Android while retaining user session.",
       "status": "required"
     }
   ],

@@ -1,13 +1,13 @@
-## v0.3.30 — GitHub release gate
+## v0.3.33 — GitHub release gate
 
-Import into existing `looprd-social` project. Adds `.github/workflows/release.yml`, `tools/release-gate.py` and `docs/RELEASE_PROCESS.md`; SDK workflows now run on every main push. Once seven required workflows pass on the same current SHA, a GitHub Release and v0.3.30 tag will be created with six bundles. Pages remains independently configured. No LoopRD schema migration.
+Import into existing `looprd-social` project. Adds `.github/workflows/release.yml`, `tools/release-gate.py` and `docs/RELEASE_PROCESS.md`; SDK workflows now run on every main push. Once seven required workflows pass on the same current SHA, a GitHub Release and v0.3.33 tag will be created with six bundles. Pages remains independently configured. No LoopRD schema migration.
 
-ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.30|file=looprd-social-0.3.30-native-chat-history-fix-ziprunner.zip
+ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.33|file=looprd-social-0.3.33-native-chat-history-fix-ziprunner.zip
 
-# Tavi 0.3.30 — Remembered session recovery
+# Tavi 0.3.33 — Remembered session recovery
 
 This source ZIP supersedes v0.3.24. Import it into the existing **looprd-social**
-ZipRunner project. Every packaged source/manifest release label is 0.3.30.
+ZipRunner project. Every packaged source/manifest release label is 0.3.33.
 
 ## Delivered
 
@@ -38,27 +38,36 @@ compilation/DPAPI and live LoopRD acceptance are **not** claimed by author-side
 tests. The new source file is `client/src/session-recovery.js`; tests are in
 `client/tests/session-recovery.test.mjs`.
 
-Server release label changes to 0.3.30 but schema remains **6**, with no new SQL
+Server release label changes to 0.3.33 but schema remains **6**, with no new SQL
 migration. No private secrets, local configuration, runtime state or generated
 build output are included. Git publishing remains a separate operator decision.
 
 
-## OpenClaw integration v0.3.30
+## OpenClaw integration v0.3.33
 
 A standalone headless Tavi account CLI and copyable OpenClaw agent instructions are in `integrations/openclaw/`. Use a dedicated Tavi user and private session. Chat and contacts are supported; game discovery is read-only until games implement agent-specific player/action contracts. The integration is a CLI adapter (not yet a native OpenClaw channel plugin). LoopRD schema 6 unchanged.
 
-## v0.3.30 — GitHub distribution
+## v0.3.33 — GitHub distribution
 
 Includes `.github/workflows/pages.yml`, SDKs for Python/Go/C#, and OpenClaw GitHub install instructions. No new database migration; schema 6. After Git push enable GitHub Actions Pages in repository settings. Pages deployment and native cross-OS installers have not been executed here.
 
 
-## Tavi 0.3.30 — GitHub Actions coverage repair
+## Tavi 0.3.33 — GitHub Actions coverage repair
 
-The 0.3.27 GitHub Pages run failed **after successful Vite build** because the GitHub Pages site was not configured: `actions/configure-pages@v5` returned 404. In 0.3.30 the web client is always uploaded as a downloadable build artifact; Pages deployment still requires the repository owner to select **Settings → Pages → Build and deployment → GitHub Actions**. The deployment job is intentionally allowed to fail visibly until Pages is enabled.
+The 0.3.27 GitHub Pages run failed **after successful Vite build** because the GitHub Pages site was not configured: `actions/configure-pages@v5` returned 404. In 0.3.33 the web client is always uploaded as a downloadable build artifact; Pages deployment still requires the repository owner to select **Settings → Pages → Build and deployment → GitHub Actions**. The deployment job is intentionally allowed to fail visibly until Pages is enabled.
 
 The Linux/macOS native workflow now runs on main pushes and relevant PRs, producing a Linux amd64 `.deb` and macOS Apple Silicon `.dmg` subject to CI success. The SDK source-package workflow produces JavaScript, Python, Go, C# and OpenClaw bridge ZIPs, without implying binary distributions for language libraries. Artifacts are retained for 30 days. Native Linux/macOS workflows require remote GitHub runner verification. Social DB schema remains 6.
 
 
-## Tavi 0.3.30 — Native conversation history fix
+## Tavi 0.3.33 — Native conversation history fix
 
 Windows chat-window peer validation previously required at least eight characters, but the server issues short IDs such as `acct_1`. Notifications worked through the main roster, while the native chat window rejected those IDs before loading history. The validator now accepts only the server-issued `acct_[1-9][0-9]{0,18}` form (and `lobby`), with regression tests for short IDs and malformed inputs. No schema migration or backend API change.
+
+## v0.3.33 Android update pass
+
+Requires GitHub Actions Android signing secrets before release pipeline can pass. Signed APK is a direct GitHub Release asset; current Android client opens the system download, not an in-app installer. See `docs/ANDROID_UPDATES.md`.
+
+## v0.3.33 Android native in-app updater
+CI patches Tauri-generated Kotlin Android plugin and FileProvider on each build. UI calls Rust main-window-only command for exact authenticated GitHub APK release URL. Device permission and Android installation approval required. APK installs have NOT been hardware-tested here. Signed APK release secrets remain mandatory.
+
+Signed release workflow also exports TAVI_ANDROID_KEYSTORE_PATH within its current shell before applying the Gradle signing configuration (not merely on subsequent steps).

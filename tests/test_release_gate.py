@@ -16,7 +16,7 @@ class ReleaseGateTests(unittest.TestCase):
     def run_gate(self, runs, *, branch='abc', release_exists=False):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            (root / 'package.json').write_text('{"version":"0.3.30"}')
+            (root / 'package.json').write_text('{"version":"0.3.33"}')
             def fake_gh(*args):
                 if 'branches/main' in args[1]: return branch
                 if '/actions/runs?' in args[1]: return json.dumps({'workflow_runs': runs})

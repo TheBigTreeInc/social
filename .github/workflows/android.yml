@@ -43,11 +43,52 @@ jobs:
         run: npm run check
       - name: Initialize Tauri Android target
         run: npm run tauri -- android init --ci
-      - name: Build installable Android debug APK
+      - name: Install native Android in-app updater bridge
+        run: python ../tools/configure-android-updater.py
+      - name: Verify release signing credentials
+        if: github.event_name != 'pull_request'
+        env:
+          KEYSTORE: ${{ secrets.TAVI_ANDROID_KEYSTORE_B64 }}
+          STORE_PASSWORD: ${{ secrets.TAVI_ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.TAVI_ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.TAVI_ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE" ] || [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo 'Android release signing secrets are missing. Configure them before publishing releases.' >&2
+            exit 1
+          fi
+      - name: Build signed Android release APK
+        if: github.event_name != 'pull_request'
+        env:
+          TAVI_ANDROID_KEYSTORE_B64: ${{ secrets.TAVI_ANDROID_KEYSTORE_B64 }}
+          TAVI_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.TAVI_ANDROID_KEYSTORE_PASSWORD }}
+          TAVI_ANDROID_KEY_ALIAS: ${{ secrets.TAVI_ANDROID_KEY_ALIAS }}
+          TAVI_ANDROID_KEY_PASSWORD: ${{ secrets.TAVI_ANDROID_KEY_PASSWORD }}
+        run: |
+          umask 077
+          printf '%s' "$TAVI_ANDROID_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/tavi-release.jks"
+          export TAVI_ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/tavi-release.jks"
+          echo "TAVI_ANDROID_KEYSTORE_PATH=$TAVI_ANDROID_KEYSTORE_PATH" >> "$GITHUB_ENV"
+          python ../tools/configure-android-release.py
+          npm run tauri -- android build --apk --ci --target aarch64
+      - name: Build Android PR debug APK
+        if: github.event_name == 'pull_request'
         run: npm run tauri -- android build --apk --debug --ci --target aarch64
+      - name: Verify signed release APK exists
+        if: github.event_name != 'pull_request'
+        run: |
+          find src-tauri/gen/android/app/build/outputs/apk/release -type f -name '*.apk' -size +1M -print -quit | grep -q .
       - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
         with:
-          name: looprd-social-android-arm64-debug-apk
+          name: tavi-android-arm64-signed-release
+          path: client/src-tauri/gen/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'pull_request'
+        with:
+          name: tavi-android-arm64-pr-debug
           path: client/src-tauri/gen/android/app/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 14
