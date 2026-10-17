@@ -8,6 +8,8 @@ const file=p=>resolve(client,'dist',p);
 const entry=await readFile(file('index.html'),'utf8');
 assert(entry.includes('src="./assets/') || entry.includes('src="/assets/'), 'Vite entrypoint missing');
 assert(!entry.includes('https://social.example.org'), 'Do not hardcode user server endpoint');
+const game=await readFile(file('game.html'),'utf8');
+assert(game.includes('src="./assets/')||game.includes('src="/assets/'),'Game window entrypoint missing from static distribution');
 const chat=await readFile(file('chat.html'),'utf8');
 assert(chat.includes('src="./assets/')||chat.includes('src="/assets/'),'Separate chat entrypoint missing from static distribution');
 const portrait=await readFile(file('portrait/index.html'),'utf8');

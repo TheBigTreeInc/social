@@ -8,12 +8,17 @@ const $=id=>document.getElementById(id);
 const peer=new URL(location.href).searchParams.get('peer');
 if(!isValidChatPeer(peer))throw Error('Unknown conversation');
 const label=chatWindowLabel(peer);
-let sequence=0,pending=new Map(),messages=[],lastScroll=true;
+let sequence=0,pending=new Map(),lastScroll=true;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const stamp=t=>{const d=new Date(Number(t)*1000);return Number.isFinite(d.getTime())?d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''};
 let current=null;
 function redraw(){
- const draft=$('message')?.value||'';
+ const oldField=$('message');const draft=oldField?.value||'';
+ const hadFocus=document.activeElement===oldField;
+ const selection=hadFocus?{start:oldField.selectionStart,end:oldField.selectionEnd}:null;
+ const prevHistory=$('history');
+ const nearBottom=!prevHistory||prevHistory.scrollHeight-prevHistory.scrollTop-prevHistory.clientHeight<90;
+ const previousTop=prevHistory?.scrollTop||0;
  const title=current?.title||'Conversation';
  const pendingInvite=current?.pending;
  $('chat-app').innerHTML=`<div class="pop-chat"><nav class="menubar"><span class="pop-menu">File &nbsp; Edit &nbsp; Actions &nbsp; Help</span></nav>
@@ -22,9 +27,10 @@ function redraw(){
  ${pendingInvite?`<div class="pop-request">${pendingInvite==='incoming'?'This person would like to add you.':'Friend request awaiting acceptance.'}${pendingInvite==='incoming'?'<button data-accept>Accept</button>':''}</div>`:`<div class="pop-format">A &nbsp; ☺ &nbsp; ♡ <span>Enter sends · Shift+Enter new line</span></div><form id="chat-form" class="pop-composer"><textarea id="message" required maxlength="${peer==='lobby'?320:1000}" aria-label="Your message" placeholder="Type a message…">${esc(draft)}</textarea><button type="submit" class="solid">Send</button></form>`}
  <div class="window-status" id="chat-status">${esc(current?.server||'Connecting to Social…')}</div></div>`;
  if($('message')){$('message').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();e.target.form?.requestSubmit();}});}
- $('chat-form')?.addEventListener('submit',async e=>{e.preventDefault();const field=$('message');const text=field.value.trim();if(!text)return;field.disabled=true;try{current=await request('send',text);redraw();}catch(err){field.disabled=false;$('chat-status').textContent=err.message;}});
+ $('chat-form')?.addEventListener('submit',async e=>{e.preventDefault();const field=$('message');const text=field.value.trim();if(!text)return;field.disabled=true;try{current=await request('send',text);field.value='';redraw();}catch(err){field.disabled=false;$('chat-status').textContent=err.message;}});
  document.querySelector('[data-accept]')?.addEventListener('click',async()=>{try{current=await request('accept');redraw();}catch(err){$('chat-status').textContent=err.message;}});
- const history=$('history');if(history&&lastScroll)history.scrollTop=history.scrollHeight;
+ const history=$('history');if(history)history.scrollTop=nearBottom?history.scrollHeight:previousTop;
+ if(hadFocus&&$('message')){$('message').focus();$('message').setSelectionRange(selection.start,selection.end);}
 }
 function request(kind='snapshot',text=''){
  return new Promise((resolve,reject)=>{
@@ -40,5 +46,23 @@ await listen('social-chat-response',e=>{
  if(data.ok)ticket.resolve(data.snapshot);
  else ticket.reject(Error(data.error||'Conversation error'));
 });
-async function update(){if(document.activeElement===$('message'))return;try{const snapshot=await request();if(JSON.stringify(snapshot)!==JSON.stringify(current)){current=snapshot;redraw();}}catch(err){if($('chat-status'))$('chat-status').textContent=err.message;}}
-redraw();await update();setInterval(update,6000);
+async function acknowledgeViewed(){
+ if(peer==='lobby'||document.visibilityState==='hidden'||!document.hasFocus()||!current?.messages?.length)return;
+ const last=current.messages.at(-1);
+ if(!Number.isSafeInteger(last?.id))return;
+ await emitTo('main','social-chat-viewed',{peer,label,upToId:last.id}).catch(()=>{});
+}
+let refreshing=false;
+async function update(){
+ if(refreshing)return;
+ refreshing=true;
+ try{
+  const snapshot=await request();
+  if(JSON.stringify(snapshot)!==JSON.stringify(current)){current=snapshot;redraw();}
+  await acknowledgeViewed();
+ }catch(err){if($('chat-status'))$('chat-status').textContent=err.message;}
+ finally{refreshing=false;}
+}
+window.addEventListener('focus',()=>void update());
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void update();});
+redraw();await update();setInterval(update,3500);

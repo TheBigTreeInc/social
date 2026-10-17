@@ -1,0 +1,34 @@
+= Tavi game catalog: operator deployment
+:revnumber: 0.3.8
+
+The Social component returns a read-only `tavi.game-catalog/v1` via a public `game_catalog` operation.
+This is server-advertised metadata, *not* federated discovery or a game login flow.
+
+Set `TAVI_GAME_CATALOG_JSON` in the Social handler's runtime environment, using a JSON array:
+
+[source,json]
+----
+[
+  {"id":"life", "name":"Life", "url":"https://your-reviewed-life-game.example/play", "embedded":true}
+]
+----
+
+The URL above is an example placeholder, not the actual Life deployment URL. Do not publish it as-is.
+The `embedded` attribute must be `true` only if the game operator supports iframe embedding.
+
+* The operator is responsible for publishing and reviewing the catalog. Invalid or missing catalog values result in no games.
+* Only HTTPS global hosts may be promoted; no basic-auth credentials or URL fragments. This is an input validation layer, not a comprehensive defense against DNS rebinding or server-side DNS changes. Catalog entries are user-navigated; the backend does not fetch them.
+* The Tavi Windows game window keeps its trusted UI on the app's own origin, with the external game in a separate sandboxed iframe. All Social operations are brokered through the main window; no credential is given to game content.
+* Some browser games deny framing through CSP `frame-ancestors` or X-Frame-Options. Offer an external browser option.
+* The current companion chat targets the Tavi **server lobby**, not a private match or existing Life game chat. Room chat, signed game-session tickets, Life account linking and game-host-specific UX require a new explicit contract.
+* Android and web targets currently use the external browser option; their embedded player is on the workboard.
+
+== Operator acceptance checks
+
+. Deploy matching Social server descriptor and handler on a staging LoopRD server.
+. Configure the reviewed actual Life URL in `TAVI_GAME_CATALOG_JSON`.
+. Verify public catalog discovery returns that record and no records when the setting is absent.
+. Sign in, navigate to Games, and open the embedded Windows game window.
+. Confirm Life loads and is playable. If frame embedding is denied, use the external browser mode.
+. Send a Tavi community lobby message in the companion sidebar; confirm the game cannot read a Social token.
+. Verify the roster remains responsive, the game window can close independently, and no state leaks between servers.

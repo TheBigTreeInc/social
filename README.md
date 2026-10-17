@@ -1,3 +1,7 @@
+Tavi 0.3.17: chat notifications, unread badges, mobile/Windows conversation UX. Client-only; LoopRD descriptor remains server release 0.3.16/schema 4. See docs/CHAT_AND_NOTIFICATIONS.adoc.
+
+Tavi 0.3.16: server-enforced event dismissal and filtered inbox; LoopRD release 0.3.16, schema 4; push/deploy server descriptor. No admin-role auto-routing or web SSO yet.
+
 ## Canonical design / browser client (v0.3.3)
 
 The design is maintained in **`docs/DESIGN.adoc`** and the independent browser
@@ -88,3 +92,15 @@ Use `looprd-social-0.3.2-ziprunner.zip` in the existing `looprd-social` ZipRunne
 ## Windows classic-messenger shell (v0.3.4)
 
 The native Windows application now uses a narrow roster-sized main window rather than the older 1060-pixel-wide dashboard. Chats open in separate windows with no duplicated login credentials. `docs/DESIGN.adoc` is the authoritative UX acceptance contract. No server schema changes in this UI-only update.
+
+
+## Dedicated ZipRunner project
+
+Import `tavi-0.3.7-looprd-social-ziprunner.zip` into existing project `looprd-social`. Prefilled repository URLs are in `ziprunner-git-targets.json`; the existing LoopRD component ID is not renamed. See `GIT-REPOSITORIES.md`.
+
+## Tavi identity
+
+The native and web clients now use the custom Tavi speech/leaf mark and classic teal/forest accents. See `docs/BRANDING.adoc`. Icon source: `client/assets/tavi-mark.svg`. Client-only branding does not change `looprd.yaml`.
+
+
+Interactive events: see `docs/INTERACTIVE_EVENTS.adoc`; LoopRD deployment and schema v4 upgrade required for inbox.

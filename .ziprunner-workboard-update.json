@@ -1,20 +1,129 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.4",
-  "summary": "Compact native Windows messenger shell: 355px independent sign-in/contact roster, real separate conversation windows and authenticated main-window broker; keep Android/web parity.",
+  "version": "0.3.17",
+  "summary": "Chat-first Windows/Android/Web client update: per-peer unread indicators, foreground notification settings, smoother native chats and mobile touch navigation; LoopRD server descriptor unchanged.",
   "implemented": [
     {
       "id": "SCL-021",
       "title": "Replace oversized Windows client with native buddy list and separate conversations",
       "summary": "Windows main window is roster-sized instead of 1060px dashboard. Open individual Tauri chat windows and broker authenticated operations via main window without copying credentials. Build emits standalone chat page, leaves Android/web responsive, and adds native geometry/IPC checks.",
       "operator_checks": [
-        "Install the Windows NSIS artifact; sign-in opens as a narrow 355×630 window, with no blue 1060px background or a duplicate app title bar.",
+        "Install the Windows NSIS artifact; sign-in opens as a narrow 355\u00d7630 window, with no blue 1060px background or a duplicate app title bar.",
         "Sign in with an existing Social account; the same window displays buddy groups and turn alerts; verify there is no permanent right-side panel.",
-        "Double-click a buddy or open Community Lobby: a separate approximately 585×525 Windows chat window opens, and reselecting the same buddy focuses it.",
+        "Double-click a buddy or open Community Lobby: a separate approximately 585\u00d7525 Windows chat window opens, and reselecting the same buddy focuses it.",
         "Send and receive a message in the native conversation; verify chat windows do not need another login and can open simultaneously.",
         "Verify Settings/Games/Portrait and server-authorized developer switch work within the roster-sized native host.",
         "Run the Web, Windows and Android workflows; confirm Android navigation and browser API/account parity remain functional."
+      ]
+    },
+    {
+      "id": "TAVI-030",
+      "title": "Server-promoted browser games and Windows companion lobby chat",
+      "summary": "Server operator publishes HTTPS game allowlist using TAVI_GAME_CATALOG_JSON; client shows catalog; isolated Tauri game window displays sandboxed game iframe and authenticated lobby chat via main-only request broker. External-browser fallback supported.",
+      "operator_checks": [
+        "Set TAVI_GAME_CATALOG_JSON to a reviewed HTTPS game URL on the Social server and redeploy the generated LoopRD handler.",
+        "Refresh games in Tavi; verify only server-promoted games appear.",
+        "Open promoted embedded web game on Windows; verify separate window and community lobby chat while playing.",
+        "Test browser refusal to frame: open browser fallback; verify no Social token is disclosed to embedded game.",
+        "Verify Windows NSIS and web build before deployment."
+      ]
+    },
+    {
+      "id": "TAVI-041",
+      "title": "Local client build and explicit descriptor deployment check",
+      "summary": "Provide PowerShell local Web, Windows and verify build entrypoints and read-only Git HEAD comparison for looprd.yaml; no automatic push or release deployment.",
+      "operator_checks": [
+        "Run BUILD-LOCAL.ps1 -Target Web on Windows with dependencies installed and inspect client/dist.",
+        "Run BUILD-LOCAL.ps1 -Target Windows with Rust/MSVC toolchain and inspect NSIS installer.",
+        "Run CHECK-LOOPRD-DEPLOY.ps1 against unchanged and modified looprd.yaml in a Git checkout."
+      ]
+    },
+    {
+      "id": "TAVI-042",
+      "title": "ZipRunner automatic local Tavi builds",
+      "summary": "Windows default; Web/Android configurable; incremental digest and installer rollback; never pushes Git.",
+      "operator_checks": [
+        "On Windows import source ZIP with working NSIS dependencies and confirm TAVI_AUTO_BUILD_PASSED in ZipRunner build log.",
+        "Reapply doc-only changes and confirm cached build when client sources unchanged.",
+        "Intentionally break native build, confirm job fails and previous NSIS installer remains.",
+        "Check looprd.yaml diff independently and publish server changes only when required."
+      ]
+    },
+    {
+      "id": "TAVI-043",
+      "title": "Tavi visual identity and branded launcher assets",
+      "summary": "Custom Tavi speech/leaf icon rendered to PNG/ICO from versioned SVG source; forest/teal accents on welcome/roster/chat/game window; Tavi web metadata and existing ZipRunner local Windows autobuild. No server descriptor changes.",
+      "operator_checks": [
+        "Import into looprd-social ZipRunner and confirm 0.3.10 stamp.",
+        "Verify tests and Windows auto-build on Windows host; open installer and check taskbar/launcher icon.",
+        "Confirm compact roster and independent chat/game windows retain original size and layout.",
+        "Confirm client-only change does not require looprd.yaml publication."
+      ]
+    },
+    {
+      "id": "TAVI-044",
+      "title": "Windows native build environment and SQLite cleanup reliability",
+      "summary": "Temporary SQLite fixtures now close all connections before cleanup; local build establishes .venv and installs requirements-dev.txt without modifying global Python.",
+      "operator_checks": [
+        "On Windows run BUILD-LOCAL.ps1 -Target Windows without manually activating a venv; verify Python tests pass without WinError 32 and compilation advances to Tauri.",
+        "Confirm TAVI_AUTO_BUILD_PASSED and a real NSIS executable before accepting native build; retain prior installer if a build fails."
+      ]
+    },
+    {
+      "id": "TAVI-045",
+      "title": "Bind native WebView2 network requests correctly",
+      "summary": "The shared JavaScript SDK now invokes window fetch on globalThis rather than calling a detached browser method. Adds a failing-before regression test that exercises discovery, account registration, and authenticated profile read.",
+      "operator_checks": [
+        "Build and launch Tavi on Windows; connect to the existing server, register a NEW username with a >=12 character password, and verify a buddy list appears without Illegal invocation.",
+        "Close and reopen Tavi; sign in and check that contact list, direct messages and server catalog load.",
+        "Verify browser SDK tests and no looprd.yaml change; ensure no tokens are logged or sent to game URLs."
+      ]
+    },
+    {
+      "id": "TAVI-046",
+      "title": "Remember Tavi login on Windows and Web",
+      "summary": "Save a revocable server-scoped Social token after explicit opt-in and restore it only after authenticated me() validation. Session-only fallback, remembered-device setting, expiration guard and logout cleanup added; never persist passwords.",
+      "operator_checks": [
+        "On Windows, sign in with Remember enabled, close Tavi, relaunch and confirm buddy list restores without a password.",
+        "Disable remembering, sign out, restart, and confirm the password is required.",
+        "Repeat with the standalone web client; confirm an invalid or revoked token is cleared and prompts for sign-in.",
+        "Verify no game iframe, external site or public endpoint receives the saved Social token."
+      ]
+    },
+    {
+      "id": "TAVI-EVENTS-001",
+      "title": "Initial Tavi interactive event inbox",
+      "summary": "Persistence and bounded action schemas in Social; reply controls and HTTPS links in client. Operator-authorized publisher only; LoopRD admin role automation and scoped web SSO remain future work.",
+      "operator_checks": [
+        "Deploy schema v4 descriptor and activate server release 0.3.16; verify old accounts remain available.",
+        "Publish a test event from an operator-approved developer account; confirm recipient inbox displays it after refresh.",
+        "Reply once and verify replay is refused and state survives restart.",
+        "Open an HTTPS link and confirm no Social session token is sent to destination.",
+        "Confirm no permanent admin panel is added and old server behavior reports inbox unavailable rather than corrupting login."
+      ]
+    },
+    {
+      "id": "TAVI-EVENTS-003",
+      "title": "Actionable and historical inbox UX with recipient dismissal",
+      "summary": "Filters open/history events, renders transient native action forms, and atomically records dismissals for the authenticated recipient without schema changes.",
+      "operator_checks": [
+        "Publish an event to one user and confirm it appears under Needs action only for that user.",
+        "Dismiss the event and verify it moves to History after refresh and restart.",
+        "Verify a different user cannot dismiss or reply to the event.",
+        "Open a safe HTTPS link and confirm the Social bearer is not forwarded to the destination."
+      ]
+    },
+    {
+      "id": "TAVI-CHAT-001",
+      "title": "Readable chat inbox with Windows and Android foreground alerts",
+      "summary": "Per-peer unread counts in the contact roster, local read/notified cursors scoped by server and account, privacy-first OS notifications, separate-window read acknowledgments, composer-preserving conversation refresh, and phone-safe navigation. This is a client-only release; background mobile push remains future work.",
+      "operator_checks": [
+        "On Windows with two accounts, verify new private messages show per-contact unread badges and native toast after OS permission; selecting/focusing the chat clears unread.",
+        "Send a private message while editing another draft in a separate native chat window: verify the draft/caret are preserved and the message arrives.",
+        "Restart Tavi and verify an already-notified message is not notified again; verify session tokens and message bodies are absent from unread-state localStorage records.",
+        "Install the Android client and verify 48px touch targets, safe-area navigation and foreground notifications when permission is granted.",
+        "Check that looprd.yaml is unchanged and no LoopRD server migration/deployment is required."
       ]
     }
   ],
@@ -52,7 +161,43 @@
     {
       "id": "SCL-017",
       "title": "Secure persistent device login",
-      "summary": "Currently device session token is memory-only; add native OS-secure storage with explicit remembered-device management and logout/remote revoke controls.",
+      "summary": "Session restore implemented using client-local browser/WebView storage with an explicit remember-device choice. Native OS credential vault, device listing/revocation controls, and security hardening remain planned.",
+      "priority": "medium"
+    },
+    {
+      "id": "TAVI-031",
+      "title": "Embedded Life actual game acceptance",
+      "summary": "Configure Life deployment URL via operator catalog, verify iframe policies, cookies, sign-in and actual game functionality. Life integration must be validated against its deployment.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-032",
+      "title": "Dedicated game session chat and invitations",
+      "summary": "Companion currently uses existing shared community lobby; build room-scoped conversations and short-lived audience-bound game join tickets after agreeing game API contract.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-033",
+      "title": "Native game launch and overlay",
+      "summary": "Design trusted local executable registration, user-consented launches, Windows overlay injection avoidance and platform support; no arbitrary remote command execution.",
+      "priority": "low"
+    },
+    {
+      "id": "TAVI-034",
+      "title": "Web/Android integrated player",
+      "summary": "Standalone browser and Android currently open promoted games in external browser; add secure embedded player with parity after WebView acceptance.",
+      "priority": "medium"
+    },
+    {
+      "id": "TAVI-EVENTS-002",
+      "title": "LoopRD role-driven routing and scoped panel SSO",
+      "summary": "Requires LoopRD/DAPI admin-principal contracts, external publisher identity, durable role-driven subscriptions and one-time destination-scoped web handoff.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-CHAT-002",
+      "title": "Server-backed inbox heads and background mobile push",
+      "summary": "Specify and build server-side DM summaries and synchronized read state; later add authenticated mobile push enrollment, safe push payloads, Android FCM and proper delivery diagnostics. Do not claim closed-app mobile notifications.",
       "priority": "medium"
     }
   ]

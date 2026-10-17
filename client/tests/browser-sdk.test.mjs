@@ -53,3 +53,27 @@ test('standalone JS SDK contains no native/Node dependency; web workflow is mand
  const portrait=await readFile(new URL('../public/portrait/index.html',import.meta.url),'utf8');
  assert(!portrait.includes('src="/portrait/') && !portrait.includes('href="/portrait/'));
 });
+
+// Regression: some Windows WebView2 implementations reject a detached fetch function.
+test('native WebView2 fetch retains its browser invocation context through registration and session calls', async () => {
+  const previous = globalThis.fetch;
+  const ops = [];
+  globalThis.fetch = async function(url, options = {}) {
+    if (this !== globalThis) throw new TypeError("Failed to execute 'fetch' on 'Window': Illegal invocation");
+    const op = options.body ? JSON.parse(options.body).op : 'info';
+    ops.push(op);
+    const data = op === 'info' ? {protocol:'looprd.social/1',auth:'social-accounts'}
+      : op === 'capabilities' ? {ok:true,schema:'looprd.social.capabilities/v1',accounts:true,registration:true}
+      : op === 'register' ? {ok:true,token:'x'.repeat(36)}
+      : op === 'me' ? {ok:true,profile:{profileId:'alice'},revision:1}
+      : {ok:true};
+    return {ok:true,status:200,json:async()=>data};
+  };
+  try {
+    const capability = await sdk.discoverSocial(origin);
+    assert.equal(capability.registration,true);
+    const account = await sdk.registerSocial(origin,'alice','long enough password');
+    assert.equal((await account.me()).profile.profileId,'alice');
+    assert.deepEqual(ops,['info','capabilities','register','me']);
+  } finally {globalThis.fetch = previous;}
+});

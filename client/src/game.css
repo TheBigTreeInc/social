@@ -1,0 +1,8 @@
+html,body,#game-app{margin:0;width:100%;height:100%;font:13px Tahoma,Arial,sans-serif;background:#edf4ff;color:#1a3455}.tavi-player{height:100%;display:flex;flex-direction:column}.tavi-player header{display:flex;gap:12px;align-items:center;background:linear-gradient(#dceaff,#b5d1f5);padding:8px}.tavi-player header span{flex:1;color:#465d78}.tavi-player button{cursor:pointer;padding:5px 12px;border:1px solid #8da8d2;background:#fff}.player-body{flex:1;display:flex;min-height:0}.game-stage{flex:1;min-width:0;background:#fff}.game-stage iframe{width:100%;height:100%;border:0}.game-chat{width:260px;display:flex;flex-direction:column;border-left:1px solid #9bb2d5;background:white;padding:8px;box-sizing:border-box;gap:8px}.game-messages{flex:1;overflow:auto;min-height:0;overflow-wrap:anywhere}.game-messages p{margin:5px 0}.game-chat form{display:flex;gap:5px;flex-direction:column}.game-chat textarea{resize:vertical}.tavi-player footer{padding:5px 9px;background:#e4edfa;font-size:11px;color:#536785}@media(max-width:640px){.game-chat{width:42%}}
+/* Tavi game companion theme follows the messenger accent palette. */
+html,body,#game-app {background:#ebf7f1;color:#20483d}
+.tavi-player header {background:linear-gradient(#effff6,#c4e8d9)}
+.tavi-player header span,.tavi-player footer {color:#4b7062}
+.tavi-player button {border-color:#8ebbaa;color:#215b50}
+.game-chat {border-left-color:#a6cfbf}
+.tavi-player footer {background:#e0f1e8}

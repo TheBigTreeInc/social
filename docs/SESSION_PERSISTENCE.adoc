@@ -1,0 +1,21 @@
+= Tavi remembered-device sessions
+
+== Client behavior
+
+Tavi remembers the selected LoopRD server in existing local preferences. After login, a user can explicitly enable *Keep me signed in on this device*. The client saves its server-issued, revocable Social device token locally, not the account password. When not selected, the token is held in session storage to survive a same-tab reload.
+
+On restart, the client calls the server `me` operation with the remembered token before displaying the contact list. A rejected or expired token is deleted and sign-in is requested. The remembered entry expires client-side after 29 days; the backend controls the actual validity period. Sign out first deletes the local token and then sends a server logout to revoke it; other devices are independent. A Settings action allows the user to enable or disable persistent local storage.
+
+== Security boundaries
+
+The currently implemented persistence uses browser localStorage/sessionStorage within the Tavi web origin, including Tauri WebView storage. The token is accessible to scripts running in that origin; this is *not* OS credential vault protection. Require TLS, a strict content security policy, no untrusted same-origin scripts, and XSS audits before production. Native OS-secure storage is a follow-up project. Never put Social tokens in game URLs, iframe messages, browser logs, or external game domains.
+
+This provides session continuation for the standalone Web client on its own origin, not cross-site SSO. An external Life game, other sites and federated servers MUST NOT reuse or receive the Social token. Future integration requires scoped, short-lived game authorization tickets or a standard authorization flow designed and implemented server-side.
+
+== Acceptance
+
+. Register/sign in with Remember unchecked; reload current web tab; session restores. Close browser session or Tavi and reopen: a new session prompts for login (browser session restore behavior may differ).
+. Sign in with Remember checked; restart Tavi or reload the same-site Web app; contact list reappears after server verification.
+. Revoke the token on server; restart; saved token is purged and no authenticated UI is shown.
+. Sign out; restart; no automatic login, and independent device sessions remain valid.
+. Confirm no password or game token is stored in remembered-session record.

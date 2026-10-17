@@ -1,25 +1,25 @@
-# ZIPRUNNER_HANDOFF v1
+# Tavi 0.3.17 — Chat, mobile UX and OS notifications
 
-Project: `looprd-social`  
-Version: `0.3.4`  
-Artifact: `looprd-social-0.3.4-ziprunner.zip`  
-Kind: `source_update`  
+ZIPRUNNER_HANDOFF v1 | project=looprd-social | version=0.3.17 | filename=looprd-social-0.3.17-chat-notifications-ziprunner.zip
 
-## Delivered
+Project key: `looprd-social`. This is a CLIENT-ONLY update for Windows/Android/Web. `looprd.yaml` is unchanged, retaining deployed Social release 0.3.16 and database schema 4. **No server Git push or migration required for this pass.** Existing operator settings and private state must be preserved.
 
-- Compact Windows **native application window** (355×630) for sign-in and buddy list, no giant dashboard backdrop.
-- Contacts / Community Lobby open **independent native chat windows** (585×525), with transcript, composer and friend-request acceptance.
-- Only the main window holds credentials. Chat webviews use request/response Tauri events through the main window. No token in chat URL, event or storage.
-- Tauri capability scopes restrict chat-window creation to the main roster; separate conversation permissions are limited to IPC events.
-- Standalone Web/JavaScript SDK and Android clients retain the common Social account protocol and responsive presentation.
-- Updated `docs/DESIGN.adoc` and `docs/JAVASCRIPT_CLIENT.adoc` to require compact desktop and independent conversations. New source-level regression tests.
+## Implemented
 
-## Validation
+- Unread badge per accepted contact; messages polled in bounded rotating contact batches while active.
+- Persisted, server/account-scoped read/notified message ID cursors, without storing message bodies or passwords.
+- Native Windows/Android/browser notifications for incoming direct messages and new friend requests while Tavi is running and OS permission is granted; message preview off by default.
+- Dedicated conversation windows refresh while composing; text, cursor and scroll are preserved; viewed messages acknowledge unread locally.
+- Better phone safe-area/touch navigation and matching chat colors.
 
-Run `npm run test`, `node client/tools/check-package.mjs`, `python tools/generate-looprd.py --check` and `python -m unittest discover -s tests -p 'test_*.py' -q`. Build the Web output from `client/` using `npm install && npm run portrait:sync && npm run web:build && npm run web:verify`.
+## Validation / acceptance
 
-The build requires actual Windows GitHub Actions + native GUI acceptance for true separate OS windows; source test success is not a native installer proof. Browser output now includes `chat.html` for the Tauri child window. Android layout stays mobile-first. No database migration; Social schema remains 3.
+- `npm run verify`: 7 server-source Node + 41 client Node tests passed.
+- Python unittest: 43/43 passed.
+- `python tools/generate-looprd.py --check`: passed. `looprd.yaml` identical to previous source.
+- ZipRunner's saved project Build command should be `node tools/auto-build.mjs`; Start command `node tools/launch-tavi.mjs`.
+- Windows NSIS, Android APK, foreground system notifications and two-account end-to-end chat must be confirmed on the actual devices. This Linux environment did not compile those native artifacts.
 
-## Known external blocker
+**Deferred**: LoopRD admin roles, server mailbox summary/read receipts, click-to-reply OS notifications, Android background push (FCM/APNs-style), cross-device unread synchronization and actual offline message push. Do not claim they work.
 
-User's LoopRD diagnostic reported Social cached release 0.2.3 and `load: ValueError` despite subsequent source versions. Activating a compatible Social backend is necessary for new-account functionality. This ZIP only changes client UX and release identification; it does not diagnose the root exception automatically.
+See `docs/CHAT_AND_NOTIFICATIONS.adoc` and `evidence/chat-notifications-tests.md`.

@@ -17,3 +17,10 @@
 .pop-chat .window-status{min-height:22px;}
 .pop-request{padding:25px;font-size:12px;}
 .pop-request button{margin-left:12px;}
+/* Native chat uses Tavi's forest/teal identity while preserving classic geometry. */
+.pop-tools{border-bottom-color:#a9d3c3;background:linear-gradient(#fff,#e0f2ea)}
+.pop-tools strong{color:#216653}
+.pop-contact{border-color:#9bcfbc;color:#247e68}
+.pop-chat{background:#eef7f2}
+.pop-format{color:#247c69;background:linear-gradient(#fff,#e1f2e9)}
+.pop-transcript,.pop-composer textarea{border-color:#accdbf}

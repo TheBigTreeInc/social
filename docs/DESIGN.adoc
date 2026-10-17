@@ -1,6 +1,6 @@
-= Social Messenger: Design and Architecture
+= Tavi: Design and Architecture
 TheBigTreeInc Social project
-:revnumber: 0.3.4
+:revnumber: 0.3.8
 :toc: left
 :sectnums:
 
@@ -13,7 +13,7 @@ The two documents are complementary, and **this design must not redefine LoopRD 
 
 == Product identity and layout
 
-Social Messenger is a compact, game-oriented messenger, inspired by the dense
+Tavi is a compact, game-oriented messenger, inspired by the dense
 contact-list and conversation conventions of MSN Messenger and Xfire. The desktop
 shell should use a narrow contact roster, small classic menus and toolbar controls,
 white message history, thin borders, and compact status indicators. Do not reintroduce
@@ -111,7 +111,7 @@ upstream LoopRD component must actually activate the Social database schema
 before register/login can succeed; ZipRunner source installation alone does
 not activate or migrate the live backend.
 
-== Native Windows window geometry (v0.3.4)
+== Native Windows window geometry (v0.3.8)
 
 * Sign-in and buddy list are the *entire* native window, initially 355 x 630 logical pixels. The main window stays narrow; the desktop window decoration is provided by Windows, without a duplicate simulated caption. Do not fill a 1060-pixel shell with blue whitespace.
 * Selecting a contact or Community Lobby opens or focuses a separate 585 x 525 conversation window. Each conversation has its own message history and composer. Multiple windows may coexist.
@@ -119,3 +119,40 @@ not activate or migrate the live backend.
 * Settings, Games, and Portrait screens temporarily replace the roster in the narrow main window; Back to contacts restores the roster. Allow scrolling where required.
 * Browser remains a separately shipped HTML/JS build. Android remains single-window responsive navigation; do not open desktop popup webviews on phones.
 * Acceptance MUST verify actual native window dimensions and independent conversations in Windows Actions; HTML source checks alone cannot certify OS behavior.
+
+== Tavi identity and friend discovery (v0.3.5)
+
+Tavi is the user-facing name. `looprd-social`, its HTTP paths, database, and account IDs remain unchanged. All Windows, Android and browser clients use the same Social account on a chosen home server.
+
+=== Registration and contact UX
+
+* Registration errors appear inline beside the account form; never rely on a transient toast.
+* Username is 3–24 lowercase letters, digits or underscores and begins with a letter; password is 12–128 characters.
+* Adding a friend is a dedicated, keyboard-accessible form, not a JavaScript prompt.
+* Contact requests require acceptance before private messaging.
+
+=== Federation architecture (design only; not implemented)
+
+A Tavi identity has one home server. Remote identities use `username@host`, but do not interpret a remote address as a local username. Social owns remote discovery, relationships, blocking and message semantics; LoopRD core provides generic HTTP, persistent delivery queues and verified server-to-server credentials. No global identity directory is required.
+
+Phase 1: verified HTTPS discovery document and signed server identity with explicit trust configuration. Phase 2: signed, replay-protected request/accept/reject friend invitations with consent and per-server rate limiting. Phase 3: durable idempotent message delivery and acknowledgement with retry queues. Phase 4: presence with privacy controls, blocking, key rotation, migration and abuse handling.
+
+Do not allow arbitrary remote URL fetching from client-supplied addresses (SSRF). Never trust unsigned remote claims, never replicate password hashes or session tokens, and do not treat federation as implemented until end-to-end tests across two independent servers pass.
+
+== Promoted games and the player window (0.3.8)
+
+* Social handles `game_catalog` with a public read-only `tavi.game-catalog/v1` response. The operator sets `TAVI_GAME_CATALOG_JSON` to an array of reviewed `id`, `name`, `url`, `embedded` entries; empty by default. Only public HTTPS URLs without credentials, fragments or local-network hosts are accepted. The server is authoritative; no client may publish its own game.
+* Windows opens a separate local `game.html` webview for an operator-promoted `embedded` web game, leaving Tavi's compact roster active. A sandboxed external game iframe is a display surface only. It receives no Social token or Tauri API. The local player uses an event broker in the main authenticated webview for shared server lobby feed/send only.
+* Chat is the existing **community lobby**, not a game room; no claim of interoperable Life chat, SSO, join tickets, or direct messages from within the game. Those require explicit contract work.
+* Browsers and Android currently open promoted games externally; native player is Windows-only. Framing can be refused by the game via CSP `frame-ancestors` or `X-Frame-Options`. Browser opening remains fallback. Some games require separate cookies and login.
+* Server catalog entries do not confer privileged client capabilities; executing native binaries, native overlays, game room invitations, and federation remain workboard items.
+* Maintain independent Windows NSIS, Android and web verification. No private credentials are included in game URLs, client messages or ZipRunner archives.
+
+== Tavi branding and build experience
+
+The product is **Tavi**, published by **The Big Tree Inc**. The implementation retains the stable `looprd-social` project key, server component and package identifiers while the user-facing windows and title use Tavi. Retro messenger styling is an interaction reference, not a borrowed identity: Tavi should develop its own coherent iconography, accessible presence cues, and distinctive palette. Local Windows installation builds are default ZipRunner build outcomes; publication to GitHub is independent and reserved for explicit source/server deployment decisions.
+
+
+== Tavi v0.3.17 — chat-first notifications and phone UX
+
+See `CHAT_AND_NOTIFICATIONS.adoc` for locally scoped read markers, bounded foreground DM scanning, notification permission and privacy defaults, independent native chat windows, mobile safe-area/touch controls, and acceptance checks. No LoopRD schema or API change is included in this client-only release.

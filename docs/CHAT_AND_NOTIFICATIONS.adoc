@@ -1,0 +1,74 @@
+= Tavi chat, unread state and device notifications
+:toc:
+
+== Scope: v0.3.17
+
+This pass prioritizes direct conversations, compact Windows companion windows,
+phone-sized navigation, and OS notifications. The existing LoopRD Social server
+API and schema 4 remain unchanged: this is a *client-only* release.
+
+== Inbox and unread cursors
+
+* The Social v1 component currently exposes `dm_feed(peer)` but no summary of
+  all direct-message threads. While Tavi is active, it polls up to 12 accepted
+  contacts per scan, rotating across longer contact lists. The open mobile/web
+  conversation is also scanned, even if outside that batch.
+* Read state persists locally under a server+account-specific key. Only numeric
+  message IDs and notification cursors are retained; not message bodies or
+  credentials. First contact scan seeds a baseline rather than notifying about
+  up to 30 days of historical messages. It is **not** a server-synchronized
+  read-receipt or unread state.
+* Later incoming private messages increment that contact's unread badge. One
+  OS notification is emitted per scanned batch/peer rather than one per message;
+  repeated polling does not issue duplicates. Viewing a conversation acknowledges
+  it. Independent Windows chat windows report the last viewed server message ID
+  to the main authenticated broker. The chat webviews never receive session tokens.
+* A server-side DM inbox-heads endpoint would avoid per-contact polling and
+  enable consistent unread state across devices. This is future work, not a
+  dependency of the current client-only pass.
+
+== Windows integration
+
+Tauri's native notification plugin integrates with Windows notifications once
+users grant the OS permission. The buddy list stays compact and private
+conversations remain separate webview windows. Conversations refresh approximately
+once every 3.5 seconds even while composing; drafts, focus, caret position and
+transcript scroll position are preserved on updates. Notification content previews
+are opt-in; names are visible in the title. Sign-out clears device credentials,
+but local numeric read markers remain associated with their prior account.
+
+== Android and mobile web
+
+The same shared JavaScript SDK and unread logic runs in Tauri Android and web.
+The responsive layout shows roster and conversation separately, has minimum
+48px touch targets for navigation and buddies, and accommodates the phone's
+safe-area inset. The Android notification plugin can show notifications *while
+Tavi is running* and permission is granted. A closed/suspended mobile app does
+**not** yet receive remote background push: a server-issued push subscription,
+Google FCM for Android and platform-specific device identity/permissions would
+be required. Likewise, ordinary browser notifications are not Web Push.
+
+== Privacy and limitations
+
+Tavi saves notification preferences per server+account (messages enabled,
+friend-request alerts enabled, message previews disabled by default). OS
+permission is requested by explicit user action. No tokens are sent to game
+frames or notification payloads. The client never assumes other application
+servers can read Social authentication. The operating system may show native
+notification titles on the lock screen.
+
+== Acceptance plan
+
+. Build locally through `node tools/auto-build.mjs` (saved ZipRunner recipe).
+. Windows: sign in as A, add B, open private conversation, send B a message;
+  confirm notification badge, click conversation, see it clear, then test B's
+  response while composing. Ensure message isn't accidentally sent twice.
+. Restart Tavi with remembered sign-in; confirm unread remains and no duplicate
+  notification is issued for an already notified message.
+. Android: verify single-pane roster/chat navigation, Android notification
+  permission and foreground notification while app is open; do not claim
+  background push until its own tests pass.
+. Web: sign in from a separate origin on the server CORS allowlist; verify the
+  account and messages are shared but device read markers remain distinct.
+. Test profile changes, invite acceptance, game windows and interactive inbox
+  for regressions. All tests must pass before marking the workboard task Done.

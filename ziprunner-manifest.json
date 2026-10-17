@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.4",
-    "base_version": "0.3.3"
+    "version": "0.3.17",
+    "base_version": "0.3.16"
   },
   "update": {
-    "id": "SCL-20261016-021",
+    "id": "TAVI-20261016-009",
     "kind": "source_update",
-    "created_at": "2026-10-16T00:55:00+02:00",
-    "summary": "Replace oversized native main window with classic compact buddy roster and independent chat windows; shared Social account preserved."
+    "created_at": "2026-10-16T20:55:00+02:00",
+    "summary": "Client-only direct message unread indicators, desktop/mobile foreground notifications and chat usability; server descriptor unchanged."
   },
   "planned_work": [
     {
@@ -24,6 +24,36 @@
       "title": "Native and browser artifact and GUI acceptance",
       "acceptance_criteria": "Windows NSIS, Android APK and Web artifacts built in GitHub and independently tested for login, native window layout, conversations and notifications",
       "priority": "high"
+    },
+    {
+      "id": "TAVI-041",
+      "title": "Local Tavi build workflow independent of GitHub",
+      "acceptance_criteria": "Windows host can run BUILD-LOCAL.ps1 for Web and NSIS builds, no Git side effects; CHECK-LOOPRD-DEPLOY.ps1 distinguishes unchanged and changed descriptor",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-045",
+      "title": "Windows WebView2 fetch invocation compatibility",
+      "acceptance_criteria": "Discovery, registration, login, profile and contact requests use bound browser fetch in Windows WebView2; automated detached-fetch regression passes",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-EVENTS-003",
+      "title": "Inbox lifecycle, filters and recipient-controlled dismissal",
+      "acceptance_criteria": "Server rejects cross-user dismissal; archived events are viewable but not actionable; Node and Python tests pass.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-CHAT-001",
+      "title": "Chat unread state, Windows and mobile foreground notifications",
+      "acceptance_criteria": "Bounded per-contact scan, local read cursor/permission tests, Windows and Android acceptance, no server descriptor changes",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-CHAT-002",
+      "title": "Background mobile push and server inbox heads",
+      "acceptance_criteria": "Requires new LoopRD server protocol and Android push integration; intentionally not implemented here",
+      "priority": "medium"
     }
   ],
   "done_work": [
@@ -57,6 +87,69 @@
           "description": "Canonical multi-window UX acceptance contract"
         }
       ]
+    },
+    {
+      "id": "TAVI-045",
+      "summary": "Updated browser SDK fetch invoker and added regression test; native Windows login acceptance pending.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/sdk/looprd-social.js",
+          "description": "Browser bound fetch wrapper used as default transport"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/browser-sdk.test.mjs",
+          "description": "WebView2 method invocation regression"
+        }
+      ]
+    },
+    {
+      "id": "TAVI-EVENTS-003",
+      "summary": "Server-side recipient-only dismissal and filtered transient inbox implemented. Windows acceptance remains pending.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "server/looprd_handler.py",
+          "description": "Dismiss state transition and owner checks"
+        },
+        {
+          "kind": "test",
+          "ref": "tests/test_interactions.py",
+          "description": "Cross-user denial and idempotency"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/main.js",
+          "description": "Transient filtered inbox controls"
+        }
+      ]
+    },
+    {
+      "id": "TAVI-CHAT-001",
+      "summary": "Implemented the client-side foreground polling, local numeric cursors, notification preferences, chat UX and mobile touch layout; platform verification is still pending.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/message-state.js",
+          "description": "Bounded chat scanning/read cursor logic"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/message-state.test.mjs",
+          "description": "Unread/idempotency/rotation/local state tests"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/chat-ux.test.mjs",
+          "description": "UI and bridge assertions"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/CHAT_AND_NOTIFICATIONS.adoc",
+          "description": "Platform-specific acceptance and boundaries"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -67,6 +160,19 @@
       "blockers": [
         "Native Windows UI and Vite web output could not be launched in this environment."
       ]
+    },
+    {
+      "id": "TAVI-041",
+      "status": "review",
+      "next_action": "Verify automatic local build uses the effective persisted ZipRunner project recipe and produces Windows installer.",
+      "blockers": [
+        "ZipRunner installed project config may override source recipe."
+      ]
+    },
+    {
+      "id": "TAVI-CHAT-002",
+      "status": "pending",
+      "next_action": "Define DM summary/read state API and Android background push service in a later server-capability pass."
     }
   ],
   "validation": {

@@ -1,0 +1,21 @@
+= Tavi visual identity
+:toc:
+
+== Product
+
+Tavi — Games. Friends. Together. Published by The Big Tree Inc. LoopRD and `looprd-social` remain implementation names, not the consumer brand.
+
+== Design language
+
+* Compact familiar messenger geometry: native roster, independent conversation and isolated game windows.
+* Own identity: teal `#267a73`, deep forest `#194c4b`, mint `#d9eee7`, light surfaces; avoid full dark-green interfaces.
+* Mark: speech bubble with branching leaves. Vector source `client/assets/tavi-mark.svg` is authoritative; raster Windows icons are checked into source. Do not use third-party messenger trademarks, copied artwork or generic sparkle branding.
+* Fonts: native Tahoma/Segoe UI fallback; preserve keyboard navigation, text contrast and focus outlines.
+
+== Acceptance
+
+On the Windows build, verify the taskbar icon and installer branding, login window, contact list, separate chat and Life player window. Check Web favicon and that game framing continues to be isolated. Rebuild locally by default, and do not push Git to publish client branding. `looprd.yaml` is not affected by this identity pass.
+
+== Out of scope
+
+This pass does not repair live account registration, implement federation, add native overlay, or validate a Windows binary in CI.

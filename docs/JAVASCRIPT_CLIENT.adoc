@@ -86,3 +86,7 @@ secret. A page refresh intentionally discards it.
 == Desktop window presentation
 
 `client/vite.config.mjs` emits both `index.html` and `chat.html`. The reusable SDK is unchanged. Windows uses separate native Tauri windows with IPC mediated by the authenticated main webview, while the browser and Android use the same Social operations in responsive pages. No session secret is embedded in the chat HTML or window URL.
+
+== Tavi promoted game catalog
+
+`discoverGames(origin)` uses public `POST /looprd/looprd-social/v1/social` with `{ "op": "game_catalog" }`; returns validated game descriptions (`tavi.game-catalog/v1`). No user token is transmitted. Treat returned launch URLs as untrusted until validated. Embedding support is explicit and does not grant the game Social account access.

@@ -5,7 +5,8 @@ import sys
 import json
 import yaml
 root=Path(__file__).resolve().parent.parent
-version=json.loads((root/'package.json').read_text())['version']
+# The server release is independent of client-only Tavi packaging versions.
+version=json.loads((root/'server/looprd-release.json').read_text())['release']
 source=(root/'server/looprd_handler.py').read_text(encoding='utf8')
 def string(max_len,required=False,unique=False):
     return dict(type='string',maxLength=max_len,**({'required':True} if required else {}),**({'unique':True} if unique else {}))
@@ -15,7 +16,7 @@ spec={
  'apiVersion':'looprd/v1','component':'looprd-social','release':version,'api':{'version':'v1'},
  'auth':{'mode':'public'},
  'limits':{'requestsPerMinute':180,'authAttemptsPerMinute':90,'burstPerSecond':15,'maxInFlight':30},
-  'database':{'backend':'sqlite','schemaVersion':3,'migrations':[{'version':2,'statements':[
+  'database':{'backend':'sqlite','schemaVersion':4,'migrations':[{'version':2,'statements':[
   'CREATE TABLE "SocialAccount" ("id" INTEGER PRIMARY KEY, "handle" VARCHAR(32) NOT NULL UNIQUE, "passwordHash" VARCHAR(255) NOT NULL, "created" INTEGER NOT NULL, "failedAttempts" INTEGER NOT NULL, "lockedUntil" INTEGER NOT NULL)',
   'CREATE TABLE "SocialSession" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "tokenHash" VARCHAR(64) NOT NULL UNIQUE, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL, "lastSeen" INTEGER NOT NULL, "revoked" BOOLEAN NOT NULL)',
   'CREATE TABLE "SocialContact" ("id" INTEGER PRIMARY KEY, "leftId" VARCHAR(72) NOT NULL, "rightId" VARCHAR(72) NOT NULL, "requestedBy" VARCHAR(72) NOT NULL, "status" VARCHAR(16) NOT NULL, "created" INTEGER NOT NULL)',
@@ -24,6 +25,9 @@ spec={
   'CREATE INDEX "SocialDirectMessage_pair" ON "SocialDirectMessage" ("leftId", "rightId", "id")'
   ]},{'version':3,'statements':[
   'ALTER TABLE "SocialAccount" ADD COLUMN "developerEnabled" BOOLEAN NOT NULL DEFAULT 0'
+  ]},{'version':4,'statements':[
+  'CREATE TABLE "SocialInteraction" ("id" INTEGER PRIMARY KEY, "recipient" VARCHAR(72) NOT NULL, "publisher" VARCHAR(72) NOT NULL, "topic" VARCHAR(96) NOT NULL, "title" VARCHAR(120) NOT NULL, "data" JSON NOT NULL, "status" VARCHAR(16) NOT NULL, "response" JSON, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL)',
+  'CREATE INDEX "SocialInteraction_recipient" ON "SocialInteraction" ("recipient", "id")'
   ]}]},
  'models':{
     'SocialProfile':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True,True),'data':{'type':'json','required':True},'revision':integer(True),'updated':integer(True)}},
@@ -32,6 +36,7 @@ spec={
     'SocialAccount':{'fields':{'id':integer(primary=True,generated=True),'handle':string(32,True,True),'passwordHash':string(255,True),'created':integer(True),'failedAttempts':integer(True),'lockedUntil':integer(True),'developerEnabled':{'type':'boolean','required':True}}},
     'SocialSession':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'tokenHash':string(64,True,True),'created':integer(True),'expires':integer(True),'lastSeen':integer(True),'revoked':{'type':'boolean','required':True}}},
     'SocialContact':{'fields':{'id':integer(primary=True,generated=True),'leftId':string(72,True),'rightId':string(72,True),'requestedBy':string(72,True),'status':string(16,True),'created':integer(True)},'indexes':[{'name':'SocialContact_pair','fields':['leftId','rightId'],'unique':True}]},
+    'SocialInteraction':{'fields':{'id':integer(primary=True,generated=True),'recipient':string(72,True),'publisher':string(72,True),'topic':string(96,True),'title':string(120,True),'data':{'type':'json','required':True},'status':string(16,True),'response':{'type':'json'},'created':integer(True),'expires':integer(True)},'indexes':[{'name':'SocialInteraction_recipient','fields':['recipient','id']}]},
     'SocialDirectMessage':{'fields':{'id':integer(primary=True,generated=True),'leftId':string(72,True),'rightId':string(72,True),'senderId':string(72,True),'content':string(1000,True),'created':integer(True)},'indexes':[{'name':'SocialDirectMessage_pair','fields':['leftId','rightId','id']}]}
     },
  'resources':{'pulses':{'model':'SocialPulse','path':'/pulses','operations':['get']}},

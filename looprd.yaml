@@ -1,11 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
-cors:
-  allowedOrigins:
-    - https://thebigtreeinc.github.io
-    - http://tauri.localhost
 component: looprd-social
-release: 0.3.4
+release: 0.3.16
 api:
   version: v1
 auth:
@@ -17,7 +13,7 @@ limits:
   maxInFlight: 30
 database:
   backend: sqlite
-  schemaVersion: 3
+  schemaVersion: 4
   migrations:
   - version: 2
     statements:
@@ -36,6 +32,12 @@ database:
   - version: 3
     statements:
     - ALTER TABLE "SocialAccount" ADD COLUMN "developerEnabled" BOOLEAN NOT NULL DEFAULT 0
+  - version: 4
+    statements:
+    - CREATE TABLE "SocialInteraction" ("id" INTEGER PRIMARY KEY, "recipient" VARCHAR(72) NOT NULL, "publisher"
+      VARCHAR(72) NOT NULL, "topic" VARCHAR(96) NOT NULL, "title" VARCHAR(120) NOT NULL, "data" JSON NOT NULL, "status"
+      VARCHAR(16) NOT NULL, "response" JSON, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL)
+    - CREATE INDEX "SocialInteraction_recipient" ON "SocialInteraction" ("recipient", "id")
 models:
   SocialProfile:
     fields:
@@ -172,6 +174,48 @@ models:
       - leftId
       - rightId
       unique: true
+  SocialInteraction:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      recipient:
+        type: string
+        maxLength: 72
+        required: true
+      publisher:
+        type: string
+        maxLength: 72
+        required: true
+      topic:
+        type: string
+        maxLength: 96
+        required: true
+      title:
+        type: string
+        maxLength: 120
+        required: true
+      data:
+        type: json
+        required: true
+      status:
+        type: string
+        maxLength: 16
+        required: true
+      response:
+        type: json
+      created:
+        type: integer
+        required: true
+      expires:
+        type: integer
+        required: true
+    indexes:
+    - name: SocialInteraction_recipient
+      fields:
+      - recipient
+      - id
   SocialDirectMessage:
     fields:
       id:
@@ -228,15 +272,66 @@ handlers:
     \ sa.String),\n    sa.column('displayName', sa.String), sa.column('content', sa.String),\n    sa.column('created',\
     \ sa.Integer))\nPULSE = sa.table('SocialPulse', sa.column('id', sa.Integer),sa.column('signal', sa.Integer))\n\
     SUBJECT = re.compile(r'^[a-zA-Z0-9_-]{8,72}$')\nSLOT = re.compile(r'^[a-z0-9-]{1,64}$')\nCOLOR = re.compile(r'^#[a-fA-F0-9]{6}$')\n\
-    \n\ndef error(message):\n    return {'ok':False,'error':message}\n\n\ndef configured_tokens():\n    \"\"\"Dev\
-    \ identity->token mapping; provision via runtime environment/secret only.\"\"\"\n    raw = os.environ.get('LOOPRD_SOCIAL_DEV_TOKENS_JSON',\
-    \ '')\n    try:\n        found = json.loads(raw)\n    except (ValueError,TypeError):\n        return {}\n  \
-    \  if not isinstance(found,dict):\n        return {}\n    return {name:token for name,token in found.items()\n\
-    \            if isinstance(name,str) and SUBJECT.fullmatch(name) and not re.fullmatch(r'acct_[0-9]+',name)\n\
-    \            and isinstance(token,str) and len(token)>=24 and len(token)<=256}\n\n\ndef authorize(token, tokens):\n\
-    \    if not isinstance(token,str) or not 24<=len(token)<=256:\n        return None\n    value=hashlib.sha256(token.encode('utf8')).digest()\n\
-    \    identity=None\n    for name,secret in tokens.items():\n        if not re.fullmatch(r'acct_[0-9]+',name)\
-    \ and isinstance(secret,str) and hmac.compare_digest(value,hashlib.sha256(secret.encode('utf8')).digest()):\n\
+    \n\n# Tavi interactive events: persistent, server-authorized, bounded payloads.\nINTERACTION = sa.table('SocialInteraction',\
+    \ sa.column('id', sa.Integer),\n    sa.column('recipient', sa.String), sa.column('publisher', sa.String),\n\
+    \    sa.column('topic', sa.String), sa.column('title', sa.String),\n    sa.column('data', sa.JSON), sa.column('status',\
+    \ sa.String),\n    sa.column('response', sa.JSON), sa.column('created', sa.Integer),\n    sa.column('expires',\
+    \ sa.Integer))\nACTION_ID = re.compile(r'^[a-z][a-z0-9_-]{0,47}$')\n\ndef validate_interaction(raw):\n    if\
+    \ not isinstance(raw,dict):raise ValueError('Interaction must be an object')\n    title=raw.get('title'); topic=raw.get('topic');\
+    \ actions=raw.get('actions')\n    if not isinstance(title,str) or not 1<=len(title)<=120 or re.search(r'[\\\
+    x00-\\x1f]',title):raise ValueError('Invalid event title')\n    if not isinstance(topic,str) or not re.fullmatch(r'[a-z][a-z0-9_.-]{1,80}',topic):raise\
+    \ ValueError('Invalid event topic')\n    if not isinstance(actions,list) or not 1<=len(actions)<=6:raise ValueError('Provide\
+    \ 1–6 actions')\n    cleaned=[]; used=set()\n    for item in actions:\n        if not isinstance(item,dict):raise\
+    \ ValueError('Invalid action')\n        aid=item.get('id'); kind=item.get('type'); label=item.get('label')\n\
+    \        if not isinstance(aid,str) or not ACTION_ID.fullmatch(aid) or aid in used:raise ValueError('Invalid\
+    \ action ID')\n        if kind not in ('reply','open-url'):raise ValueError('Unsupported action type')\n   \
+    \     if not isinstance(label,str) or not 1<=len(label)<=48:raise ValueError('Invalid action label')\n     \
+    \   entry={'id':aid,'type':kind,'label':label}\n        if kind=='open-url':\n            from urllib.parse\
+    \ import urlsplit\n            url=item.get('url')\n            try:\n                u=urlsplit(url) if isinstance(url,str)\
+    \ else None\n                if not u or u.scheme!='https' or not u.hostname or u.username or u.password or\
+    \ u.fragment or len(url)>2048 or u.port not in (None,443):raise ValueError()\n                import ipaddress\n\
+    \                try: ip=ipaddress.ip_address(u.hostname)\n                except ValueError: ip=None\n    \
+    \            if (ip is not None and not ip.is_global) or u.hostname in ('localhost','localhost.localdomain')\
+    \ or u.hostname.endswith(('.localhost','.local','.internal')):raise ValueError()\n            except (ValueError,TypeError):raise\
+    \ ValueError('Invalid external HTTPS URL')\n            entry['url']=url; entry['presentation']=item.get('presentation')\
+    \ if item.get('presentation') in ('external-browser','native-webview') else 'external-browser'\n        else:\n\
+    \            fields=item.get('fields',[])\n            if not isinstance(fields,list) or len(fields)>6:raise\
+    \ ValueError('Invalid reply fields')\n            parsed=[]\n            for field in fields:\n            \
+    \    if not isinstance(field,dict) or not isinstance(field.get('id'),str) or not ACTION_ID.fullmatch(field['id'])\
+    \ or field.get('type') not in ('text','textarea','select'):raise ValueError('Invalid reply field')\n       \
+    \         entryfield={'id':field['id'],'type':field['type'],'label':str(field.get('label',field['id']))[:60]}\n\
+    \                if field['type']=='select':\n                    options=field.get('options')\n           \
+    \         if not isinstance(options,list) or not 1<=len(options)<=12 or not all(isinstance(x,str) and 1<=len(x)<=80\
+    \ for x in options):raise ValueError('Invalid field options')\n                    entryfield['options']=options\n\
+    \                parsed.append(entryfield)\n            entry['fields']=parsed\n        cleaned.append(entry);used.add(aid)\n\
+    \    message=raw.get('body','')\n    if not isinstance(message,str) or len(message)>2000:raise ValueError('Invalid\
+    \ event body')\n    return {'title':title,'body':message,'topic':topic,'actions':cleaned}\n\ndef interaction_feed(db,subject,now):\n\
+    \    rows=db.execute(sa.select(INTERACTION).where(INTERACTION.c.recipient==subject).order_by(INTERACTION.c.id.desc()).limit(80)).mappings().all()\n\
+    \    return {'ok':True,'schema':'tavi.interactions/v1','events':[\n      {'id':r['id'],'publisher':r['publisher'],'topic':r['topic'],**r['data'],\n\
+    \       'status':('expired' if r['expires']<=now and r['status']=='open' else r['status']),\n       'created':r['created'],'expires':r['expires'],'response':r['response']}\n\
+    \      for r in rows]}\n\ndef interaction_reply(db,subject,body,now):\n    event_id=body.get('id');action=body.get('action');values=body.get('values',{})\n\
+    \    if type(event_id) is not int or not isinstance(action,str) or not isinstance(values,dict):return error('Invalid\
+    \ event response')\n    row=db.execute(sa.select(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject)).mappings().first()\n\
+    \    if not row:return error('Event not found')\n    if row['status']!='open' or row['expires']<=now:return\
+    \ error('Event already handled or expired')\n    allowed=next((x for x in row['data']['actions'] if x['id']==action\
+    \ and x['type']=='reply'),None)\n    if not allowed:return error('Action not available')\n    fields={f['id']:f\
+    \ for f in allowed['fields']}\n    if len(values)>len(fields) or any(k not in fields or not isinstance(v,str)\
+    \ or len(v)>2000 or (fields[k]['type']=='select' and v not in fields[k]['options']) for k,v in values.items()):return\
+    \ error('Invalid field values')\n    response={'action':action,'values':values,'at':now,'by':subject}\n    db.execute(sa.update(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject,INTERACTION.c.status=='open').values(status='responded',response=response))\n\
+    \    return {'ok':True,'response':response}\n\ndef interaction_dismiss(db,subject,body,now):\n    event_id=body.get('id')\n\
+    \    if type(event_id) is not int or event_id<1:return error('Invalid event ID')\n    row=db.execute(sa.select(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject)).mappings().first()\n\
+    \    if not row:return error('Event not found')\n    if row['status']=='dismissed':return {'ok':True,'status':'dismissed'}\n\
+    \    if row['status']!='open' or row['expires']<=now:return error('Event already handled or expired')\n    response={'action':'dismiss','at':now,'by':subject}\n\
+    \    db.execute(sa.update(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject,INTERACTION.c.status=='open').values(status='dismissed',response=response))\n\
+    \    return {'ok':True,'status':'dismissed'}\n\ndef error(message):\n    return {'ok':False,'error':message}\n\
+    \n\ndef configured_tokens():\n    \"\"\"Dev identity->token mapping; provision via runtime environment/secret\
+    \ only.\"\"\"\n    raw = os.environ.get('LOOPRD_SOCIAL_DEV_TOKENS_JSON', '')\n    try:\n        found = json.loads(raw)\n\
+    \    except (ValueError,TypeError):\n        return {}\n    if not isinstance(found,dict):\n        return {}\n\
+    \    return {name:token for name,token in found.items()\n            if isinstance(name,str) and SUBJECT.fullmatch(name)\
+    \ and not re.fullmatch(r'acct_[0-9]+',name)\n            and isinstance(token,str) and len(token)>=24 and len(token)<=256}\n\
+    \n\ndef authorize(token, tokens):\n    if not isinstance(token,str) or not 24<=len(token)<=256:\n        return\
+    \ None\n    value=hashlib.sha256(token.encode('utf8')).digest()\n    identity=None\n    for name,secret in tokens.items():\n\
+    \        if not re.fullmatch(r'acct_[0-9]+',name) and isinstance(secret,str) and hmac.compare_digest(value,hashlib.sha256(secret.encode('utf8')).digest()):\n\
     \            identity=name\n    return identity\n\n\ndef valid_portrait_code(code):\n    \"\"\"Validate portable\
     \ numeric portrait v1 framing, without owning online artwork IDs.\n\n    TheBigTreeInc/assets owns the registry\
     \ and rendering. Social stores only the\n    canonical decimal *text*; no JavaScript number coercion or asset\
@@ -368,18 +463,46 @@ handlers:
     \    if not row or row['status']!='accepted':return {'ok':False,'error':'Contact is not accepted'}\n    left,right=pair(subject,peer)\n\
     \    prev=db.execute(sa.select(DM.c.created).where(DM.c.senderId==subject).order_by(DM.c.id.desc()).limit(1)).scalar_one_or_none()\n\
     \    if prev is not None and now-prev<1:return {'ok':False,'error':'Please slow down'}\n    db.execute(sa.insert(DM).values(leftId=left,rightId=right,senderId=subject,content=content.strip(),created=now))\n\
-    \    return {'ok':True}\n\n\ndef execute(body,sessions,tokens=None,now=None):\n    \"\"\"Returns (response,\
-    \ optional notification), after SQLite commit.\"\"\"\n    if not isinstance(body,dict):\n        return error('Invalid\
-    \ request'),None\n    tokens=configured_tokens() if tokens is None else tokens\n    op=body.get('op')\n    now=int(time.time())\
-    \ if now is None else int(now)\n    try:\n        with sessions.begin() as db:\n            if op=='capabilities':\n\
-    \                return {'ok':True,'schema':'looprd.social.capabilities/v1',\n                    'accounts':True,'registration':os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower()\
+    \    return {'ok':True}\n\n\ndef published_games():\n    \"\"\"Operator-published HTTPS game catalog; never\
+    \ supplied by clients.\n\n    Deployment sets TAVI_GAME_CATALOG_JSON to an array of entries. Invalid entries\n\
+    \    fail closed; credentials, arbitrary protocols and local-network URLs are not allowed.\n    \"\"\"\n   \
+    \ from urllib.parse import urlsplit\n    try:\n        entries=json.loads(os.getenv('TAVI_GAME_CATALOG_JSON','[]'))\n\
+    \    except (ValueError,TypeError):\n        return []\n    if not isinstance(entries,list):return []\n    games=[];\
+    \ seen=set()\n    for item in entries[:40]:\n        if not isinstance(item,dict):continue\n        key=item.get('id');\
+    \ name=item.get('name'); url=item.get('url')\n        if not isinstance(key,str) or not re.fullmatch(r'[a-z][a-z0-9-]{1,47}',key)\
+    \ or key in seen:continue\n        if not isinstance(name,str) or not 1<=len(name.strip())<=64:continue\n  \
+    \      if not isinstance(url,str) or len(url)>2048:continue\n        try:\n            parsed=urlsplit(url)\n\
+    \            host=(parsed.hostname or '').lower()\n            if parsed.scheme!='https' or not host or parsed.username\
+    \ or parsed.password or parsed.fragment or parsed.port not in (None,443):continue\n            if host in ('localhost','localhost.localdomain')\
+    \ or host.endswith(('.local','.internal','.localhost')):continue\n            import ipaddress\n           \
+    \ try:\n                if not ipaddress.ip_address(host).is_global:continue\n            except ValueError:pass\n\
+    \        except ValueError:continue\n        seen.add(key)\n        games.append({'id':key,'name':name.strip(),'type':'web','url':url,'embedded':item.get('embedded')\
+    \ is True,'external':True})\n    return games\n\n\ndef execute(body,sessions,tokens=None,now=None):\n    \"\"\
+    \"Returns (response, optional notification), after SQLite commit.\"\"\"\n    if not isinstance(body,dict):\n\
+    \        return error('Invalid request'),None\n    tokens=configured_tokens() if tokens is None else tokens\n\
+    \    op=body.get('op')\n    now=int(time.time()) if now is None else int(now)\n    try:\n        with sessions.begin()\
+    \ as db:\n            if op=='game_catalog':\n                return {'ok':True,'schema':'tavi.game-catalog/v1','games':published_games()},None\n\
+    \            if op=='capabilities':\n                return {'ok':True,'schema':'looprd.social.capabilities/v1',\n\
+    \                    'accounts':True,'registration':os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower()\
     \ in ('true','1','yes'),\n                    'contacts':True,'directMessages':True,'sessionSeconds':SESSION_AGE},None\n\
     \            if op=='register':\n                return register(db,body,now),None\n            if op=='login':\n\
     \                return login(db,body,now),None\n            subject=session_identity(db,body.get('token'),now)\
     \ or authorize(body.get('token'),tokens)\n            if not subject:\n                return error('Sign in\
-    \ to Social first'),None\n            if op=='developer_diagnostics':\n                # Do not trust a client-supplied\
-    \ username or privilege claim.\n                return developer_diagnostics(db,subject,now),None\n        \
-    \    if op=='logout':\n                return logout(db,body.get('token')),None\n            if op=='contact_list':\n\
+    \ to Social first'),None\n            if op=='interaction_feed':\n                return interaction_feed(db,subject,now),None\n\
+    \            if op=='interaction_reply':\n                result=interaction_reply(db,subject,body,now)\n  \
+    \              return result,event_signal(db) if result['ok'] else None\n            if op=='interaction_dismiss':\n\
+    \                result=interaction_dismiss(db,subject,body,now)\n                return result,event_signal(db)\
+    \ if result['ok'] else None\n            if op=='interaction_publish':\n                # Development/initial\
+    \ integration publisher: only operator-authorized developer accounts.\n                if not account_developer_permission(db,subject):\n\
+    \                    return error('Publisher permission denied'),None\n                recipient=body.get('recipient')\n\
+    \                if not isinstance(recipient,str) or not re.fullmatch(r'[a-z][a-z0-9_]{2,23}',recipient):return\
+    \ error('Invalid recipient'),None\n                target=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==recipient)).first()\n\
+    \                if not target:return error('Recipient not found'),None\n                clean=validate_interaction(body.get('interaction'))\n\
+    \                expiry=now+min(7*86400,max(60,int(body.get('ttlSeconds',86400))))\n                db.execute(sa.insert(INTERACTION).values(recipient='acct_'+str(target[0]),publisher=subject,\n\
+    \                    topic=clean['topic'],title=clean['title'],data=clean,status='open',response=None,created=now,expires=expiry))\n\
+    \                return {'ok':True},event_signal(db)\n            if op=='developer_diagnostics':\n        \
+    \        # Do not trust a client-supplied username or privilege claim.\n                return developer_diagnostics(db,subject,now),None\n\
+    \            if op=='logout':\n                return logout(db,body.get('token')),None\n            if op=='contact_list':\n\
     \                return contact_list(db,subject,now),None\n            if op=='contact_request':\n         \
     \       result=contact_request(db,subject,body.get('username'),now)\n                return result,event_signal(db)\
     \ if result['ok'] else None\n            if op in ('contact_accept','contact_remove'):\n                result=contact_action(db,subject,body.get('peer'),op)\n\
@@ -433,4 +556,4 @@ handlers:
     - lobby
     - portraits
     - server-gated-developer-tools
-    release: 0.3.4
+    release: 0.3.16

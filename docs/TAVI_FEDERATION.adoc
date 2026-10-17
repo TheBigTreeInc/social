@@ -1,0 +1,19 @@
+= Tavi federation proposal
+
+Status: DESIGN ONLY. No federation endpoint or remote friend requests are implemented in this release.
+
+== Ownership
+
+Social component owns home-server accounts, identity resolution, consent, relationships, delivery semantics and abuse policy. LoopRD core owns generic secure transport, persistence and authenticated execution.
+
+== Identity
+
+Local username `alice`; future remote handle `alice@server.example`. Explicit server discovery and signed origin proof are required before accepting a remote identity. No central directory, no OIDC dependency.
+
+== Security gates
+
+Require HTTPS, authenticated server identity, key rotation, replay resistance, nonce/timestamp bounds, host allowlisting/SSRF protection, opt-in contacts, blocking, per-server quotas, idempotency keys, retry queues and privacy-scoped presence.
+
+== Compatibility
+
+Existing `acct_` identifiers remain server-local. All clients sign in to their home server. Cross-server invitations are not exposed as functional UI until the protocol and multi-server tests exist.

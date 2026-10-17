@@ -41,7 +41,7 @@ test('mobile navigation state and login are server-scoped and token-free',()=>{
   assert(html.includes('messenger show-roster'));
   assert(html.includes('data-action="contacts"'));
   const login=shell({connected:false});
-  assert(login.includes('Social Messenger · Sign in'));
+  assert(login.includes('Tavi · Sign in'));
   assert(login.includes('LoopRD server address'));
   assert(!login.includes('social-token'));
   assert(!login.includes('dev-token'));

@@ -1,4 +1,4 @@
-/* Social Messenger 0.3.2 — classic lightweight Windows messenger layout.
+/* Tavi 0.3.10 — classic lightweight Windows messenger layout.
    No vendor logos, copied pixels, UI libraries, or platform impersonation. */
 :root {
   font: 12px/1.35 Tahoma, 'Segoe UI', Verdana, sans-serif;
@@ -226,3 +226,58 @@ h1, h2, h3, p { margin: 0; }
 .native-shell .top {display:none;}
 .native-shell .toast {bottom:12px;left:8px;right:8px;width:auto;}
 @media(max-width:620px) { .native-shell .desktop-workspace {height:100dvh;} }
+
+/* Tavi identity v0.3.10: warm teal / deep forest without changing classic geometry. */
+:root { --line:#83aaa9; --light-line:#c3ddda; --blue:#267a73; --button-bottom:#e3f4ee; }
+html,body,#app { background:#e5f3ee; }
+button { color:#22483e; border-color:#92b9b1; }
+button:hover { border-color:#4c9788; background:linear-gradient(#fff,#d9f1e7); }
+button:active { background:#cce5db; }
+button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible { outline-color:#18796e; }
+.top { background:linear-gradient(#f5fffb,#e0f5ec 66%,#bcded4);border-bottom-color:#78b4aa; }
+.top strong, .window-titlebar strong, .roster-profile strong {color:#16574d;}
+.top-version,.server-chip {color:#52776e;}
+.desktop-workspace,.login-desktop {background:linear-gradient(145deg,#f5fcf8 2%,#d9eee7 70%,#c1dfd7);}
+.classic-window {border-color:#6baca3;box-shadow:0 1px 0 white inset,0 2px 8px #1c5a4a1c;}
+.window-titlebar {background:linear-gradient(#f7fff9,#d6f3e9 43%,#afdcd1 51%,#e1f6ed);border-bottom-color:#91c3b8;color:#185e54;}
+.menubar {background:#fbfffd;border-bottom-color:#d3e8e1;}
+.menu-drop[open] summary,.menu-drop summary:hover {background:#dcefe9;outline-color:#a6ccc0;}
+.menu-options {border-color:#93b9af;}
+.menu-options button:hover,.buddy:hover,.mini-game:hover,.mini-alert:hover {background:#e2f4ed;}
+.roster-profile {background:linear-gradient(#f9fffc,#e0f3eb);border-bottom-color:#bfded3;}
+.roster-profile small {color:#247651;}
+.roster-toolbar,.conversation-tools {background:linear-gradient(#fff,#f0f8f4);border-bottom-color:#c5ded5;}
+.roster-toolbar button:hover,.conversation-tools button:hover {border-color:#acd5c7;background:#e4f5ee;}
+.roster-toolbar button span,.conversation-tools button span {color:#258879;}
+.roster-search {border-color:#afcfc3;}
+.buddy.chosen {background:linear-gradient(#e9f8f0,#cceadd);border-color:#9dccbb;}
+.games-strip {background:#f4fcf7;border-top-color:#bad9ce;}
+.roster-label {background:#e1f2e9;border-bottom-color:#c8e2d6;color:#3a6c5c;}
+.brand-icon,.caption-mark {flex-shrink:0;background:#194c4b url('/tavi-mark.svg') center / cover no-repeat;border:1px solid #4a9b8e;color:transparent;}
+.welcome-icon {background:linear-gradient(#fff,#e8f7ee);border-color:#b1d7c6;color:transparent;}
+.welcome-mark {display:block;width:68px;height:68px;background:url('/tavi-mark.svg') center / contain no-repeat;}
+.native-shell .welcome-mark {width:54px;height:54px;}
+
+/* Transient, data-driven event inbox: never a permanent admin pane. */
+.interaction-inbox{display:grid;gap:10px;max-width:100%;overflow-wrap:anywhere}.interaction-list{display:grid;gap:5px;max-height:190px;overflow-y:auto}.interaction-entry{display:flex;justify-content:space-between;text-align:left;align-items:center;padding:7px;background:#f5faf8;border:1px solid #a4c7bc;border-radius:3px;color:#204c46;cursor:pointer}.interaction-entry.chosen{background:#d4efe4}.interaction-entry small{display:block;font-size:11px;color:#52756d}.interaction-detail{border-top:1px solid #aacfc4;padding-top:8px}.interaction-detail h3{margin:0 0 5px}.interaction-reply{display:grid;gap:7px;margin:9px 0;padding:9px;background:#eef8f4;border:1px solid #c2ddd4}.interaction-reply label{display:grid;gap:4px;font-size:12px}.interaction-reply input,.interaction-reply select,.interaction-reply textarea{max-width:100%;min-width:0}.interaction-link{display:block;margin:8px 0;padding:7px;border:1px solid #85aba2;background:#e9f4ef;color:#225e52}
+
+/* Transient inbox navigation: compact by default, with separated history/actions. */
+.inbox-header{display:flex;align-items:center;justify-content:space-between;gap:8px}.inbox-header h2{margin:0}.inbox-counter{display:inline-flex;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#266f61;color:white;font-size:12px;align-items:center;justify-content:center}.inbox-filters{display:flex;flex-wrap:wrap;gap:4px}.inbox-filters button{padding:5px 8px;border:1px solid #a0c6b9;border-radius:3px;background:#f7fcf9}.inbox-filters button.picked{background:#cfe9dc;border-color:#599f87;font-weight:600}.interaction-entry{min-height:45px}.interaction-entry small{line-height:1.4}.interaction-commands{display:flex;justify-content:flex-end;margin-top:7px}.interaction-commands button{font-size:12px}.interaction-detail{overflow-wrap:anywhere}.interaction-inbox button:focus-visible{outline:2px solid #18796e;outline-offset:2px}
+/* Tavi v0.3.17: chat-first badges and phone touch targets. */
+.unread-badge { flex: none; min-width: 20px; height: 20px; padding: 2px 5px; border-radius: 11px; background: #187766; color: #fff; font-size: 11px; font-weight: bold; line-height: 16px; text-align: center; }
+.notification-options { border: 1px solid #c1dbd1; background: #f4fbf8; padding: 10px; margin: 14px 0; }
+.notification-options h3 { font-size: 13px; color: #246352; margin: 0 0 7px; }
+.notification-options label { display: flex; align-items: center; gap: 9px; min-height: 29px; font-size: 12px; }
+.notification-options input { width: 16px; height: 16px; accent-color: #237c68; }
+@media(max-width:620px){
+  .bottom-nav {height: calc(52px + env(safe-area-inset-bottom,0px));padding-bottom: env(safe-area-inset-bottom,0px);}
+  .messenger {height: calc(100% - 52px - env(safe-area-inset-bottom,0px));}
+  .bottom-nav button {min-height:48px;font-size:12px;}
+  .buddy {min-height:48px;}
+  .roster-toolbar button, .conversation-tools button {min-height:42px;}
+  .roster-search {height:36px;}
+  .roster-search input {font-size:16px;}
+  .composer textarea {font-size:16px;}
+  .composer button {min-height:44px;}
+  .utility {padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));}
+}

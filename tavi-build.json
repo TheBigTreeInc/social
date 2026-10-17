@@ -1,0 +1,9 @@
+{
+  "schema": "tavi.auto-build-config/v1",
+  "targets": {
+    "Windows": true,
+    "Web": false,
+    "Android": false
+  },
+  "force": false
+}

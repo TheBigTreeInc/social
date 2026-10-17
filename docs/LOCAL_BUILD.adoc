@@ -1,0 +1,50 @@
+= Tavi local build and deployment policy
+
+== Principle
+
+A GitHub push is *not* a prerequisite for local client development. Windows and Web artifacts are built from the local Git checkout. No local build script commits, pushes or modifies private runtime configuration.
+
+`looprd.yaml` is the generated LoopRD component specification. Server deployment requires a separate decision; do not trigger it simply because client-side files changed. Changes to the spec, server handler, protocol or schema require operator review and deployment of the newly generated descriptor to the real LoopRD service. *A Git push by itself does not activate a LoopRD component* unless your infrastructure has automation configured to do so.
+
+== Windows prerequisites
+
+Install Node.js 22, Python 3, Rust stable/MSVC toolchain (including Windows Build Tools), WebView2, and the NSIS requirements supported by Tauri 2. The Rust toolchain and Windows SDK must be available to the current shell. Python project test dependencies must be installed (see `requirements-dev.txt`). An internet connection may be needed for first-time npm/Rust packages and portrait-sync.
+
+== Commands (PowerShell, from repository root)
+
+[source,powershell]
+----
+.\BUILD-LOCAL.ps1 -Target Web
+.\BUILD-LOCAL.ps1 -Target Windows
+.\BUILD-LOCAL.ps1 -Target All
+.\BUILD-LOCAL.ps1 -Target Verify
+.\CHECK-LOOPRD-DEPLOY.ps1
+----
+
+If execution policy prevents scripts from starting, use `powershell -NoProfile -ExecutionPolicy Bypass -File .\BUILD-LOCAL.ps1 -Target All` for that invocation (do not change the global policy).
+
+Output: `client/dist/` for Web, and `client/src-tauri/target/release/bundle/nsis/*.exe` for the native Windows installer. Local build outputs are generated artifacts; they must not be copied into Git update ZIPs. Running `-Target Windows` builds the web frontend internally through Tauri's pre-build command even without a standalone `Web` target.
+
+`-SkipTests` and `-SkipPortraitSync` are development accelerators only; they do not prove release readiness. Portrait-sync may depend on the pinned external source.
+
+== Server component change detection
+
+`CHECK-LOOPRD-DEPLOY.ps1` compares `looprd.yaml` against the checked-in Git `HEAD`: exit 0 = unchanged; exit 1 = changed; exit 2 = descriptor not tracked. A missing Git checkout, other Git failure or generation error means the deployment decision is *unknown*, never silently 'unchanged'. The check never pushes.
+
+Run `python tools/generate-looprd.py --check` first. If the server-side source has been changed, regenerate `looprd.yaml` with the repository generator before comparing; *checking only a stale YAML file is not sufficient*. When deploying a changed YAML, make an explicit, reviewed Git commit/push to the server source repo and activate it using the existing operator mechanism. A component release number by itself must not imply a server rollout.
+
+== ZipRunner
+
+Set the post-update local validation to `npm run verify`, `python tools/generate-looprd.py --check`, and optionally `BUILD-LOCAL.ps1 -Target All` **only on a Windows build-capable host**. Native installer compilation should be an opt-in local job, not a mandatory test for every source ZIP. Keep old outputs and local config untouched. Git is only needed for source history, distributing code, or shipping a genuine server change; GitHub Actions remains a fallback for clean-room release builds and Android builds.
+
+== Automatic ZipRunner builds (0.3.9)
+
+ZipRunner runs `npm run verify` followed by `node tools/auto-build.mjs` as build commands. On Windows, the auto-builder compiles the NSIS installer locally by default and records status in the protected `client/src-tauri/target/tavi-ziprunner-build-state.json`. Hashes cover client source/configuration, so documentation-only changes reuse an existing installer. Missing compilers or failed native builds cause the ZipRunner build phase to fail; previous NSIS installers are restored.
+
+Edit committed `tavi-build.json` to opt into `Web` or `Android` builds independently. Android is disabled by default and requires a properly initialized Android SDK/Tauri toolchain; acceptance on real devices remains pending. `force=true` forces rebuilding enabled targets. Other operating systems skip Windows auto-build, rather than producing a misleading artifact.
+
+The local auto-builder does not commit or push. It also cannot detect whether an uncommitted generated `looprd.yaml` has been deployed: run `CHECK-LOOPRD-DEPLOY.ps1` as a separate decision. Server handler changes can require regeneration/publishing of `looprd.yaml` even if a client's build succeeds.
+
+== ZipRunner desktop launch (v0.3.11)
+
+The project start command is `node tools/launch-tavi.mjs`; it launches the compiled `client/src-tauri/target/release/looprd-social-client.exe` as a managed foreground process. The build hook now requires the executable *and* NSIS installer before claiming Windows success. Importing a source ZIP or building an installer alone does not install it or automatically start it outside ZipRunner's configured start lifecycle. Local project configuration may override the bundled `.zr` descriptors. Run `node tools/launch-tavi.mjs` manually to distinguish missing binary, spawn failure and normal exit.

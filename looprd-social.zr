@@ -1,20 +1,25 @@
 {
   "project_key": "looprd-social",
-  "display_name": "Looprd Social",
+  "display_name": "Tavi",
   "zip_match_patterns": [
+    "tavi-*-ziprunner.zip",
     "looprd-social-*-ziprunner.zip"
   ],
   "zip_patterns": [
+    "tavi-*-ziprunner.zip",
     "looprd-social-*-ziprunner.zip"
   ],
   "match_patterns": [
+    "tavi-*-ziprunner.zip",
     "looprd-social-*-ziprunner.zip"
   ],
   "build_commands": [
-    "npm run test",
-    "node client/tools/check-package.mjs"
+    "npm run verify",
+    "node tools/auto-build.mjs"
   ],
-  "start_commands": [],
+  "start_commands": [
+    "node tools/launch-tavi.mjs"
+  ],
   "strip_single_root_folder": false,
   "delete_missing_files": false,
   "clean_git_tree": false,
@@ -33,7 +38,8 @@
     "client/node_modules",
     "client/dist",
     "client/src-tauri/target",
-    "client/src-tauri/gen"
+    "client/src-tauri/gen",
+    ".venv"
   ],
   "git_auto_push": false
 }

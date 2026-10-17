@@ -1,6 +1,8 @@
 /** LoopRD v1 client protocol: strict server-local components, no federation. */
 export const SOCIAL_COMPONENT = 'looprd-social';
 const COMPONENT = /^[a-z][a-z0-9-]{0,47}$/;
+// Call fetch as a method on its host: WebView2 can reject a detached native fetch.
+const browserFetch = (url, options) => globalThis.fetch(url, options);
 const DEV_HOSTS = new Set(['localhost', '127.0.0.1', '10.0.2.2', '[::1]']);
 
 export function normalizeServer(input) {
@@ -36,7 +38,7 @@ async function responseJson(response) {
 }
 
 /** Probe one LoopRD origin. Missing Social means no local account or chat store. */
-export async function discoverSocial(origin, fetcher = fetch) {
+export async function discoverSocial(origin, fetcher = browserFetch) {
   const url = componentPath(origin, SOCIAL_COMPONENT, 'info');
   const controller = new AbortController(), timer = setTimeout(()=>controller.abort(),12000);
   try {
@@ -56,7 +58,7 @@ export async function discoverSocial(origin, fetcher = fetch) {
   finally {clearTimeout(timer);}
 }
 
-async function accountCommand(origin, op, username, password, fetcher = fetch) {
+async function accountCommand(origin, op, username, password, fetcher = browserFetch) {
   const controller = new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
   try {
     const response=await fetcher(componentPath(origin,SOCIAL_COMPONENT,'social'),{
@@ -70,11 +72,30 @@ async function accountCommand(origin, op, username, password, fetcher = fetch) {
   finally{clearTimeout(timer);}
 }
 
-export const registerSocial=(origin,username,password,fetcher=fetch)=>accountCommand(origin,'register',username,password,fetcher);
-export const loginSocial=(origin,username,password,fetcher=fetch)=>accountCommand(origin,'login',username,password,fetcher);
+export const registerSocial=(origin,username,password,fetcher=browserFetch)=>accountCommand(origin,'register',username,password,fetcher);
+export const loginSocial=(origin,username,password,fetcher=browserFetch)=>accountCommand(origin,'login',username,password,fetcher);
+
+/** Read the selected server's operator-approved game catalog. No Social token sent. */
+export async function discoverGames(origin, fetcher=browserFetch) {
+  const response=await fetcher(componentPath(origin,SOCIAL_COMPONENT,'social'),{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'game_catalog'}),cache:'no-store'
+  });
+  const data=await responseJson(response);
+  if(data?.ok!==true||data.schema!=='tavi.game-catalog/v1'||!Array.isArray(data.games)||data.games.length>40)
+    throw new ProtocolError('Server did not return a compatible game catalog.');
+  return data.games.filter(g=>g?.type==='web'&&typeof g.id==='string'&&/^[a-z][a-z0-9-]{1,47}$/.test(g.id)&&
+      typeof g.name==='string'&&g.name.length<=64&&typeof g.url==='string'&&isSafePublishedGameUrl(g.url))
+    .map(g=>({id:g.id,name:g.name,type:'web',url:g.url,embedded:g.embedded===true,external:true}));
+}
+export function isSafePublishedGameUrl(value){
+  try{const u=new URL(value);return u.protocol==='https:'&&!!u.hostname&&!u.username&&!u.password&&!u.hash&&
+    (!u.port||u.port==='443')&&!['localhost','localhost.localdomain'].includes(u.hostname)&&
+    !/\.(local|internal|localhost)$/.test(u.hostname)&&!/^(127\.|10\.|192\.168\.|169\.254\.)/.test(u.hostname)&&
+    !/^172\.(1[6-9]|2[0-9]|3[01])\./.test(u.hostname)&&u.hostname!=='[::1]';}catch{return false;}
+}
 
 export class LooprdSocial {
-  constructor(origin, token, fetcher = fetch) {
+  constructor(origin, token, fetcher = browserFetch) {
     this.origin = normalizeServer(origin);
     if (typeof token !== 'string' || token.length < 24 || token.length > 256) throw Error('Enter the Social credential (24–256 characters).');
     this.token = token; // memory only; never serialized, logged or sent to game endpoints
@@ -97,6 +118,10 @@ export class LooprdSocial {
       throw error;
     } finally { clearTimeout(timer); }
   }
+  interactions() { return this.command('interaction_feed'); }
+  replyInteraction(id, action, values) { return this.command('interaction_reply', {id,action,values}); }
+  dismissInteraction(id) { return this.command('interaction_dismiss', {id}); }
+  publishInteraction(recipient, interaction, ttlSeconds = 86400) { return this.command('interaction_publish', {recipient,interaction,ttlSeconds}); }
   me() { return this.command('me'); }
   developerDiagnostics() { return this.command('developer_diagnostics').then(validateDeveloperDiagnostics); }
   saveProfile(profile, revision) { return this.command('save_profile', {profile, ifRevision: revision}); }
@@ -135,7 +160,7 @@ export function parseGameActivity(body, component) {
   return {turns};
 }
 
-export async function gameActivity(origin, game, credential = '', fetcher = fetch) {
+export async function gameActivity(origin, game, credential = '', fetcher = browserFetch) {
   if (!COMPONENT.test(game)) throw Error('Invalid game component ID.');
   const url = componentPath(origin, game, 'activity');
   const controller = new AbortController();

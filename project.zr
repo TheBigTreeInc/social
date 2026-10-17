@@ -1,18 +1,21 @@
 {
   "schema": "ziprunner.zr/v1",
   "project_key": "looprd-social",
-  "label": "LoopRD Social (backend + Windows/Android client)",
+  "label": "Tavi \u2014 The Big Tree Inc",
   "match": [
+    "tavi-*-ziprunner.zip",
     "looprd-social-*-ziprunner.zip"
   ],
   "command_subdir": ".",
   "stop": [],
   "stop_ports": [],
   "build": [
-    "npm run test",
-    "node client/tools/check-package.mjs"
+    "npm run verify",
+    "node tools/auto-build.mjs"
   ],
-  "start": [],
+  "start": [
+    "node tools/launch-tavi.mjs"
+  ],
   "build_window": "hidden",
   "start_window": "managed",
   "delete_missing": false,
@@ -33,7 +36,8 @@
     "state/**",
     "secrets/**",
     "ziprunner.config.json",
-    "ziprunner.project-state.json"
+    "ziprunner.project-state.json",
+    ".venv/**"
   ],
   "require_clean_git_before_overlay": false,
   "mechanisms_require_build_success": true,

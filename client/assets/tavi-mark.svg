@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Tavi icon">
+<defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#226e69"/><stop offset="1" stop-color="#123d47"/></linearGradient><linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d6fbdc"/><stop offset="1" stop-color="#77dabb"/></linearGradient></defs>
+<rect x="8" y="8" width="240" height="240" rx="54" fill="url(#bg)"/>
+<path d="M60 81C60 64 74 51 92 51H165C184 51 198 66 198 84V154C198 174 183 187 164 187H111L70 211L76 178C66 172 60 162 60 150Z" fill="#effff9" opacity=".98"/>
+<path d="M128 169V101" stroke="#287b6c" stroke-width="10" stroke-linecap="round"/>
+<path d="M125 135C94 126 92 94 92 94C123 95 132 116 125 135Z" fill="url(#leaf)" stroke="#248776" stroke-width="3"/>
+<path d="M134 124C133 99 153 84 174 84C170 110 151 125 134 124Z" fill="#70caaa" stroke="#248776" stroke-width="3"/>
+<path d="M129 111C115 91 120 70 137 61C146 86 144 102 129 111Z" fill="#9ce7c1" stroke="#248776" stroke-width="3"/>
+</svg>

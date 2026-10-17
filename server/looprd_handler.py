@@ -31,6 +31,92 @@ SLOT = re.compile(r'^[a-z0-9-]{1,64}$')
 COLOR = re.compile(r'^#[a-fA-F0-9]{6}$')
 
 
+# Tavi interactive events: persistent, server-authorized, bounded payloads.
+INTERACTION = sa.table('SocialInteraction', sa.column('id', sa.Integer),
+    sa.column('recipient', sa.String), sa.column('publisher', sa.String),
+    sa.column('topic', sa.String), sa.column('title', sa.String),
+    sa.column('data', sa.JSON), sa.column('status', sa.String),
+    sa.column('response', sa.JSON), sa.column('created', sa.Integer),
+    sa.column('expires', sa.Integer))
+ACTION_ID = re.compile(r'^[a-z][a-z0-9_-]{0,47}$')
+
+def validate_interaction(raw):
+    if not isinstance(raw,dict):raise ValueError('Interaction must be an object')
+    title=raw.get('title'); topic=raw.get('topic'); actions=raw.get('actions')
+    if not isinstance(title,str) or not 1<=len(title)<=120 or re.search(r'[\x00-\x1f]',title):raise ValueError('Invalid event title')
+    if not isinstance(topic,str) or not re.fullmatch(r'[a-z][a-z0-9_.-]{1,80}',topic):raise ValueError('Invalid event topic')
+    if not isinstance(actions,list) or not 1<=len(actions)<=6:raise ValueError('Provide 1–6 actions')
+    cleaned=[]; used=set()
+    for item in actions:
+        if not isinstance(item,dict):raise ValueError('Invalid action')
+        aid=item.get('id'); kind=item.get('type'); label=item.get('label')
+        if not isinstance(aid,str) or not ACTION_ID.fullmatch(aid) or aid in used:raise ValueError('Invalid action ID')
+        if kind not in ('reply','open-url'):raise ValueError('Unsupported action type')
+        if not isinstance(label,str) or not 1<=len(label)<=48:raise ValueError('Invalid action label')
+        entry={'id':aid,'type':kind,'label':label}
+        if kind=='open-url':
+            from urllib.parse import urlsplit
+            url=item.get('url')
+            try:
+                u=urlsplit(url) if isinstance(url,str) else None
+                if not u or u.scheme!='https' or not u.hostname or u.username or u.password or u.fragment or len(url)>2048 or u.port not in (None,443):raise ValueError()
+                import ipaddress
+                try: ip=ipaddress.ip_address(u.hostname)
+                except ValueError: ip=None
+                if (ip is not None and not ip.is_global) or u.hostname in ('localhost','localhost.localdomain') or u.hostname.endswith(('.localhost','.local','.internal')):raise ValueError()
+            except (ValueError,TypeError):raise ValueError('Invalid external HTTPS URL')
+            entry['url']=url; entry['presentation']=item.get('presentation') if item.get('presentation') in ('external-browser','native-webview') else 'external-browser'
+        else:
+            fields=item.get('fields',[])
+            if not isinstance(fields,list) or len(fields)>6:raise ValueError('Invalid reply fields')
+            parsed=[]
+            for field in fields:
+                if not isinstance(field,dict) or not isinstance(field.get('id'),str) or not ACTION_ID.fullmatch(field['id']) or field.get('type') not in ('text','textarea','select'):raise ValueError('Invalid reply field')
+                entryfield={'id':field['id'],'type':field['type'],'label':str(field.get('label',field['id']))[:60]}
+                if field['type']=='select':
+                    options=field.get('options')
+                    if not isinstance(options,list) or not 1<=len(options)<=12 or not all(isinstance(x,str) and 1<=len(x)<=80 for x in options):raise ValueError('Invalid field options')
+                    entryfield['options']=options
+                parsed.append(entryfield)
+            entry['fields']=parsed
+        cleaned.append(entry);used.add(aid)
+    message=raw.get('body','')
+    if not isinstance(message,str) or len(message)>2000:raise ValueError('Invalid event body')
+    return {'title':title,'body':message,'topic':topic,'actions':cleaned}
+
+def interaction_feed(db,subject,now):
+    rows=db.execute(sa.select(INTERACTION).where(INTERACTION.c.recipient==subject).order_by(INTERACTION.c.id.desc()).limit(80)).mappings().all()
+    return {'ok':True,'schema':'tavi.interactions/v1','events':[
+      {'id':r['id'],'publisher':r['publisher'],'topic':r['topic'],**r['data'],
+       'status':('expired' if r['expires']<=now and r['status']=='open' else r['status']),
+       'created':r['created'],'expires':r['expires'],'response':r['response']}
+      for r in rows]}
+
+def interaction_reply(db,subject,body,now):
+    event_id=body.get('id');action=body.get('action');values=body.get('values',{})
+    if type(event_id) is not int or not isinstance(action,str) or not isinstance(values,dict):return error('Invalid event response')
+    row=db.execute(sa.select(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject)).mappings().first()
+    if not row:return error('Event not found')
+    if row['status']!='open' or row['expires']<=now:return error('Event already handled or expired')
+    allowed=next((x for x in row['data']['actions'] if x['id']==action and x['type']=='reply'),None)
+    if not allowed:return error('Action not available')
+    fields={f['id']:f for f in allowed['fields']}
+    if len(values)>len(fields) or any(k not in fields or not isinstance(v,str) or len(v)>2000 or (fields[k]['type']=='select' and v not in fields[k]['options']) for k,v in values.items()):return error('Invalid field values')
+    response={'action':action,'values':values,'at':now,'by':subject}
+    db.execute(sa.update(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject,INTERACTION.c.status=='open').values(status='responded',response=response))
+    return {'ok':True,'response':response}
+
+def interaction_dismiss(db,subject,body,now):
+    event_id=body.get('id')
+    if type(event_id) is not int or event_id<1:return error('Invalid event ID')
+    row=db.execute(sa.select(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject)).mappings().first()
+    if not row:return error('Event not found')
+    if row['status']=='dismissed':return {'ok':True,'status':'dismissed'}
+    if row['status']!='open' or row['expires']<=now:return error('Event already handled or expired')
+    response={'action':'dismiss','at':now,'by':subject}
+    db.execute(sa.update(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject,INTERACTION.c.status=='open').values(status='dismissed',response=response))
+    return {'ok':True,'status':'dismissed'}
+
 def error(message):
     return {'ok':False,'error':message}
 
@@ -366,6 +452,40 @@ def direct_send(db,subject,peer,content,now):
     return {'ok':True}
 
 
+def published_games():
+    """Operator-published HTTPS game catalog; never supplied by clients.
+
+    Deployment sets TAVI_GAME_CATALOG_JSON to an array of entries. Invalid entries
+    fail closed; credentials, arbitrary protocols and local-network URLs are not allowed.
+    """
+    from urllib.parse import urlsplit
+    try:
+        entries=json.loads(os.getenv('TAVI_GAME_CATALOG_JSON','[]'))
+    except (ValueError,TypeError):
+        return []
+    if not isinstance(entries,list):return []
+    games=[]; seen=set()
+    for item in entries[:40]:
+        if not isinstance(item,dict):continue
+        key=item.get('id'); name=item.get('name'); url=item.get('url')
+        if not isinstance(key,str) or not re.fullmatch(r'[a-z][a-z0-9-]{1,47}',key) or key in seen:continue
+        if not isinstance(name,str) or not 1<=len(name.strip())<=64:continue
+        if not isinstance(url,str) or len(url)>2048:continue
+        try:
+            parsed=urlsplit(url)
+            host=(parsed.hostname or '').lower()
+            if parsed.scheme!='https' or not host or parsed.username or parsed.password or parsed.fragment or parsed.port not in (None,443):continue
+            if host in ('localhost','localhost.localdomain') or host.endswith(('.local','.internal','.localhost')):continue
+            import ipaddress
+            try:
+                if not ipaddress.ip_address(host).is_global:continue
+            except ValueError:pass
+        except ValueError:continue
+        seen.add(key)
+        games.append({'id':key,'name':name.strip(),'type':'web','url':url,'embedded':item.get('embedded') is True,'external':True})
+    return games
+
+
 def execute(body,sessions,tokens=None,now=None):
     """Returns (response, optional notification), after SQLite commit."""
     if not isinstance(body,dict):
@@ -375,6 +495,8 @@ def execute(body,sessions,tokens=None,now=None):
     now=int(time.time()) if now is None else int(now)
     try:
         with sessions.begin() as db:
+            if op=='game_catalog':
+                return {'ok':True,'schema':'tavi.game-catalog/v1','games':published_games()},None
             if op=='capabilities':
                 return {'ok':True,'schema':'looprd.social.capabilities/v1',
                     'accounts':True,'registration':os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower() in ('true','1','yes'),
@@ -386,6 +508,27 @@ def execute(body,sessions,tokens=None,now=None):
             subject=session_identity(db,body.get('token'),now) or authorize(body.get('token'),tokens)
             if not subject:
                 return error('Sign in to Social first'),None
+            if op=='interaction_feed':
+                return interaction_feed(db,subject,now),None
+            if op=='interaction_reply':
+                result=interaction_reply(db,subject,body,now)
+                return result,event_signal(db) if result['ok'] else None
+            if op=='interaction_dismiss':
+                result=interaction_dismiss(db,subject,body,now)
+                return result,event_signal(db) if result['ok'] else None
+            if op=='interaction_publish':
+                # Development/initial integration publisher: only operator-authorized developer accounts.
+                if not account_developer_permission(db,subject):
+                    return error('Publisher permission denied'),None
+                recipient=body.get('recipient')
+                if not isinstance(recipient,str) or not re.fullmatch(r'[a-z][a-z0-9_]{2,23}',recipient):return error('Invalid recipient'),None
+                target=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==recipient)).first()
+                if not target:return error('Recipient not found'),None
+                clean=validate_interaction(body.get('interaction'))
+                expiry=now+min(7*86400,max(60,int(body.get('ttlSeconds',86400))))
+                db.execute(sa.insert(INTERACTION).values(recipient='acct_'+str(target[0]),publisher=subject,
+                    topic=clean['topic'],title=clean['title'],data=clean,status='open',response=None,created=now,expires=expiry))
+                return {'ok':True},event_signal(db)
             if op=='developer_diagnostics':
                 # Do not trust a client-supplied username or privilege claim.
                 return developer_diagnostics(db,subject,now),None

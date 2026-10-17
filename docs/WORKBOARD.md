@@ -8,3 +8,8 @@
 - SCL-009: Android background notifications remain open.
 - SCL-011: game activity contracts depend on game components.
 - SCL-017: secure remembered-device login remains open.
+
+
+## TAVI-CHAT-001 — Foreground chat notifications, unread state and mobile usability (0.3.17)
+
+Implemented in source: per-contact unread badges, bounded rotating DM feed scans, local per-account read state, private-by-default OS notifications, separate-window seen acknowledgments, chat composer live refresh, Android safe-area/touch improvements. Awaiting Windows installer and Android foreground acceptance. Background mobile push and server inbox summaries remain future work.

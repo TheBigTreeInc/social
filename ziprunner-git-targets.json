@@ -1,0 +1,27 @@
+{
+  "schema": "tavi.git-targets/v1",
+  "project": "looprd-social",
+  "default_target": "product",
+  "targets": [
+    {
+      "id": "product",
+      "repository": "https://github.com/TheBigTreeInc/social.git",
+      "web": "https://github.com/TheBigTreeInc/social",
+      "branch": "main",
+      "role": "product-source",
+      "access": "push-after-tests",
+      "remote": "origin"
+    },
+    {
+      "id": "looprd",
+      "repository": "https://github.com/pac-labs/dapi.git",
+      "web": "https://github.com/pac-labs/dapi",
+      "branch": "main",
+      "role": "infrastructure-reference",
+      "access": "read-only",
+      "remote": "looprd-upstream"
+    }
+  ],
+  "identity": "Use an existing ZipRunner Git account; no credentials or keys are bundled.",
+  "warning": "The product remote is the existing Social repository. Review before first push; this ZIP does not create a new GitHub repository."
+}
