@@ -18,7 +18,7 @@ def integer(required=False,primary=False,generated=False):
 spec={
  'apiVersion':'looprd/v1','component':'looprd-social','release':version,'api':{'version':'v1'},
  'cors':{'allowedOrigins':['https://thebigtreeinc.github.io','http://tauri.localhost']},
- 'requires':['auth.verified','events.transactional','events.replay','push.unifiedpush','management.data','service.contracts'],
+ 'requires':['auth.verified','events.transactional','events.replay','push.unifiedpush','management.data','service.contracts','reports.bugs'],
  'auth':{'mode':'verified','realm':'tavi-social',
          'scopes':['social:api','events:read','push:manage','social:service','social:operator'],
          'verifier':{'kind':'python','source':verifier}},

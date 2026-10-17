@@ -1,4 +1,4 @@
-# Android in-app APK update flow — 0.3.34
+# Android in-app APK update flow — 0.3.35
 
 The Android release build is signed with the persistent GitHub Secrets keystore, and the official published APK asset is named `tavi-android-arm64-vX.Y.Z.apk`.
 

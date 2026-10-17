@@ -1,17 +1,28 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.34",
-  "summary": "Tavi v0.3.34: fix GitHub Android signed-release build artifact verification path; verify signature and publish normalized APK.",
+  "version": "0.3.35",
+  "summary": "Tavi v0.3.35: pre-login report to LoopRD built-in bugs inbox; no sensitive automatic log collection.",
   "implemented": [
+    {
+      "id": "TAVI-REPORTS-035",
+      "title": "Pre-login LoopRD bug report",
+      "summary": "Adds explicit consent button at Tavi sign-in, calls the built-in _bugreports endpoint with a public limited guest principal, safe login/discovery context, and displays LoopRD report ID.",
+      "operator_checks": [
+        "Deploy LoopRD with reports.bugs enabled and update Social descriptor",
+        "On Android trigger login failure and submit report; inspect LoopRD management Bug reports",
+        "Confirm no credentials or username submitted",
+        "Verify Android login error independently"
+      ]
+    },
     {
       "id": "TAVI-ANDROID-034",
       "title": "Repair Android signed APK GitHub artifact path",
       "summary": "Find Tauri APK in universal/release, verify apksigner signature, and stage it for stable GitHub Actions artifact upload. No change to app runtime or Social database.",
       "operator_checks": [
-        "Push v0.3.34 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
+        "Push v0.3.35 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
         "Confirm tavi-android-arm64-signed-release uploaded as a ZIP containing exactly one APK.",
-        "Confirm gated GitHub Release attaches direct v0.3.34 Android APK asset."
+        "Confirm gated GitHub Release attaches direct v0.3.35 Android APK asset."
       ]
     },
     {
@@ -19,8 +30,8 @@
       "title": "Verified GitHub release gate and version tags",
       "summary": "GitHub workflow_run gate waits for 7 required CI workflows on the same current main SHA; checks artifact completeness, creates immutable vX.Y.Z release with downloadable Windows, Android, Linux, macOS, web and SDK/OpenClaw bundles. Pages hosting remains independent.",
       "operator_checks": [
-        "Push 0.3.34 to main and confirm seven required workflows complete successfully.",
-        "Check Publish verified Tavi release creates tag v0.3.34 and a release containing six ZIP assets.",
+        "Push 0.3.35 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.35 and a release containing six ZIP assets.",
         "Force a build failure in a later test branch and confirm no release is created.",
         "Confirm rerunning an already-released commit never overwrites an existing tag or release."
       ]
@@ -281,7 +292,7 @@
       "summary": "Checks published GitHub Releases at startup and every six hours; displays a download notice and Help action. No automatic installer execution. Live platform acceptance pending.",
       "priority": "high",
       "operator_checks": [
-        "After GitHub Release v0.3.34 is published, start v0.3.34 Tavi and confirm the update notice appears.",
+        "After GitHub Release v0.3.35 is published, start v0.3.35 Tavi and confirm the update notice appears.",
         "Choose Download update and verify it opens the official GitHub Release, without installing anything.",
         "Check Help > Check for updates with an unavailable network and confirm messaging remains usable."
       ]
@@ -392,7 +403,7 @@
     {
       "id": "TAVI-AGENT-002",
       "title": "Native OpenClaw channel plugin and game actions",
-      "summary": "The v0.3.34 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
+      "summary": "The v0.3.35 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
       "priority": "high"
     },
     {

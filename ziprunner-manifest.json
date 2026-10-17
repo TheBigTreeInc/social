@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.34",
-    "base_version": "0.3.33"
+    "version": "0.3.35",
+    "base_version": "0.3.34"
   },
   "update": {
-    "id": "TAVI-20261017-ANDROID-034",
+    "id": "TAVI-20261017-REPORTS-035",
     "kind": "source_update",
     "created_at": "2026-10-17T16:00:00+02:00",
-    "summary": "Repair Android release APK artifact detection: Tauri writes to universal/release; verify APK signature and copy into stable release artifact directory."
+    "summary": "Provide pre-authentication LoopRD reports.bugs user-consented reporting on login/discovery failures, with safe bounded diagnostics."
   },
   "planned_work": [
     {
@@ -143,6 +143,12 @@
       "id": "TAVI-ANDROID-034",
       "title": "Fix signed Android APK artifact discovery",
       "acceptance_criteria": "GitHub job validates generated universal/release APK with apksigner, stages one APK and releases it with the normal tag gate",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-REPORTS-035",
+      "title": "User-consented login bug reports to LoopRD",
+      "acceptance_criteria": "Pre-login report button conforms to reports.bugs schema, sends no credentials, displays issue ID or failure and requires LoopRD capability.",
       "priority": "high"
     }
   ],
@@ -563,6 +569,24 @@
           "ref": "tests/test_android_artifact_workflow.py"
         }
       ]
+    },
+    {
+      "id": "TAVI-REPORTS-035",
+      "summary": "Pre-login LoopRD reports.bugs submission, safe bounded user-initiated diagnostics, receipt/failure UI and tests.",
+      "evidence": [
+        {
+          "ref": "client/src/bug-report.js"
+        },
+        {
+          "ref": "client/tests/bug-report.test.mjs"
+        },
+        {
+          "ref": "client/src/main.js"
+        },
+        {
+          "ref": "looprd.yaml"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -743,7 +767,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Confirm GitHub signed Android APK job and GitHub Release gate succeed for v0.3.34; test native updater on Android with next released version.",
+    "next_pass": "Push v0.3.35 and test Android failed login reporting with the current LoopRD runtime, then diagnose Android login using report reference.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -768,7 +792,7 @@
     },
     {
       "id": "TAVI-UPDATES-003-OP",
-      "description": "Push v0.3.34, verify Android APK generated under universal/release, signature verified with apksigner, artifact uploaded and release gate passes; run on-device update test on following release.",
+      "description": "Push v0.3.35, verify Android APK generated under universal/release, signature verified with apksigner, artifact uploaded and release gate passes; run on-device update test on following release.",
       "status": "required"
     }
   ],
