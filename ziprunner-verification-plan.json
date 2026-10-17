@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.35",
+  "version": "0.3.38",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -232,6 +232,40 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-NEARBY-001",
+      "criteria": [
+        {
+          "id": "TAVI-NEARBY-001-AC1",
+          "description": "Actions are sequential and tamper detected; offline snapshots are recoverable; divergent online heads never auto-merge.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-NEARBY-001-TEST"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-AGENT-003",
+      "criteria": [
+        {
+          "id": "TAVI-AGENT-003-AC-1",
+          "description": "No self-message routing and no cursor advancement on processing failures",
+          "mode": "automated",
+          "checks": [
+            "node --test integrations/openclaw/tests/*.test.mjs"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-003-AC-2",
+          "description": "Live Gateway roundtrip and reconnect on actual OpenClaw instance",
+          "mode": "manual",
+          "checks": [
+            "OpenClaw CLI/Gateway local acceptance"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -442,6 +476,19 @@
       "stage": "acceptance",
       "description": "Live Tavi/OpenClaw chat acceptance",
       "instructions": "On an OpenClaw host, provision a dedicated Tavi account, run me, contacts and updates, then send and receive a DM using the bridge. Verify token isolation and no game-play claims."
+    },
+    {
+      "id": "TAVI-NEARBY-001-TEST",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Transport-neutral offline journal regression tests",
+      "runner_ref": "node --test client/tests/nearby-local-session.test.mjs",
+      "assertions": [
+        "No gaps or silent conflict resolution",
+        "Append/reload/verify and server acknowledgement boundaries",
+        "No unrecognized actors or unbounded payloads"
+      ],
+      "test_ref": "client/tests/nearby-local-session.test.mjs"
     }
   ]
 }

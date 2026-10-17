@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {inboundFromFeed,acceptedPeers,reconcileInbox,clampPoll,pulseWake} from '../tavi-watch.mjs';
+const me='acct_1';
+const feed=[{id:3,authorId:'acct_2',text:'third',at:3},{id:1,authorId:'acct_2',text:'first',at:1},{id:2,authorId:me,text:'own',at:2},{id:3,authorId:'acct_2',text:'duplicate',at:3}];
+test('only inbound messages, unique, ordered and strictly after cursor',()=>{assert.deepEqual(inboundFromFeed('acct_2',feed,me).map(x=>x.id),[1,3]);assert.deepEqual(inboundFromFeed('acct_2',feed,me,1).map(x=>x.id),[3]);});
+test('accepted contacts only; invalid peers ignored',()=>{assert.equal(acceptedPeers([{id:'acct_2',status:'accepted'},{id:'evil',status:'accepted'},{id:'acct_3',status:'pending'}]).length,1);});
+test('first contact sync baselines history without sending old content',async()=>{const got=[];const cp=await reconcileInbox({api:{origin:'https://example.com',me:async()=>({profile:{profileId:me}}),contacts:async()=>({contacts:[{id:'acct_2',status:'accepted',username:'bob'}]}),directFeed:async()=>({messages:feed})},onMessage:async x=>got.push(x)});assert.deepEqual(got,[]);assert.equal(cp.peers.acct_2,3);});
+test('failed consumer does not advance cursor',async()=>{const api={origin:'https://example.com',me:async()=>({profile:{profileId:me}}),contacts:async()=>({contacts:[{id:'acct_2',status:'accepted',username:'bob'}]}),directFeed:async()=>({messages:feed})};const cp={schema:'tavi.openclaw.inbox/v1',origin:api.origin,selfId:me,peers:{acct_2:0}};await assert.rejects(reconcileInbox({api,checkpoint:cp,onMessage:async()=>{throw Error('not accepted');}}),/not accepted/);assert.equal(cp.peers.acct_2,0);});
+test('wrong account checkpoint fails closed',async()=>{await assert.rejects(reconcileInbox({api:{origin:'https://example.com',me:async()=>({profile:{profileId:me}}),contacts:async()=>({contacts:[]})},checkpoint:{origin:'https://example.com',selfId:'acct_9',peers:{}},onMessage:async()=>{}}),/another Tavi account/);});
+test('wake parses only pulse events; poll bound',()=>{assert(pulseWake({data:'{"resource":"pulses"}'}));assert(!pulseWake({data:'{"resource":"messages"}'}));assert.equal(clampPoll(1),5000);});

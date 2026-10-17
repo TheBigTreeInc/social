@@ -1,4 +1,4 @@
-# Android signed releases and update flow — v0.3.35
+# Android signed releases and update flow — v0.3.38
 
 ## Signing configuration (required once)
 

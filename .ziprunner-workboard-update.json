@@ -1,9 +1,30 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.35",
-  "summary": "Tavi v0.3.35: pre-login report to LoopRD built-in bugs inbox; no sensitive automatic log collection.",
+  "version": "0.3.38",
+  "summary": "OpenClaw pulse-driven inbox service on existing DAPI, per-peer sessions, allowlisted replies and reconnect reconciliation.",
   "implemented": [
+    {
+      "id": "TAVI-AGENT-003",
+      "title": "OpenClaw notification-to-agent bridge",
+      "summary": "New persistent Tavi watcher and OpenClaw CLI responder using existing LoopRD pulse WebSockets, authenticated HTTP inbox, cursor checkpoints and explicit allowlist. Native plugin remains follow-up.",
+      "operator_checks": [
+        "Start dedicated Tavi account bridge as supervised process",
+        "Message it from an accepted allowlisted account",
+        "Observe OpenClaw agent reply and successful retry/restart"
+      ]
+    },
+    {
+      "id": "TAVI-SYNC-037",
+      "title": "DAPI-aligned notifications and reduced request load",
+      "summary": "Coalesce LoopRD generic WebSocket and native push wake hints; retain dirty wake during active full sync and fetch only contacts, message summaries, active DM feed, interactions and visible lobby. Full periodic scan and game polling remain as fallback.",
+      "operator_checks": [
+        "Verify incoming chats update quickly while Tavi is foregrounded.",
+        "Verify multiple rapid messages result in a bounded number of requests.",
+        "Verify game turn monitoring still works on 25-second full poll.",
+        "Verify Android foreground/resume messages after network reconnection."
+      ]
+    },
     {
       "id": "TAVI-REPORTS-035",
       "title": "Pre-login LoopRD bug report",
@@ -20,9 +41,9 @@
       "title": "Repair Android signed APK GitHub artifact path",
       "summary": "Find Tauri APK in universal/release, verify apksigner signature, and stage it for stable GitHub Actions artifact upload. No change to app runtime or Social database.",
       "operator_checks": [
-        "Push v0.3.35 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
+        "Push v0.3.38 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
         "Confirm tavi-android-arm64-signed-release uploaded as a ZIP containing exactly one APK.",
-        "Confirm gated GitHub Release attaches direct v0.3.35 Android APK asset."
+        "Confirm gated GitHub Release attaches direct v0.3.38 Android APK asset."
       ]
     },
     {
@@ -30,8 +51,8 @@
       "title": "Verified GitHub release gate and version tags",
       "summary": "GitHub workflow_run gate waits for 7 required CI workflows on the same current main SHA; checks artifact completeness, creates immutable vX.Y.Z release with downloadable Windows, Android, Linux, macOS, web and SDK/OpenClaw bundles. Pages hosting remains independent.",
       "operator_checks": [
-        "Push 0.3.35 to main and confirm seven required workflows complete successfully.",
-        "Check Publish verified Tavi release creates tag v0.3.35 and a release containing six ZIP assets.",
+        "Push 0.3.38 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.38 and a release containing six ZIP assets.",
         "Force a build failure in a later test branch and confirm no release is created.",
         "Confirm rerunning an already-released commit never overwrites an existing tag or release."
       ]
@@ -292,7 +313,7 @@
       "summary": "Checks published GitHub Releases at startup and every six hours; displays a download notice and Help action. No automatic installer execution. Live platform acceptance pending.",
       "priority": "high",
       "operator_checks": [
-        "After GitHub Release v0.3.35 is published, start v0.3.35 Tavi and confirm the update notice appears.",
+        "After GitHub Release v0.3.38 is published, start v0.3.38 Tavi and confirm the update notice appears.",
         "Choose Download update and verify it opens the official GitHub Release, without installing anything.",
         "Check Help > Check for updates with an unavailable network and confirm messaging remains usable."
       ]
@@ -306,6 +327,16 @@
         "Configure signing secrets and confirm GitHub Actions builds Android signed release APK.",
         "Install a release-signed Tavi build on Android; then update to a future version from inside Tavi and verify account/session data stays intact.",
         "Confirm Android handles unknown-sources permission and APK installation confirmation; test cancellation and download failures."
+      ]
+    },
+    {
+      "id": "TAVI-NEARBY-001",
+      "title": "Transport-neutral offline game session journal",
+      "summary": "Client-owned append-only revision journal, hash corruption checking, bounded game-action payloads, persistence adapter and conflict-safe sync intent. No BLE or server game sync implemented.",
+      "operator_checks": [
+        "Run node --test client/tests/nearby-local-session.test.mjs",
+        "Confirm no Android Bluetooth transport, pairing or real game advertised as implemented.",
+        "Keep existing LoopRD Social schema and APIs unchanged."
       ]
     }
   ],
@@ -403,7 +434,7 @@
     {
       "id": "TAVI-AGENT-002",
       "title": "Native OpenClaw channel plugin and game actions",
-      "summary": "The v0.3.35 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
+      "summary": "The v0.3.38 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
       "priority": "high"
     },
     {
@@ -411,6 +442,16 @@
       "title": "Signed native in-app updater",
       "summary": "Needs Tauri updater signing keys, platform-specific signed artifacts, trusted update manifest and user-approved restart.",
       "priority": "medium"
+    },
+    {
+      "id": "TAVI-NEARBY-002",
+      "title": "Native nearby pairing and transport",
+      "summary": "Android permissions + verified encrypted pairing, BLE/Wi-Fi transport, two-device acceptance and nearby UI."
+    },
+    {
+      "id": "TAVI-NEARBY-003",
+      "title": "Atrium offline game adapter and online sync",
+      "summary": "Obtain game rules/state reducer and server-authorized transactional sync contract; reject divergent heads; restart and train-mode device testing."
     }
   ]
 }

@@ -1,8 +1,12 @@
-# v0.3.35 — Login bug reports via LoopRD
+
+## v0.3.38 — DAPI-aligned chat notification performance
+
+LoopRD `pulses` and UnifiedPush `sync` messages are hints only. The Tavi foreground client now coalesces bursts through `client/src/sync-coordinator.js`, retaining a pending hint if a full refresh is in progress, and refreshes authenticated contact/conversation/active-DM/interactions without reloading the game turn catalog on every social event. The 25-second full poll remains for game alerts and reconnection. The existing `dm_conversations` and `dm_feed` server handlers are authoritative; private chat is **not** declared as a generic LoopRD snapshot resource, so `_sync` cannot be substituted without changing the application model. No new DAPI capability or Social migration.
+# v0.3.38 — Login bug reports via LoopRD
 
 Explicit **Report a login problem to LoopRD** control before authentication, using `reports.bugs` and `looprd-bugreport/v1`. Sends user-approved context with no credentials, displays issue receipt. LoopRD runtime must support reports.bugs and deploy regenerated descriptor. Does not itself resolve Android login.
 
-# Tavi 0.3.35 — Resilient remembered sessions (client pass)
+# Tavi 0.3.38 — Resilient remembered sessions (client pass)
 
 This version allows remembered sign-ins to recover when LoopRD was offline at
 startup: bounded retries, immediate retry on network restoration/focus, visible
@@ -11,7 +15,7 @@ on HTTP 403 or transient failures. Only HTTP 401 or explicit session removal
 clears rejected credentials. Fixes duplicated trusted-device help copy. Windows
 uses its existing DPAPI vault; native acceptance remains required.
 
-LoopRD descriptor release is stamped **0.3.35** for version consistency; the Social
+LoopRD descriptor release is stamped **0.3.38** for version consistency; the Social
 database remains **schema 6** with no data migration and no new server handlers.
 The client changes work without redeploying the server, although the descriptor
 must be pushed/reconciled for LoopRD to show the new release ID. See
@@ -159,36 +163,44 @@ Windows now persists opt-in Tavi sessions using a per-user DPAPI-encrypted file 
 Windows builds now close only this project's running `client/src-tauri/target/release/looprd-social-client.exe` before Cargo replaces it. The pre-build helper attempts a graceful close then, if necessary, forces termination of the path-verified PID; unrelated installed copies are unaffected. Native acceptance required. See `ZIPRUNNER_HANDOFF.md` and `docs/LOCAL_BUILD.adoc`. Schema 6 unchanged.
 
 
-## OpenClaw integration v0.3.35
+## OpenClaw integration v0.3.38
 
 A standalone headless Tavi account CLI and copyable OpenClaw agent instructions are in `integrations/openclaw/`. Use a dedicated Tavi user and private session. Chat and contacts are supported; game discovery is read-only until games implement agent-specific player/action contracts. The integration is a CLI adapter (not yet a native OpenClaw channel plugin). LoopRD schema 6 unchanged.
 
-## v0.3.35 — GitHub clients, SDKs and Pages
+## v0.3.38 — GitHub clients, SDKs and Pages
 
 See [docs/PUBLIC_CLIENTS.md](docs/PUBLIC_CLIENTS.md) and [sdk/README.md](sdk/README.md). Pages is opt-in through repository Settings; publishing the source alone does not activate Pages.
 
 
-## Tavi 0.3.35 — GitHub Actions coverage repair
+## Tavi 0.3.38 — GitHub Actions coverage repair
 
-The 0.3.27 GitHub Pages run failed **after successful Vite build** because the GitHub Pages site was not configured: `actions/configure-pages@v5` returned 404. In 0.3.35 the web client is always uploaded as a downloadable build artifact; Pages deployment still requires the repository owner to select **Settings → Pages → Build and deployment → GitHub Actions**. The deployment job is intentionally allowed to fail visibly until Pages is enabled.
+The 0.3.27 GitHub Pages run failed **after successful Vite build** because the GitHub Pages site was not configured: `actions/configure-pages@v5` returned 404. In 0.3.38 the web client is always uploaded as a downloadable build artifact; Pages deployment still requires the repository owner to select **Settings → Pages → Build and deployment → GitHub Actions**. The deployment job is intentionally allowed to fail visibly until Pages is enabled.
 
 The Linux/macOS native workflow now runs on main pushes and relevant PRs, producing a Linux amd64 `.deb` and macOS Apple Silicon `.dmg` subject to CI success. The SDK source-package workflow produces JavaScript, Python, Go, C# and OpenClaw bridge ZIPs, without implying binary distributions for language libraries. Artifacts are retained for 30 days. Native Linux/macOS workflows require remote GitHub runner verification. Social DB schema remains 6.
 
 
-## Tavi 0.3.35 — Native conversation history fix
+## Tavi 0.3.38 — Native conversation history fix
 
 Windows chat-window peer validation previously required at least eight characters, but the server issues short IDs such as `acct_1`. Notifications worked through the main roster, while the native chat window rejected those IDs before loading history. The validator now accepts only the server-issued `acct_[1-9][0-9]{0,18}` form (and `lobby`), with regression tests for short IDs and malformed inputs. No schema migration or backend API change.
 
-## Verified GitHub releases (v0.3.35)
+## Verified GitHub releases (v0.3.38)
 
 After a push to `main`, the `Publish verified Tavi release` workflow waits for seven required CI workflows to pass **on the same current commit**, verifies their artifacts, and publishes a `vX.Y.Z` tag plus a GitHub Release containing six downloadable ZIP bundles. The version comes from root `package.json`. Each source release must bump that version; existing tags are never overwritten. SDK checks and SDK packaging run on every main push to ensure the gate can complete. GitHub Pages hosting is not part of the gate because Pages must be enabled in repository settings. See `docs/RELEASE_PROCESS.md`.
 
-## v0.3.35 — Signed Android upgrade distribution
+## v0.3.38 — Signed Android upgrade distribution
 
 See `docs/ANDROID_UPDATES.md` for the mandatory signing secrets, one-time debug-to-release migration, and remaining native installation work.
 
-## v0.3.35 Android in-app upgrade
+## v0.3.38 Android in-app upgrade
 Native Android Update now starts a scoped DownloadManager download for the validated signed APK and hands it to Android package installer, requiring OS approval. See `docs/ANDROID_IN_APP_UPDATES.md`. Native acceptance pending.
 
-### v0.3.35 Android build correction
+### v0.3.38 Android build correction
 The Android signed-release workflow now reads Tauri APK output at `gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk`, verifies its signature with Android SDK `apksigner`, and stages one APK for GitHub Actions release artifacts. No native runtime behavior changes.
+
+
+## v0.3.38 — Nearby/offline gameplay foundation
+
+Added `client/src/nearby/local-session.js` offline turn journal with chain verification, local persistence, explicit server sync prefix and conflict detection. See `docs/NEARBY_LOCAL_SESSIONS.md`. **No Bluetooth pairing, nearby chat, game adapter or cloud synchronization is implemented in this release.** No Social schema migration.
+
+## 0.3.38 OpenClaw notification-driven bridge
+Persistent Tavi WebSocket pulse consumer with authenticated DM reconciliation and opt-in OpenClaw CLI agent reply service. See integrations/openclaw/README.md. This is not an installed native OpenClaw channel; live Gateway acceptance outstanding.

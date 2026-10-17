@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.35",
-    "base_version": "0.3.34"
+    "version": "0.3.38",
+    "base_version": "0.3.38"
   },
   "update": {
-    "id": "TAVI-20261017-REPORTS-035",
+    "id": "TAVI-20261017-OPENCLAW-WAKE-038",
     "kind": "source_update",
     "created_at": "2026-10-17T16:00:00+02:00",
-    "summary": "Provide pre-authentication LoopRD reports.bugs user-consented reporting on login/discovery failures, with safe bounded diagnostics."
+    "summary": "OpenClaw persistent background responder using existing LoopRD WebSocket pulse + HTTP inbox reconciliation, accepted-contact allowlist, per-peer agent sessions and checkpointing. No new DAPI capability or Social schema."
   },
   "planned_work": [
     {
@@ -149,6 +149,36 @@
       "id": "TAVI-REPORTS-035",
       "title": "User-consented login bug reports to LoopRD",
       "acceptance_criteria": "Pre-login report button conforms to reports.bugs schema, sends no credentials, displays issue ID or failure and requires LoopRD capability.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-NEARBY-001",
+      "title": "Offline-first local game-session journal",
+      "acceptance_criteria": "Hash-checked bounded host action journal, restart persistence, sync intent and divergence rejection under Node tests.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-NEARBY-002",
+      "title": "Bluetooth/Wi-Fi local encrypted transport and pairing",
+      "acceptance_criteria": "Native Android two-device discovery and mutually verified pairing, encrypted local chat with permission control.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-NEARBY-003",
+      "title": "Atrium game adapter and online reconciliation",
+      "acceptance_criteria": "First supported Atrium game validates local turns and syncs exact common prefix to authorized server; airplane-mode/restart conflict tests.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-SYNC-037",
+      "title": "Coalesced DAPI wake hints and lightweight authoritative mailbox refresh",
+      "acceptance_criteria": "Generic WebSocket and push hints coalesce and are never discarded during another sync; skip unrelated game polling on wake; periodic/full sync retained; regression tests pass",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-AGENT-003",
+      "title": "OpenClaw background notification consumer and opt-in agent responder",
+      "acceptance_criteria": "Authenticated WebSocket pulse wake, bounded HTTP mailbox reconciliation, explicit account allowlist, per-sender OpenClaw CLI sessions, fail-closed checkpoint tests; native channel remains follow-up",
       "priority": "high"
     }
   ],
@@ -587,6 +617,74 @@
           "ref": "looprd.yaml"
         }
       ]
+    },
+    {
+      "id": "TAVI-NEARBY-001",
+      "summary": "Implemented versioned local turn journal and isolated offline-sync reconciliation primitives, plus Node regression suite. Transport and backend are not implemented.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/nearby/local-session.js",
+          "description": "Client-local session journal"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/nearby-local-session.test.mjs",
+          "description": "Persistence, integrity, ack and divergence tests"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/NEARBY_LOCAL_SESSIONS.md",
+          "description": "Integration contract and capability caveats"
+        }
+      ]
+    },
+    {
+      "id": "TAVI-SYNC-037",
+      "summary": "Coalesced LoopRD WebSocket/UnifiedPush wake-up hints; lightweight authorized mailbox sync without game/API catalog refresh; pending hints retained through overlapping refreshes. Background support still requires distributor.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/sync-coordinator.js",
+          "description": "Lossless coalescing and serial wake queue"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/sync-coordinator.test.mjs",
+          "description": "Burst, concurrent, deferred, and shutdown regression cases"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/main.js",
+          "description": "Lightweight DAPI wake recovery retains authenticated mailbox summaries and existing full polling"
+        }
+      ]
+    },
+    {
+      "id": "TAVI-AGENT-003",
+      "summary": "Persistent wake-driven OpenClaw service with DAPI pulse subscriptions, authenticated DM scan, per-contact checkpoints and allowlisted agent CLI replies.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "integrations/openclaw/tavi-watch.mjs",
+          "description": "Authenticated pulse wake and inbox checkpoint loop"
+        },
+        {
+          "kind": "source",
+          "ref": "integrations/openclaw/tavi-openclaw-service.mjs",
+          "description": "Allowlisted OpenClaw CLI handoff and Tavi DM reply"
+        },
+        {
+          "kind": "test",
+          "ref": "integrations/openclaw/tests/watch.test.mjs",
+          "description": "Inbox cursor and message isolation tests"
+        },
+        {
+          "kind": "test",
+          "ref": "integrations/openclaw/tests/service.test.mjs",
+          "description": "Allowlist and response routing tests"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -635,6 +733,14 @@
       "blockers": [
         "Requires private signing keys and platform-specific acceptance."
       ]
+    },
+    {
+      "id": "TAVI-NEARBY-002",
+      "next_action": "Implement native Android nearby pairing and local data channel; exercise two devices."
+    },
+    {
+      "id": "TAVI-NEARBY-003",
+      "next_action": "Coordinate Atrium game rule reducer and authenticated server sync protocol; implement one sample game."
     }
   ],
   "validation": {
@@ -767,16 +873,20 @@
     ]
   },
   "handover": {
-    "next_pass": "Push v0.3.35 and test Android failed login reporting with the current LoopRD runtime, then diagnose Android login using report reference.",
+    "next_pass": "Validate real OpenClaw Gateway CLI JSON contract and bridge on live host; then package native OpenClaw channel plugin using channel-core runtime SDK.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
       "Android closed-app UnifiedPush distributor integration still requires native device work.",
-      "Android in-app Kotlin bridge has unit-tested generated source overlay but no native Gradle compilation or device acceptance in author environment."
+      "Android in-app Kotlin bridge has unit-tested generated source overlay but no native Gradle compilation or device acceptance in author environment.",
+      "SHA journal checks detect corruption but do not authenticate other participants; pairing/signatures are not implemented.",
+      "Generic LoopRD pulses remain wake hints, not message payloads; Tavi Social DMs are custom handler tables and are not available as LoopRD generic _sync snapshots. Periodic authenticated summary reconciliation remains authoritative.",
+      "Bridge is an external supervised OpenClaw CLI service, not a native OpenClaw channel. Native Gateway acceptance and exactly-once downstream delivery are unverified."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
-      "Android UnifiedPush distributor and device testing not delivered in this pass."
+      "Android UnifiedPush distributor and device testing not delivered in this pass.",
+      "No device BLE implementation or Atrium server sync contract in v0.3.38."
     ],
     "notes": [
       "Client-side resume logic and minimal login UI only; Social database schema 6 unchanged.",
@@ -792,13 +902,23 @@
     },
     {
       "id": "TAVI-UPDATES-003-OP",
-      "description": "Push v0.3.35, verify Android APK generated under universal/release, signature verified with apksigner, artifact uploaded and release gate passes; run on-device update test on following release.",
+      "description": "Push v0.3.38, verify Android APK generated under universal/release, signature verified with apksigner, artifact uploaded and release gate passes; run on-device update test on following release.",
+      "status": "required"
+    },
+    {
+      "id": "TAVI-NEARBY-001-OP",
+      "description": "Treat nearby play as design/engine groundwork only; verify Node tests and retain schema 6.",
+      "status": "required"
+    },
+    {
+      "id": "TAVI-AGENT-003-OP",
+      "description": "Provision a separate Tavi account, configure TAVI_SERVER and TAVI_TOKEN, explicit TAVI_ALLOWED_PEERS and OpenClaw Gateway; launch tavi-openclaw-service.mjs; verify real DM roundtrip and restarts.",
       "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "OpenClaw CLI/skill source addition. LoopRD schema 6 unchanged; game actions not yet available."
+    "notes": "Client-only offline journal foundation; no native nearby connectivity or real game sync. LoopRD Social database schema 6."
   }
 }
