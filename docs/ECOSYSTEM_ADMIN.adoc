@@ -1,0 +1,69 @@
+= Tavi ecosystem-admin delivery
+:revnumber: 0.3.22
+:toc:
+
+== Purpose and boundaries
+
+One operator decides which application components are admitted to its private LoopRD ecosystem. Tavi accounts may be promoted as *ecosystem event recipients* from the protected LoopRD Data & actions workspace. This flag is not a LoopRD management key and never grants arbitrary database access to a user. Tavi still has no permanent administration dashboard. Ordinary clients receive events through the existing inbox and content-free UnifiedPush wake mechanism when registered.
+
+The canonical service interface belongs to `looprd-social` (the admitted Tavi component), not a new mandatory LoopRD built-in role system. Other approved components can opt in by declaring a service dependency. LoopRD verifies machine callers and enforces scopes; Tavi resolves its account memberships and writes recipient-specific inbox events.
+
+== LoopRD management integration
+
+v0.3.22 declares `requires: [management.data, service.contracts, ...]` and schema 6, adding `SocialAccount.ecosystemAdmin BOOLEAN NOT NULL DEFAULT 0`. The `accounts` managed resource projects only `handle`, `created`, `developerEnabled` and `ecosystemAdmin`; password hashes and login fields are not exposed. The ordinary `/operator-accounts` CRUD facade requires `social:operator`, a scope issued to NO Tavi guest, user, or service. It is needed solely as a declared resource for LoopRD management. Neither users nor trusted services receive the management bearer key.
+
+In `/_looprd/panel/` -> Data & actions -> `looprd-social` -> Tavi accounts, select an existing account and invoke **Promote to ecosystem admin** or **Revoke ecosystem admin**, supply an operator reason, review and confirm. Named actions are audited and idempotent by LoopRD; `ecosystemAdmin` is not a self-editable account/profile field. A separate developer entitlement remains editable from the management panel.
+
+Account registration and login do not grant admin status. The read-only `me.permissions.ecosystemAdmin` reflects current DB status and is never trusted as a client-side authorization claim.
+
+== Trusted application service identity
+
+LoopRD's `auth.mode: verified` verifier additionally recognizes *service* credentials only when privately mapped by the operator. Provide an environment mapping from an approved **caller component ID** to a mounted LoopRD **secret reference**. Example (nonsecret mapping only):
+
+[source,shell]
+----
+LOOPRD_SOCIAL_SERVICE_SECRETS_JSON='{"looprd-life":"tavi/services/looprd-life"}'
+----
+
+The server operator privately provisions a high-entropy random credential at the referenced secret path under `LOOPRD_SECRETS` and uses the SAME secret reference in the approved calling component's `dependencies[].credentialSecret`. Do not commit the credential, put it in the client, or send the LoopRD management key to any application. Tavi's verifier checks the credential against the mounted secret on every request. Unconfigured services are denied. Removing the mapping or secret revokes that caller immediately. All registered services get only `social:service` scope, not user or management scopes.
+
+== Service contracts for approved components
+
+Two independently discoverable LoopRD `service.contracts` v1 are provided:
+
+* `tavi-admin-notify` on `POST /looprd/looprd-social/v1/ecosystem/admin-notify`: sends a notification to current promoted Tavi accounts. Required `topic` (machine-readable), `title`; optional `body`, `url` (validated remote HTTPS), `ttlSeconds` (60-604800). A notification with a link provides **Open details**; without a link it provides **Acknowledge**. The response is `{"accepted":true,"recipients":N}`; rejected requests have `accepted:false` and a safe `reason`.
+* `tavi-admin-role` on `POST /looprd/looprd-social/v1/ecosystem/admin-role`: input `{"subject":"acct_123"}`, response `{"admin":true|false}`. A service may use this to verify a Tavi role but it does not issue a LoopRD operator key or authorize unrelated application actions.
+
+Both handlers require the `social:service` scope and `serviceOnly: true`. The issuer is recorded as `service:<caller-component-id>` on each inbox event. An approved caller can use `await ctx.call('looprd-social','tavi-admin-notify', payload)` after declaring this dependency in its **own** `looprd.yaml`:
+
+[source,yaml]
+----
+dependencies:
+  - component: looprd-social
+    contract: tavi-admin-notify
+    version: 1
+    credentialSecret: tavi/services/looprd-life
+----
+
+A separate dependency entry is needed for `tavi-admin-role` if the app checks roles. LoopRD service calls operate within the same LoopRD runtime. They are not cross-host RPC, nor are they distributed transactions. Each calling application remains responsible for deciding *when* it should notify administrators and for authorizing any resulting business action in its own service.
+
+== Transaction, access and privacy
+
+* Each accepted service notification inserts at most 100 recipient-scoped `SocialInteraction` rows, emits an opaque durable `pulses` event, and queues one `ctx.notify` wake per recipient **in one Social DB transaction**. On event or push queue failure the SQL transaction rolls back. No notification text or URL is included in the push payload.
+* Ordinary Tavi messages and user-generated interactive events continue using existing flows.
+* A revoked administrator immediately loses access to service-issued events, including already stored events, and cannot reply/dismiss them. Ordinary personal interactions remain available.
+* No arbitrary URL schemes, localhost/LAN targets, cleartext HTTP, credentialed links or URL fragments are accepted for admin notifications. Link opening does not share Tavi credentials.
+* Management events are not a pre-authenticated third-party web session. Account-signed admin links and embedded admin WebViews remain separate future contracts.
+* This is application-scoped Tavi administrator distribution; a generic cross-component directory, delegated human admin grants and federation have **not** been introduced into LoopRD core.
+
+== Operator acceptance after pushing to Git
+
+. Confirm LoopRD runtime supports `management.data`, `service.contracts`, verified auth, durable events and UnifiedPush, with `LOOPRD_ALLOW_PYTHON=true`. Preserve the existing configured ntfy provider and secret mounts.
+. Back up the Social DB, push `looprd.yaml` and `server/` sources to the existing `TheBigTreeInc/social` repository, and reconcile the admitted component. Confirm active release **0.3.22**, schema **6**, and no descriptor errors.
+. Create two Tavi accounts through normal Tavi login/registration. Promote only one via Data & actions; never edit passwords in the management workspace.
+. Confirm `me.permissions.ecosystemAdmin` differs between accounts; check the management audit.
+. Provision a private test caller credential and its `LOOPRD_SOCIAL_SERVICE_SECRETS_JSON` mapping, then call `tavi-admin-notify` with a valid HTTPS link from the approved service. Only the admin account should see the new inbox event. If the admin has an active verified UnifiedPush device, LoopRD should queue a content-free sync wake.
+. Revoke the role and confirm the event is no longer returned and can no longer be answered. Re-enable the role only with an explicit operator action.
+. Attempt to call the service contract using a normal Tavi session, and to access `/operator-accounts` as a normal user or service. Both must be forbidden.
+
+No fake service credentials or test accounts are bundled. A local source test passing does not prove that the remote LoopRD generation, ntfy provider, Windows or Android clients have accepted the release.

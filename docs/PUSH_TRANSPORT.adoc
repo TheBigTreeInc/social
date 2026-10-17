@@ -1,0 +1,122 @@
+= Tavi: LoopRD UnifiedPush v1 integration
+:revnumber: 0.3.20
+:toc:
+
+== Scope and verified-contract boundary
+
+Tavi 0.3.20 now uses the published LoopRD `push.unifiedpush` contract rather than the
+speculative `tavi.push-wakeup/v1` format from 0.3.19. The canonical upstream
+source is https://github.com/pac-labs/dapi/blob/main/docs/push-and-sync.md .
+
+This release updates the LoopRD Social component to `auth.mode: verified` and
+`realtime.delivery: durable`, retaining application database schema 5. LoopRD
+creates separate runtime-owned event and device tables. The component descriptor
+requires `auth.verified`, `events.transactional`, `events.replay`, and
+`push.unifiedpush`, so an older runtime that lacks these contracts must reject
+the descriptor. An operator must upgrade LoopRD before deploying this release.
+
+== Identity and public access
+
+Tavi owns usernames, passwords, sessions and friend permissions. A trusted
+server-side verifier (`server/looprd_verifier.py`, embedded into generated
+`looprd.yaml`) maps an active Social session token to stable verified subject
+`acct_<id>` under realm `tavi-social`. This yields the LoopRD principal ID
+`sha256('tavi-social\\0' + subject)` (NUL separator), which LoopRD owns and
+uses for push-device registration and delivery.
+
+The public, unprivileged `tavi_guest_v1` bearer is a *guest marker*, not a
+secret. It grants only `social:api`, and the handler permits guest operations
+`capabilities`, `game_catalog`, `register` and `login`. Account-sensitive
+requests require a verified user session matching the authenticated subject.
+Neither the guest nor a forged client-supplied account ID can obtain
+`push:manage`, WebSocket event read scopes, or another account's data.
+
+**Compatibility break:** Older Tavi clients that do not send the LoopRD verified
+Authorization header cannot log in to this component once deployed. There are
+no existing production users to migrate by operator direction. Upgrade clients
+and server together. Allow trusted Python verification in LoopRD runtime as
+required by the upstream `auth.verified` implementation.
+
+== Real device protocol
+
+The device SDK in `client/sdk/looprd-social.js` implements these actual LoopRD
+component endpoints with the active Social session as `Authorization: Bearer`:
+
+* `GET /_push/devices` lists caller-owned devices without endpoints.
+* `POST /_push/devices` accepts `{installationId, endpoint}` where the endpoint
+  is supplied by the installed Android UnifiedPush distributor.
+* A `202 pending` registration is **not** active. The challenge must arrive
+  through the push endpoint, not the HTTP response.
+* `POST /_push/devices/{id}/verify` confirms the 43-character challenge.
+* `DELETE /_push/devices/{id}` unregisters a caller-owned device.
+* Repeat registration for the same verified endpoint renews its lifetime.
+
+Default lifetime is 24 hours. `LOOPRD_PUSH_PUBLIC_URL` must be configured on
+the LoopRD host for registration to succeed; without it LoopRD returns HTTP
+503. Provider/distributor endpoints and challenges are ephemeral and must not
+be logged, put in URLs, or saved in browser storage. A non-secret random
+installation ID can remain locally scoped to the signed-in Tavi account.
+
+Tavi's `client/src/push-enrollment.js` validates opt-in, `pending` -> `active`
+state, and revocation, but **a native Android distributor receiver has not yet
+been compiled or tested**. Tavi must not claim closed-app delivery merely
+because the backend, SDK or preference checkbox is present.
+
+== Transactional message notifications
+
+Social uses the LoopRD `ctx.transaction()` / `ctx.emit()` / `ctx.notify()`
+combination for message and invitation changes. Recipient principals are
+resolved server-side from accepted friendships or trusted account records;
+clients never supply arbitrary push recipient principal IDs.
+
+The notification payload is exactly
+`{"apiVersion":"looprd-push/v1","type":"sync"}`. It carries no content,
+recipient, resource, token, event ID, URL or mutable action. A wake is a hint
+only: on foreground resume or native Android wake, Tavi fetches its private
+mailbox and unread count under its current authenticated session. The bridge
+throttles duplicate hints without inventing a non-existent event ID.
+
+LoopRD HTTP snapshot/replay exists for declared durable CRUD resources. The
+Social application currently publishes an opaque `pulses` GET-only resource,
+not a snapshot-capable private DM collection. Therefore Tavi continues to
+synchronize using its own authenticated `dm_conversations` / `dm_feed`
+endpoints. Do *not* wire `recoverResource('messages')` until Social exposes an
+appropriate authorized and projected durable resource. Native `ctx.emit`
+provides atomic wake-up/outbox semantics in this pass, not a replacement for
+Social's mailbox API.
+
+== Deployment and security verification
+
+. Build the new Windows/Web clients locally; install Android only after a
+  native distributor adapter is available. Old clients must be upgraded.
+. Upgrade LoopRD runtime to one advertising `push.unifiedpush` and
+  `events.transactional`, then provision a dedicated HTTPS ntfy origin and
+  `LOOPRD_PUSH_PUBLIC_URL` / optional internal delivery origin.
+. Back up the Social SQLite database before activating release 0.3.20.
+  Application schema remains version 5; LoopRD owns its internal push tables.
+. Push the updated generated `looprd.yaml` and handler through the existing
+  Git workflow and verify the component loads and `register`/`login` work.
+. With two new test accounts, verify recipient-only DM notifications and
+  non-replayable/unauthorized registration challenges; unregister on device
+  sign-out. No user data or endpoint must appear in push payloads.
+. Complete a real Android suspended/terminated-app end-to-end test **after**
+  native UnifiedPush receiver/distributor integration. FCM is not required.
+
+== Remaining engineering
+
+* Native Tauri Android UnifiedPush distributor intent/register/receiver bridge;
+  endpoint proof callbacks, renewal, rotation, and logout revocation.
+* Device list UI, dedicated per-device disable/unregister workflow and
+  Android OS notification channels/permission acceptance.
+* Runtime/ntfy deployment validation against the live configured origin.
+* Optional bounded resource snapshot/replay adapter only after Social exposes
+  its own private projected resource contract.
+
+
+== Admin event delivery (0.3.22)
+
+Approved other LoopRD components may call Tavi's `tavi-admin-notify/v1`
+service contract with a mounted machine credential. Tavi persists one interaction
+per promoted administrator in the same transaction as an opaque durable pulse
+and `ctx.notify` per recipient. This does not send event content in push payloads.
+Native Android distributor registration and closed-app acceptance remain open.

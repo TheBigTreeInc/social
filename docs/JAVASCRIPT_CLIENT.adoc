@@ -90,3 +90,25 @@ secret. A page refresh intentionally discards it.
 == Tavi promoted game catalog
 
 `discoverGames(origin)` uses public `POST /looprd/looprd-social/v1/social` with `{ "op": "game_catalog" }`; returns validated game descriptions (`tavi.game-catalog/v1`). No user token is transmitted. Treat returned launch URLs as untrusted until validated. Embedding support is explicit and does not grant the game Social account access.
+
+== Verified LoopRD HTTP and push transport (Tavi 0.3.20)
+
+Authenticated Social commands include both LoopRD's `Authorization: Bearer`
+header and the existing Social operation body token. Discovery, account
+creation and login use the public unprivileged guest marker. The canonical
+`LooprdSocial` SDK now includes `pushDevices`, `registerPushDevice`,
+`verifyPushDevice`, `removePushDevice`, and `pulseTicket`; the latter obtains
+a single-use 30-second WebSocket ticket. No Social token enters game
+endpoints, WebSocket query parameters, local preference storage or push
+notification payloads. See `docs/PUSH_TRANSPORT.adoc`.
+
+
+== Ecosystem administrator inbox (0.3.22)
+
+`me.permissions.ecosystemAdmin` is informational, not a local authorization
+grant. It comes from the Social server's current `SocialAccount` state and is
+not writable through the client. Cross-application administrator notifications
+reuse the existing Inbox, dynamic reply actions and external HTTPS links.
+No admin configuration panel, management API call or LoopRD operator credential
+is allowed in the browser, Android or Windows client. The same server may send
+content-free UnifiedPush wake hints to verified enrolled admin devices.

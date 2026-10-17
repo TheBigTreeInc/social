@@ -20,6 +20,16 @@ This pass changes `looprd.yaml`, the handler and schema version 3 to 4. A source
 
 The recipient may dismiss an open interaction via `interaction_dismiss`. The server checks session identity, ownership, and state; dismissal is idempotent for that recipient and prevents later reply. The client separates actionable and historical events without installing a permanent admin screen. The component database schema remains 4; status is stored in the existing status column.
 
-== LoopRD role-routing dependency (not yet implemented)
+== LoopRD role and service delivery (0.3.22)
 
-The existing LoopRD management key is not an interactive-user role. The generic LoopRD specification should add verified principals, per-component role grants, role-driven subscriptions, and action-scoped authorization with explicit revocation checks. Tavi must not infer admin permissions from an account name, an event payload, or an untrusted URL. Embedded external web panels and SSO are deferred until an origin-bound, short-lived ticket exchange is supported. External HTTPS links currently open without a Social token.
+LoopRD `management.data` now allows the operator to promote/demote existing Tavi
+accounts through the protected Data & actions workspace. Tavi `ecosystemAdmin`
+controls whether a user can receive or act on events issued by approved machine
+service principals. The `tavi-admin-notify` and `tavi-admin-role` service contracts
+provide explicitly authorized cross-component integration. Notification writes and
+content-free push hints are transactional; role revocation immediately hides
+service-origin events and denies responses. See `docs/ECOSYSTEM_ADMIN.adoc`.
+
+A LoopRD management key is NOT a client admin identity. No generic LoopRD-wide
+role directory, third-party SSO, arbitrary admin database operations, or embedded
+origin-bound privileged web panel is implemented. HTTPS links open externally.

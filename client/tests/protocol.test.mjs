@@ -13,7 +13,7 @@ test('HTTPS origin accepted, remote HTTP and injected paths/tokens rejected',()=
   for(const bad of ['../admin','http://bad.example','activity?x=1','//evil','%2e%2e']) assert.throws(()=>componentPath(server,'the-life-loop',bad));
   assert.throws(()=>componentPath(server,'../admin','activity'));
 });
-test('Social credential ONLY sent in Social body; correct profile and lobby operations',async()=>{
+test('Verified Social credential uses authenticated header and body but never URL or game endpoint',async()=>{
   const calls=[];
   const fake=async(url,init)=>{calls.push([url,init]);return {ok:true,json:async()=>({ok:true,profile:{profileId:'user_alex'},messages:[],revision:1})};};
   const client=new LooprdSocial(server,'a'.repeat(32),fake);
@@ -22,7 +22,7 @@ test('Social credential ONLY sent in Social body; correct profile and lobby oper
   assert(calls.every(([url])=>url===server+'/looprd/looprd-social/v1/social'));
   assert.equal(JSON.parse(calls[2][1].body).text,'hello');
   assert(!JSON.stringify(calls.map(x=>x[0])).includes('a'.repeat(32)));
-  assert(calls.every(([,init])=>init.headers.Authorization===undefined));
+  assert(calls.every(([,init])=>init.headers.Authorization===`Bearer ${'a'.repeat(32)}`));
 });
 test('Social action error and malformed payload are not silently accepted',async()=>{
   const fake=async()=>({ok:true,status:200,json:async()=>({ok:false,error:'Invalid credential'})});

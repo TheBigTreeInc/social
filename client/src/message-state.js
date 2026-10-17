@@ -71,3 +71,29 @@ export function saveNotificationPrefs(storage,key,prefs){
  const v={schema:NOTIFY_TAG,messages:prefs.messages===true,preview:prefs.preview===true,requests:prefs.requests===true};
  try{storage.setItem(key,JSON.stringify(v));return true;}catch{return false;}
 }
+
+/** Server-owned mailbox metadata. A notification marker stays local to this
+ * installation; the read cursor itself comes from LoopRD and is shared across
+ * devices. A fresh device seeds notification state without erasing unread mail.
+ */
+export function reconcileConversationSummary(summary,myId,previous,{visible=false}={}){
+  if(!summary||!/^acct_[0-9]{1,19}$/.test(summary.peer)||!Number.isSafeInteger(summary.readId)||summary.readId<0||
+     !Number.isSafeInteger(summary.unread)||summary.unread<0||summary.unread>99)
+    throw Error('Invalid Tavi conversation summary');
+  const latest=summary.latest;
+  if(latest && (!Number.isSafeInteger(latest.id)||latest.id<1||
+      !/^acct_[0-9]{1,19}$/.test(latest.authorId)||typeof latest.text!=='string'||
+      !Number.isSafeInteger(latest.at)))throw Error('Invalid Tavi latest-message summary');
+  const localRead=safeMessageId(previous?.read);
+  const read=Math.max(summary.readId,localRead);
+  const notified=safeMessageId(previous?.notified);
+  const latestId=latest?.id||0;
+  const unseen=latest&&latest.authorId!==myId&&latestId>read;
+  const notification=!visible&&previous&&unseen&&latestId>notified?
+    {id:latestId,text:latest.text.slice(0,100)}:null;
+  const cursor={read,notified:Math.max(notified,latestId)};
+  // The server's unread count is authoritative once it has acknowledged a
+  // device's local cursor; do not invent a count from the last message alone.
+  const unread=visible?0:read>summary.readId?0:summary.unread;
+  return {cursor,unread,notification};
+}

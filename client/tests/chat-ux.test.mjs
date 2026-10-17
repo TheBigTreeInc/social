@@ -5,7 +5,10 @@ const file=f=>readFileSync(new URL(f,import.meta.url),'utf8');
 const main=file('../src/main.js'),chat=file('../src/chat.js'),notifications=file('../src/notifications.js'),css=file('../src/style.css');
 test('roster shows unread badges and native chat windows acknowledge viewed messages',()=>{
  for(const token of ['unreadTotal','unread-badge','scanDirectMessages','reconcileDirectFeed','saveChatReadState','social-chat-viewed'])assert.ok(main.includes(token),token);
- assert.match(main,/chatPollPeers\(state\.contacts,state\.chatOffset,12\)/);
+ assert.match(main,/await api.conversations\(\)/);
+ assert.match(main,/await api.directFeed\(state.peer\)/);
+ assert.match(main,/pushRead\(state.api,peer,next.read\)/);
+ assert.match(main,/chatPollPeers\(state\.contacts,state\.chatOffset,12\)/); // fallback for old servers
  assert.match(chat,/emitTo\('main','social-chat-viewed'/);
  assert.match(chat,/document\.hasFocus\(\)/);
  assert.match(chat,/setInterval\(update,3500\)/);

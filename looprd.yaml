@@ -1,11 +1,71 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.16
+release: 0.3.22
 api:
   version: v1
+cors:
+  allowedOrigins:
+  - https://thebigtreeinc.github.io
+  - http://tauri.localhost
+requires:
+- auth.verified
+- events.transactional
+- events.replay
+- push.unifiedpush
+- management.data
+- service.contracts
 auth:
-  mode: public
+  mode: verified
+  realm: tavi-social
+  scopes:
+  - social:api
+  - events:read
+  - push:manage
+  - social:service
+  - social:operator
+  verifier:
+    kind: python
+    source: "\"\"\"LoopRD verified identity adapter for Tavi Social sessions.\n\nThe public guest credential is\
+      \ an *unprivileged protocol marker*, not a secret.\nIt only permits sign-up/sign-in/discovery through the\
+      \ Social handler. Normal\nsessions are checked against the database on every HTTP request, and LoopRD\nbinds\
+      \ devices to the stable realm/subject principal.\n\"\"\"\nimport hashlib\nimport hmac\nimport time\nimport\
+      \ json\nimport os\nimport re\nimport sqlalchemy as sa\n\nGUEST_CREDENTIAL = \"tavi_guest_v1\"  # public, unprivileged,\
+      \ NOT an authentication secret\nSOCIAL_SCOPES = ['social:api']\nUSER_SCOPES = ['social:api', 'events:read',\
+      \ 'push:manage']\nSERVICE_SCOPES = ['social:service']\n\n\ndef lookup_session(session_factory, credential):\n\
+      \    if not isinstance(credential, str) or not 32 <= len(credential) <= 256:\n        return None\n    digest\
+      \ = hashlib.sha256(credential.encode('utf8')).hexdigest()\n    now = time.time()\n    with session_factory()\
+      \ as db:\n        row = db.execute(sa.text('''SELECT id, subjectId, expires FROM \"SocialSession\"\n     \
+      \       WHERE tokenHash = :digest AND revoked = 0 AND expires > :now\n            LIMIT 1'''), {'digest':\
+      \ digest, 'now': now}).mappings().first()\n    if not row or not isinstance(row['subjectId'], str) or not\
+      \ row['subjectId'].startswith('acct_'):\n        return None\n    return {'subject': row['subjectId'], 'label':\
+      \ 'Tavi user', 'kind': 'user',\n            'sessionId': str(row['id']), 'expiresAt': float(row['expires']),\n\
+      \            'scopes': USER_SCOPES}\n\n\ndef configured_service_refs():\n    \"\"\"Private operator mapping:\
+      \ component IDs -> names of mounted secret references.\"\"\"\n    try:\n        mapping=json.loads(os.environ.get('LOOPRD_SOCIAL_SERVICE_SECRETS_JSON','{}'))\n\
+      \    except (ValueError,TypeError):\n        return {}\n    if not isinstance(mapping,dict) or len(mapping)>32:\n\
+      \        return {}\n    return {name:ref for name,ref in mapping.items()\n        if isinstance(name,str)\
+      \ and re.fullmatch(r'[a-z][a-z0-9-]{1,47}',name)\n        and isinstance(ref,str) and re.fullmatch(r'[a-zA-Z0-9_./-]{1,200}',ref)\n\
+      \        and '..' not in ref.split('/') and not ref.startswith('/')}\n\n\ndef service_identity(credential,\
+      \ secret_reader):\n    if not isinstance(credential,str) or not 32 <= len(credential) <= 256:\n        return\
+      \ None\n    received=hashlib.sha256(credential.encode('utf8')).digest()\n    for name,reference in configured_service_refs().items():\n\
+      \        try:\n            secret=secret_reader(reference)\n            if not isinstance(secret,str) or len(secret)<32:\n\
+      \                continue\n            expected=hashlib.sha256(secret.strip().encode('utf8')).digest()\n \
+      \           if hmac.compare_digest(received,expected):\n                return {'subject':name,'label':'Tavi\
+      \ trusted service', 'kind':'service',\n                        'scopes':SERVICE_SCOPES}\n        except (ValueError,OSError,KeyError):\n\
+      \            continue\n    return None\n\n\nasync def verify(ctx):\n    if hmac.compare_digest(ctx.credential,\
+      \ GUEST_CREDENTIAL):\n        return {'subject': 'guest', 'label': 'Tavi guest', 'kind': 'service', 'scopes':\
+      \ SOCIAL_SCOPES}\n    service=service_identity(ctx.credential,ctx.secret)\n    if service is not None:\n \
+      \       return service\n    if ctx.session_factory is None:\n        return None\n    return await ctx.run(lookup_session,\
+      \ ctx.session_factory, ctx.credential)\n"
+realtime:
+  delivery: durable
+  retentionSeconds: 86400
+push:
+  transport: unifiedpush
+  scopes:
+  - push:manage
+  deviceLifetimeSeconds: 86400
+  maxDevicesPerPrincipal: 8
 limits:
   requestsPerMinute: 180
   authAttemptsPerMinute: 90
@@ -13,7 +73,7 @@ limits:
   maxInFlight: 30
 database:
   backend: sqlite
-  schemaVersion: 4
+  schemaVersion: 6
   migrations:
   - version: 2
     statements:
@@ -38,6 +98,14 @@ database:
       VARCHAR(72) NOT NULL, "topic" VARCHAR(96) NOT NULL, "title" VARCHAR(120) NOT NULL, "data" JSON NOT NULL, "status"
       VARCHAR(16) NOT NULL, "response" JSON, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL)
     - CREATE INDEX "SocialInteraction_recipient" ON "SocialInteraction" ("recipient", "id")
+  - version: 5
+    statements:
+    - CREATE TABLE "SocialConversationRead" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "peerId"
+      VARCHAR(72) NOT NULL, "readId" INTEGER NOT NULL, "updated" INTEGER NOT NULL)
+    - CREATE UNIQUE INDEX "SocialConversationRead_subject_peer" ON "SocialConversationRead" ("subjectId", "peerId")
+  - version: 6
+    statements:
+    - ALTER TABLE "SocialAccount" ADD COLUMN "ecosystemAdmin" BOOLEAN NOT NULL DEFAULT 0
 models:
   SocialProfile:
     fields:
@@ -114,6 +182,9 @@ models:
         type: integer
         required: true
       developerEnabled:
+        type: boolean
+        required: true
+      ecosystemAdmin:
         type: boolean
         required: true
   SocialSession:
@@ -216,6 +287,32 @@ models:
       fields:
       - recipient
       - id
+  SocialConversationRead:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      subjectId:
+        type: string
+        maxLength: 72
+        required: true
+      peerId:
+        type: string
+        maxLength: 72
+        required: true
+      readId:
+        type: integer
+        required: true
+      updated:
+        type: integer
+        required: true
+    indexes:
+    - name: SocialConversationRead_subject_peer
+      fields:
+      - subjectId
+      - peerId
+      unique: true
   SocialDirectMessage:
     fields:
       id:
@@ -253,35 +350,93 @@ resources:
     path: /pulses
     operations:
     - get
+    permissions:
+      get:
+      - events:read
+  accounts:
+    model: SocialAccount
+    path: /operator-accounts
+    operations:
+    - list
+    - get
+    permissions:
+      list:
+      - social:operator
+      get:
+      - social:operator
+    projection:
+    - id
+    - handle
+    - created
+    - developerEnabled
+    - ecosystemAdmin
+management:
+  resources:
+    accounts:
+      label: Tavi accounts
+      titleField: handle
+      fields:
+        handle:
+          label: Username
+        created:
+          label: Registered at
+        developerEnabled:
+          label: Developer access
+          editable: true
+        ecosystemAdmin:
+          label: Ecosystem administrator
+  actions:
+    promote-admin:
+      label: Promote to ecosystem admin
+      resource: accounts
+      description: Grant administrator event delivery to this Tavi account.
+      writes:
+        accounts:
+        - ecosystemAdmin
+      source: "def handle(ctx):\n    ctx.update('accounts', ctx.recordId, {'ecosystemAdmin': True})\n"
+    revoke-admin:
+      label: Revoke ecosystem admin
+      resource: accounts
+      description: Stop administrator event access for this Tavi account.
+      writes:
+        accounts:
+        - ecosystemAdmin
+      source: "def handle(ctx):\n    ctx.update('accounts', ctx.recordId, {'ecosystemAdmin': False})\n"
 websocket:
   path: /events
   resources:
   - pulses
+  permissions:
+    pulses:
+    - events:read
 handlers:
 - path: /social
   method: POST
   kind: python
-  source: "\"\"\"Looprd Social v0.3.2 native Looprd handler.\n\nSelf-contained in looprd.yaml by tools/generate-looprd.py.\n\
-    The verified Looprd v1 handler contract provides ctx.body, ctx.session_factory\nand ctx.publish. No unverified\
-    \ request-header assumptions are used.\n\"\"\"\nimport hashlib\nimport hmac\nimport json\nimport os\nimport\
-    \ re\nimport time\nimport sqlalchemy as sa\nfrom starlette.concurrency import run_in_threadpool\n\nSCHEMA =\
-    \ 'looprd.social.profile/v1'\nAPPEARANCE_SCHEMA = 'modular-portraits.identity/v1'\nPORTRAIT_NUMBER = re.compile(r'^[1-9][0-9]{0,511}$')\n\
-    SOCIAL = 'looprd-social'\nPROFILE = sa.table('SocialProfile',\n    sa.column('id', sa.Integer), sa.column('subjectId',\
-    \ sa.String),\n    sa.column('data', sa.JSON), sa.column('revision', sa.Integer),\n    sa.column('updated',\
-    \ sa.Integer))\nMESSAGE = sa.table('SocialMessage',\n    sa.column('id', sa.Integer), sa.column('subjectId',\
-    \ sa.String),\n    sa.column('displayName', sa.String), sa.column('content', sa.String),\n    sa.column('created',\
-    \ sa.Integer))\nPULSE = sa.table('SocialPulse', sa.column('id', sa.Integer),sa.column('signal', sa.Integer))\n\
-    SUBJECT = re.compile(r'^[a-zA-Z0-9_-]{8,72}$')\nSLOT = re.compile(r'^[a-z0-9-]{1,64}$')\nCOLOR = re.compile(r'^#[a-fA-F0-9]{6}$')\n\
-    \n\n# Tavi interactive events: persistent, server-authorized, bounded payloads.\nINTERACTION = sa.table('SocialInteraction',\
-    \ sa.column('id', sa.Integer),\n    sa.column('recipient', sa.String), sa.column('publisher', sa.String),\n\
-    \    sa.column('topic', sa.String), sa.column('title', sa.String),\n    sa.column('data', sa.JSON), sa.column('status',\
-    \ sa.String),\n    sa.column('response', sa.JSON), sa.column('created', sa.Integer),\n    sa.column('expires',\
-    \ sa.Integer))\nACTION_ID = re.compile(r'^[a-z][a-z0-9_-]{0,47}$')\n\ndef validate_interaction(raw):\n    if\
-    \ not isinstance(raw,dict):raise ValueError('Interaction must be an object')\n    title=raw.get('title'); topic=raw.get('topic');\
-    \ actions=raw.get('actions')\n    if not isinstance(title,str) or not 1<=len(title)<=120 or re.search(r'[\\\
-    x00-\\x1f]',title):raise ValueError('Invalid event title')\n    if not isinstance(topic,str) or not re.fullmatch(r'[a-z][a-z0-9_.-]{1,80}',topic):raise\
-    \ ValueError('Invalid event topic')\n    if not isinstance(actions,list) or not 1<=len(actions)<=6:raise ValueError('Provide\
-    \ 1–6 actions')\n    cleaned=[]; used=set()\n    for item in actions:\n        if not isinstance(item,dict):raise\
+  scopes:
+  - social:api
+  source: "\"\"\"Tavi Social native LoopRD handler with verified identities and durable wake hints.\n\nEmbedded\
+    \ in looprd.yaml by tools/generate-looprd.py. Account authentication\nand push-device ownership are independently\
+    \ enforced by LoopRD's verifier.\n\"\"\"\nimport hashlib\nimport hmac\nimport json\nimport os\nimport re\nimport\
+    \ time\nimport sqlalchemy as sa\nfrom contextlib import nullcontext\nfrom starlette.concurrency import run_in_threadpool\n\
+    \nSCHEMA = 'looprd.social.profile/v1'\nAPPEARANCE_SCHEMA = 'modular-portraits.identity/v1'\nPORTRAIT_NUMBER\
+    \ = re.compile(r'^[1-9][0-9]{0,511}$')\nSOCIAL = 'looprd-social'\nPROFILE = sa.table('SocialProfile',\n    sa.column('id',\
+    \ sa.Integer), sa.column('subjectId', sa.String),\n    sa.column('data', sa.JSON), sa.column('revision', sa.Integer),\n\
+    \    sa.column('updated', sa.Integer))\nMESSAGE = sa.table('SocialMessage',\n    sa.column('id', sa.Integer),\
+    \ sa.column('subjectId', sa.String),\n    sa.column('displayName', sa.String), sa.column('content', sa.String),\n\
+    \    sa.column('created', sa.Integer))\nPULSE = sa.table('SocialPulse', sa.column('id', sa.Integer),sa.column('signal',\
+    \ sa.Integer))\nSUBJECT = re.compile(r'^[a-zA-Z0-9_-]{8,72}$')\nSLOT = re.compile(r'^[a-z0-9-]{1,64}$')\nCOLOR\
+    \ = re.compile(r'^#[a-fA-F0-9]{6}$')\n\n\n# Tavi interactive events: persistent, server-authorized, bounded\
+    \ payloads.\nINTERACTION = sa.table('SocialInteraction', sa.column('id', sa.Integer),\n    sa.column('recipient',\
+    \ sa.String), sa.column('publisher', sa.String),\n    sa.column('topic', sa.String), sa.column('title', sa.String),\n\
+    \    sa.column('data', sa.JSON), sa.column('status', sa.String),\n    sa.column('response', sa.JSON), sa.column('created',\
+    \ sa.Integer),\n    sa.column('expires', sa.Integer))\nACTION_ID = re.compile(r'^[a-z][a-z0-9_-]{0,47}$')\n\n\
+    def validate_interaction(raw):\n    if not isinstance(raw,dict):raise ValueError('Interaction must be an object')\n\
+    \    title=raw.get('title'); topic=raw.get('topic'); actions=raw.get('actions')\n    if not isinstance(title,str)\
+    \ or not 1<=len(title)<=120 or re.search(r'[\\x00-\\x1f]',title):raise ValueError('Invalid event title')\n \
+    \   if not isinstance(topic,str) or not re.fullmatch(r'[a-z][a-z0-9_.-]{1,80}',topic):raise ValueError('Invalid\
+    \ event topic')\n    if not isinstance(actions,list) or not 1<=len(actions)<=6:raise ValueError('Provide 1–6\
+    \ actions')\n    cleaned=[]; used=set()\n    for item in actions:\n        if not isinstance(item,dict):raise\
     \ ValueError('Invalid action')\n        aid=item.get('id'); kind=item.get('type'); label=item.get('label')\n\
     \        if not isinstance(aid,str) or not ACTION_ID.fullmatch(aid) or aid in used:raise ValueError('Invalid\
     \ action ID')\n        if kind not in ('reply','open-url'):raise ValueError('Unsupported action type')\n   \
@@ -306,21 +461,24 @@ handlers:
     \                parsed.append(entryfield)\n            entry['fields']=parsed\n        cleaned.append(entry);used.add(aid)\n\
     \    message=raw.get('body','')\n    if not isinstance(message,str) or len(message)>2000:raise ValueError('Invalid\
     \ event body')\n    return {'title':title,'body':message,'topic':topic,'actions':cleaned}\n\ndef interaction_feed(db,subject,now):\n\
-    \    rows=db.execute(sa.select(INTERACTION).where(INTERACTION.c.recipient==subject).order_by(INTERACTION.c.id.desc()).limit(80)).mappings().all()\n\
+    \    query=sa.select(INTERACTION).where(INTERACTION.c.recipient==subject)\n    if not account_ecosystem_admin(db,subject):\n\
+    \        query=query.where(sa.not_(INTERACTION.c.publisher.like('service:%')))\n    rows=db.execute(query.order_by(INTERACTION.c.id.desc()).limit(80)).mappings().all()\n\
     \    return {'ok':True,'schema':'tavi.interactions/v1','events':[\n      {'id':r['id'],'publisher':r['publisher'],'topic':r['topic'],**r['data'],\n\
     \       'status':('expired' if r['expires']<=now and r['status']=='open' else r['status']),\n       'created':r['created'],'expires':r['expires'],'response':r['response']}\n\
     \      for r in rows]}\n\ndef interaction_reply(db,subject,body,now):\n    event_id=body.get('id');action=body.get('action');values=body.get('values',{})\n\
     \    if type(event_id) is not int or not isinstance(action,str) or not isinstance(values,dict):return error('Invalid\
     \ event response')\n    row=db.execute(sa.select(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject)).mappings().first()\n\
-    \    if not row:return error('Event not found')\n    if row['status']!='open' or row['expires']<=now:return\
-    \ error('Event already handled or expired')\n    allowed=next((x for x in row['data']['actions'] if x['id']==action\
-    \ and x['type']=='reply'),None)\n    if not allowed:return error('Action not available')\n    fields={f['id']:f\
-    \ for f in allowed['fields']}\n    if len(values)>len(fields) or any(k not in fields or not isinstance(v,str)\
-    \ or len(v)>2000 or (fields[k]['type']=='select' and v not in fields[k]['options']) for k,v in values.items()):return\
-    \ error('Invalid field values')\n    response={'action':action,'values':values,'at':now,'by':subject}\n    db.execute(sa.update(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject,INTERACTION.c.status=='open').values(status='responded',response=response))\n\
+    \    if not row:return error('Event not found')\n    if row['publisher'].startswith('service:') and not account_ecosystem_admin(db,subject):return\
+    \ error('Administrator entitlement revoked')\n    if row['status']!='open' or row['expires']<=now:return error('Event\
+    \ already handled or expired')\n    allowed=next((x for x in row['data']['actions'] if x['id']==action and x['type']=='reply'),None)\n\
+    \    if not allowed:return error('Action not available')\n    fields={f['id']:f for f in allowed['fields']}\n\
+    \    if len(values)>len(fields) or any(k not in fields or not isinstance(v,str) or len(v)>2000 or (fields[k]['type']=='select'\
+    \ and v not in fields[k]['options']) for k,v in values.items()):return error('Invalid field values')\n    response={'action':action,'values':values,'at':now,'by':subject}\n\
+    \    db.execute(sa.update(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject,INTERACTION.c.status=='open').values(status='responded',response=response))\n\
     \    return {'ok':True,'response':response}\n\ndef interaction_dismiss(db,subject,body,now):\n    event_id=body.get('id')\n\
     \    if type(event_id) is not int or event_id<1:return error('Invalid event ID')\n    row=db.execute(sa.select(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject)).mappings().first()\n\
-    \    if not row:return error('Event not found')\n    if row['status']=='dismissed':return {'ok':True,'status':'dismissed'}\n\
+    \    if not row:return error('Event not found')\n    if row['publisher'].startswith('service:') and not account_ecosystem_admin(db,subject):return\
+    \ error('Administrator entitlement revoked')\n    if row['status']=='dismissed':return {'ok':True,'status':'dismissed'}\n\
     \    if row['status']!='open' or row['expires']<=now:return error('Event already handled or expired')\n    response={'action':'dismiss','at':now,'by':subject}\n\
     \    db.execute(sa.update(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject,INTERACTION.c.status=='open').values(status='dismissed',response=response))\n\
     \    return {'ok':True,'status':'dismissed'}\n\ndef error(message):\n    return {'ok':False,'error':message}\n\
@@ -373,11 +531,12 @@ handlers:
     \            'data':{'id':1,'signal':count}}\n\n\n\nimport base64\nimport hashlib\nimport hmac\nimport os\n\
     import re\nimport secrets\nimport time\nimport sqlalchemy as sa\n\nACCOUNT = sa.table('SocialAccount', sa.column('id',sa.Integer),sa.column('handle',sa.String),\n\
     \    sa.column('passwordHash',sa.String),sa.column('created',sa.Integer),\n    sa.column('failedAttempts',sa.Integer),sa.column('lockedUntil',sa.Integer),\n\
-    \    sa.column('developerEnabled',sa.Boolean))\nSESSION = sa.table('SocialSession',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n\
+    \    sa.column('developerEnabled',sa.Boolean),sa.column('ecosystemAdmin',sa.Boolean))\nSESSION = sa.table('SocialSession',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n\
     \    sa.column('tokenHash',sa.String),sa.column('created',sa.Integer),\n    sa.column('expires',sa.Integer),sa.column('lastSeen',sa.Integer),sa.column('revoked',sa.Boolean))\n\
     CONTACT = sa.table('SocialContact',sa.column('id',sa.Integer),sa.column('leftId',sa.String),\n    sa.column('rightId',sa.String),sa.column('requestedBy',sa.String),\n\
     \    sa.column('status',sa.String),sa.column('created',sa.Integer))\nDM = sa.table('SocialDirectMessage',sa.column('id',sa.Integer),sa.column('leftId',sa.String),\n\
     \    sa.column('rightId',sa.String),sa.column('senderId',sa.String),\n    sa.column('content',sa.String),sa.column('created',sa.Integer))\n\
+    READ = sa.table('SocialConversationRead',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n    sa.column('peerId',sa.String),sa.column('readId',sa.Integer),sa.column('updated',sa.Integer))\n\
     HANDLE = re.compile(r'^[a-z][a-z0-9_]{2,23}$')\nSESSION_AGE = 30*86400\nDUMMY_SALT = b'looprd-social-dummy-salt'\n\
     \ndef username(value):\n    if not isinstance(value,str) or not HANDLE.fullmatch(value.strip().lower()):\n \
     \       raise ValueError('Username must be 3–24 letters, digits or underscores and start with a letter')\n \
@@ -400,7 +559,7 @@ handlers:
     \ not in ('true','1','yes'):\n        return {'ok':False,'error':'Registration is disabled on this Social server','code':'REGISTRATION_DISABLED'}\n\
     \    handle=username(body.get('username'))\n    password=body.get('password')\n    if db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==handle)).first():\n\
     \        return {'ok':False,'error':'This username is already registered','code':'USERNAME_TAKEN'}\n    digest=password_digest(password)\n\
-    \    id_=db.execute(sa.insert(ACCOUNT).values(handle=handle,passwordHash=digest,created=now,\n        failedAttempts=0,lockedUntil=0,developerEnabled=False).returning(ACCOUNT.c.id)).scalar_one()\n\
+    \    id_=db.execute(sa.insert(ACCOUNT).values(handle=handle,passwordHash=digest,created=now,\n        failedAttempts=0,lockedUntil=0,developerEnabled=False,ecosystemAdmin=False).returning(ACCOUNT.c.id)).scalar_one()\n\
     \    subject='acct_'+str(id_)\n    db.execute(sa.insert(PROFILE).values(subjectId=subject,\n        data={'schema':SCHEMA,'profileId':subject,'displayName':handle,'appearance':None,'portraitCode':None},\n\
     \        revision=1,updated=now))\n    return {'ok':True,**new_session(db,subject,now),'profileId':subject}\n\
     \ndef login(db,body,now):\n    # Never reveal whether a username exists. Persistent per-account backoff and\n\
@@ -418,22 +577,25 @@ handlers:
     \    return {'ok':True}\n\n# Social-specific development privilege: operator-set DB entitlement, never a\n#\
     \ LoopRD management role. Checked on EVERY privileged request and profile refresh.\n# Development tokens cannot\
     \ get this privilege, even when their subject resembles\n# a registered user; no public API path changes the\
-    \ flag.\nSOCIAL_RELEASE = '0.3.2'\nSOCIAL_SCHEMA_VERSION = 3\n\ndef account_developer_permission(db, subject):\n\
+    \ flag.\nSOCIAL_RELEASE = '0.3.22'\nSOCIAL_SCHEMA_VERSION = 6\n\ndef account_developer_permission(db, subject):\n\
     \    if not isinstance(subject, str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):\n        return\
     \ False\n    account = db.execute(sa.select(ACCOUNT.c.developerEnabled).where(\n        ACCOUNT.c.id == int(subject[5:]))).first()\n\
-    \    return account is not None and account[0] is True\n\ndef developer_diagnostics(db, subject, now):\n   \
-    \ \"\"\"Deliberately aggregate-only: never include credentials, messages, or raw SQL.\"\"\"\n    if not account_developer_permission(db,\
-    \ subject):\n        return {'ok': False, 'error': 'Developer tools are not enabled for this account',\n   \
-    \             'code': 'DEVELOPER_ACCESS_DENIED'}\n    models = (('accounts', ACCOUNT), ('profiles', PROFILE),\
-    \ ('contacts', CONTACT),\n              ('directMessages', DM), ('lobbyMessages', MESSAGE))\n    counts = {label:\
-    \ db.execute(sa.select(sa.func.count()).select_from(table)).scalar_one()\n              for label, table in\
-    \ models}\n    counts['activeSessions'] = db.execute(sa.select(sa.func.count()).select_from(SESSION)\n     \
-    \   .where(SESSION.c.revoked.is_(False), SESSION.c.expires > now)).scalar_one()\n    return {'ok': True, 'schema':\
-    \ 'looprd.social.developer-diagnostics/v1',\n        'component': SOCIAL, 'release': SOCIAL_RELEASE,\n     \
-    \   'apiVersion': 'looprd/v1', 'databaseSchemaVersion': SOCIAL_SCHEMA_VERSION,\n        'serverTime': now, 'counts':\
-    \ counts,\n        'features': ['accounts', 'contacts', 'direct-messages', 'lobby', 'portraits',\n         \
-    \            'server-gated-developer-tools']}\n\ndef pair(a,b): return tuple(sorted((a,b)))\n\ndef contact_row(db,subject,other):\n\
-    \    left,right=pair(subject,other)\n    return db.execute(sa.select(CONTACT).where(CONTACT.c.leftId==left,CONTACT.c.rightId==right)).mappings().first()\n\
+    \    return account is not None and account[0] is True\n\ndef account_ecosystem_admin(db, subject):\n    \"\"\
+    \"Lookup current entitlement from authoritative server rows on every access.\"\"\"\n    if not isinstance(subject,str)\
+    \ or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):\n        return False\n    record=db.execute(sa.select(ACCOUNT.c.ecosystemAdmin).where(\n\
+    \        ACCOUNT.c.id==int(subject[5:]))).first()\n    return record is not None and record[0] is True\n\ndef\
+    \ developer_diagnostics(db, subject, now):\n    \"\"\"Deliberately aggregate-only: never include credentials,\
+    \ messages, or raw SQL.\"\"\"\n    if not account_developer_permission(db, subject):\n        return {'ok':\
+    \ False, 'error': 'Developer tools are not enabled for this account',\n                'code': 'DEVELOPER_ACCESS_DENIED'}\n\
+    \    models = (('accounts', ACCOUNT), ('profiles', PROFILE), ('contacts', CONTACT),\n              ('directMessages',\
+    \ DM), ('lobbyMessages', MESSAGE))\n    counts = {label: db.execute(sa.select(sa.func.count()).select_from(table)).scalar_one()\n\
+    \              for label, table in models}\n    counts['activeSessions'] = db.execute(sa.select(sa.func.count()).select_from(SESSION)\n\
+    \        .where(SESSION.c.revoked.is_(False), SESSION.c.expires > now)).scalar_one()\n    return {'ok': True,\
+    \ 'schema': 'looprd.social.developer-diagnostics/v1',\n        'component': SOCIAL, 'release': SOCIAL_RELEASE,\n\
+    \        'apiVersion': 'looprd/v1', 'databaseSchemaVersion': SOCIAL_SCHEMA_VERSION,\n        'serverTime': now,\
+    \ 'counts': counts,\n        'features': ['accounts', 'contacts', 'direct-messages', 'lobby', 'portraits',\n\
+    \                     'server-gated-developer-tools']}\n\ndef pair(a,b): return tuple(sorted((a,b)))\n\ndef\
+    \ contact_row(db,subject,other):\n    left,right=pair(subject,other)\n    return db.execute(sa.select(CONTACT).where(CONTACT.c.leftId==left,CONTACT.c.rightId==right)).mappings().first()\n\
     \ndef account_subject(db,handle):\n    row=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==handle)).first()\n\
     \    return 'acct_'+str(row[0]) if row else None\n\ndef contact_list(db,subject,now):\n    contacts=db.execute(sa.select(CONTACT).where(sa.or_(CONTACT.c.leftId==subject,CONTACT.c.rightId==subject))).mappings().all()\n\
     \    result=[]\n    for link in contacts:\n        peer=link['rightId'] if link['leftId']==subject else link['leftId']\n\
@@ -457,7 +619,36 @@ handlers:
     \    if not row or row['status']!='accepted':return {'ok':False,'error':'Contact is not accepted'}\n    left,right=pair(subject,peer)\n\
     \    rows=db.execute(sa.select(DM).where(DM.c.leftId==left,DM.c.rightId==right,DM.c.created>=now-30*86400)\n\
     \        .order_by(DM.c.id.desc()).limit(100)).mappings().all()\n    return {'ok':True,'messages':[{'id':m['id'],'authorId':m['senderId'],\
-    \ 'text':m['content'], 'at':m['created']}\n        for m in reversed(rows)]}\n\ndef direct_send(db,subject,peer,content,now):\n\
+    \ 'text':m['content'], 'at':m['created']}\n        for m in reversed(rows)]}\n\ndef conversation_summaries(db,\
+    \ subject, now):\n    \"\"\"One mailbox request instead of polling every friend for their DM feed.\n\n    Only\
+    \ accepted contacts participate; read cursors are owned by the authenticated\n    subject, not supplied by clients.\
+    \ The latest-message query is bounded to the\n    same 30-day horizon as dm_feed, and returns no unaccepted\
+    \ contact content.\n    \"\"\"\n    pairs=db.execute(sa.select(CONTACT.c.leftId,CONTACT.c.rightId).where(\n\
+    \        CONTACT.c.status=='accepted',sa.or_(CONTACT.c.leftId==subject,CONTACT.c.rightId==subject))).all()\n\
+    \    peers={right if left==subject else left for left,right in pairs}\n    if not peers:\n        return {'ok':True,'schema':'tavi.dm-summaries/v1','conversations':[]}\n\
+    \    reads={r['peerId']:r['readId'] for r in db.execute(sa.select(READ).where(\n        READ.c.subjectId==subject,READ.c.peerId.in_(peers))).mappings().all()}\n\
+    \    other=sa.case((DM.c.leftId==subject,DM.c.rightId),else_=DM.c.leftId)\n    base=sa.and_(sa.or_(DM.c.leftId==subject,DM.c.rightId==subject),\n\
+    \                 DM.c.created>=now-30*86400,other.in_(peers))\n    latest=db.execute(sa.select(other.label('peer'),sa.func.max(DM.c.id).label('id'))\n\
+    \        .where(base).group_by(other)).all()\n    latest_rows={r['id']:r for r in db.execute(sa.select(DM).where(\n\
+    \        DM.c.id.in_([item.id for item in latest]))).mappings().all()} if latest else {}\n    unread_rows=db.execute(sa.select(other.label('peer'),sa.func.count(DM.c.id).label('unread'))\n\
+    \        .select_from(DM.outerjoin(READ,sa.and_(READ.c.subjectId==subject,READ.c.peerId==other)))\n        .where(base,DM.c.senderId!=subject,DM.c.id>sa.func.coalesce(READ.c.readId,0))\n\
+    \        .group_by(other)).all()\n    unread={r.peer:r.unread for r in unread_rows}\n    last_by_peer={r.peer:latest_rows.get(r.id)\
+    \ for r in latest}\n    conversations=[]\n    for peer in peers:\n        record=last_by_peer.get(peer)\n  \
+    \      recent=({'id':record['id'],'authorId':record['senderId'],'text':record['content'],\n                \
+    \ 'at':record['created']} if record else None)\n        conversations.append({'peer':peer,'readId':reads.get(peer,0),\n\
+    \            'unread':min(99,unread.get(peer,0)), 'latest':recent})\n    conversations.sort(key=lambda x:(-(x['latest']['id']\
+    \ if x['latest'] else 0),x['peer']))\n    return {'ok':True,'schema':'tavi.dm-summaries/v1','conversations':conversations}\n\
+    \n\ndef mark_direct_read(db,subject,peer,up_to,now):\n    if not isinstance(peer,str) or not re.fullmatch(r'acct_[0-9]{1,19}',peer):\n\
+    \        return error('Invalid contact')\n    if type(up_to) is not int or up_to<0 or up_to>2**53-1:\n     \
+    \   return error('Invalid read cursor')\n    link=contact_row(db,subject,peer)\n    if not link or link['status']!='accepted':return\
+    \ error('Contact is not accepted')\n    existing=db.execute(sa.select(READ).where(READ.c.subjectId==subject,READ.c.peerId==peer)).mappings().first()\n\
+    \    previous=existing['readId'] if existing else 0\n    advanced=up_to>previous\n    if advanced:\n       \
+    \ left,right=pair(subject,peer)\n        found=db.execute(sa.select(DM.c.id).where(\n            DM.c.id==up_to,DM.c.leftId==left,DM.c.rightId==right)).first()\n\
+    \        if not found:return error('Read cursor is not a message in this conversation')\n        if existing:\n\
+    \            db.execute(sa.update(READ).where(READ.c.id==existing['id'],READ.c.readId<up_to).values(readId=up_to,updated=now))\n\
+    \        else:\n            db.execute(sa.insert(READ).values(subjectId=subject,peerId=peer,readId=up_to,updated=now))\n\
+    \        previous=db.execute(sa.select(READ.c.readId).where(READ.c.subjectId==subject,READ.c.peerId==peer)).scalar_one()\n\
+    \    return {'ok':True,'readId':previous,'advanced':advanced}\n\n\ndef direct_send(db,subject,peer,content,now):\n\
     \    if not isinstance(content,str) or not 1<=len(content.strip())<=1000 or re.search(r'[\\x00-\\x08\\x0e-\\\
     x1f\\x7f]',content):\n        return {'ok':False,'error':'Message must be 1–1000 safe characters'}\n    row=contact_row(db,subject,peer)\n\
     \    if not row or row['status']!='accepted':return {'ok':False,'error':'Contact is not accepted'}\n    left,right=pair(subject,peer)\n\
@@ -477,27 +668,36 @@ handlers:
     \ or host.endswith(('.local','.internal','.localhost')):continue\n            import ipaddress\n           \
     \ try:\n                if not ipaddress.ip_address(host).is_global:continue\n            except ValueError:pass\n\
     \        except ValueError:continue\n        seen.add(key)\n        games.append({'id':key,'name':name.strip(),'type':'web','url':url,'embedded':item.get('embedded')\
-    \ is True,'external':True})\n    return games\n\n\ndef execute(body,sessions,tokens=None,now=None):\n    \"\"\
-    \"Returns (response, optional notification), after SQLite commit.\"\"\"\n    if not isinstance(body,dict):\n\
+    \ is True,'external':True})\n    return games\n\n\ndef execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):\n\
+    \    \"\"\"Returns (response, optional notification), after SQLite commit.\"\"\"\n    if not isinstance(body,dict):\n\
     \        return error('Invalid request'),None\n    tokens=configured_tokens() if tokens is None else tokens\n\
-    \    op=body.get('op')\n    now=int(time.time()) if now is None else int(now)\n    try:\n        with sessions.begin()\
-    \ as db:\n            if op=='game_catalog':\n                return {'ok':True,'schema':'tavi.game-catalog/v1','games':published_games()},None\n\
+    \    op=body.get('op')\n    now=int(time.time()) if now is None else int(now)\n    try:\n        with (nullcontext(db)\
+    \ if db is not None else sessions.begin()) as db:\n            if principal_subject is not None:\n         \
+    \       # The public guest is only permitted to discover or obtain an account.\n                if principal_subject\
+    \ == 'guest':\n                    if op not in ('game_catalog','capabilities','register','login'):\n      \
+    \                  return error('Sign in to Social first'),None\n                else:\n                   \
+    \ if op in ('register','login'):\n                        return error('Sign out before creating another session'),None\n\
+    \                    if not isinstance(body.get('token'),str) or session_identity(db,body['token'],now) != principal_subject:\n\
+    \                        return error('Session identity does not match verified principal'),None\n         \
+    \   if op=='game_catalog':\n                return {'ok':True,'schema':'tavi.game-catalog/v1','games':published_games()},None\n\
     \            if op=='capabilities':\n                return {'ok':True,'schema':'looprd.social.capabilities/v1',\n\
     \                    'accounts':True,'registration':os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower()\
-    \ in ('true','1','yes'),\n                    'contacts':True,'directMessages':True,'sessionSeconds':SESSION_AGE},None\n\
-    \            if op=='register':\n                return register(db,body,now),None\n            if op=='login':\n\
-    \                return login(db,body,now),None\n            subject=session_identity(db,body.get('token'),now)\
-    \ or authorize(body.get('token'),tokens)\n            if not subject:\n                return error('Sign in\
-    \ to Social first'),None\n            if op=='interaction_feed':\n                return interaction_feed(db,subject,now),None\n\
-    \            if op=='interaction_reply':\n                result=interaction_reply(db,subject,body,now)\n  \
-    \              return result,event_signal(db) if result['ok'] else None\n            if op=='interaction_dismiss':\n\
-    \                result=interaction_dismiss(db,subject,body,now)\n                return result,event_signal(db)\
-    \ if result['ok'] else None\n            if op=='interaction_publish':\n                # Development/initial\
-    \ integration publisher: only operator-authorized developer accounts.\n                if not account_developer_permission(db,subject):\n\
-    \                    return error('Publisher permission denied'),None\n                recipient=body.get('recipient')\n\
-    \                if not isinstance(recipient,str) or not re.fullmatch(r'[a-z][a-z0-9_]{2,23}',recipient):return\
-    \ error('Invalid recipient'),None\n                target=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==recipient)).first()\n\
-    \                if not target:return error('Recipient not found'),None\n                clean=validate_interaction(body.get('interaction'))\n\
+    \ in ('true','1','yes'),\n                    'contacts':True,'directMessages':True,'conversationSummaries':True,'readSync':True,'sessionSeconds':SESSION_AGE,\n\
+    \                    'push':{'schema':'looprd-push/v1','transport':'unifiedpush','deviceRegistration':True,\n\
+    \                            'requiresVerifiedSession':True}},None\n            if op=='register':\n       \
+    \         return register(db,body,now),None\n            if op=='login':\n                return login(db,body,now),None\n\
+    \            subject=session_identity(db,body.get('token'),now) or authorize(body.get('token'),tokens)\n   \
+    \         if not subject:\n                return error('Sign in to Social first'),None\n            if op=='interaction_feed':\n\
+    \                return interaction_feed(db,subject,now),None\n            if op=='interaction_reply':\n   \
+    \             result=interaction_reply(db,subject,body,now)\n                return result,event_signal(db)\
+    \ if result['ok'] else None\n            if op=='interaction_dismiss':\n                result=interaction_dismiss(db,subject,body,now)\n\
+    \                return result,event_signal(db) if result['ok'] else None\n            if op=='interaction_publish':\n\
+    \                # Development/initial integration publisher: only operator-authorized developer accounts.\n\
+    \                if not account_developer_permission(db,subject):\n                    return error('Publisher\
+    \ permission denied'),None\n                recipient=body.get('recipient')\n                if not isinstance(recipient,str)\
+    \ or not re.fullmatch(r'[a-z][a-z0-9_]{2,23}',recipient):return error('Invalid recipient'),None\n          \
+    \      target=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==recipient)).first()\n             \
+    \   if not target:return error('Recipient not found'),None\n                clean=validate_interaction(body.get('interaction'))\n\
     \                expiry=now+min(7*86400,max(60,int(body.get('ttlSeconds',86400))))\n                db.execute(sa.insert(INTERACTION).values(recipient='acct_'+str(target[0]),publisher=subject,\n\
     \                    topic=clean['topic'],title=clean['title'],data=clean,status='open',response=None,created=now,expires=expiry))\n\
     \                return {'ok':True},event_signal(db)\n            if op=='developer_diagnostics':\n        \
@@ -506,15 +706,19 @@ handlers:
     \                return contact_list(db,subject,now),None\n            if op=='contact_request':\n         \
     \       result=contact_request(db,subject,body.get('username'),now)\n                return result,event_signal(db)\
     \ if result['ok'] else None\n            if op in ('contact_accept','contact_remove'):\n                result=contact_action(db,subject,body.get('peer'),op)\n\
-    \                return result,event_signal(db) if result['ok'] else None\n            if op=='dm_feed':\n \
-    \               return direct_messages(db,subject,body.get('peer'),now),None\n            if op=='dm_send':\n\
+    \                return result,event_signal(db) if result['ok'] else None\n            if op=='dm_conversations':\n\
+    \                return conversation_summaries(db,subject,now),None\n            if op=='dm_mark_read':\n  \
+    \              result=mark_direct_read(db,subject,body.get('peer'),body.get('upToId'),now)\n               \
+    \ return result,event_signal(db) if result['ok'] and result['advanced'] else None\n            if op=='dm_feed':\n\
+    \                return direct_messages(db,subject,body.get('peer'),now),None\n            if op=='dm_send':\n\
     \                result=direct_send(db,subject,body.get('peer'),body.get('text'),now)\n                return\
     \ result,event_signal(db) if result['ok'] else None\n            stored=db.execute(sa.select(PROFILE).where(PROFILE.c.subjectId==subject)).mappings().first()\n\
     \            current=stored['data'] if stored else {'schema':SCHEMA,'profileId':subject,\n                 \
     \     'displayName':subject,'appearance':None,'portraitCode':None}\n            if op=='me':\n             \
     \   return {'ok':True,'profile':current,'revision':stored['revision'] if stored else 0,\n                  \
-    \  'permissions':{'developer':account_developer_permission(db,subject)}},None\n            if op=='save_profile':\n\
-    \                incoming=body.get('profile')\n                if isinstance(incoming,dict) and stored and 'portraitCode'\
+    \  'permissions':{'developer':account_developer_permission(db,subject),\n                                  \
+    \ 'ecosystemAdmin':account_ecosystem_admin(db,subject)}},None\n            if op=='save_profile':\n        \
+    \        incoming=body.get('profile')\n                if isinstance(incoming,dict) and stored and 'portraitCode'\
     \ not in incoming:\n                    # Older clients can still rename accounts without removing v3 portraits.\n\
     \                    incoming={**incoming,'portraitCode':current.get('portraitCode')}\n                p=clean_profile(subject,incoming)\n\
     \                before=stored['revision'] if stored else 0\n                if body.get('ifRevision') is not\
@@ -542,10 +746,150 @@ handlers:
     \ return error('Game tickets require application-owned verified identity and game-service validation; not implemented'),None\n\
     \            return error('Unknown operation'),None\n    except sa.exc.IntegrityError:\n        return error('Account\
     \ or contact already exists'),None\n    except (ValueError,TypeError) as exc:\n        return error(str(exc)),None\n\
-    \n\nasync def handle(ctx):\n    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory)\n\
-    \    if event is not None:\n        ctx.publish(event)\n    return result\n"
+    \n\ndef principal_id(subject):\n    \"\"\"Exactly LoopRD's verified realm+subject ID formula, not a client-supplied\
+    \ ID.\"\"\"\n    return hashlib.sha256(('tavi-social\\0' + subject).encode('utf8')).hexdigest()\n\n\ndef process_event(ctx):\n\
+    \    \"\"\"Use the same transaction for application writes, event and push outbox.\"\"\"\n    body=ctx.body\n\
+    \    op=body.get('op') if isinstance(body,dict) else None\n    principal=ctx.principal.subject\n    with ctx.transaction()\
+    \ as db:\n        result,event=execute(body,ctx.session_factory,db=db,principal_subject=principal)\n       \
+    \ if result.get('ok') and event is not None:\n            ctx.emit(db,{k:v for k,v in event.items() if k!='component'})\n\
+    \            recipient=None\n            if op=='dm_send':\n                recipient=body.get('peer')\n   \
+    \         elif op=='contact_request':\n                recipient=account_subject(db,username(body.get('username')))\n\
+    \            elif op in ('contact_accept','contact_remove'):\n                recipient=body.get('peer')\n \
+    \           elif op=='interaction_publish':\n                recipient=account_subject(db,username(body.get('recipient')))\n\
+    \            if recipient and recipient != principal and re.fullmatch(r'acct_[0-9]{1,19}',recipient):\n    \
+    \            ctx.notify(db,principal_id(recipient))\n    return result\n\n\nasync def handle(ctx):\n    op=ctx.body.get('op')\
+    \ if isinstance(ctx.body,dict) else None\n    changing=op in {'interaction_reply','interaction_dismiss','interaction_publish',\n\
+    \                    'contact_request','contact_accept','contact_remove','dm_mark_read',\n                 \
+    \   'dm_send','save_profile','chat_send'}\n    if changing:\n        return await run_in_threadpool(process_event,ctx)\n\
+    \    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory,principal_subject=ctx.principal.subject)\n\
+    \    # login/register create an account-specific session; the identity is checked on\n    # the *next* request.\
+    \ No push is sent for guest operations or regular reads.\n    return result\n"
+- path: /ecosystem/admin-notify
+  method: POST
+  kind: python
+  scopes:
+  - social:service
+  source: "\"\"\"Trusted service-contract handler delivering a Tavi inbox event to ecosystem admins.\n\nThe Social\
+    \ verified verifier authenticates the calling component as kind=service.\nNo Tavi user can call this endpoint\
+    \ with their ordinary account credential.\n\"\"\"\nimport hashlib\nimport json\nimport ipaddress\nimport re\n\
+    import time\nfrom urllib.parse import urlsplit\n\nimport sqlalchemy as sa\nfrom starlette.concurrency import\
+    \ run_in_threadpool\n\nMAX_ADMIN_RECIPIENTS = 100\n\n\ndef safe_https_url(value):\n    if not isinstance(value,\
+    \ str) or len(value) > 2048 or any(ord(c) < 33 or c == '\\\\' for c in value):\n        return False\n    try:\n\
+    \        url = urlsplit(value)\n        if url.scheme != 'https' or not url.hostname or url.username or url.password\
+    \ or url.fragment or url.port not in (None, 443):\n            return False\n        host=url.hostname.lower()\n\
+    \        if host in ('localhost', 'localhost.localdomain') or host.endswith(('.localhost', '.local', '.internal')):\n\
+    \            return False\n        try:\n            ip=ipaddress.ip_address(host)\n            if not ip.is_global:\n\
+    \                return False\n        except ValueError:\n            pass\n        return True\n    except\
+    \ (ValueError, TypeError):\n        return False\n\n\ndef build_interaction(body):\n    topic=body.get('topic')\n\
+    \    title=body.get('title')\n    description=body.get('body','')\n    link=body.get('url')\n    ttl=body.get('ttlSeconds',86400)\n\
+    \    if (not isinstance(topic,str) or not re.fullmatch(r'[a-z][a-z0-9_.-]{1,79}',topic)\n            or not\
+    \ isinstance(title,str) or not 1 <= len(title) <= 120\n            or not isinstance(description,str) or len(description)>2000\n\
+    \            or any(ord(char)<32 or ord(char)==127 for char in topic+title)\n            or type(ttl) is not\
+    \ int or not 60 <= ttl <= 604800):\n        return None\n    if link is not None and not safe_https_url(link):\n\
+    \        return None\n    actions=[{'id':'open-link','type':'open-url','label':'Open details',\n           \
+    \   'url':link,'presentation':'external-browser'}] if link else [\n              {'id':'acknowledge','type':'reply','label':'Acknowledge','fields':[]}]\n\
+    \    return {'topic':topic,'title':title,'body':description,'actions':actions},ttl\n\n\ndef principal_id(subject):\n\
+    \    return hashlib.sha256(('tavi-social\\0'+subject).encode('utf8')).hexdigest()\n\n\ndef deliver(ctx):\n \
+    \   if getattr(ctx.principal,'kind',None)!='service' or not re.fullmatch(r'[a-z][a-z0-9-]{1,47}',ctx.principal.subject\
+    \ or ''):\n        return {'accepted':False,'recipients':0,'reason':'service_identity_required'}\n    constructed=build_interaction(ctx.body\
+    \ or {})\n    if constructed is None:\n        return {'accepted':False,'recipients':0,'reason':'invalid_interaction'}\n\
+    \    data,ttl=constructed\n    now=int(time.time())\n    with ctx.transaction() as session:\n        admins=session.execute(sa.text('SELECT\
+    \ id FROM \"SocialAccount\" WHERE \"ecosystemAdmin\" = 1 ORDER BY id LIMIT :limit'),\n            {'limit':MAX_ADMIN_RECIPIENTS+1}).scalars().all()\n\
+    \        if len(admins)>MAX_ADMIN_RECIPIENTS:\n            return {'accepted':False,'recipients':0,'reason':'recipient_limit'}\n\
+    \        if not admins:\n            return {'accepted':True,'recipients':0}\n        for account_id in admins:\n\
+    \            subject='acct_'+str(account_id)\n            session.execute(sa.text('''INSERT INTO \"SocialInteraction\"\
+    \ (\"recipient\",\"publisher\",\"topic\",\"title\",\"data\",\"status\",\"response\",\"created\",\"expires\"\
+    )\n                VALUES (:recipient,:publisher,:topic,:title,:data,'open',NULL,:created,:expires)'''),\n \
+    \               {'recipient':subject,'publisher':'service:'+ctx.principal.subject,\n                 'topic':data['topic'],'title':data['title'],\n\
+    \                 'data':json.dumps(data),'created':now,'expires':now+ttl})\n        row=session.execute(sa.text('SELECT\
+    \ signal FROM \"SocialPulse\" WHERE id=1')).first()\n        signal=(row[0] if row else 0)+1\n        if row:\n\
+    \            session.execute(sa.text('UPDATE \"SocialPulse\" SET signal=:signal WHERE id=1'),{'signal':signal})\n\
+    \        else:\n            session.execute(sa.text('INSERT INTO \"SocialPulse\" (id,signal) VALUES (1,:signal)'),{'signal':signal})\n\
+    \        ctx.emit(session,{'resource':'pulses','action':'updated','id':1,'data':{'id':1,'signal':signal}})\n\
+    \        for account_id in admins:\n            ctx.notify(session,principal_id('acct_'+str(account_id)))\n\
+    \    return {'accepted':True,'recipients':len(admins)}\n\n\nasync def handle(ctx):\n    return await run_in_threadpool(deliver,ctx)\n"
+  contract:
+    name: tavi-admin-notify
+    version: 1
+    serviceOnly: true
+    request:
+      type: object
+      required:
+      - topic
+      - title
+      additionalProperties: false
+      properties:
+        topic:
+          type: string
+          minLength: 2
+          maxLength: 80
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+        body:
+          type: string
+          maxLength: 2000
+        url:
+          type: string
+          maxLength: 2048
+        ttlSeconds:
+          type: integer
+          minimum: 60
+          maximum: 604800
+    response:
+      type: object
+      required:
+      - accepted
+      - recipients
+      additionalProperties: false
+      properties:
+        accepted:
+          type: boolean
+        recipients:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+          maxLength: 48
+- path: /ecosystem/admin-role
+  method: POST
+  kind: python
+  scopes:
+  - social:service
+  source: "\"\"\"Trusted service contract for checking the current Tavi administrator role.\"\"\"\nimport re\nimport\
+    \ sqlalchemy as sa\nfrom starlette.concurrency import run_in_threadpool\n\n\ndef current_role(sessions, subject):\n\
+    \    if not isinstance(subject,str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}',subject):\n        return False\n\
+    \    with sessions() as db:\n        return db.execute(sa.text('SELECT \"ecosystemAdmin\" FROM \"SocialAccount\"\
+    \ WHERE id=:id'),\n            {'id':int(subject[5:])}).scalar() == 1\n\n\nasync def handle(ctx):\n    if getattr(ctx.principal,'kind',None)!='service':\n\
+    \        return {'admin':False}\n    return {'admin':await run_in_threadpool(current_role,ctx.session_factory,(ctx.body\
+    \ or {}).get('subject'))}\n"
+  contract:
+    name: tavi-admin-role
+    version: 1
+    serviceOnly: true
+    request:
+      type: object
+      required:
+      - subject
+      additionalProperties: false
+      properties:
+        subject:
+          type: string
+          minLength: 6
+          maxLength: 72
+    response:
+      type: object
+      required:
+      - admin
+      additionalProperties: false
+      properties:
+        admin:
+          type: boolean
 - path: /info
   kind: response
+  scopes:
+  - social:api
   response:
     protocol: looprd.social/1
     auth: social-accounts
@@ -556,4 +900,4 @@ handlers:
     - lobby
     - portraits
     - server-gated-developer-tools
-    release: 0.3.16
+    release: 0.3.22

@@ -1,0 +1,241 @@
+{
+  "schema": "ziprunner.verification-plan/v1",
+  "project": "looprd-social",
+  "version": "0.3.22",
+  "tasks": [
+    {
+      "id": "TAVI-CHAT-002",
+      "criteria": [
+        {
+          "id": "TAVI-CHAT-002-AC-1",
+          "description": "Only accepted contacts appear in server mailbox; read cursors are account-scoped and monotonic.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-CHAT-002-PY"
+          ]
+        },
+        {
+          "id": "TAVI-CHAT-002-AC-2",
+          "description": "Client uses shared summary SDK and falls back safely on older Social servers.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-CHAT-002-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-CHAT-002-AC-3",
+          "description": "Windows and Android/Web live accounts show matching unread state and accurate read sync after interaction.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-CHAT-002-DEVICE"
+          ]
+        },
+        {
+          "id": "TAVI-CHAT-002-AC-4",
+          "description": "Migration 5 activates with accounts, contacts and prior messages intact.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-CHAT-002-DEPLOY"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-PUSH-001",
+      "criteria": [
+        {
+          "id": "TAVI-PUSH-001-AC-1",
+          "description": "Device opt-in and explicit capability negotiation never imply live registration before backend and distributor exist.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-PUSH-001-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-PUSH-001-AC-2",
+          "description": "OS notifications, mobile resume and current chat/unread behavior work on target devices.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-PUSH-001-DEVICE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-PUSH-002",
+      "criteria": [
+        {
+          "id": "PUSH-AC-1",
+          "description": "Scoped guest access and verified per-user principal prevent user spoofing and device impersonation.",
+          "mode": "automated",
+          "checks": [
+            "PUSH-PY-1"
+          ]
+        },
+        {
+          "id": "PUSH-AC-2",
+          "description": "Device API and WebSocket-ticket integration use LoopRD published routes, safe URLs and content-free wakes.",
+          "mode": "automated",
+          "checks": [
+            "PUSH-JS-1"
+          ]
+        },
+        {
+          "id": "PUSH-AC-3",
+          "description": "Actual LoopRD/ntfy and Windows/Android clients accept and validate sessions, device endpoint proof and recipient wakes.",
+          "mode": "manual",
+          "checks": [
+            "PUSH-OP-1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-ADMIN-001",
+      "criteria": [
+        {
+          "id": "ADMIN-AC-1",
+          "description": "LoopRD management role grants are explicitly declared and never expose password/token hashes.",
+          "mode": "automated",
+          "checks": [
+            "ADMIN-PY-1"
+          ]
+        },
+        {
+          "id": "ADMIN-AC-2",
+          "description": "Only verified trusted callers can broadcast admin events; recipient/role are always checked server-side.",
+          "mode": "automated",
+          "checks": [
+            "ADMIN-PY-1"
+          ]
+        },
+        {
+          "id": "ADMIN-AC-3",
+          "description": "Source release activates in LoopRD and an administrator can receive and dismiss/revoke a test event.",
+          "mode": "manual",
+          "checks": [
+            "ADMIN-OP-1"
+          ]
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "TAVI-CHAT-002-PY",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Authenticated server mailbox, owner-only read cursor integration",
+      "runner_ref": "tavi-python-conversation-tests",
+      "assertions": [
+        "Cross-device sessions share recipient read cursor.",
+        "Unaccepted contacts cannot read or advance cursors.",
+        "Schema migration only adds the new read table."
+      ],
+      "test_ref": "tests/test_conversation_sync.py"
+    },
+    {
+      "id": "TAVI-CHAT-002-NODE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "SDK mailbox and client UX tests",
+      "runner_ref": "tavi-client-mailbox-tests",
+      "assertions": [
+        "Notification deduplication respects server read cursor.",
+        "Client uses only authenticated Social endpoint; old-server fallback persists."
+      ],
+      "test_ref": "client/tests/mailbox-sync.test.mjs"
+    },
+    {
+      "id": "TAVI-CHAT-002-DEVICE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Cross-device user acceptance",
+      "instructions": "Sign in with one Tavi recipient account on Windows and Android or browser. Send a DM from another account. Confirm matching unread, then open it on one and verify the other clears after refresh; verify native chat window and notifications."
+    },
+    {
+      "id": "TAVI-CHAT-002-DEPLOY",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Additive LoopRD schema rollout verification",
+      "instructions": "Back up production component database. Review/push generated looprd.yaml, deploy schema 5 and verify existing accounts, contacts, DMs and sessions survive. Test unauthorized DM read requests and confirm successful rollback planning."
+    },
+    {
+      "id": "TAVI-PUSH-001-NODE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Local push preference/capability validation and foreground wakeup unit tests",
+      "runner_ref": "tavi-client-push-readiness",
+      "assertions": [
+        "Unexpected or missing backend capabilities do not enable background notifications.",
+        "Preference storage contains only opt-in state and is scoped to server+account.",
+        "Wake-up hints are bounded, content-free, deduplicated and require a signed-in client.",
+        "Foreground resume triggers a throttled authoritative server refresh."
+      ],
+      "test_ref": "client/tests/push-readiness.test.mjs"
+    },
+    {
+      "id": "TAVI-PUSH-001-DEVICE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Windows and Android native OS notification and resume acceptance",
+      "instructions": "Import to existing looprd-social ZipRunner project, build Windows client and Android APK, sign in, test OS notification, suspend/resume Android and validate inbox refresh. Verify background status clearly says pending until LoopRD and UnifiedPush distributor integration exists; do not mark real push delivered."
+    },
+    {
+      "id": "PUSH-PY-1",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Verified principal, message recipient and rollback regressions",
+      "runner_ref": "tavi-python-suite",
+      "assertions": [
+        "Guest scope cannot enroll devices or access private operations",
+        "Authenticated subject must match Social session",
+        "Failed durable event transaction rolls back message",
+        "Recipient wake uses only server-resolved principal ID"
+      ],
+      "test_ref": "tests/test_verified_push.py"
+    },
+    {
+      "id": "PUSH-JS-1",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Exact LoopRD push device API, verification, ticket and privacy checks",
+      "runner_ref": "tavi-node-suite",
+      "assertions": [
+        "Authenticated bearer is sent only to same Social component",
+        "Device registration/verification/delete routes and payloads match LoopRD",
+        "Content-free wake schema rejects tokens and message bodies"
+      ],
+      "test_ref": "client/tests/push-api.test.mjs"
+    },
+    {
+      "id": "PUSH-OP-1",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Real LoopRD, ntfy and client end-to-end acceptance",
+      "instructions": "Deploy compatible LoopRD runtime, enable push provider and install updated Tavi; verify guest signup, user login, push device challenge activation, accepted-friend DM wake, scoped denial and revocation. Confirm native closed-app Android push is not yet accepted."
+    },
+    {
+      "id": "ADMIN-PY-1",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Ecosystem admin entitlement, service identity, fanout, revocation and rollback",
+      "runner_ref": "tavi-ecosystem-admin-tests",
+      "assertions": [
+        "Promote/revoke sources are explicit named operator actions.",
+        "Unprivileged sessions cannot self-promote.",
+        "Only private configured machine principals can invoke admin notification or role contracts.",
+        "Notification writes and recipient wakes occur in one SQL transaction.",
+        "Role revocation denies previously stored service-origin event access."
+      ],
+      "test_ref": "tests/test_ecosystem_admin.py"
+    },
+    {
+      "id": "ADMIN-OP-1",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Live LoopRD Data & actions and service contract smoke",
+      "instructions": "Push reviewed 0.3.22 source; reconcile LoopRD with management.data and service.contracts; back up DB and confirm schema6. Promote one test account in management panel, configure a mounted machine credential and calling-component dependency, publish one HTTPS-link notification, verify admin-only inbox and service-only authorization, revoke role, and check audit and removal of event access. Do not claim native closed-app Android delivery."
+    }
+  ]
+}

@@ -1,5 +1,8 @@
 /** LoopRD v1 client protocol: strict server-local components, no federation. */
 export const SOCIAL_COMPONENT = 'looprd-social';
+// Public, unprivileged guest scope: registration/discovery only; never a user token.
+export const TAVI_GUEST_CREDENTIAL = 'tavi_guest_v1';
+const guestHeaders = {'Authorization':`Bearer ${TAVI_GUEST_CREDENTIAL}`};
 const COMPONENT = /^[a-z][a-z0-9-]{0,47}$/;
 // Call fetch as a method on its host: WebView2 can reject a detached native fetch.
 const browserFetch = (url, options) => globalThis.fetch(url, options);
@@ -42,13 +45,13 @@ export async function discoverSocial(origin, fetcher = browserFetch) {
   const url = componentPath(origin, SOCIAL_COMPONENT, 'info');
   const controller = new AbortController(), timer = setTimeout(()=>controller.abort(),12000);
   try {
-    const response = await fetcher(url,{method:'GET',cache:'no-store',signal:controller.signal});
+    const response = await fetcher(url,{method:'GET',headers:guestHeaders,cache:'no-store',signal:controller.signal});
     if (response.status===404 || response.status===503) return {available:false,reason:'The selected LoopRD server has no active Social component.'};
     const data = await responseJson(response);
     if (data?.protocol!=='looprd.social/1') return {available:false,reason:'This server does not provide a compatible Social component.'};
     if(data.auth!=='social-accounts') return {available:true,registration:false,accounts:false,release:data.release||''};
     const caps=await fetcher(componentPath(origin,SOCIAL_COMPONENT,'social'),{
-      method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:controller.signal,
+      method:'POST',headers:{'Content-Type':'application/json',...guestHeaders},cache:'no-store',signal:controller.signal,
       body:JSON.stringify({op:'capabilities'})});
     const check=await responseJson(caps);
     if(check?.ok!==true||check.schema!=='looprd.social.capabilities/v1'||check.accounts!==true)
@@ -62,7 +65,7 @@ async function accountCommand(origin, op, username, password, fetcher = browserF
   const controller = new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
   try {
     const response=await fetcher(componentPath(origin,SOCIAL_COMPONENT,'social'),{
-      method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:controller.signal,
+      method:'POST',headers:{'Content-Type':'application/json',...guestHeaders},cache:'no-store',signal:controller.signal,
       body:JSON.stringify({op,username,password})});
     const body=await responseJson(response);
     if(!body?.ok || typeof body.token!=='string' || body.token.length<32)
@@ -78,7 +81,7 @@ export const loginSocial=(origin,username,password,fetcher=browserFetch)=>accoun
 /** Read the selected server's operator-approved game catalog. No Social token sent. */
 export async function discoverGames(origin, fetcher=browserFetch) {
   const response=await fetcher(componentPath(origin,SOCIAL_COMPONENT,'social'),{
-    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'game_catalog'}),cache:'no-store'
+    method:'POST',headers:{'Content-Type':'application/json',...guestHeaders},body:JSON.stringify({op:'game_catalog'}),cache:'no-store'
   });
   const data=await responseJson(response);
   if(data?.ok!==true||data.schema!=='tavi.game-catalog/v1'||!Array.isArray(data.games)||data.games.length>40)
@@ -94,6 +97,13 @@ export function isSafePublishedGameUrl(value){
     !/^172\.(1[6-9]|2[0-9]|3[01])\./.test(u.hostname)&&u.hostname!=='[::1]';}catch{return false;}
 }
 
+export function safePushEndpoint(value) {
+  try {const url=new URL(value);return typeof value==='string'&&value.length<=2048&&
+    url.protocol==='https:'&&!!url.hostname&&!url.username&&!url.password&&!url.search&&!url.hash&&
+    /^\/[A-Za-z0-9_-]{1,200}$/.test(url.pathname)&&url.origin+url.pathname===value;}
+  catch{return false;}
+}
+
 export class LooprdSocial {
   constructor(origin, token, fetcher = browserFetch) {
     this.origin = normalizeServer(origin);
@@ -106,7 +116,7 @@ export class LooprdSocial {
     const timer = setTimeout(() => controller.abort(), 12000);
     try {
       const response = await this.fetcher(componentPath(this.origin, SOCIAL_COMPONENT, 'social'), {
-        method: 'POST', headers: {'Content-Type':'application/json'},
+        method: 'POST', headers: {'Content-Type':'application/json','Authorization':`Bearer ${this.token}`},
         body: JSON.stringify({ op, ...fields, token: this.token }), signal: controller.signal,
         cache: 'no-store',
       });
@@ -131,10 +141,43 @@ export class LooprdSocial {
   requestContact(username) {return this.command('contact_request',{username});}
   acceptContact(peer) {return this.command('contact_accept',{peer});}
   removeContact(peer) {return this.command('contact_remove',{peer});}
+  conversations() {return this.command('dm_conversations');}
+  markDirectRead(peer,upToId) {return this.command('dm_mark_read',{peer,upToId});}
   directFeed(peer) {return this.command('dm_feed',{peer});}
   directSend(peer,text) {return this.command('dm_send',{peer,text});}
   logout() {return this.command('logout');}
-  /** Current Social public WS only broadcasts opaque pulse signals; never identities or chat payloads. */
+  async pushRequest(path, method='GET', value) {
+    const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),12000);
+    try {
+      const response=await this.fetcher(componentPath(this.origin,SOCIAL_COMPONENT,path),{
+        method,headers:{'Authorization':`Bearer ${this.token}`, ...(value===undefined?{}:{'Content-Type':'application/json'})},
+        ...(value===undefined?{}:{body:JSON.stringify(value)}),cache:'no-store',signal:controller.signal,
+      });
+      return await responseJson(response);
+    } catch(error){if(error?.name==='AbortError')throw new ProtocolError('Push request timed out.');throw error;}
+    finally {clearTimeout(timer);}
+  }
+  pushDevices() {return this.pushRequest('_push/devices');}
+  registerPushDevice(installationId,endpoint) {
+    if(typeof installationId!=='string'||!/^[A-Za-z0-9_-]{8,128}$/.test(installationId))throw new ProtocolError('Invalid installation ID');
+    if(typeof endpoint!=='string'||!safePushEndpoint(endpoint))throw new ProtocolError('Invalid push endpoint');
+    return this.pushRequest('_push/devices','POST',{installationId,endpoint});
+  }
+  verifyPushDevice(deviceId,challenge) {
+    if(typeof deviceId!=='string'||!/^[0-9a-f]{32}$/.test(deviceId)||
+       typeof challenge!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(challenge))throw new ProtocolError('Invalid push verification');
+    return this.pushRequest(`_push/devices/${deviceId}/verify`,'POST',{challenge});
+  }
+  removePushDevice(deviceId) {
+    if(typeof deviceId!=='string'||!/^[0-9a-f]{32}$/.test(deviceId))throw new ProtocolError('Invalid device ID');
+    return this.pushRequest(`_push/devices/${deviceId}`,'DELETE');
+  }
+  async pulseTicket() {
+    const response=await this.pushRequest('_ws-ticket','POST');
+    if(typeof response?.ticket!=='string'||response.ticket.length<16)throw new ProtocolError('Invalid WS ticket');
+    return response.ticket;
+  }
+  /** Verified LoopRD WS uses a single-use, 30-second ticket; never a Social token in URL. */
   pulseUrl() { return componentPath(this.origin, SOCIAL_COMPONENT, 'events').replace(/^http/, 'ws'); }
 }
 

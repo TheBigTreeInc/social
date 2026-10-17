@@ -2,6 +2,14 @@
 import { isTauri } from '@tauri-apps/api/core';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 
+export async function notificationPermissionStatus() {
+  try {
+    if (isTauri()) return (await isPermissionGranted()) ? 'granted' : 'prompt';
+    if (!('Notification' in globalThis)) return 'unavailable';
+    return Notification.permission; // granted / denied / default
+  } catch { return 'unavailable'; }
+}
+
 export async function grantNotifications() {
   if (isTauri()) return (await isPermissionGranted()) || (await requestPermission()) === 'granted';
   if (!('Notification' in globalThis)) return false;
@@ -24,6 +32,7 @@ async function showNotification(title,body,tag){
   return false;
 }
 export const notifyTurn=(title,body)=>showNotification(title,body,`turn-${title}-${body}`);
+export const sendTestNotification=()=>showNotification('Tavi · Test notification','Your device can display Tavi alerts while the app is running.','tavi-test');
 export function notifyChat(name,text,{preview=false}={}){
  const safeName=String(name||'Friend').slice(0,64);
  const body=preview?String(text||'New message').slice(0,100):'New private message';

@@ -1,8 +1,7 @@
-"""Looprd Social v0.3.2 native Looprd handler.
+"""Tavi Social native LoopRD handler with verified identities and durable wake hints.
 
-Self-contained in looprd.yaml by tools/generate-looprd.py.
-The verified Looprd v1 handler contract provides ctx.body, ctx.session_factory
-and ctx.publish. No unverified request-header assumptions are used.
+Embedded in looprd.yaml by tools/generate-looprd.py. Account authentication
+and push-device ownership are independently enforced by LoopRD's verifier.
 """
 import hashlib
 import hmac
@@ -11,6 +10,7 @@ import os
 import re
 import time
 import sqlalchemy as sa
+from contextlib import nullcontext
 from starlette.concurrency import run_in_threadpool
 
 SCHEMA = 'looprd.social.profile/v1'
@@ -85,7 +85,10 @@ def validate_interaction(raw):
     return {'title':title,'body':message,'topic':topic,'actions':cleaned}
 
 def interaction_feed(db,subject,now):
-    rows=db.execute(sa.select(INTERACTION).where(INTERACTION.c.recipient==subject).order_by(INTERACTION.c.id.desc()).limit(80)).mappings().all()
+    query=sa.select(INTERACTION).where(INTERACTION.c.recipient==subject)
+    if not account_ecosystem_admin(db,subject):
+        query=query.where(sa.not_(INTERACTION.c.publisher.like('service:%')))
+    rows=db.execute(query.order_by(INTERACTION.c.id.desc()).limit(80)).mappings().all()
     return {'ok':True,'schema':'tavi.interactions/v1','events':[
       {'id':r['id'],'publisher':r['publisher'],'topic':r['topic'],**r['data'],
        'status':('expired' if r['expires']<=now and r['status']=='open' else r['status']),
@@ -97,6 +100,7 @@ def interaction_reply(db,subject,body,now):
     if type(event_id) is not int or not isinstance(action,str) or not isinstance(values,dict):return error('Invalid event response')
     row=db.execute(sa.select(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject)).mappings().first()
     if not row:return error('Event not found')
+    if row['publisher'].startswith('service:') and not account_ecosystem_admin(db,subject):return error('Administrator entitlement revoked')
     if row['status']!='open' or row['expires']<=now:return error('Event already handled or expired')
     allowed=next((x for x in row['data']['actions'] if x['id']==action and x['type']=='reply'),None)
     if not allowed:return error('Action not available')
@@ -111,6 +115,7 @@ def interaction_dismiss(db,subject,body,now):
     if type(event_id) is not int or event_id<1:return error('Invalid event ID')
     row=db.execute(sa.select(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject)).mappings().first()
     if not row:return error('Event not found')
+    if row['publisher'].startswith('service:') and not account_ecosystem_admin(db,subject):return error('Administrator entitlement revoked')
     if row['status']=='dismissed':return {'ok':True,'status':'dismissed'}
     if row['status']!='open' or row['expires']<=now:return error('Event already handled or expired')
     response={'action':'dismiss','at':now,'by':subject}
@@ -253,7 +258,7 @@ import sqlalchemy as sa
 ACCOUNT = sa.table('SocialAccount', sa.column('id',sa.Integer),sa.column('handle',sa.String),
     sa.column('passwordHash',sa.String),sa.column('created',sa.Integer),
     sa.column('failedAttempts',sa.Integer),sa.column('lockedUntil',sa.Integer),
-    sa.column('developerEnabled',sa.Boolean))
+    sa.column('developerEnabled',sa.Boolean),sa.column('ecosystemAdmin',sa.Boolean))
 SESSION = sa.table('SocialSession',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),
     sa.column('tokenHash',sa.String),sa.column('created',sa.Integer),
     sa.column('expires',sa.Integer),sa.column('lastSeen',sa.Integer),sa.column('revoked',sa.Boolean))
@@ -263,6 +268,8 @@ CONTACT = sa.table('SocialContact',sa.column('id',sa.Integer),sa.column('leftId'
 DM = sa.table('SocialDirectMessage',sa.column('id',sa.Integer),sa.column('leftId',sa.String),
     sa.column('rightId',sa.String),sa.column('senderId',sa.String),
     sa.column('content',sa.String),sa.column('created',sa.Integer))
+READ = sa.table('SocialConversationRead',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),
+    sa.column('peerId',sa.String),sa.column('readId',sa.Integer),sa.column('updated',sa.Integer))
 HANDLE = re.compile(r'^[a-z][a-z0-9_]{2,23}$')
 SESSION_AGE = 30*86400
 DUMMY_SALT = b'looprd-social-dummy-salt'
@@ -318,7 +325,7 @@ def register(db,body,now):
         return {'ok':False,'error':'This username is already registered','code':'USERNAME_TAKEN'}
     digest=password_digest(password)
     id_=db.execute(sa.insert(ACCOUNT).values(handle=handle,passwordHash=digest,created=now,
-        failedAttempts=0,lockedUntil=0,developerEnabled=False).returning(ACCOUNT.c.id)).scalar_one()
+        failedAttempts=0,lockedUntil=0,developerEnabled=False,ecosystemAdmin=False).returning(ACCOUNT.c.id)).scalar_one()
     subject='acct_'+str(id_)
     db.execute(sa.insert(PROFILE).values(subjectId=subject,
         data={'schema':SCHEMA,'profileId':subject,'displayName':handle,'appearance':None,'portraitCode':None},
@@ -356,8 +363,8 @@ def logout(db,token):
 # LoopRD management role. Checked on EVERY privileged request and profile refresh.
 # Development tokens cannot get this privilege, even when their subject resembles
 # a registered user; no public API path changes the flag.
-SOCIAL_RELEASE = '0.3.2'
-SOCIAL_SCHEMA_VERSION = 3
+SOCIAL_RELEASE = '0.3.22'
+SOCIAL_SCHEMA_VERSION = 6
 
 def account_developer_permission(db, subject):
     if not isinstance(subject, str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):
@@ -365,6 +372,14 @@ def account_developer_permission(db, subject):
     account = db.execute(sa.select(ACCOUNT.c.developerEnabled).where(
         ACCOUNT.c.id == int(subject[5:]))).first()
     return account is not None and account[0] is True
+
+def account_ecosystem_admin(db, subject):
+    """Lookup current entitlement from authoritative server rows on every access."""
+    if not isinstance(subject,str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):
+        return False
+    record=db.execute(sa.select(ACCOUNT.c.ecosystemAdmin).where(
+        ACCOUNT.c.id==int(subject[5:]))).first()
+    return record is not None and record[0] is True
 
 def developer_diagnostics(db, subject, now):
     """Deliberately aggregate-only: never include credentials, messages, or raw SQL."""
@@ -440,6 +455,67 @@ def direct_messages(db,subject,peer,now):
     return {'ok':True,'messages':[{'id':m['id'],'authorId':m['senderId'], 'text':m['content'], 'at':m['created']}
         for m in reversed(rows)]}
 
+def conversation_summaries(db, subject, now):
+    """One mailbox request instead of polling every friend for their DM feed.
+
+    Only accepted contacts participate; read cursors are owned by the authenticated
+    subject, not supplied by clients. The latest-message query is bounded to the
+    same 30-day horizon as dm_feed, and returns no unaccepted contact content.
+    """
+    pairs=db.execute(sa.select(CONTACT.c.leftId,CONTACT.c.rightId).where(
+        CONTACT.c.status=='accepted',sa.or_(CONTACT.c.leftId==subject,CONTACT.c.rightId==subject))).all()
+    peers={right if left==subject else left for left,right in pairs}
+    if not peers:
+        return {'ok':True,'schema':'tavi.dm-summaries/v1','conversations':[]}
+    reads={r['peerId']:r['readId'] for r in db.execute(sa.select(READ).where(
+        READ.c.subjectId==subject,READ.c.peerId.in_(peers))).mappings().all()}
+    other=sa.case((DM.c.leftId==subject,DM.c.rightId),else_=DM.c.leftId)
+    base=sa.and_(sa.or_(DM.c.leftId==subject,DM.c.rightId==subject),
+                 DM.c.created>=now-30*86400,other.in_(peers))
+    latest=db.execute(sa.select(other.label('peer'),sa.func.max(DM.c.id).label('id'))
+        .where(base).group_by(other)).all()
+    latest_rows={r['id']:r for r in db.execute(sa.select(DM).where(
+        DM.c.id.in_([item.id for item in latest]))).mappings().all()} if latest else {}
+    unread_rows=db.execute(sa.select(other.label('peer'),sa.func.count(DM.c.id).label('unread'))
+        .select_from(DM.outerjoin(READ,sa.and_(READ.c.subjectId==subject,READ.c.peerId==other)))
+        .where(base,DM.c.senderId!=subject,DM.c.id>sa.func.coalesce(READ.c.readId,0))
+        .group_by(other)).all()
+    unread={r.peer:r.unread for r in unread_rows}
+    last_by_peer={r.peer:latest_rows.get(r.id) for r in latest}
+    conversations=[]
+    for peer in peers:
+        record=last_by_peer.get(peer)
+        recent=({'id':record['id'],'authorId':record['senderId'],'text':record['content'],
+                 'at':record['created']} if record else None)
+        conversations.append({'peer':peer,'readId':reads.get(peer,0),
+            'unread':min(99,unread.get(peer,0)), 'latest':recent})
+    conversations.sort(key=lambda x:(-(x['latest']['id'] if x['latest'] else 0),x['peer']))
+    return {'ok':True,'schema':'tavi.dm-summaries/v1','conversations':conversations}
+
+
+def mark_direct_read(db,subject,peer,up_to,now):
+    if not isinstance(peer,str) or not re.fullmatch(r'acct_[0-9]{1,19}',peer):
+        return error('Invalid contact')
+    if type(up_to) is not int or up_to<0 or up_to>2**53-1:
+        return error('Invalid read cursor')
+    link=contact_row(db,subject,peer)
+    if not link or link['status']!='accepted':return error('Contact is not accepted')
+    existing=db.execute(sa.select(READ).where(READ.c.subjectId==subject,READ.c.peerId==peer)).mappings().first()
+    previous=existing['readId'] if existing else 0
+    advanced=up_to>previous
+    if advanced:
+        left,right=pair(subject,peer)
+        found=db.execute(sa.select(DM.c.id).where(
+            DM.c.id==up_to,DM.c.leftId==left,DM.c.rightId==right)).first()
+        if not found:return error('Read cursor is not a message in this conversation')
+        if existing:
+            db.execute(sa.update(READ).where(READ.c.id==existing['id'],READ.c.readId<up_to).values(readId=up_to,updated=now))
+        else:
+            db.execute(sa.insert(READ).values(subjectId=subject,peerId=peer,readId=up_to,updated=now))
+        previous=db.execute(sa.select(READ.c.readId).where(READ.c.subjectId==subject,READ.c.peerId==peer)).scalar_one()
+    return {'ok':True,'readId':previous,'advanced':advanced}
+
+
 def direct_send(db,subject,peer,content,now):
     if not isinstance(content,str) or not 1<=len(content.strip())<=1000 or re.search(r'[\x00-\x08\x0e-\x1f\x7f]',content):
         return {'ok':False,'error':'Message must be 1–1000 safe characters'}
@@ -486,7 +562,7 @@ def published_games():
     return games
 
 
-def execute(body,sessions,tokens=None,now=None):
+def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
     """Returns (response, optional notification), after SQLite commit."""
     if not isinstance(body,dict):
         return error('Invalid request'),None
@@ -494,13 +570,25 @@ def execute(body,sessions,tokens=None,now=None):
     op=body.get('op')
     now=int(time.time()) if now is None else int(now)
     try:
-        with sessions.begin() as db:
+        with (nullcontext(db) if db is not None else sessions.begin()) as db:
+            if principal_subject is not None:
+                # The public guest is only permitted to discover or obtain an account.
+                if principal_subject == 'guest':
+                    if op not in ('game_catalog','capabilities','register','login'):
+                        return error('Sign in to Social first'),None
+                else:
+                    if op in ('register','login'):
+                        return error('Sign out before creating another session'),None
+                    if not isinstance(body.get('token'),str) or session_identity(db,body['token'],now) != principal_subject:
+                        return error('Session identity does not match verified principal'),None
             if op=='game_catalog':
                 return {'ok':True,'schema':'tavi.game-catalog/v1','games':published_games()},None
             if op=='capabilities':
                 return {'ok':True,'schema':'looprd.social.capabilities/v1',
                     'accounts':True,'registration':os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower() in ('true','1','yes'),
-                    'contacts':True,'directMessages':True,'sessionSeconds':SESSION_AGE},None
+                    'contacts':True,'directMessages':True,'conversationSummaries':True,'readSync':True,'sessionSeconds':SESSION_AGE,
+                    'push':{'schema':'looprd-push/v1','transport':'unifiedpush','deviceRegistration':True,
+                            'requiresVerifiedSession':True}},None
             if op=='register':
                 return register(db,body,now),None
             if op=='login':
@@ -542,6 +630,11 @@ def execute(body,sessions,tokens=None,now=None):
             if op in ('contact_accept','contact_remove'):
                 result=contact_action(db,subject,body.get('peer'),op)
                 return result,event_signal(db) if result['ok'] else None
+            if op=='dm_conversations':
+                return conversation_summaries(db,subject,now),None
+            if op=='dm_mark_read':
+                result=mark_direct_read(db,subject,body.get('peer'),body.get('upToId'),now)
+                return result,event_signal(db) if result['ok'] and result['advanced'] else None
             if op=='dm_feed':
                 return direct_messages(db,subject,body.get('peer'),now),None
             if op=='dm_send':
@@ -552,7 +645,8 @@ def execute(body,sessions,tokens=None,now=None):
                       'displayName':subject,'appearance':None,'portraitCode':None}
             if op=='me':
                 return {'ok':True,'profile':current,'revision':stored['revision'] if stored else 0,
-                    'permissions':{'developer':account_developer_permission(db,subject)}},None
+                    'permissions':{'developer':account_developer_permission(db,subject),
+                                   'ecosystemAdmin':account_ecosystem_admin(db,subject)}},None
             if op=='save_profile':
                 incoming=body.get('profile')
                 if isinstance(incoming,dict) and stored and 'portraitCode' not in incoming:
@@ -602,8 +696,42 @@ def execute(body,sessions,tokens=None,now=None):
         return error(str(exc)),None
 
 
+def principal_id(subject):
+    """Exactly LoopRD's verified realm+subject ID formula, not a client-supplied ID."""
+    return hashlib.sha256(('tavi-social\0' + subject).encode('utf8')).hexdigest()
+
+
+def process_event(ctx):
+    """Use the same transaction for application writes, event and push outbox."""
+    body=ctx.body
+    op=body.get('op') if isinstance(body,dict) else None
+    principal=ctx.principal.subject
+    with ctx.transaction() as db:
+        result,event=execute(body,ctx.session_factory,db=db,principal_subject=principal)
+        if result.get('ok') and event is not None:
+            ctx.emit(db,{k:v for k,v in event.items() if k!='component'})
+            recipient=None
+            if op=='dm_send':
+                recipient=body.get('peer')
+            elif op=='contact_request':
+                recipient=account_subject(db,username(body.get('username')))
+            elif op in ('contact_accept','contact_remove'):
+                recipient=body.get('peer')
+            elif op=='interaction_publish':
+                recipient=account_subject(db,username(body.get('recipient')))
+            if recipient and recipient != principal and re.fullmatch(r'acct_[0-9]{1,19}',recipient):
+                ctx.notify(db,principal_id(recipient))
+    return result
+
+
 async def handle(ctx):
-    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory)
-    if event is not None:
-        ctx.publish(event)
+    op=ctx.body.get('op') if isinstance(ctx.body,dict) else None
+    changing=op in {'interaction_reply','interaction_dismiss','interaction_publish',
+                    'contact_request','contact_accept','contact_remove','dm_mark_read',
+                    'dm_send','save_profile','chat_send'}
+    if changing:
+        return await run_in_threadpool(process_event,ctx)
+    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory,principal_subject=ctx.principal.subject)
+    # login/register create an account-specific session; the identity is checked on
+    # the *next* request. No push is sent for guest operations or regular reads.
     return result

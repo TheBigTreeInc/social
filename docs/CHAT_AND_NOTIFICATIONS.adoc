@@ -45,8 +45,9 @@ The responsive layout shows roster and conversation separately, has minimum
 safe-area inset. The Android notification plugin can show notifications *while
 Tavi is running* and permission is granted. A closed/suspended mobile app does
 **not** yet receive remote background push: a server-issued push subscription,
-Google FCM for Android and platform-specific device identity/permissions would
-be required. Likewise, ordinary browser notifications are not Web Push.
+UnifiedPush with an Android distributor (such as ntfy), a server-side
+registration/revocation contract and device permission handling are needed.
+FCM may be offered as a separate optional adapter but is not mandatory. Likewise, ordinary browser notifications are not Web Push.
 
 == Privacy and limitations
 
@@ -72,3 +73,7 @@ notification titles on the lock screen.
   account and messages are shared but device read markers remain distinct.
 . Test profile changes, invite acceptance, game windows and interactive inbox
   for regressions. All tests must pass before marking the workboard task Done.
+
+== Background-delivery readiness since v0.3.19
+
+Tavi offers a per-server/account device opt-in, an OS notification test, and an explicit readiness description. It never claims closed-app notification delivery before an installed UnifiedPush distributor and LoopRD enrollment support are verified. Foreground/resume synchronization remains available immediately. See `docs/PUSH_TRANSPORT.adoc`.

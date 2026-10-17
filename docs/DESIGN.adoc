@@ -1,6 +1,6 @@
 = Tavi: Design and Architecture
 TheBigTreeInc Social project
-:revnumber: 0.3.8
+:revnumber: 0.3.22
 :toc: left
 :sectnums:
 
@@ -58,14 +58,12 @@ The account identity is assigned and persisted by the Social component on that
 LoopRD server. The browser, Windows app, and Android app use the same username and
 password and get *different revocable session tokens*, both pointing to the
 same server-side Social account. Contact list, profile, portrait decimal-string
-code and messages are server-backed and therefore shared. Session tokens stay
-in process memory in this release: a page reload or app restart requires login
-again. Do not mistake independent sessions for independent identities.
-
-If persistent login is later added, use an audited, secure platform-specific
-credential mechanism. Never copy a token into a query string, a game request,
-URL fragment, localStorage, generated bundle, or a ZipRunner package. A web
-client MUST require HTTPS for a non-local LoopRD origin. Production deployment
+code and messages are server-backed and therefore shared. Social sessions
+are device-specific and revocable. Tavi supports explicit "Keep me signed in"
+persistence in origin-scoped browser/WebView storage (not account passwords).
+Native OS-backed credential storage remains planned. Saved tokens must never
+be sent to a game, URL, push payload, generated bundle or ZipRunner package.
+A web client MUST require HTTPS for a non-local LoopRD origin. Production deployment
 must configure the permitted browser `Origin` on the LoopRD server (CORS).
 
 == Client features
@@ -156,3 +154,49 @@ The product is **Tavi**, published by **The Big Tree Inc**. The implementation r
 == Tavi v0.3.17 — chat-first notifications and phone UX
 
 See `CHAT_AND_NOTIFICATIONS.adoc` for locally scoped read markers, bounded foreground DM scanning, notification permission and privacy defaults, independent native chat windows, mobile safe-area/touch controls, and acceptance checks. No LoopRD schema or API change is included in this client-only release.
+
+== Tavi v0.3.18 — server-backed message summaries
+
+`looprd-social` schema 5 adds account-scoped, monotonically advancing DM read
+markers and one authenticated summary operation across accepted contacts.
+The roster orders recent conversations; Windows native companion chat windows
+continue to broker actions through the main credential-bearing window.
+See `docs/CONVERSATION_SYNC.adoc` for the wire contract and rollout.
+Android background push and native notification action responses remain future
+work; there are no new permanent administration panels.
+
+== Push delivery portability (client readiness v0.3.19)
+
+Tavi keeps Social chat and read status authoritative on its selected LoopRD server. Foreground Windows/Android/Web notifications use existing OS integrations. The current client adds a scoped, default-off preference for background delivery and reports readiness only when explicit Social push capabilities and native distributor support exist. Android UnifiedPush with optional self-hosted ntfy is the intended primary provider, not Firebase. An Android bridge eventually forwards only an opaque wakeup to the authenticated client; it must fetch messages from Social. No registration endpoints or subscription tokens are fabricated in this release. See `docs/PUSH_TRANSPORT.adoc` for proposed contracts and acceptance.
+
+== Verified Social identities and background push (0.3.20)
+
+LoopRD Social uses `auth.mode: verified`, an app-local verifier and a public,
+nonprivileged registration/login guest marker; authenticated sessions are
+bound to individual LoopRD principals in realm `tavi-social`. All device,
+WebSocket and scoped event requests use verified bearer credentials, and
+browsers obtain single-use WebSocket tickets rather than placing Social tokens
+in URLs. Durable opaque pulse events and recipient-specific `ctx.notify`
+wake jobs are committed with Social account/DM changes where supported.
+The external ntfy provider and native Android UnifiedPush receiver are
+separate deployment/device concerns, not built-in magic. See
+`docs/PUSH_TRANSPORT.adoc` for exact LoopRD routes, operation requirements,
+limitations and release acceptance.
+
+
+== Ecosystem administrator event delivery (0.3.22)
+
+LoopRD admission and the protected operator workspace remain the only administration
+surface. The Social component explicitly exposes a safe `accounts` management
+resource and named promote/revoke actions; new accounts have `ecosystemAdmin=false`.
+The operator management credential MUST NEVER enter Tavi client code or a service
+contract. A user's role allows eligible Tavi inbox delivery, not arbitrary API access.
+
+Approved, privately credentialed LoopRD machine principals can publish scoped
+administrator events using the declared `tavi-admin-notify` service contract and
+read current Tavi-admin entitlement through `tavi-admin-role`. Their credentials
+are mounted references, not a client flag. Social resolves actual recipients and
+uses one transactional event and push outbox. On revocation, previously delivered
+service-origin events become inaccessible and no longer actionable on the Social
+API. The Inbox is dynamic, not an always-visible administration screen. Details
+and operator acceptance: `docs/ECOSYSTEM_ADMIN.adoc`.

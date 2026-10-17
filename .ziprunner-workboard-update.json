@@ -1,17 +1,17 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.17",
-  "summary": "Chat-first Windows/Android/Web client update: per-peer unread indicators, foreground notification settings, smoother native chats and mobile touch navigation; LoopRD server descriptor unchanged.",
+  "version": "0.3.22",
+  "summary": "Tavi 0.3.22: ecosystem admin promotion and secure cross-service events (schema 6), with repaired mandatory ZipRunner workboard metadata and incremented release identifiers. Supersedes rejected 0.3.21.",
   "implemented": [
     {
       "id": "SCL-021",
       "title": "Replace oversized Windows client with native buddy list and separate conversations",
       "summary": "Windows main window is roster-sized instead of 1060px dashboard. Open individual Tauri chat windows and broker authenticated operations via main window without copying credentials. Build emits standalone chat page, leaves Android/web responsive, and adds native geometry/IPC checks.",
       "operator_checks": [
-        "Install the Windows NSIS artifact; sign-in opens as a narrow 355\u00d7630 window, with no blue 1060px background or a duplicate app title bar.",
+        "Install the Windows NSIS artifact; sign-in opens as a narrow 355×630 window, with no blue 1060px background or a duplicate app title bar.",
         "Sign in with an existing Social account; the same window displays buddy groups and turn alerts; verify there is no permanent right-side panel.",
-        "Double-click a buddy or open Community Lobby: a separate approximately 585\u00d7525 Windows chat window opens, and reselecting the same buddy focuses it.",
+        "Double-click a buddy or open Community Lobby: a separate approximately 585×525 Windows chat window opens, and reselecting the same buddy focuses it.",
         "Send and receive a message in the native conversation; verify chat windows do not need another login and can open simultaneously.",
         "Verify Settings/Games/Portrait and server-authorized developer switch work within the roster-sized native host.",
         "Run the Web, Windows and Android workflows; confirm Android navigation and browser API/account parity remain functional."
@@ -125,6 +125,65 @@
         "Install the Android client and verify 48px touch targets, safe-area navigation and foreground notifications when permission is granted.",
         "Check that looprd.yaml is unchanged and no LoopRD server migration/deployment is required."
       ]
+    },
+    {
+      "id": "TAVI-CHAT-002",
+      "title": "Server-backed conversation summaries and synchronized read state",
+      "summary": "LoopRD Social schema 5 adds recipient-scoped DM mailbox heads and monotonically increasing read cursor. Tavi uses one summary request for the roster and fetches the selected conversation separately; old servers retain a bounded fallback. Historical local read IDs migrate per account and server; native chat views acknowledge through the main authenticated broker.",
+      "operator_checks": [
+        "Back up the Social database and deploy release 0.3.18 with migration 5. Confirm existing accounts, DM contents and friendships remain intact.",
+        "With two signed-in devices on one account and a second account sending private messages, confirm new messages are counted on both devices; opening a conversation clears unread on both after refresh.",
+        "Verify no notifications repeat for already-seen message IDs and no private message bodies are written to local notification/read-state storage.",
+        "Check that unaccepted contacts cannot read messages or manipulate read markers and that the prior client-only 0.3.17 app continues operating against the upgraded server.",
+        "Build Tavi locally using ZipRunner; confirm the compact roster orders recent conversations and the older-server fallback still functions."
+      ]
+    },
+    {
+      "id": "TAVI-PUSH-001",
+      "title": "Provider-independent push client preparation and resume UX",
+      "summary": "Clients opt in locally to future background alerts, check only an explicit Social push-capability schema, reject malformed/credential-bearing wakeups, resume mailbox sync when visible, and offer an OS notification test. Does not register a UnifiedPush endpoint or claim delivery while suspended.",
+      "operator_checks": [
+        "On Windows, import this ZIP, complete the local Windows build and sign in; enable and test OS notification permission in Settings. Confirm notification settings and conversations survive restart.",
+        "On Android, open Settings and opt in to background alerts. Verify it reports waiting for deployed LoopRD and the Android distributor adapter rather than claiming push registration.",
+        "Suspend Tavi and resume; verify unread/message status refreshes immediately, without repeated notifications or duplicate work from rapid focus events.",
+        "Confirm no endpoint, token, message body or Social credential is stored in the push preference key or exposed through wake-up payloads.",
+        "Confirm looprd.yaml has no diff from 0.3.18, backend remains schema 5 and Git push is not required."
+      ]
+    },
+    {
+      "id": "TAVI-PUSH-002",
+      "title": "Verified LoopRD Social principals and actual UnifiedPush API integration",
+      "summary": "Moved LoopRD component to auth.verified with scoped public guest registration/login and 30-day Social sessions, transactional opaque pulse/event wake messages, recipient-bound ctx.notify, exact LoopRD device enrollment/verification/revoke SDK and verified WebSocket tickets. No native Android closed-app distributor receiver is claimed.",
+      "operator_checks": [
+        "Upgrade LoopRD runtime to support auth.verified, push.unifiedpush and events.transactional; set LoopRD Python verifier support, configure ntfy public provider and keep management credentials private.",
+        "Apply this release looprd.yaml from Git and confirm the component loads, registration/login work from a new Tavi 0.3.20 Windows/Web client, and old clients are retired (no existing users require migration).",
+        "With two test accounts and accepted friendship, send a DM; verify one recipient wake in ntfy contains only {apiVersion: looprd-push/v1, type: sync}; blocked users and guests cannot register devices.",
+        "Receive a registration challenge on an actual distributor endpoint, verify it, list and revoke the owned device, then confirm session revocation denies further enrollment.",
+        "Confirm Android closed-app notifications remain disabled until native distributor plugin and real-device testing are implemented."
+      ]
+    },
+    {
+      "id": "TAVI-ADMIN-001",
+      "title": "LoopRD operator-granted ecosystem admin notifications",
+      "summary": "Data & actions exposes safe accounts projection and promote/revoke operations; approved private machine callers can broadcast administrator events or check Tavi role. Events persist and wake recipient devices transactionally; revocation removes access to previous service-origin events.",
+      "operator_checks": [
+        "Back up the Social DB and push looprd.yaml plus server sources to the existing Git repository; confirm LoopRD activates release 0.3.22/schema 6 and management.data capability.",
+        "Create two Tavi accounts. Promote one using LoopRD Data & actions, with an operator reason; verify the audit entry and per-account me.permissions.ecosystemAdmin.",
+        "Configure a private caller secret reference and LOOPRD_SOCIAL_SERVICE_SECRETS_JSON mapping; call tavi-admin-notify from the approved LoopRD component using ctx.call.",
+        "Confirm only the promoted account gets the inbox event. An active enrolled device should receive a content-free sync wake; native Android closed-app behavior is still pending.",
+        "Revoke the account role. Confirm service events immediately disappear and cannot be responded to; unpromoted account never sees them.",
+        "Verify account clients and unapproved components cannot call service-only contracts or browse the management-only /operator-accounts resource."
+      ]
+    },
+    {
+      "id": "TAVI-RELEASE-022",
+      "title": "Correct ZipRunner workboard and advance version after packaging fix",
+      "summary": "Correct the mandatory remaining-item summary shape that blocked ZipRunner 1.2.304.92 before source overlay; advance client, server, LoopRD descriptor, handoff and verification metadata to 0.3.22 without changing application behavior. Supersedes rejected release 0.3.21.",
+      "operator_checks": [
+        "Import 0.3.22 into the existing looprd-social ZipRunner project and confirm mandatory workboard gate succeeds.",
+        "Confirm the active package metadata and built Tavi client version read 0.3.22.",
+        "Push the reviewed source and verify LoopRD reports release 0.3.22 with schema 6; complete previously listed administrator acceptance checks."
+      ]
     }
   ],
   "remaining": [
@@ -143,7 +202,7 @@
     {
       "id": "SCL-009",
       "title": "Android background push and turn delivery",
-      "summary": "Turn notifications work while the client is running; provide Social-owned device push registration and a push provider to wake Android after app termination.",
+      "summary": "LoopRD server verified principal and push device APIs are now integrated in Tavi v0.3.20. Still requires native Android UnifiedPush distributor enrollment/receiver (endpoint and challenge), 24-hour device renewal/rotation, lifecycle revocation, OS channels, closed-app wake testing and live ntfy acceptance.",
       "priority": "high"
     },
     {
@@ -195,10 +254,16 @@
       "priority": "high"
     },
     {
-      "id": "TAVI-CHAT-002",
-      "title": "Server-backed inbox heads and background mobile push",
-      "summary": "Specify and build server-side DM summaries and synchronized read state; later add authenticated mobile push enrollment, safe push payloads, Android FCM and proper delivery diagnostics. Do not claim closed-app mobile notifications.",
-      "priority": "medium"
+      "id": "TAVI-CHAT-003",
+      "title": "Android UnifiedPush background delivery and notification actions",
+      "summary": "LoopRD server verified principal and push device APIs are now integrated in Tavi v0.3.20. Still requires native Android UnifiedPush distributor enrollment/receiver (endpoint and challenge), 24-hour device renewal/rotation, lifecycle revocation, OS channels, closed-app wake testing and live ntfy acceptance.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-ADMIN-002",
+      "title": "Live admin notifications acceptance",
+      "summary": "Awaiting operator acceptance after the 0.3.22 Git revision is pushed and LoopRD reconciles schema 6. Verify promotion/revocation in protected Data & actions, privately enrolled service-to-Tavi administrator notifications, recipient-only inbox access, and ntfy wake delivery. Requires a running compatible LoopRD instance and private service credential enrollment; these live checks are not claimed complete.",
+      "priority": "high"
     }
   ]
 }

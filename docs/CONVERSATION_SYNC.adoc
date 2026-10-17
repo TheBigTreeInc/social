@@ -1,0 +1,81 @@
+= Tavi conversation summaries and cross-device read state
+:toc:
+
+== Scope and backwards compatibility
+
+Tavi 0.3.18 adds `dm_conversations` (read-only inbox heads) and
+`dm_mark_read` (per-account acknowledgement) to the `looprd-social` handler.
+The component changes from database schema 4 to 5 with only an additive
+`SocialConversationRead` table and unique `(subjectId, peerId)` index. The
+existing `SocialDirectMessage`, accounts, contacts and sessions are retained.
+Back up the component database before deployment. Do not delete or reset it.
+
+== Server wire protocol
+
+* Authenticated `dm_conversations` returns `tavi.dm-summaries/v1` with
+  `conversations: [{peer, readId, unread, latest}]`. Each `latest` contains
+  `id`, `authorId`, `text`, and `at` or is `null`. Only **accepted contacts**
+  and DMs from the same 30-day history window as `dm_feed` are included.
+  A single call replaces the per-contact foreground DM polling pattern.
+* Authenticated `dm_mark_read` takes `peer` and `upToId` (an integer message ID
+  from that precise accepted conversation) and returns the effective `readId`.
+  The cursor is monotonic; other accounts cannot acknowledge private messages.
+  A read acknowledgment broadcasts a content-free pulse so other signed-in
+  devices can refresh unread state. The public pulse is not a chat payload.
+* Read acknowledgement indicates that the recipient *viewed* messages, not
+  proof that the other person received or opened their outgoing message.
+  Outgoing read receipts are not exposed to senders.
+* Existing Social sessions and permission boundaries remain intact. Sessions
+  never flow into game windows or third-party websites.
+
+== Client presentation and compatibility
+
+* Windows, Web and Android use the same shared JavaScript SDK, scoped to the
+  current LoopRD server. The compact roster groups recent conversations in
+  last-message order with unread counters and time. Message text previews in
+  the roster are opt-in through the existing message-preview setting.
+* Opening a DM reads its actual feed and acknowledges only messages viewed.
+  Native Windows chat windows ask the authenticated main Tavi window to issue
+  the acknowledgement; no tokens are sent to unprivileged webviews.
+* Previous v0.3.17 local numeric read markers migrate forward for accepted
+  contacts when the server cursor is behind. The server never accepts a
+  cursor from a different conversation or an unaccepted account.
+* Clients connected to an older Social release gracefully fall back to the
+  existing bounded round-robin per-contact scan; this fallback cannot deliver
+  cross-device server read sync.
+* The server's initial unread state may show historical unacknowledged DMs
+  within its 30-day window. The client does not fire a surprise OS notification
+  for historical messages on a new installation.
+
+== Windows and Android notifications
+
+Notification permissions remain explicit and local to each device. Native
+Tauri notifications work **while the client is running**, subject to OS
+permission, and hide message previews by default. Web browser notifications
+are foreground-only. This pass does **not** implement notification delivery
+while an Android app is suspended/terminated.
+
+== Android background push (TAVI-CHAT-003, future)
+
+Requires a provider-agnostic, consented, per-device push enrollment resource
+and an Android UnifiedPush distributor adapter (such as ntfy); FCM is optional.
+Store revocable provider tokens securely, rotate and revoke on sign-out,
+restrict delivery to verified Tavi recipients, queue bounded wakeup hints,
+never include full DM content or session credentials, and retrieve private
+state from Social after wake. Validate real-background behavior on devices
+and support operator diagnostics for expired push tokens and provider errors.
+No push-server implementation, distributor credentials or FCM credentials ship in this client-only readiness pass.
+
+== Operator acceptance
+
+. Back up existing Social schema 4 data, then publish and activate the new
+  release 0.3.18 descriptor and verify the additive schema 5 migration.
+. With two Tavi clients signed into the same recipient, send a DM from a
+  second account. Confirm both show one unread thread without duplicating
+  system notifications.
+. Open the thread on one device and confirm the other reflects zero unread
+  after a pulse/refresh. Sign out and back in; read state must remain.
+. Attempt a `dm_mark_read` for a stranger, another account's thread,
+  negative/future ID and stale session: server must reject.
+. Verify the native companion conversation window and Web/Android chat
+  still work; test an older Social server to confirm safe fallback.
