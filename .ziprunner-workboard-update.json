@@ -1,9 +1,21 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.47",
-  "summary": "Planning/QA reconciliation only: six new PLANNED tickets for native OpenClaw-as-Tavi-client, Life multiplayer and CI evidence; preserve all 74 operator tickets/statuses. v0.3.46 8/8 GitHub push workflows and 13/13 re-run exact-ZIP checks passed. No native plugin or Life game action implemented.",
+  "version": "0.3.48",
+  "summary": "Client-side Atrium launch visibility and safe reviewed-URL handoff. Keeps Tavi chat-first and legacy Social game challenges intact. No new match, game registration, identity exchange or native OpenClaw channel. Social database schema 10 unchanged. Preserve the 74-ticket original operator snapshot and previous 6 planned native-channel/multiplayer tickets.",
   "implemented": [
+    {
+      "id": "TAVI-ATRIUM-048",
+      "title": "Expose Atrium as reviewed game hub in Tavi while preserving legacy challenges",
+      "summary": "Source candidate: native/web/mobile Games view promotes an independent reviewed Atrium HTTPS launcher with visible not-configured status; menu action is always visible; strictly validates URL and opens separately without Social token; old TAVI_GAME_CATALOG_JSON Play/Challenge stays labeled as legacy. No new DB or game API.",
+      "operator_checks": [
+        "Configure a reviewed public HTTPS LOOPRD_TAVI_ATRIUM_BASE_URL on the active Social server, confirm capabilities.atriumUrl and clickable Atrium Games card in the Windows installer.",
+        "Confirm the Windows external browser opens the correct Atrium site and returning to Tavi preserves contact list, active chat draft and session; repeat on Web and Android.",
+        "Without Atrium configured, Games displays a clear unavailable state; unsafe local/credential/fragment/query URLs are denied.",
+        "With legacy TAVI_GAME_CATALOG_JSON configured, prior Play and friend/OpenClaw challenge flow remains available; no challenge creates a Life match.",
+        "Do not mark this or related TAVI-031/TAVI-MULTI tickets Done without independent operator testing and Atrium/Life game-service acceptance."
+      ]
+    },
     {
       "id": "TAVI-MULTI-046",
       "title": "Visible Tavi game library and OpenClaw account challenge response",

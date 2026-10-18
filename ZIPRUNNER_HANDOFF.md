@@ -1,146 +1,17 @@
-## Tavi 0.3.47 — Native channel workboard & v0.3.46 QA reconciliation ONLY
+## Tavi 0.3.48 — visible Atrium launcher in Games
 
-ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.47|file=looprd-social-0.3.47-native-channel-workboard-qa-ziprunner.zip
+ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.48|file=looprd-social-0.3.48-atrium-launcher-ziprunner.zip
 
-Full-source ZipRunner planning update from v0.3.46. Imported workboard update proposes six NEW **planned** items under the user multiplayer priority override, while preserving the original 74-ticket snapshot and all existing operator decisions. TAVI-AGENT-002 stays high/planned. Native OpenClaw plugin, Life game turns and Atrium integration are NOT implemented in this documentation/metadata pass. Schema 10 unchanged; no SQL migration. 0.3.46 exact push CI 8/8 and fresh SHA-bound exact ZIP post-update checks 13/13 passed, but ZipRunner watcher says not_github and must be reconciled under TAVI-QA-047. Separate native/device/operator acceptance remains open. Never mark Done, auto-push, tag, release or deploy.
+**Base:** exact source bytes of TheBigTreeInc/social `f37d91084aba53d71cb777d3c5325bf9fea7727c` (v0.3.47). **Scope:** UI and safety tests for existing operator-reviewed `LOOPRD_TAVI_ATRIUM_BASE_URL`; no DAPI or Atrium server change and no Life match/agent action claims. Source ZIP contains complete source, generated Looprd release descriptor and all original 74-ticket operator snapshot history; only `TAVI-ATRIUM-048` added as source candidate requiring Review. Preserve all previous original priorities/statuses and the user's multiplayer priority override.
 
-See `docs/TAVI_NATIVE_CHANNEL_MULTIPLAYER_WORKBOARD_0347.adoc` and `docs/TAVI_QA_0346_RECONCILIATION.adoc`.
+### Release QA gates
 
-## Tavi 0.3.46 — Game Library and OpenClaw Challenge Handshake
+* `npm run verify`, `python tools/generate-looprd.py --check`, plus all 14 `.ziprunner-post-update-tests.json` commands against extracted ZIP.
+* Confirm `ziprunner.looprd.json` SHA equals exact packaged `looprd.yaml`. Server schema remains 10.
+* Windows live Atrium launch, Web/Android smoke, real Life registration and OpenClaw native channel are not independently accepted by source tests.
 
-ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.46|file=looprd-social-0.3.46-game-library-openclaw-challenges-ziprunner.zip
+### Manual runtime integration
 
-This is a full source ZIP; server handler and client changed. Regenerate and deploy LoopRD 0.3.46 on the approved runtime; Social SQLite schema remains 10 (no migration from 0.3.45). Configure actual Life HTTPS URL under `TAVI_GAME_CATALOG_JSON`, then launch from Windows Tavi Games. A dedicated, accepted OpenClaw Tavi contact can receive and acknowledge game challenges from its private session, manually or with explicitly enabled peer/game allowlisted autoaccept. Staging acceptance is mandatory; no Life match, bot game turn, push, tag or release claim. Preserve 72 local operator workboard tickets. See `docs/TAVI_OPENCLAW_GAME_CHALLENGES_0346.adoc`.
+The Social server already exposes `capabilities.atriumUrl` from `LOOPRD_TAVI_ATRIUM_BASE_URL`; set that variable **on the actual server** to a reviewed public HTTPS Atrium URL with trailing slash. v0.3.48 client displays a prominent disabled card if unconfigured and opens approved Atrium in an external browser if configured. Legacy `TAVI_GAME_CATALOG_JSON` is retained for old Play/Challenge until the Atrium reviewed catalog is live. No token forwarding or URL inference from portable manifests. See `docs/TAVI_ATRIUM_LAUNCH_0348.adoc` for acceptance checks.
 
-## Tavi 0.3.45 — Dedicated native match chat candidate
-
-Import into existing `looprd-social` project. Windows Games → Match conversations → Open separate chat window now opens a dedicated match window; game state and turns remain game-owned. Verify native build, account/seat/consent revocation, and two clients with a real Life publisher. Schema remains 10, no new SQL migration from v0.3.44. Do not push/release automatically.
-
-ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.45|file=looprd-social-0.3.45-native-match-chat-ziprunner.zip
-
-## Tavi 0.3.44 — Game-seat-scoped match chat source candidate
-
-Import as `looprd-social` from the full source ZIP; back up the Social SQLite database before migration 9→10. An approved Life backend must send versioned complete seat rosters via `tavi-game-room-roster/v1`. Accounts still explicitly opt into each match. Test cross-client room authorization and revocation before operator acceptance. No repository push, tag or release.
-
-ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.44|file=looprd-social-0.3.44-multiplayer-match-chat-ziprunner.zip
-
-## Tavi 0.3.43 — LRS-004 account recovery source candidate
-
-CI gate checked for previous 0.3.42 Git commit `781a610a88461496ab687ece882a728b245d62ab`: all eight push workflows passed. New 0.3.43 source requires independent checks. Import into project `looprd-social`, back up and validate Social schema 9 migration, then test recovery and registration on staged instance. Do not push/tag/release automatically.
-
-ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.43|file=looprd-social-0.3.43-account-recovery-ziprunner.zip
-
-## Tavi 0.3.42 — Android sign-in and reporter repair
-
-TAVI-ANDROID-042 logged from Android screenshots: Social discovery timeout on api.thebigtree.life; raw Invalid URL when submitting pre-login report without valid server; system status bar overlaps Tavi header. This client-only pass makes discovery stages and transient 503 failures explicit, validates report origin, and applies Android status-bar spacing. Social schema 8 is unchanged; the real device/backend timeout remains an operator acceptance blocker. See docs/WORKBOARD.md.
-
-ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.42|file=looprd-social-0.3.42-android-discovery-ziprunner.zip
-
-
-## v0.3.39 — DAPI notification efficiency
-
-New `client/src/sync-coordinator.js` coalesces WebSocket and push wake hints and retries a wake deferred by a concurrent full refresh. `refresh({mailboxOnly:true})` avoids unrelated per-game polling; periodic full reconciliation remains in place. Validate Android foreground incoming messages and Windows native chats on actual devices; no background UnifiedPush distributor added. LoopRD descriptor release advances to 0.3.39, schema remains 6.
-ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.39|file=looprd-social-0.3.39-nearby-foundation-ziprunner.zip
-
-## v0.3.39 — LoopRD bug reports
-
-Import this full source ZIP into `looprd-social`. Deploy regenerated `looprd.yaml` with requires `reports.bugs` only after updating LoopRD runtime. Android login errors may be submitted before login, using the public Tavi guest verifier token and no login credentials. Verify 202 receipt and check LoopRD management > Bug reports. No Social SQL schema change. Android login itself remains to be diagnosed.
-
-## v0.3.39 — GitHub release gate
-
-Import into existing `looprd-social` project. Adds `.github/workflows/release.yml`, `tools/release-gate.py` and `docs/RELEASE_PROCESS.md`; SDK workflows now run on every main push. Once seven required workflows pass on the same current SHA, a GitHub Release and v0.3.39 tag will be created with six bundles. Pages remains independently configured. No LoopRD schema migration.
-
-ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.39|file=looprd-social-0.3.39-native-chat-history-fix-ziprunner.zip
-
-# Tavi 0.3.39 — Remembered session recovery
-
-This source ZIP supersedes v0.3.24. Import it into the existing **looprd-social**
-ZipRunner project. Every packaged source/manifest release label is 0.3.39.
-
-## Delivered
-
-* New bounded (8/16/32/60 second) auto-reconnect on temporary startup failure,
-  and explicit Retry saved sign-in / Use another account controls in the narrow login window.
-* Saved session is retained on HTTP 403 and temporary errors, cleared on confirmed
-  401 invalid credential. Restored identity still comes from the server.
-* Coalescing/cancellation of retries on sign-in, sign-out and account switching.
-* Corrected duplicated trusted-device copy; no changes to DPAPI file format,
-  server authentication handlers or Social data model.
-
-## Acceptance on Windows
-
-1. Import the ZIP and observe the ZipRunner build. Confirm the pre-build shutdown
-   from v0.3.24 still runs and Cargo/NSIS can build successfully.
-2. Log in and select Remember this device. Close Tavi, disconnect your network,
-   reopen Tavi. Confirm saved sign-in warning and Retry button without losing vault.
-3. Restore network; verify the roster reconnects without restarting or entering a
-   password. Click Retry for an immediate manual test.
-4. Sign out and reopen; verify session was revoked and is no longer restored.
-5. Confirm normal chat, contacts, interactive inbox and separate chat windows still work.
-
-## Validation boundary
-
-Run `npm run verify`, `python tools/generate-looprd.py --check`, and
-`python -m unittest discover -s tests -p 'test_*.py' -q`. Native Windows
-compilation/DPAPI and live LoopRD acceptance are **not** claimed by author-side
-tests. The new source file is `client/src/session-recovery.js`; tests are in
-`client/tests/session-recovery.test.mjs`.
-
-Server release label changes to 0.3.39 but schema remains **6**, with no new SQL
-migration. No private secrets, local configuration, runtime state or generated
-build output are included. Git publishing remains a separate operator decision.
-
-
-## OpenClaw integration v0.3.39
-
-A standalone headless Tavi account CLI and copyable OpenClaw agent instructions are in `integrations/openclaw/`. Use a dedicated Tavi user and private session. Chat and contacts are supported; game discovery is read-only until games implement agent-specific player/action contracts. The integration is a CLI adapter (not yet a native OpenClaw channel plugin). LoopRD schema 6 unchanged.
-
-## v0.3.39 — GitHub distribution
-
-Includes `.github/workflows/pages.yml`, SDKs for Python/Go/C#, and OpenClaw GitHub install instructions. No new database migration; schema 6. After Git push enable GitHub Actions Pages in repository settings. Pages deployment and native cross-OS installers have not been executed here.
-
-
-## Tavi 0.3.39 — GitHub Actions coverage repair
-
-The 0.3.27 GitHub Pages run failed **after successful Vite build** because the GitHub Pages site was not configured: `actions/configure-pages@v5` returned 404. In 0.3.39 the web client is always uploaded as a downloadable build artifact; Pages deployment still requires the repository owner to select **Settings → Pages → Build and deployment → GitHub Actions**. The deployment job is intentionally allowed to fail visibly until Pages is enabled.
-
-The Linux/macOS native workflow now runs on main pushes and relevant PRs, producing a Linux amd64 `.deb` and macOS Apple Silicon `.dmg` subject to CI success. The SDK source-package workflow produces JavaScript, Python, Go, C# and OpenClaw bridge ZIPs, without implying binary distributions for language libraries. Artifacts are retained for 30 days. Native Linux/macOS workflows require remote GitHub runner verification. Social DB schema remains 6.
-
-
-## Tavi 0.3.39 — Native conversation history fix
-
-Windows chat-window peer validation previously required at least eight characters, but the server issues short IDs such as `acct_1`. Notifications worked through the main roster, while the native chat window rejected those IDs before loading history. The validator now accepts only the server-issued `acct_[1-9][0-9]{0,18}` form (and `lobby`), with regression tests for short IDs and malformed inputs. No schema migration or backend API change.
-
-## v0.3.39 Android update pass
-
-Requires GitHub Actions Android signing secrets before release pipeline can pass. Signed APK is a direct GitHub Release asset; current Android client opens the system download, not an in-app installer. See `docs/ANDROID_UPDATES.md`.
-
-## v0.3.39 Android native in-app updater
-CI patches Tauri-generated Kotlin Android plugin and FileProvider on each build. UI calls Rust main-window-only command for exact authenticated GitHub APK release URL. Device permission and Android installation approval required. APK installs have NOT been hardware-tested here. Signed APK release secrets remain mandatory.
-
-Signed release workflow also exports TAVI_ANDROID_KEYSTORE_PATH within its current shell before applying the Gradle signing configuration (not merely on subsequent steps).
-
-## v0.3.39 GitHub Actions Android correction
-GitHub run 39053886663 compiled the Android release APK successfully but failed at `Verify signed release APK exists` because the workflow used `outputs/apk/release/`. Correct path is `outputs/apk/universal/release/app-universal-release.apk`. This pass verifies the signed APK and stages the upload under `outputs/tavi-release/`. Rebuild on GitHub; local author cannot validate Android signing or phone installation.
-
-
-## v0.3.39 — Nearby/offline gameplay foundation
-
-Added `client/src/nearby/local-session.js` offline turn journal with chain verification, local persistence, explicit server sync prefix and conflict detection. See `docs/NEARBY_LOCAL_SESSIONS.md`. **No Bluetooth pairing, nearby chat, game adapter or cloud synchronization is implemented in this release.** No Social schema migration.
-
-## 0.3.39 OpenClaw notification-driven bridge
-Persistent Tavi WebSocket pulse consumer with authenticated DM reconciliation and opt-in OpenClaw CLI agent reply service. See integrations/openclaw/README.md. This is not an installed native OpenClaw channel; live Gateway acceptance outstanding.
-
-
-## v0.3.39 — OpenClaw sender identity
-
-Tavi now sends the contact’s verified username and profile-selected display name through the bridge to OpenClaw. `acct_N` remains an internal routing ID, not a name. This requires deploying the updated LoopRD Social component to expose the `displayName` field in `contact_list`; the bridge falls back to `username` with older runtimes. No database migration is needed.
-
-
-## 0.3.40 game-turn events
-New opt-in, private service-backed game notifications; schema 7, durable inbox. Cross-project identity grants and launch routes pending; see `docs/GAME_EVENT_IMPLEMENTATION.adoc`.
-
-
-## 0.3.41 — Game invitations and proof redemption
-
-Additive schema 8; back up Social database before staging migration. Source implementation adds service-origin invitations from accepted contacts, account consent on accept, one-use short-lived identity grants and same-runtime service redemption. No actual Life seat authorization or cross-runtime RPC. Run npm run verify, full Python tests and then operator staging checks. See docs/GAME_INVITES_AND_GRANTS_0.3.41.adoc.
+**No automated Git push, tag, release, migration or deployment authorized.**

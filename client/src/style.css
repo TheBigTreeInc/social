@@ -339,3 +339,13 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .challenge-form select{display:block;width:100%;max-width:100%;padding:7px;margin-top:5px}
 .challenge-form button{min-height:36px}
 .game-library-card .fineprint{margin:8px 0 0}
+
+/* v0.3.48 — Atrium remains a separate, reviewed game destination. */
+.atrium-feature{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid #9cbbb1;border-radius:8px;padding:14px;background:linear-gradient(145deg,#f3fbf7,#e9f6f0);margin:10px 0 18px}
+.atrium-feature-heading{display:flex;align-items:flex-start;gap:10px;flex:1 1 240px;min-width:0}
+.atrium-feature-heading>span{font-size:26px;color:#317963;line-height:1.2}
+.atrium-feature-heading h3{font-size:15px;color:#286b55;margin-bottom:4px}
+.atrium-feature-heading p{color:#566e65;font-size:11px;line-height:1.45}
+.atrium-open{min-height:38px;white-space:nowrap}
+.game-library>h3{font-size:13px;margin-top:8px;color:#47675d}
+.game-library>h3+p{margin-top:7px;color:#61766b}

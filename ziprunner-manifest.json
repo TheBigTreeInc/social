@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.47",
-    "base_version": "0.3.46"
+    "version": "0.3.48",
+    "base_version": "0.3.47"
   },
   "update": {
-    "id": "TAVI-20261018-WORKBOARD-NATIVE-TAVI-CHANNEL-QA",
+    "id": "TAVI-20261018-ATRIUM-LAUNCH-UI-0348",
     "kind": "source_update",
-    "created_at": "2026-10-18T17:00:00+02:00",
-    "summary": "Planning and QA reconciliation only. No native OpenClaw plugin, Life gameplay or Tavi feature changes; schema 10."
+    "created_at": "2026-10-18T18:05:00+02:00",
+    "summary": "Visible reviewed Atrium external launcher in Tavi Games; retain existing Play/Challenge and 74-ticket operator snapshot. Client logic and targeted tests, no Life multiplayer backend or native OpenClaw channel."
   },
   "planned_work": [
     {
@@ -263,6 +263,12 @@
       "id": "TAVI-QA-047",
       "title": "Reconcile ZipRunner CI watcher and exact-ZIP QA evidence",
       "acceptance_criteria": "For commit 5adc8af8ab986fa21349a6973b8236817e6059b4, ingest the eight completed successful event=push GitHub workflow URLs and 28 completed checks; distinguish missing watcher evidence from a failing workflow. | Associate post-update command outcomes with the exact v0.3.46 artifact SHA cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615. Reject evidence from any different ZIP SHA or stale run. | Cross-check canonical project ID be0bf498-ea5a-461e-a84e-d47f5f449e09 with the local board payload canonical_project_id blank; fix reporting without changing existing 74 tickets or their statuses. | Check application release labels for consistency between server/looprd-release.json, handler embedded SOCIAL_RELEASE, descriptor and installed clients; record any mismatches independently. | Operator confirms CI/ZIP evidence and only then approves ticket status; never infer device acceptance or grant permission to push/release.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-ATRIUM-048",
+      "title": "Tavi shows independent reviewed Atrium launch from Games",
+      "acceptance_criteria": "Visible configured/disabled Atrium launch in Windows Games with safe HTTPS URL and no Tavi credentials; preserves chat and legacy Play/Challenge; automated and real-device tests; source implemented not operator-accepted.",
       "priority": "high"
     }
   ],
@@ -928,6 +934,32 @@
           "description": "Staging and next-game contract"
         }
       ]
+    },
+    {
+      "id": "TAVI-ATRIUM-048",
+      "summary": "Source implementation only: Games view Atrium feature, strict URL validation, unhidden menu entry, and compatibility with old Social game link/challenge flow. Operator Windows/Atrium rollout not proven.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/atrium-launch.js",
+          "description": "Validated URL and user-visible launcher status"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/main.js",
+          "description": "Atrium CTA and legacy game compatibility in Games"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/atrium-launch.test.mjs",
+          "description": "No unsafe URLs; source wiring and legacy controls"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/TAVI_ATRIUM_LAUNCH_0348.adoc",
+          "description": "Operator setup and remaining acceptance"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -997,6 +1029,11 @@
       "id": "TAVI-MULTI-045-OP",
       "status": "review",
       "next_action": "Staging Windows NSIS acceptance with real Life match seats, two Tavi accounts, revoked consent and room removal. Complete actual Life/Atrium play before closing multiplayer."
+    },
+    {
+      "id": "TAVI-ATRIUM-048-LIVE",
+      "status": "review",
+      "next_action": "Test reviewed Atrium external launch on Windows/Android/Web against actual Social capabilities.atriumUrl; verify chat continuity, denied unsafe URLs, legacy challenges and no cross-service token forwarding."
     }
   ],
   "validation": {
@@ -1190,11 +1227,19 @@
         "command": "node --test client/tests/match-window.test.mjs",
         "environment": "Linux Node.js",
         "evidence_ref": "client/tests/match-window.test.mjs"
+      },
+      {
+        "id": "TAVI-ATRIUM-048-NODE",
+        "description": "Atrium HTTPS launcher, configured/unconfigured UX and backwards compatible challenge tests",
+        "status": "not_run",
+        "command": "node --test client/tests/atrium-launch.test.mjs",
+        "environment": "Node.js with project dependencies",
+        "evidence_ref": "client/tests/atrium-launch.test.mjs"
       }
     ]
   },
   "handover": {
-    "next_pass": "TAVI-AGENT-005 first: verify upstream OpenClaw native channel SDK and freeze client-only contract. Then 006 native messaging, 007 QA; Life 047 gameplay in its own repo; 048 full integration. TAVI-QA-047 tracks watcher separately. Preserve operator board statuses and multiplayer priority override.",
+    "next_pass": "Priority: complete Life DAPI->Atrium reviewed discovery and Life game-authoritative /play, while independently proceeding with TAVI-AGENT-005/006 native messaging channel. Operator test Atrium CTA from Tavi on Windows first. Do not duplicate Atrium catalog inside Tavi.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -1272,6 +1317,6 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Workboard planning and QA metadata only; no change to Social schema 10; do not push, tag, auto-release or deploy without operator approval."
+    "notes": "Client-side Atrium launcher, no schema 10 change and no live Social bearer delegation. Do not push, tag, release, deploy or auto-close operator workboard tasks without explicit approval."
   }
 }

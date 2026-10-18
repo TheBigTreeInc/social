@@ -1,3 +1,5 @@
+> **v0.3.48 Atrium launcher visibility pass:** The Windows Games view now displays a first-class Atrium launch card based on the existing server-advertised reviewed URL; Tavi remains chat-first and the v0.3.46 legacy challenge flow remains supported. No new Life `/play` or DAPI discovery delivery is implemented. See `docs/TAVI_ATRIUM_LAUNCH_0348.adoc`.
+
 > **v0.3.47 workboard planning pass (no new messaging or gameplay behavior):**
 > Native OpenClaw-as-normal-Tavi-user channel, Life authoritative opponent turns and full Atrium multiplayer acceptance are planned in `docs/TAVI_NATIVE_CHANNEL_MULTIPLAYER_WORKBOARD_0347.adoc`. Reconciled exact v0.3.46 GitHub/ZIP evidence: `docs/TAVI_QA_0346_RECONCILIATION.adoc`.
 

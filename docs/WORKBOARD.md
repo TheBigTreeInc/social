@@ -1,3 +1,7 @@
+== v0.3.48 TAVI-ATRIUM-048 source candidate
+
+The Tavi client now presents its pre-existing optional Atrium launcher prominently and clearly distinguishes it from legacy Social-promoted game links. Source verification only; real reviewed Atrium origin, native Windows launch, Life registration, OpenClaw gameplay and operator approval remain pending. See `docs/TAVI_ATRIUM_LAUNCH_0348.adoc`. Preserve all original workboard statuses.
+
 ## v0.3.47 — Native Tavi channel & multiplayer workboard plan (no runtime feature delivery)
 
 Operator-supplied canonical workboard: **74 tickets** (40 review, 20 planned, 13 deferred, 1 suggested). The full snapshot is archived in `docs/ZIPRUNNER_LOCAL_WORKBOARD_74_20261018.json` without changes. Preserve all existing IDs, statuses, priorities and operator acceptance checks. Existing `TAVI-AGENT-002` remains high/planned. No item is marked Done.

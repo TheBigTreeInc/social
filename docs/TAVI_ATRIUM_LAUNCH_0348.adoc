@@ -1,0 +1,38 @@
+= Tavi v0.3.48 — Visible Atrium launcher and retained game challenge compatibility
+:revdate: 2026-10-18
+:toc:
+
+== Scope
+
+This is a real **Tavi client-side** integration pass, not automatic game registration or a new game service. Atrium is the independent reviewed game/app catalog and launcher; Tavi stays a messaging application. It keeps a small game/notification section for invitations and compatibility but does not claim ownership of Atrium's catalog or a Life match.
+
+== Implemented
+
+* Games & invitations now displays Atrium first as a clear independent destination. A disabled state explains why it cannot be opened when the server has not configured it.
+* The existing Actions -> Open Atrium command is always discoverable, rather than conditionally hidden.
+* The source of the launcher remains Social's **existing** `capabilities.atriumUrl` from `LOOPRD_TAVI_ATRIUM_BASE_URL`. No database, server operation or Looprd spec change is made in this pass.
+* A strict browser-side URL check accepts only canonical public HTTPS base URLs ending in `/`, without credentials, query, fragment, ports, localhost/private IP address or internal suffix. The operator explicitly configures a reviewed Atrium origin; it is NOT derived from the portable game manifest.
+* The Tauri opener / browser new-tab action opens that URL separately. No Tavi session token, game grant, arbitrary redirect or message context is passed to Atrium. Chat remains alive when the game hub opens.
+* A separately labeled **server-promoted links** section retains `TAVI_GAME_CATALOG_JSON` Play/Challenge as backwards compatibility. Its challenge acceptance remains only a Social inbox interaction, **not** Life match admission.
+
+== Operator deployment and manual acceptance
+
+. Build this source ZIP via ZipRunner under `looprd-social`. This is a client UI change relative to 0.3.47, with Social schema 10 unchanged and no descriptor diff beyond the deliberate version bump/handler generated release label.
+. On the active Social runtime (not a source repo), set `LOOPRD_TAVI_ATRIUM_BASE_URL` to an operator-reviewed Atrium Pages HTTPS base URL, e.g. `https://thebigtreeinc.github.io/atrium/` **only if that is your actual approved deployment**. This value is a runtime binding, not portable `looprd.yaml` metadata.
+. Verify Social's authenticated `capabilities` response includes `atriumUrl` and Windows Games prominently shows Open Atrium. A server without this config should display a disabled button and explanation rather than a missing feature.
+. Click Open Atrium in Windows; ensure the separate browser opens the reviewed origin and that Tavi's chat draft, roster, identity and ongoing messages remain unchanged. Repeat on Web and Android.
+. Test an invalid local/credential-bearing Atrium base and verify it cannot be opened; no account token in any resulting URL/referrer.
+. Independently verify Atrium Pages is actually published. `web/catalog.json` might still be empty; this button alone does not publish Life, approve games or create a Life account session.
+. Test legacy Game library Play/Challenge still works on a staging Social server with a reviewed `TAVI_GAME_CATALOG_JSON`; accepted OpenClaw challenge must not create a seat.
+
+== Cross-repository follow-up — not included here
+
+* Life: version-controlled `atriumd.yaml` sibling for `the-life-loop`, same-revision DAPI observation; authoritative verified `/play` and agent legal actions.
+* DAPI: authorized and durable discovery-observation sender; still observe-only in inspected revision `dc79897a54f69141ce300bbdadd3bdd6bd996d14`.
+* Atrium: review-gated hosted multi-asset Life publication, player sessions, lobby and continue-game link, invite resolution. A static Checkers local preview is not network multiplayer.
+* Social/OpenClaw: native channel plugin as ordinary Tavi account, separate from game actions; the existing bridge still works.
+* Assets: explicit compatibility between canonical decimal portraitCode and legacy Life pack identity before migrating art.
+
+== Acceptance limitation
+
+Automated tests prove URL filtering and source integration. They do **not** prove Windows runtime launch, a production Atrium configuration, Social SSO, real Life discovery, OpenClaw gameplay, or operator acceptance. Preserve every existing workboard ID/status and the user's multiplayer priority override.

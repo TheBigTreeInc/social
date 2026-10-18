@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.47",
+  "version": "0.3.48",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -672,6 +672,36 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-ATRIUM-048",
+      "criteria": [
+        {
+          "id": "TAVI-ATRIUM-048-AC-1",
+          "description": "Review-approved HTTPS Atrium URL displayed or explicit disabled state; URL never contains credentials/queries, and Tavi game catalog remains independent.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-ATRIUM-048-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-ATRIUM-048-AC-2",
+          "description": "Verified native Windows external launch, browser Web/Android, chat continuity, configured Social capabilities, accepted operator URL; no token forwarding.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-ATRIUM-048-DEVICE"
+          ]
+        },
+        {
+          "id": "TAVI-ATRIUM-048-AC-3",
+          "description": "Legacy server-promoted Play/Challenge remains working and does not create Life match authority.",
+          "mode": "mixed",
+          "checks": [
+            "TAVI-ATRIUM-048-NODE",
+            "TAVI-ATRIUM-048-LEGACY"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -1093,6 +1123,33 @@
         "Run OpenClaw bridge with allowed peer/game and explicit autoaccept=true; human receives accepted response in Tavi Inbox, with manual decline and unauthorized attempts refused.",
         "Confirm acceptance does not create a Life seat, launch a multiplayer match, or enable bot moves. Complete game API integration and two-account play separately before closing SCL-007 or TAVI-032."
       ]
+    },
+    {
+      "id": "TAVI-ATRIUM-048-NODE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Pure reviewed URL/disabled-state and main UI legacy challenge wiring",
+      "runner_ref": "tavi-client-regression",
+      "assertions": [
+        "Only canonical public HTTPS no-credential base URL accepted.",
+        "Enabled/disabled Atrium state derives only from existing Social capabilities.",
+        "Native Games preserves legacy server-promoted Play/Challenge without token forwarding."
+      ],
+      "test_ref": "client/tests/atrium-launch.test.mjs"
+    },
+    {
+      "id": "TAVI-ATRIUM-048-DEVICE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Reviewed configured Atrium launch and chat continuity",
+      "instructions": "Install v0.3.48 Tavi Windows client, connect to Social with server-reviewed Atrium URL, navigate Games, use Open Atrium in external browser and return to current conversation without draft/session loss; verify disabled state when unconfigured and try Web/Android. Do not claim Life match works."
+    },
+    {
+      "id": "TAVI-ATRIUM-048-LEGACY",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Legacy promoted Play and accepted-contact challenge smoke",
+      "instructions": "In staging, configure TAVI_GAME_CATALOG_JSON with reviewed actual Life URL, verify old Play and accepted-contact challenge; confirm OpenClaw receives and accepts via normal Tavi account; verify no Life match created. Do not mark Done without operator acceptance."
     }
   ]
 }
