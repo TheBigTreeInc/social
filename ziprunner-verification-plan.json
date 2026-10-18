@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.42",
+  "version": "0.3.43",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -338,6 +338,36 @@
           ]
         }
       ]
+    },
+    {
+      "id": "LRS-004",
+      "criteria": [
+        {
+          "id": "LRS-004-AC-1",
+          "description": "A signed-in account can generate one-time offline codes only with its current password; codes never appear in SQL and rotate safely.",
+          "mode": "automated",
+          "checks": [
+            "LRS-004-PY"
+          ]
+        },
+        {
+          "id": "LRS-004-AC-2",
+          "description": "Guest recovery revokes all prior account sessions, issues a new session and rejects replay, expiry, and wrong-account codes.",
+          "mode": "automated",
+          "checks": [
+            "LRS-004-PY",
+            "LRS-004-SDK"
+          ]
+        },
+        {
+          "id": "LRS-004-AC-3",
+          "description": "Social SQL schema 8\u21929 and Android/Windows actual recovery flow independently verified by operator.",
+          "mode": "manual",
+          "checks": [
+            "LRS-004-DEVICE"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -517,7 +547,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"
@@ -647,6 +677,41 @@
       "stage": "acceptance",
       "description": "Android device sign-in and status bar checks",
       "instructions": "Install v0.3.42 signed APK. On actual phone, test https://api.thebigtree.life discovery over Wi-Fi and cellular, verify successful sign-in or stage-specific failure; open report with empty URL and verify friendly text, then with valid reachable URL submit a failure report; verify header not covered by status icons or keyboard. If still timed out, inspect server deployment/network; do not pass this gate."
+    },
+    {
+      "id": "LRS-004-PY",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "LRS-004 Python recovery issuance, revocation, lockout, registration limits, additive schema 9",
+      "runner_ref": "python-account-recovery",
+      "assertions": [
+        "Recovery proof cannot impersonate another user",
+        "Reset revokes prior sessions",
+        "Schema 9 additive migration"
+      ]
+    },
+    {
+      "id": "LRS-004-SDK",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Shared browser/Windows/Android recovery SDK protocol",
+      "runner_ref": "client-sdk-recovery",
+      "assertions": [
+        "One-use codes not persisted",
+        "Same SDK shared across client platforms"
+      ]
+    },
+    {
+      "id": "LRS-004-DEVICE",
+      "kind": "manual",
+      "stage": "operator",
+      "description": "Fresh signed APK and Windows installer on staging with real schema 9 and account-recovery lifecycle",
+      "runner_ref": "operator-recovery-device",
+      "assertions": [
+        "Code generated while signed in and used while signed out",
+        "Other sessions revoked",
+        "No secret telemetry/logging"
+      ]
     }
   ]
 }

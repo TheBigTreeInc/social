@@ -133,7 +133,7 @@ test('messenger developer UI cannot be promoted by a client-side toggle alone',a
 
 test('independent time budget for Social discovery info and capabilities',async()=>{
  let probes=[];const fetcher=async(url,options)=>{probes.push({url,signal:options.signal});
-  return {status:200,ok:true,json:async()=>url.endsWith('/info')?{protocol:'looprd.social/1',auth:'social-accounts',release:'0.3.42'}:{ok:true,schema:'looprd.social.capabilities/v1',accounts:true,registration:true}};};
+  return {status:200,ok:true,json:async()=>url.endsWith('/info')?{protocol:'looprd.social/1',auth:'social-accounts',release:'0.3.43'}:{ok:true,schema:'looprd.social.capabilities/v1',accounts:true,registration:true}};};
  assert.equal((await discoverSocial(server,fetcher)).available,true);
  assert.equal(probes.length,2);assert.notEqual(probes[0].signal,probes[1].signal);
 });

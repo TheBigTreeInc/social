@@ -282,7 +282,12 @@ import sqlalchemy as sa
 ACCOUNT = sa.table('SocialAccount', sa.column('id',sa.Integer),sa.column('handle',sa.String),
     sa.column('passwordHash',sa.String),sa.column('created',sa.Integer),
     sa.column('failedAttempts',sa.Integer),sa.column('lockedUntil',sa.Integer),
-    sa.column('developerEnabled',sa.Boolean),sa.column('ecosystemAdmin',sa.Boolean))
+    sa.column('developerEnabled',sa.Boolean),sa.column('ecosystemAdmin',sa.Boolean),
+    sa.column('recoveryFailures',sa.Integer),sa.column('recoveryLockedUntil',sa.Integer))
+RECOVERY = sa.table('SocialRecoveryCode',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),
+    sa.column('codeHash',sa.String),sa.column('created',sa.Integer),sa.column('expires',sa.Integer))
+RECOVERY_AGE = 180*86400
+RECOVERY_FORMAT = re.compile(r'^TAVI-(?:[A-Z2-7]{4}-){7}[A-Z2-7]{4}$')
 SESSION = sa.table('SocialSession',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),
     sa.column('tokenHash',sa.String),sa.column('created',sa.Integer),
     sa.column('expires',sa.Integer),sa.column('lastSeen',sa.Integer),sa.column('revoked',sa.Boolean))
@@ -345,11 +350,22 @@ def register(db,body,now):
         return {'ok':False,'error':'Registration is disabled on this Social server','code':'REGISTRATION_DISABLED'}
     handle=username(body.get('username'))
     password=body.get('password')
+    # Backstop to LoopRD's per-origin/auth rate limits; a configurable GLOBAL
+    # budget deliberately stores no IPs. For busy public instances increase it.
+    try: hourly_cap=int(os.getenv('LOOPRD_SOCIAL_REGISTRATION_HOURLY_MAX','60'))
+    except ValueError: hourly_cap=60
+    hourly_cap=max(1,min(1000,hourly_cap))
+    hourly=db.execute(sa.select(sa.func.count()).select_from(ACCOUNT).where(ACCOUNT.c.created>=now-3600)).scalar_one()
+    if hourly>=hourly_cap:
+        return {'ok':False,'error':'Registration is temporarily busy. Please try again later.','code':'REGISTRATION_RATE_LIMITED'}
     if db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==handle)).first():
         return {'ok':False,'error':'This username is already registered','code':'USERNAME_TAKEN'}
     digest=password_digest(password)
+    if password.casefold().strip()==handle or handle in password.casefold() and len(password)<20:
+        raise ValueError('Choose a password unrelated to your username')
     id_=db.execute(sa.insert(ACCOUNT).values(handle=handle,passwordHash=digest,created=now,
-        failedAttempts=0,lockedUntil=0,developerEnabled=False,ecosystemAdmin=False).returning(ACCOUNT.c.id)).scalar_one()
+        failedAttempts=0,lockedUntil=0,developerEnabled=False,ecosystemAdmin=False,
+        recoveryFailures=0,recoveryLockedUntil=0).returning(ACCOUNT.c.id)).scalar_one()
     subject='acct_'+str(id_)
     db.execute(sa.insert(PROFILE).values(subjectId=subject,
         data={'schema':SCHEMA,'profileId':subject,'displayName':handle,'appearance':None,'portraitCode':None},
@@ -378,6 +394,80 @@ def login(db,body,now):
     subject='acct_'+str(record['id'])
     return {'ok':True,**new_session(db,subject,now),'profileId':subject}
 
+def _recovery_code():
+    # 160 random bits. Display only in a successful authenticated response;
+    # databases, logs and push payloads never store the plaintext code.
+    raw=base64.b32encode(secrets.token_bytes(20)).decode('ascii')
+    return 'TAVI-'+'-'.join(raw[i:i+4] for i in range(0,32,4))
+
+def recovery_codes_create(db,subject,body,now):
+    account=db.execute(sa.select(ACCOUNT).where(ACCOUNT.c.id==int(subject[5:]))).mappings().first()
+    if not account or not verify_password(body.get('password'),account['passwordHash']):
+        return {'ok':False,'error':'Current password is incorrect','code':'PASSWORD_INVALID'}
+    if account['lockedUntil']>now:
+        return {'ok':False,'error':'Try again after your sign-in lock expires','code':'LOGIN_LOCKED'}
+    codes=[_recovery_code() for _ in range(8)]
+    db.execute(sa.delete(RECOVERY).where(RECOVERY.c.subjectId==subject))
+    for code in codes:
+        db.execute(sa.insert(RECOVERY).values(subjectId=subject,
+          codeHash=hashlib.sha256(code.encode()).hexdigest(),created=now,expires=now+RECOVERY_AGE))
+    return {'ok':True,'schema':'tavi.recovery-codes/v1','codes':codes,'expiresAt':now+RECOVERY_AGE}
+
+def recovery_codes_status(db,subject,now):
+    rows=db.execute(sa.select(RECOVERY.c.expires).where(
+      RECOVERY.c.subjectId==subject,RECOVERY.c.expires>now)).all()
+    return {'ok':True,'schema':'tavi.recovery-status/v1','remaining':len(rows),
+        'expiresAt':min((x[0] for x in rows),default=None)}
+
+def recovery_codes_revoke(db,subject,body):
+    account=db.execute(sa.select(ACCOUNT.c.passwordHash).where(
+        ACCOUNT.c.id==int(subject[5:]))).scalar_one_or_none()
+    if account is None or not verify_password(body.get('password'),account):
+        return {'ok':False,'error':'Current password is incorrect','code':'PASSWORD_INVALID'}
+    db.execute(sa.delete(RECOVERY).where(RECOVERY.c.subjectId==subject))
+    return {'ok':True,'revoked':True}
+
+def recover_account(db,body,now):
+    # Generic responses for nonexistent names, incorrect codes, expired codes,
+    # and recovery lockouts. A recovery proof cannot be a guessed account ID.
+    denied={'ok':False,'error':'Recovery code invalid or expired','code':'RECOVERY_DENIED'}
+    try: handle=username(body.get('username'))
+    except ValueError: return denied
+    code=body.get('recoveryCode')
+    if not isinstance(code,str) or not RECOVERY_FORMAT.fullmatch(code):return denied
+    account=db.execute(sa.select(ACCOUNT).where(ACCOUNT.c.handle==handle)).mappings().first()
+    if not account:return denied
+    if account['recoveryLockedUntil']>now:return denied
+    subject='acct_'+str(account['id'])
+    code_hash=hashlib.sha256(code.encode()).hexdigest()
+    match=db.execute(sa.select(RECOVERY.c.id).where(RECOVERY.c.subjectId==subject,
+        RECOVERY.c.codeHash==code_hash,RECOVERY.c.expires>now)).scalar_one_or_none()
+    if match is None:
+        n=account['recoveryFailures']+1
+        db.execute(sa.update(ACCOUNT).where(ACCOUNT.c.id==account['id']).values(
+            recoveryFailures=n,recoveryLockedUntil=now+900 if n>=5 else 0))
+        return denied
+    new_password=body.get('newPassword')
+    password_hash=password_digest(new_password)
+    if verify_password(new_password,account['passwordHash']):
+        return {'ok':False,'error':'Choose a new password different from the previous one','code':'PASSWORD_REUSED'}
+    if new_password.casefold().strip()==handle or handle in new_password.casefold() and len(new_password)<20:
+        return {'ok':False,'error':'Choose a password unrelated to your username','code':'PASSWORD_WEAK'}
+    # Claim this single-use code atomically. Parallel redeem attempts may have
+    # passed the initial read but only one may delete-and-return it.
+    claimed=db.execute(sa.delete(RECOVERY).where(RECOVERY.c.subjectId==subject,
+        RECOVERY.c.codeHash==code_hash,RECOVERY.c.expires>now).returning(RECOVERY.c.id)).scalar_one_or_none()
+    if claimed is None:return denied
+    db.execute(sa.update(ACCOUNT).where(ACCOUNT.c.id==account['id']).values(
+        passwordHash=password_hash,failedAttempts=0,lockedUntil=0,
+        recoveryFailures=0,recoveryLockedUntil=0))
+    # Revoke all device sessions and all one-use codes (including unused ones),
+    # then create one fresh session for the recovering account.
+    db.execute(sa.update(SESSION).where(SESSION.c.subjectId==subject).values(revoked=True))
+    db.execute(sa.delete(RECOVERY).where(RECOVERY.c.subjectId==subject))
+    return {'ok':True,'schema':'tavi.account-recovered/v1','profileId':subject,
+            **new_session(db,subject,now)}
+
 def logout(db,token):
     if isinstance(token,str):
         db.execute(sa.update(SESSION).where(SESSION.c.tokenHash==hashlib.sha256(token.encode()).hexdigest()).values(revoked=True))
@@ -387,8 +477,8 @@ def logout(db,token):
 # LoopRD management role. Checked on EVERY privileged request and profile refresh.
 # Development tokens cannot get this privilege, even when their subject resembles
 # a registered user; no public API path changes the flag.
-SOCIAL_RELEASE = '0.3.41'
-SOCIAL_SCHEMA_VERSION = 8
+SOCIAL_RELEASE = '0.3.43'
+SOCIAL_SCHEMA_VERSION = 9
 
 def account_developer_permission(db, subject):
     if not isinstance(subject, str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):
@@ -698,10 +788,10 @@ def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
             if principal_subject is not None:
                 # The public guest is only permitted to discover or obtain an account.
                 if principal_subject == 'guest':
-                    if op not in ('game_catalog','capabilities','register','login'):
+                    if op not in ('game_catalog','capabilities','register','login','recover_account'):
                         return error('Sign in to Social first'),None
                 else:
-                    if op in ('register','login'):
+                    if op in ('register','login','recover_account'):
                         return error('Sign out before creating another session'),None
                     if not isinstance(body.get('token'),str) or session_identity(db,body['token'],now) != principal_subject:
                         return error('Session identity does not match verified principal'),None
@@ -710,7 +800,7 @@ def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
             if op=='capabilities':
                 return {'ok':True,'schema':'looprd.social.capabilities/v1',
                     'accounts':True,'registration':os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower() in ('true','1','yes'),
-                    'contacts':True,'directMessages':True,'conversationSummaries':True,'readSync':True,'sessionSeconds':SESSION_AGE,
+                    'recoveryCodes':True,'contacts':True,'directMessages':True,'conversationSummaries':True,'readSync':True,'sessionSeconds':SESSION_AGE,
                     'push':{'schema':'looprd-push/v1','transport':'unifiedpush','deviceRegistration':True,
                             'requiresVerifiedSession':True},
                     'atriumUrl':atrium_app_url()},None
@@ -718,9 +808,17 @@ def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
                 return register(db,body,now),None
             if op=='login':
                 return login(db,body,now),None
+            if op=='recover_account':
+                return recover_account(db,body,now),None
             subject=session_identity(db,body.get('token'),now) or authorize(body.get('token'),tokens)
             if not subject:
                 return error('Sign in to Social first'),None
+            if op=='recovery_codes_create':
+                return recovery_codes_create(db,subject,body,now),None
+            if op=='recovery_codes_status':
+                return recovery_codes_status(db,subject,now),None
+            if op=='recovery_codes_revoke':
+                return recovery_codes_revoke(db,subject,body),None
             if op=='interaction_feed':
                 return interaction_feed(db,subject,now),None
             if op=='game_subscription_set':
@@ -839,6 +937,11 @@ def process_event(ctx):
     principal=ctx.principal.subject
     with ctx.transaction() as db:
         result,event=execute(body,ctx.session_factory,db=db,principal_subject=principal)
+        # Account recovery invalidates the existing account's push endpoints as
+        # well as bearer sessions. A queued content-free hint must not keep
+        # waking a device whose account credential was revoked.
+        if result.get('ok') and op=='recover_account' and ctx.revoke_push:
+            ctx.revoke_push(db,principal_id(result['profileId']))
         if result.get('ok') and event is not None:
             ctx.emit(db,{k:v for k,v in event.items() if k!='component'})
             recipient=None
@@ -859,7 +962,7 @@ async def handle(ctx):
     op=ctx.body.get('op') if isinstance(ctx.body,dict) else None
     changing=op in {'interaction_reply','interaction_dismiss','interaction_publish',
                     'contact_request','contact_accept','contact_remove','dm_mark_read',
-                    'dm_send','save_profile','chat_send'}
+                    'dm_send','save_profile','chat_send','recover_account'}
     if changing:
         return await run_in_threadpool(process_event,ctx)
     result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory,principal_subject=ctx.principal.subject)

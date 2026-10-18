@@ -1,0 +1,78 @@
+= Tavi account recovery and registration resilience — v0.3.43 source candidate
+:revdate: 2026-10-18
+:toc:
+
+== Status and scope
+
+The previous exact push SHA `781a610a88461496ab687ece882a728b245d62ab`
+has eight successfully completed GitHub push workflows. The v0.3.42 ZipRunner ZIP
+at SHA-256 `047c586e3e85e40a0054b1c7a4174c93764bba8b4f605e4b92e12f1fbcd5fd56`
+passed all six fresh source post-update commands on Linux. This is a v0.3.43
+*source-only development candidate*, not a CI-verified pushed commit or accepted
+production release. Independent operator checks are required.
+
+== Account recovery flow
+
+. While authenticated, open Settings > Account recovery codes. Reenter the current password.
+. Social generates eight independent 160-bit random codes. Their SHA-256 digests,
+  principal owner, creation and expiry are held in SQL. Plaintext is returned only
+  on initial issue and displayed in memory; the client does not persist it.
+. The user saves those codes offline. A later issue invalidates all previous codes.
+  Revocation requires current password. Codes expire after 180 days.
+. A signed-out user can select Recover account and supply handle, a complete code,
+  and a new password. An expired, incorrect, unknown-user or locked recovery yields
+  a generic denial. After five failed code submissions the account's recovery
+  path is locked for 15 minutes.
+. Valid recovery revokes all previously issued Tavi device sessions and all
+  remaining recovery codes, replaces the password hash and opens one fresh
+  Tavi session for that account. Generate new recovery codes after recovering.
+
+The recovery code is a bearer recovery secret; do not paste it in chats,
+registration diagnostics, bug reports or project issue trackers.
+
+== SQL changes and deployment
+
+Component release 0.3.43 advances Social schema 8 to 9 additively:
+
+* SocialAccount gains `recoveryFailures` and `recoveryLockedUntil`, default 0.
+* `SocialAccount_created` index supports a bounded global registration budget.
+* New `SocialRecoveryCode` stores an account-scoped SHA-256 digest, creation and
+  expiry; index on `(subjectId, expires)`.
+
+Existing accounts, private DMs, contacts, game grants and subscriptions are not
+rewritten or deleted. Legacy accounts have no recovery codes until they opt in.
+Before deployment, back up the Social database. Validate the generated `looprd.yaml`
+under the installed DAPI binary and test an isolated schema-8 to schema-9 migration.
+Never delete existing database entries to resolve a failed migration.
+
+== Public registration hardening
+
+`LOOPRD_SOCIAL_REGISTRATION_HOURLY_MAX` is a host-only optional setting, default
+60, clamped to 1..1000. It caps new account creation in a rolling hour across
+this Social component and stores no IP addresses. It is an additional backstop,
+not a substitute for LoopRD's configured authentication limits, ingress abuse
+controls or production attack monitoring. A busy server may need a higher cap.
+`LOOPRD_SOCIAL_ALLOW_REGISTRATION=false` still disables new registrations but
+never disables login or recovery for existing users.
+
+== Acceptance checks
+
+* Run `npm run verify`, `python tools/generate-looprd.py --check`, and
+  `python -m unittest discover -s tests -p 'test_*.py' -v`.
+* On a disposable SQL clone, verify schema 8 to 9. Confirm accounts, contacts,
+  DMs and previously issued game grants are untouched.
+* Generate codes on Windows or Android after reentering password; recover on
+  a different signed-out device. Verify old sessions cannot read Social.
+* Check expiry, wrong user, replay, rotation and five-failure lockout.
+* Test registration cap and operator-disabled registration without affecting
+  existing-account login.
+* Verify no code or bearer token lands in log, report, push, deep link or analytics.
+* If an Android server-discovery timeout remains, keep `TAVI-ANDROID-042` open
+  and investigate network/TLS separately.
+
+== Follow-up
+
+LRS-004 stays Review until independent migration, real-device acceptance,
+concurrent recovery race and public-abuse policy have been validated. No email,
+phone, automatic operator reset, account federation or general identity provider
+is implemented by this pass.

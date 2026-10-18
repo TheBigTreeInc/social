@@ -1,3 +1,7 @@
+# Tavi 0.3.43 — LRS-004 account recovery candidate
+
+Opt-in one-use recovery codes (180 days), safe password reset, all-old-session revocation, and a configurable global hourly registration limit. Additive Social SQL schema 9. Operator database backup/migration and physical-device tests are required before approval. See `docs/LRS_004_ACCOUNT_RECOVERY.adoc`.
+
 ## Tavi 0.3.42 — Android sign-in and reporter repair
 
 TAVI-ANDROID-042 logged from Android screenshots: Social discovery timeout on api.thebigtree.life; raw Invalid URL when submitting pre-login report without valid server; system status bar overlaps Tavi header. This client-only pass makes discovery stages and transient 503 failures explicit, validates report origin, and applies Android status-bar spacing. Social schema 8 is unchanged; the real device/backend timeout remains an operator acceptance blocker. See docs/WORKBOARD.md.

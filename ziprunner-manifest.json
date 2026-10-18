@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.42",
-    "base_version": "0.3.41"
+    "version": "0.3.43",
+    "base_version": "0.3.42"
   },
   "update": {
-    "id": "TAVI-20261018-ANDROID-042",
+    "id": "TAVI-20261018-LRS-004",
     "kind": "source_update",
-    "created_at": "2026-10-18T09:01:00+02:00",
-    "summary": "Android sign-in discovery network error classification, per-probe timeout, validated pre-login bug reporting and status bar safe-area repair."
+    "created_at": "2026-10-18T09:45:00+02:00",
+    "summary": "First LRS-004 implementation: offline one-use recovery codes, password reset session revocation and public registration cap. Schema 9 migration."
   },
   "planned_work": [
     {
@@ -889,7 +889,7 @@
       {
         "id": "TAVI-CHAT-002-PY",
         "description": "SQL mailbox summaries, monotonic read cursor, authorization, migration tests",
-        "status": "passed",
+        "status": "requires_rerun_for_0.3.43",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Linux Python 3.13",
         "evidence_ref": "evidence/conversation-sync-tests.md"
@@ -897,7 +897,7 @@
       {
         "id": "TAVI-CHAT-002-NODE",
         "description": "SDK, inbox client behavior, fallback and native IPC source tests",
-        "status": "passed",
+        "status": "requires_rerun_for_0.3.43",
         "command": "npm run verify",
         "environment": "Linux Node.js",
         "evidence_ref": "evidence/conversation-sync-tests.md"
@@ -923,7 +923,7 @@
       {
         "id": "TAVI-PUSH-001-NODE",
         "description": "Client opt-in/capability/wakeup/resume tests",
-        "status": "passed",
+        "status": "requires_rerun_for_0.3.43",
         "command": "node --test client/tests/push-readiness.test.mjs",
         "environment": "Linux Node.js",
         "evidence_ref": "evidence/push-readiness-tests.md"
@@ -937,7 +937,7 @@
       {
         "id": "TAVI-ADMIN-001-PY",
         "description": "Promote/revoke, bound machine caller, admin-only fanout, role lookup and rollback",
-        "status": "passed",
+        "status": "requires_rerun_for_0.3.43",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Python 3.13 SQLite test environment",
         "evidence_ref": "tests/test_ecosystem_admin.py"
@@ -957,7 +957,7 @@
       {
         "id": "TAVI-SESSION-002-JS",
         "description": "Windows DPAPI session adapter, legacy migration, browser behavior",
-        "status": "passed",
+        "status": "requires_rerun_for_0.3.43",
         "command": "node --test client/tests/device-session.test.mjs",
         "environment": "Linux Node 22",
         "evidence_ref": "client/tests/device-session.test.mjs"
@@ -985,7 +985,7 @@
       {
         "id": "TAVI-SESSION-RECOVERY-025-NODE",
         "description": "Credential failure policy, recoverable session retry, timer cancellation and source integration",
-        "status": "passed",
+        "status": "requires_rerun_for_0.3.43",
         "command": "node --test client/tests/session-recovery.test.mjs client/tests/secure-session-contract.test.mjs",
         "environment": "Linux Node.js (author environment)",
         "evidence_ref": "client/tests/session-recovery.test.mjs"
@@ -999,7 +999,7 @@
       {
         "id": "TAVI-UPDATES-003-OVERLAY",
         "description": "Android Kotlin/manifest FileProvider source overlay generated and testable without SDK",
-        "status": "passed",
+        "status": "requires_rerun_for_0.3.43",
         "command": "python -m unittest discover -s tests -p test_*.py",
         "environment": "Linux CPython",
         "evidence_ref": "tests/test_android_updater.py"
@@ -1013,7 +1013,7 @@
       {
         "id": "SOC-GAME-02A-PY",
         "description": "Game event service authorization and deduplication tests",
-        "status": "passed",
+        "status": "requires_rerun_for_0.3.43",
         "command": "python -m unittest discover -s tests -p test_game_events.py -q",
         "environment": "Container-local Python 3.13, SQLAlchemy 2.0",
         "evidence_ref": "evidence/game-event-source-tests.md"
@@ -1027,7 +1027,7 @@
       {
         "id": "TAVI-GAME-002-SOURCE",
         "description": "Source-level invitation and one-use game grant tests",
-        "status": "passed",
+        "status": "requires_rerun_for_0.3.43",
         "command": "python -m unittest discover -s tests -p test_*.py",
         "evidence_ref": "tests/test_game_invites_grants.py"
       },
@@ -1040,7 +1040,7 @@
       {
         "id": "TAVI-ANDROID-042-NODE",
         "description": "Discovery and pre-login report/source safe-area regression tests",
-        "status": "passed",
+        "status": "requires_rerun_for_0.3.43",
         "command": "node --test client/tests/protocol.test.mjs client/tests/bug-report.test.mjs",
         "environment": "Linux Node.js",
         "evidence_ref": "client/tests/bug-report.test.mjs"
@@ -1054,7 +1054,7 @@
     ]
   },
   "handover": {
-    "next_pass": "After v0.3.42 source import, test native Android discovery + reporter against deployed DAPI, then proceed with Life-game game-event and identity-grant integration. Do not mark TAVI-ANDROID-042 complete without an actual phone check.",
+    "next_pass": "After 0.3.43 source import, independently test schema 8\u21929 migration, recovery across devices, registration abuse cap and Android 0.3.42 network issue. Preserve LRS-004 and TAVI-ANDROID-042 as Review until operator acceptance.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -1114,6 +1114,6 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Client resilience and Android layout fix; Social backend schema 8 unchanged. Production root cause requires device and deployed server checks."
+    "notes": "Backend changes require Social SQL schema 9 migration. Recovery, registration and Android sign-in need staging/native validation. Not a release approval."
   }
 }

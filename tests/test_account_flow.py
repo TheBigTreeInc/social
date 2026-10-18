@@ -55,8 +55,8 @@ class AccountFlow(unittest.TestCase):
   cap=self.call(op='capabilities');self.assertTrue(cap['accounts'] and cap['contacts'])
   self.assertFalse(self.call(op='register',username='??',password='long password 123!')['ok'])
   self.assertFalse(self.call(op='register',username='too_short_pw',password='abc')['ok'])
-  self.assertEqual(self.spec['database']['schemaVersion'],8)
-  self.assertEqual([m['version'] for m in self.spec['database']['migrations']],[2,3,4,5,6,7,8])
+  self.assertEqual(self.spec['database']['schemaVersion'],9)
+  self.assertEqual([m['version'] for m in self.spec['database']['migrations']],[2,3,4,5,6,7,8,9])
  def test_registration_can_be_disabled_without_disabling_login(self):
   from unittest.mock import patch
   a=self.reg('alice');self.assertTrue(a['ok'])

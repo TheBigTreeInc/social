@@ -101,3 +101,32 @@ test('game invitations and one-use identity proofs use the signed-in Social API 
  assert(seen.every(x=>!x.grant),'A reusable bearer proof must never be sent in a Tavi inbox request');
  assert.equal(nativeFacade.LooprdSocial,sdk.LooprdSocial);
 });
+
+test('LRS-004 recovery uses portable SDK, no browser automation or account token in signed-out flow',async()=>{
+ const code='TAVI-'+Array.from({length:8},()=> 'ABCD').join('-');
+ const requests=[];
+ const fake=async (url,opts)=>{
+   assert.equal(url,base+'social');
+   const body=JSON.parse(opts.body);requests.push(body);
+   if(body.op==='recover_account')return {ok:true,status:200,json:async()=>({ok:true,token:'r'.repeat(44),profileId:'acct_7'})};
+   if(body.op==='recovery_codes_create')return {ok:true,status:200,json:async()=>({ok:true,codes:[code]})};
+   if(body.op==='recovery_codes_status')return {ok:true,status:200,json:async()=>({ok:true,remaining:1})};
+   return {ok:true,status:200,json:async()=>({ok:true})};
+ };
+ assert.equal(typeof sdk.recoverSocial,'function');
+ assert.equal(sdk.recoverSocial,nativeFacade.recoverSocial);
+ const api=await sdk.recoverSocial(origin,'alice',code,'fresh password 123456',fake);
+ assert(api instanceof sdk.LooprdSocial);
+ assert.equal(requests[0].op,'recover_account');
+ assert.equal(requests[0].recoveryCode,code);
+ assert.equal(requests[0].password,undefined);
+ await api.recoveryCodesCreate('fresh password 123456');
+ await api.recoveryCodesStatus();
+ await api.recoveryCodesRevoke('fresh password 123456');
+ assert.deepEqual(requests.map(x=>x.op),['recover_account','recovery_codes_create','recovery_codes_status','recovery_codes_revoke']);
+ assert.throws(()=>sdk.recoverSocial(origin,'alice','fake code','fresh password 123456',fake),/complete Tavi recovery code/);
+ const source=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
+ assert(source.includes('recovery-codes-form'));
+ assert(source.includes('data-auth="recover"'));
+ assert(source.includes("state.recoveryCodes=null"));
+});

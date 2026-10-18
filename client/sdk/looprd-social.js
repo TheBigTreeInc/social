@@ -73,15 +73,15 @@ export async function discoverSocial(origin, fetcher = browserFetch) {
   const check=await responseJson(caps);
   if(check?.ok!==true||check.schema!=='looprd.social.capabilities/v1'||check.accounts!==true)
     return {available:true,registration:false,accounts:false,release:data.release||''};
-  return {available:true,registration:check.registration===true,accounts:true,release:data.release||''};
+  return {available:true,registration:check.registration===true,accounts:true,recoveryCodes:check.recoveryCodes===true,release:data.release||''};
 }
 
-async function accountCommand(origin, op, username, password, fetcher = browserFetch) {
+async function accountCommand(origin, op, username, password, fetcher = browserFetch, extra={}) {
   const controller = new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
   try {
     const response=await fetcher(componentPath(origin,SOCIAL_COMPONENT,'social'),{
       method:'POST',headers:{'Content-Type':'application/json',...guestHeaders},cache:'no-store',signal:controller.signal,
-      body:JSON.stringify({op,username,password})});
+      body:JSON.stringify({op,username,password,...extra})});
     const body=await responseJson(response);
     if(!body?.ok || typeof body.token!=='string' || body.token.length<32)
       throw new ProtocolError(body?.error||'Social sign-in failed');
@@ -92,6 +92,12 @@ async function accountCommand(origin, op, username, password, fetcher = browserF
 
 export const registerSocial=(origin,username,password,fetcher=browserFetch)=>accountCommand(origin,'register',username,password,fetcher);
 export const loginSocial=(origin,username,password,fetcher=browserFetch)=>accountCommand(origin,'login',username,password,fetcher);
+/** Recovery-code exchange creates a fresh session and revokes every older session. */
+export function recoverSocial(origin,username,recoveryCode,newPassword,fetcher=browserFetch){
+  if(!/^TAVI-(?:[A-Z2-7]{4}-){7}[A-Z2-7]{4}$/.test(recoveryCode||''))throw new ProtocolError('Enter a complete Tavi recovery code.');
+  if(typeof newPassword!=='string'||newPassword.length<12||newPassword.length>128)throw new ProtocolError('New password must have 12–128 characters.');
+  return accountCommand(origin,'recover_account',username,undefined,fetcher,{recoveryCode,newPassword});
+}
 
 /** Read the selected server's operator-approved game catalog. No Social token sent. */
 export async function discoverGames(origin, fetcher=browserFetch) {
@@ -173,6 +179,9 @@ export class LooprdSocial {
   dismissInteraction(id) { return this.command('interaction_dismiss', {id}); }
   publishInteraction(recipient, interaction, ttlSeconds = 86400) { return this.command('interaction_publish', {recipient,interaction,ttlSeconds}); }
   me() { return this.command('me'); }
+  recoveryCodesStatus(){return this.command('recovery_codes_status');}
+  recoveryCodesCreate(password){return this.command('recovery_codes_create',{password});}
+  recoveryCodesRevoke(password){return this.command('recovery_codes_revoke',{password});}
   developerDiagnostics() { return this.command('developer_diagnostics').then(validateDeveloperDiagnostics); }
   saveProfile(profile, revision) { return this.command('save_profile', {profile, ifRevision: revision}); }
   feed() { return this.command('chat_feed'); }

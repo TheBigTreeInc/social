@@ -1,3 +1,9 @@
+## Tavi 0.3.43 — LRS-004 account recovery source candidate
+
+CI gate checked for previous 0.3.42 Git commit `781a610a88461496ab687ece882a728b245d62ab`: all eight push workflows passed. New 0.3.43 source requires independent checks. Import into project `looprd-social`, back up and validate Social schema 9 migration, then test recovery and registration on staged instance. Do not push/tag/release automatically.
+
+ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.43|file=looprd-social-0.3.43-account-recovery-ziprunner.zip
+
 ## Tavi 0.3.42 — Android sign-in and reporter repair
 
 TAVI-ANDROID-042 logged from Android screenshots: Social discovery timeout on api.thebigtree.life; raw Invalid URL when submitting pre-login report without valid server; system status bar overlaps Tavi header. This client-only pass makes discovery stages and transient 503 failures explicit, validates report origin, and applies Android status-bar spacing. Social schema 8 is unchanged; the real device/backend timeout remains an operator acceptance blocker. See docs/WORKBOARD.md.

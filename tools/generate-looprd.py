@@ -28,7 +28,7 @@ spec={
  'push':{'transport':'unifiedpush','scopes':['push:manage'],
          'deviceLifetimeSeconds':86400,'maxDevicesPerPrincipal':8},
  'limits':{'requestsPerMinute':180,'authAttemptsPerMinute':90,'burstPerSecond':15,'maxInFlight':30},
-  'database':{'backend':'sqlite','schemaVersion':8,'migrations':[{'version':2,'statements':[
+  'database':{'backend':'sqlite','schemaVersion':9,'migrations':[{'version':2,'statements':[
   'CREATE TABLE "SocialAccount" ("id" INTEGER PRIMARY KEY, "handle" VARCHAR(32) NOT NULL UNIQUE, "passwordHash" VARCHAR(255) NOT NULL, "created" INTEGER NOT NULL, "failedAttempts" INTEGER NOT NULL, "lockedUntil" INTEGER NOT NULL)',
   'CREATE TABLE "SocialSession" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "tokenHash" VARCHAR(64) NOT NULL UNIQUE, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL, "lastSeen" INTEGER NOT NULL, "revoked" BOOLEAN NOT NULL)',
   'CREATE TABLE "SocialContact" ("id" INTEGER PRIMARY KEY, "leftId" VARCHAR(72) NOT NULL, "rightId" VARCHAR(72) NOT NULL, "requestedBy" VARCHAR(72) NOT NULL, "status" VARCHAR(16) NOT NULL, "created" INTEGER NOT NULL)',
@@ -54,12 +54,19 @@ spec={
   ]},{'version':8,'statements':[
   'CREATE TABLE "SocialGameGrant" ("id" INTEGER PRIMARY KEY, "tokenHash" VARCHAR(64) NOT NULL UNIQUE, "sessionHash" VARCHAR(64) NOT NULL, "subjectId" VARCHAR(72) NOT NULL, "publisher" VARCHAR(48) NOT NULL, "gameId" VARCHAR(96) NOT NULL, "matchId" VARCHAR(128) NOT NULL, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL, "consumed" BOOLEAN NOT NULL)',
   'CREATE INDEX "SocialGameGrant_subject" ON "SocialGameGrant" ("subjectId","expires")'
+  ]},{'version':9,'statements':[
+  'ALTER TABLE "SocialAccount" ADD COLUMN "recoveryFailures" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "SocialAccount" ADD COLUMN "recoveryLockedUntil" INTEGER NOT NULL DEFAULT 0',
+  'CREATE INDEX "SocialAccount_created" ON "SocialAccount" ("created")',
+  'CREATE TABLE "SocialRecoveryCode" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "codeHash" VARCHAR(64) NOT NULL UNIQUE, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL)',
+  'CREATE INDEX "SocialRecoveryCode_subject" ON "SocialRecoveryCode" ("subjectId","expires")'
   ]}]},
  'models':{
     'SocialProfile':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True,True),'data':{'type':'json','required':True},'revision':integer(True),'updated':integer(True)}},
     'SocialMessage':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'displayName':string(24,True),'content':string(320,True),'created':integer(True)}},
     'SocialPulse':{'fields':{'id':integer(primary=True,generated=True),'signal':integer(True)}},
-    'SocialAccount':{'fields':{'id':integer(primary=True,generated=True),'handle':string(32,True,True),'passwordHash':string(255,True),'created':integer(True),'failedAttempts':integer(True),'lockedUntil':integer(True),'developerEnabled':{'type':'boolean','required':True},'ecosystemAdmin':{'type':'boolean','required':True}}},
+    'SocialAccount':{'fields':{'id':integer(primary=True,generated=True),'handle':string(32,True,True),'passwordHash':string(255,True),'created':integer(True),'failedAttempts':integer(True),'lockedUntil':integer(True),'developerEnabled':{'type':'boolean','required':True},'ecosystemAdmin':{'type':'boolean','required':True},'recoveryFailures':integer(True),'recoveryLockedUntil':integer(True)},'indexes':[{'name':'SocialAccount_created','fields':['created']}]},
+    'SocialRecoveryCode':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'codeHash':string(64,True,True),'created':integer(True),'expires':integer(True)},'indexes':[{'name':'SocialRecoveryCode_subject','fields':['subjectId','expires']}]},
     'SocialSession':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'tokenHash':string(64,True,True),'created':integer(True),'expires':integer(True),'lastSeen':integer(True),'revoked':{'type':'boolean','required':True}}},
     'SocialContact':{'fields':{'id':integer(primary=True,generated=True),'leftId':string(72,True),'rightId':string(72,True),'requestedBy':string(72,True),'status':string(16,True),'created':integer(True)},'indexes':[{'name':'SocialContact_pair','fields':['leftId','rightId'],'unique':True}]},
     'SocialInteraction':{'fields':{'id':integer(primary=True,generated=True),'recipient':string(72,True),'publisher':string(72,True),'topic':string(96,True),'title':string(120,True),'data':{'type':'json','required':True},'status':string(16,True),'response':{'type':'json'},'created':integer(True),'expires':integer(True)},'indexes':[{'name':'SocialInteraction_recipient','fields':['recipient','id']}]},
@@ -145,7 +152,7 @@ spec={
            'properties':{'subject':{'type':'string','minLength':6,'maxLength':72}}},
        'response':{'type':'object','required':['admin'],'additionalProperties':False,
            'properties':{'admin':{'type':'boolean'}}}}},
-    {'path':'/info','kind':'response','scopes':['social:api'],'response':{'protocol':'looprd.social/1','auth':'social-accounts','registration':'see-capabilities','features':['contacts','direct-messages','lobby','portraits','server-gated-developer-tools','game-event-inbox-v1','game-invites-v1','game-grants-v1'],'release':version}},
+    {'path':'/info','kind':'response','scopes':['social:api'],'response':{'protocol':'looprd.social/1','auth':'social-accounts','registration':'see-capabilities','features':['contacts','direct-messages','lobby','portraits','server-gated-developer-tools','game-event-inbox-v1','game-invites-v1','game-grants-v1','recovery-codes-v1'],'release':version}},
  ]}
 output='# Generated from server/looprd_handler.py. Do not edit by hand.\n'+yaml.safe_dump(spec,sort_keys=False,allow_unicode=True,width=110)
 if '--check' in sys.argv:

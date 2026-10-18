@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.41
+release: 0.3.43
 api:
   version: v1
 cors:
@@ -74,7 +74,7 @@ limits:
   maxInFlight: 30
 database:
   backend: sqlite
-  schemaVersion: 8
+  schemaVersion: 9
   migrations:
   - version: 2
     statements:
@@ -125,6 +125,14 @@ database:
       NOT NULL, "matchId" VARCHAR(128) NOT NULL, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL, "consumed"
       BOOLEAN NOT NULL)
     - CREATE INDEX "SocialGameGrant_subject" ON "SocialGameGrant" ("subjectId","expires")
+  - version: 9
+    statements:
+    - ALTER TABLE "SocialAccount" ADD COLUMN "recoveryFailures" INTEGER NOT NULL DEFAULT 0
+    - ALTER TABLE "SocialAccount" ADD COLUMN "recoveryLockedUntil" INTEGER NOT NULL DEFAULT 0
+    - CREATE INDEX "SocialAccount_created" ON "SocialAccount" ("created")
+    - CREATE TABLE "SocialRecoveryCode" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "codeHash"
+      VARCHAR(64) NOT NULL UNIQUE, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL)
+    - CREATE INDEX "SocialRecoveryCode_subject" ON "SocialRecoveryCode" ("subjectId","expires")
 models:
   SocialProfile:
     fields:
@@ -206,6 +214,42 @@ models:
       ecosystemAdmin:
         type: boolean
         required: true
+      recoveryFailures:
+        type: integer
+        required: true
+      recoveryLockedUntil:
+        type: integer
+        required: true
+    indexes:
+    - name: SocialAccount_created
+      fields:
+      - created
+  SocialRecoveryCode:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      subjectId:
+        type: string
+        maxLength: 72
+        required: true
+      codeHash:
+        type: string
+        maxLength: 64
+        required: true
+        unique: true
+      created:
+        type: integer
+        required: true
+      expires:
+        type: integer
+        required: true
+    indexes:
+    - name: SocialRecoveryCode_subject
+      fields:
+      - subjectId
+      - expires
   SocialSession:
     fields:
       id:
@@ -685,9 +729,12 @@ handlers:
     \            'data':{'id':1,'signal':count}}\n\n\n\nimport base64\nimport hashlib\nimport hmac\nimport os\n\
     import re\nimport secrets\nimport time\nimport sqlalchemy as sa\n\nACCOUNT = sa.table('SocialAccount', sa.column('id',sa.Integer),sa.column('handle',sa.String),\n\
     \    sa.column('passwordHash',sa.String),sa.column('created',sa.Integer),\n    sa.column('failedAttempts',sa.Integer),sa.column('lockedUntil',sa.Integer),\n\
-    \    sa.column('developerEnabled',sa.Boolean),sa.column('ecosystemAdmin',sa.Boolean))\nSESSION = sa.table('SocialSession',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n\
-    \    sa.column('tokenHash',sa.String),sa.column('created',sa.Integer),\n    sa.column('expires',sa.Integer),sa.column('lastSeen',sa.Integer),sa.column('revoked',sa.Boolean))\n\
-    CONTACT = sa.table('SocialContact',sa.column('id',sa.Integer),sa.column('leftId',sa.String),\n    sa.column('rightId',sa.String),sa.column('requestedBy',sa.String),\n\
+    \    sa.column('developerEnabled',sa.Boolean),sa.column('ecosystemAdmin',sa.Boolean),\n    sa.column('recoveryFailures',sa.Integer),sa.column('recoveryLockedUntil',sa.Integer))\n\
+    RECOVERY = sa.table('SocialRecoveryCode',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n    sa.column('codeHash',sa.String),sa.column('created',sa.Integer),sa.column('expires',sa.Integer))\n\
+    RECOVERY_AGE = 180*86400\nRECOVERY_FORMAT = re.compile(r'^TAVI-(?:[A-Z2-7]{4}-){7}[A-Z2-7]{4}$')\nSESSION =\
+    \ sa.table('SocialSession',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n    sa.column('tokenHash',sa.String),sa.column('created',sa.Integer),\n\
+    \    sa.column('expires',sa.Integer),sa.column('lastSeen',sa.Integer),sa.column('revoked',sa.Boolean))\nCONTACT\
+    \ = sa.table('SocialContact',sa.column('id',sa.Integer),sa.column('leftId',sa.String),\n    sa.column('rightId',sa.String),sa.column('requestedBy',sa.String),\n\
     \    sa.column('status',sa.String),sa.column('created',sa.Integer))\nDM = sa.table('SocialDirectMessage',sa.column('id',sa.Integer),sa.column('leftId',sa.String),\n\
     \    sa.column('rightId',sa.String),sa.column('senderId',sa.String),\n    sa.column('content',sa.String),sa.column('created',sa.Integer))\n\
     READ = sa.table('SocialConversationRead',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n    sa.column('peerId',sa.String),sa.column('readId',sa.Integer),sa.column('updated',sa.Integer))\n\
@@ -711,9 +758,16 @@ handlers:
     \ if now-session['lastSeen']>=30:\n        db.execute(sa.update(SESSION).where(SESSION.c.id==session['id']).values(lastSeen=now))\n\
     \    return session['subjectId']\n\ndef register(db,body,now):\n    if os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower()\
     \ not in ('true','1','yes'):\n        return {'ok':False,'error':'Registration is disabled on this Social server','code':'REGISTRATION_DISABLED'}\n\
-    \    handle=username(body.get('username'))\n    password=body.get('password')\n    if db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==handle)).first():\n\
+    \    handle=username(body.get('username'))\n    password=body.get('password')\n    # Backstop to LoopRD's per-origin/auth\
+    \ rate limits; a configurable GLOBAL\n    # budget deliberately stores no IPs. For busy public instances increase\
+    \ it.\n    try: hourly_cap=int(os.getenv('LOOPRD_SOCIAL_REGISTRATION_HOURLY_MAX','60'))\n    except ValueError:\
+    \ hourly_cap=60\n    hourly_cap=max(1,min(1000,hourly_cap))\n    hourly=db.execute(sa.select(sa.func.count()).select_from(ACCOUNT).where(ACCOUNT.c.created>=now-3600)).scalar_one()\n\
+    \    if hourly>=hourly_cap:\n        return {'ok':False,'error':'Registration is temporarily busy. Please try\
+    \ again later.','code':'REGISTRATION_RATE_LIMITED'}\n    if db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==handle)).first():\n\
     \        return {'ok':False,'error':'This username is already registered','code':'USERNAME_TAKEN'}\n    digest=password_digest(password)\n\
-    \    id_=db.execute(sa.insert(ACCOUNT).values(handle=handle,passwordHash=digest,created=now,\n        failedAttempts=0,lockedUntil=0,developerEnabled=False,ecosystemAdmin=False).returning(ACCOUNT.c.id)).scalar_one()\n\
+    \    if password.casefold().strip()==handle or handle in password.casefold() and len(password)<20:\n       \
+    \ raise ValueError('Choose a password unrelated to your username')\n    id_=db.execute(sa.insert(ACCOUNT).values(handle=handle,passwordHash=digest,created=now,\n\
+    \        failedAttempts=0,lockedUntil=0,developerEnabled=False,ecosystemAdmin=False,\n        recoveryFailures=0,recoveryLockedUntil=0).returning(ACCOUNT.c.id)).scalar_one()\n\
     \    subject='acct_'+str(id_)\n    db.execute(sa.insert(PROFILE).values(subjectId=subject,\n        data={'schema':SCHEMA,'profileId':subject,'displayName':handle,'appearance':None,'portraitCode':None},\n\
     \        revision=1,updated=now))\n    return {'ok':True,**new_session(db,subject,now),'profileId':subject}\n\
     \ndef login(db,body,now):\n    # Never reveal whether a username exists. Persistent per-account backoff and\n\
@@ -727,11 +781,49 @@ handlers:
     \            failedAttempts=attempts,lockedUntil=now+900 if attempts>=5 else 0))\n        return {'ok':False,'error':'Invalid\
     \ username or password','code':'INVALID_LOGIN'}\n    db.execute(sa.update(ACCOUNT).where(ACCOUNT.c.id==record['id']).values(failedAttempts=0,lockedUntil=0))\n\
     \    subject='acct_'+str(record['id'])\n    return {'ok':True,**new_session(db,subject,now),'profileId':subject}\n\
-    \ndef logout(db,token):\n    if isinstance(token,str):\n        db.execute(sa.update(SESSION).where(SESSION.c.tokenHash==hashlib.sha256(token.encode()).hexdigest()).values(revoked=True))\n\
+    \ndef _recovery_code():\n    # 160 random bits. Display only in a successful authenticated response;\n    #\
+    \ databases, logs and push payloads never store the plaintext code.\n    raw=base64.b32encode(secrets.token_bytes(20)).decode('ascii')\n\
+    \    return 'TAVI-'+'-'.join(raw[i:i+4] for i in range(0,32,4))\n\ndef recovery_codes_create(db,subject,body,now):\n\
+    \    account=db.execute(sa.select(ACCOUNT).where(ACCOUNT.c.id==int(subject[5:]))).mappings().first()\n    if\
+    \ not account or not verify_password(body.get('password'),account['passwordHash']):\n        return {'ok':False,'error':'Current\
+    \ password is incorrect','code':'PASSWORD_INVALID'}\n    if account['lockedUntil']>now:\n        return {'ok':False,'error':'Try\
+    \ again after your sign-in lock expires','code':'LOGIN_LOCKED'}\n    codes=[_recovery_code() for _ in range(8)]\n\
+    \    db.execute(sa.delete(RECOVERY).where(RECOVERY.c.subjectId==subject))\n    for code in codes:\n        db.execute(sa.insert(RECOVERY).values(subjectId=subject,\n\
+    \          codeHash=hashlib.sha256(code.encode()).hexdigest(),created=now,expires=now+RECOVERY_AGE))\n    return\
+    \ {'ok':True,'schema':'tavi.recovery-codes/v1','codes':codes,'expiresAt':now+RECOVERY_AGE}\n\ndef recovery_codes_status(db,subject,now):\n\
+    \    rows=db.execute(sa.select(RECOVERY.c.expires).where(\n      RECOVERY.c.subjectId==subject,RECOVERY.c.expires>now)).all()\n\
+    \    return {'ok':True,'schema':'tavi.recovery-status/v1','remaining':len(rows),\n        'expiresAt':min((x[0]\
+    \ for x in rows),default=None)}\n\ndef recovery_codes_revoke(db,subject,body):\n    account=db.execute(sa.select(ACCOUNT.c.passwordHash).where(\n\
+    \        ACCOUNT.c.id==int(subject[5:]))).scalar_one_or_none()\n    if account is None or not verify_password(body.get('password'),account):\n\
+    \        return {'ok':False,'error':'Current password is incorrect','code':'PASSWORD_INVALID'}\n    db.execute(sa.delete(RECOVERY).where(RECOVERY.c.subjectId==subject))\n\
+    \    return {'ok':True,'revoked':True}\n\ndef recover_account(db,body,now):\n    # Generic responses for nonexistent\
+    \ names, incorrect codes, expired codes,\n    # and recovery lockouts. A recovery proof cannot be a guessed\
+    \ account ID.\n    denied={'ok':False,'error':'Recovery code invalid or expired','code':'RECOVERY_DENIED'}\n\
+    \    try: handle=username(body.get('username'))\n    except ValueError: return denied\n    code=body.get('recoveryCode')\n\
+    \    if not isinstance(code,str) or not RECOVERY_FORMAT.fullmatch(code):return denied\n    account=db.execute(sa.select(ACCOUNT).where(ACCOUNT.c.handle==handle)).mappings().first()\n\
+    \    if not account:return denied\n    if account['recoveryLockedUntil']>now:return denied\n    subject='acct_'+str(account['id'])\n\
+    \    code_hash=hashlib.sha256(code.encode()).hexdigest()\n    match=db.execute(sa.select(RECOVERY.c.id).where(RECOVERY.c.subjectId==subject,\n\
+    \        RECOVERY.c.codeHash==code_hash,RECOVERY.c.expires>now)).scalar_one_or_none()\n    if match is None:\n\
+    \        n=account['recoveryFailures']+1\n        db.execute(sa.update(ACCOUNT).where(ACCOUNT.c.id==account['id']).values(\n\
+    \            recoveryFailures=n,recoveryLockedUntil=now+900 if n>=5 else 0))\n        return denied\n    new_password=body.get('newPassword')\n\
+    \    password_hash=password_digest(new_password)\n    if verify_password(new_password,account['passwordHash']):\n\
+    \        return {'ok':False,'error':'Choose a new password different from the previous one','code':'PASSWORD_REUSED'}\n\
+    \    if new_password.casefold().strip()==handle or handle in new_password.casefold() and len(new_password)<20:\n\
+    \        return {'ok':False,'error':'Choose a password unrelated to your username','code':'PASSWORD_WEAK'}\n\
+    \    # Claim this single-use code atomically. Parallel redeem attempts may have\n    # passed the initial read\
+    \ but only one may delete-and-return it.\n    claimed=db.execute(sa.delete(RECOVERY).where(RECOVERY.c.subjectId==subject,\n\
+    \        RECOVERY.c.codeHash==code_hash,RECOVERY.c.expires>now).returning(RECOVERY.c.id)).scalar_one_or_none()\n\
+    \    if claimed is None:return denied\n    db.execute(sa.update(ACCOUNT).where(ACCOUNT.c.id==account['id']).values(\n\
+    \        passwordHash=password_hash,failedAttempts=0,lockedUntil=0,\n        recoveryFailures=0,recoveryLockedUntil=0))\n\
+    \    # Revoke all device sessions and all one-use codes (including unused ones),\n    # then create one fresh\
+    \ session for the recovering account.\n    db.execute(sa.update(SESSION).where(SESSION.c.subjectId==subject).values(revoked=True))\n\
+    \    db.execute(sa.delete(RECOVERY).where(RECOVERY.c.subjectId==subject))\n    return {'ok':True,'schema':'tavi.account-recovered/v1','profileId':subject,\n\
+    \            **new_session(db,subject,now)}\n\ndef logout(db,token):\n    if isinstance(token,str):\n      \
+    \  db.execute(sa.update(SESSION).where(SESSION.c.tokenHash==hashlib.sha256(token.encode()).hexdigest()).values(revoked=True))\n\
     \    return {'ok':True}\n\n# Social-specific development privilege: operator-set DB entitlement, never a\n#\
     \ LoopRD management role. Checked on EVERY privileged request and profile refresh.\n# Development tokens cannot\
     \ get this privilege, even when their subject resembles\n# a registered user; no public API path changes the\
-    \ flag.\nSOCIAL_RELEASE = '0.3.41'\nSOCIAL_SCHEMA_VERSION = 8\n\ndef account_developer_permission(db, subject):\n\
+    \ flag.\nSOCIAL_RELEASE = '0.3.43'\nSOCIAL_SCHEMA_VERSION = 9\n\ndef account_developer_permission(db, subject):\n\
     \    if not isinstance(subject, str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):\n        return\
     \ False\n    account = db.execute(sa.select(ACCOUNT.c.developerEnabled).where(\n        ACCOUNT.c.id == int(subject[5:]))).first()\n\
     \    return account is not None and account[0] is True\n\ndef account_ecosystem_admin(db, subject):\n    \"\"\
@@ -883,33 +975,37 @@ handlers:
     \    op=body.get('op')\n    now=int(time.time()) if now is None else int(now)\n    try:\n        with (nullcontext(db)\
     \ if db is not None else sessions.begin()) as db:\n            if principal_subject is not None:\n         \
     \       # The public guest is only permitted to discover or obtain an account.\n                if principal_subject\
-    \ == 'guest':\n                    if op not in ('game_catalog','capabilities','register','login'):\n      \
-    \                  return error('Sign in to Social first'),None\n                else:\n                   \
-    \ if op in ('register','login'):\n                        return error('Sign out before creating another session'),None\n\
-    \                    if not isinstance(body.get('token'),str) or session_identity(db,body['token'],now) != principal_subject:\n\
-    \                        return error('Session identity does not match verified principal'),None\n         \
-    \   if op=='game_catalog':\n                return {'ok':True,'schema':'tavi.game-catalog/v1','games':published_games()},None\n\
+    \ == 'guest':\n                    if op not in ('game_catalog','capabilities','register','login','recover_account'):\n\
+    \                        return error('Sign in to Social first'),None\n                else:\n             \
+    \       if op in ('register','login','recover_account'):\n                        return error('Sign out before\
+    \ creating another session'),None\n                    if not isinstance(body.get('token'),str) or session_identity(db,body['token'],now)\
+    \ != principal_subject:\n                        return error('Session identity does not match verified principal'),None\n\
+    \            if op=='game_catalog':\n                return {'ok':True,'schema':'tavi.game-catalog/v1','games':published_games()},None\n\
     \            if op=='capabilities':\n                return {'ok':True,'schema':'looprd.social.capabilities/v1',\n\
     \                    'accounts':True,'registration':os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower()\
-    \ in ('true','1','yes'),\n                    'contacts':True,'directMessages':True,'conversationSummaries':True,'readSync':True,'sessionSeconds':SESSION_AGE,\n\
+    \ in ('true','1','yes'),\n                    'recoveryCodes':True,'contacts':True,'directMessages':True,'conversationSummaries':True,'readSync':True,'sessionSeconds':SESSION_AGE,\n\
     \                    'push':{'schema':'looprd-push/v1','transport':'unifiedpush','deviceRegistration':True,\n\
     \                            'requiresVerifiedSession':True},\n                    'atriumUrl':atrium_app_url()},None\n\
     \            if op=='register':\n                return register(db,body,now),None\n            if op=='login':\n\
-    \                return login(db,body,now),None\n            subject=session_identity(db,body.get('token'),now)\
-    \ or authorize(body.get('token'),tokens)\n            if not subject:\n                return error('Sign in\
-    \ to Social first'),None\n            if op=='interaction_feed':\n                return interaction_feed(db,subject,now),None\n\
-    \            if op=='game_subscription_set':\n                return set_game_subscription(db,subject,body,now),None\n\
-    \            if op=='game_grant_issue':\n                return issue_game_grant(db,subject,body,now),None\n\
-    \            if op=='game_event_feed':\n                return game_event_feed(db,subject,body),None\n     \
-    \       if op=='interaction_reply':\n                result=interaction_reply(db,subject,body,now)\n       \
-    \         return result,event_signal(db) if result['ok'] else None\n            if op=='interaction_dismiss':\n\
-    \                result=interaction_dismiss(db,subject,body,now)\n                return result,event_signal(db)\
-    \ if result['ok'] else None\n            if op=='interaction_publish':\n                # Development/initial\
-    \ integration publisher: only operator-authorized developer accounts.\n                if not account_developer_permission(db,subject):\n\
-    \                    return error('Publisher permission denied'),None\n                recipient=body.get('recipient')\n\
-    \                if not isinstance(recipient,str) or not re.fullmatch(r'[a-z][a-z0-9_]{2,23}',recipient):return\
-    \ error('Invalid recipient'),None\n                target=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==recipient)).first()\n\
-    \                if not target:return error('Recipient not found'),None\n                clean=validate_interaction(body.get('interaction'))\n\
+    \                return login(db,body,now),None\n            if op=='recover_account':\n                return\
+    \ recover_account(db,body,now),None\n            subject=session_identity(db,body.get('token'),now) or authorize(body.get('token'),tokens)\n\
+    \            if not subject:\n                return error('Sign in to Social first'),None\n            if op=='recovery_codes_create':\n\
+    \                return recovery_codes_create(db,subject,body,now),None\n            if op=='recovery_codes_status':\n\
+    \                return recovery_codes_status(db,subject,now),None\n            if op=='recovery_codes_revoke':\n\
+    \                return recovery_codes_revoke(db,subject,body),None\n            if op=='interaction_feed':\n\
+    \                return interaction_feed(db,subject,now),None\n            if op=='game_subscription_set':\n\
+    \                return set_game_subscription(db,subject,body,now),None\n            if op=='game_grant_issue':\n\
+    \                return issue_game_grant(db,subject,body,now),None\n            if op=='game_event_feed':\n\
+    \                return game_event_feed(db,subject,body),None\n            if op=='interaction_reply':\n   \
+    \             result=interaction_reply(db,subject,body,now)\n                return result,event_signal(db)\
+    \ if result['ok'] else None\n            if op=='interaction_dismiss':\n                result=interaction_dismiss(db,subject,body,now)\n\
+    \                return result,event_signal(db) if result['ok'] else None\n            if op=='interaction_publish':\n\
+    \                # Development/initial integration publisher: only operator-authorized developer accounts.\n\
+    \                if not account_developer_permission(db,subject):\n                    return error('Publisher\
+    \ permission denied'),None\n                recipient=body.get('recipient')\n                if not isinstance(recipient,str)\
+    \ or not re.fullmatch(r'[a-z][a-z0-9_]{2,23}',recipient):return error('Invalid recipient'),None\n          \
+    \      target=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==recipient)).first()\n             \
+    \   if not target:return error('Recipient not found'),None\n                clean=validate_interaction(body.get('interaction'))\n\
     \                expiry=now+min(7*86400,max(60,int(body.get('ttlSeconds',86400))))\n                db.execute(sa.insert(INTERACTION).values(recipient='acct_'+str(target[0]),publisher=subject,\n\
     \                    topic=clean['topic'],title=clean['title'],data=clean,status='open',response=None,created=now,expires=expiry))\n\
     \                return {'ok':True},event_signal(db)\n            if op=='developer_diagnostics':\n        \
@@ -963,16 +1059,19 @@ handlers:
     \    \"\"\"Use the same transaction for application writes, event and push outbox.\"\"\"\n    body=ctx.body\n\
     \    op=body.get('op') if isinstance(body,dict) else None\n    principal=ctx.principal.subject\n    with ctx.transaction()\
     \ as db:\n        result,event=execute(body,ctx.session_factory,db=db,principal_subject=principal)\n       \
-    \ if result.get('ok') and event is not None:\n            ctx.emit(db,{k:v for k,v in event.items() if k!='component'})\n\
-    \            recipient=None\n            if op=='dm_send':\n                recipient=body.get('peer')\n   \
-    \         elif op=='contact_request':\n                recipient=account_subject(db,username(body.get('username')))\n\
+    \ # Account recovery invalidates the existing account's push endpoints as\n        # well as bearer sessions.\
+    \ A queued content-free hint must not keep\n        # waking a device whose account credential was revoked.\n\
+    \        if result.get('ok') and op=='recover_account' and ctx.revoke_push:\n            ctx.revoke_push(db,principal_id(result['profileId']))\n\
+    \        if result.get('ok') and event is not None:\n            ctx.emit(db,{k:v for k,v in event.items() if\
+    \ k!='component'})\n            recipient=None\n            if op=='dm_send':\n                recipient=body.get('peer')\n\
+    \            elif op=='contact_request':\n                recipient=account_subject(db,username(body.get('username')))\n\
     \            elif op in ('contact_accept','contact_remove'):\n                recipient=body.get('peer')\n \
     \           elif op=='interaction_publish':\n                recipient=account_subject(db,username(body.get('recipient')))\n\
     \            if recipient and recipient != principal and re.fullmatch(r'acct_[0-9]{1,19}',recipient):\n    \
     \            ctx.notify(db,principal_id(recipient))\n    return result\n\n\nasync def handle(ctx):\n    op=ctx.body.get('op')\
     \ if isinstance(ctx.body,dict) else None\n    changing=op in {'interaction_reply','interaction_dismiss','interaction_publish',\n\
     \                    'contact_request','contact_accept','contact_remove','dm_mark_read',\n                 \
-    \   'dm_send','save_profile','chat_send'}\n    if changing:\n        return await run_in_threadpool(process_event,ctx)\n\
+    \   'dm_send','save_profile','chat_send','recover_account'}\n    if changing:\n        return await run_in_threadpool(process_event,ctx)\n\
     \    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory,principal_subject=ctx.principal.subject)\n\
     \    # login/register create an account-specific session; the identity is checked on\n    # the *next* request.\
     \ No push is sent for guest operations or regular reads.\n    return result\n"
@@ -1393,4 +1492,5 @@ handlers:
     - game-event-inbox-v1
     - game-invites-v1
     - game-grants-v1
-    release: 0.3.41
+    - recovery-codes-v1
+    release: 0.3.43
