@@ -48,15 +48,37 @@ export async function reconcileInbox({api,checkpoint,onMessage,bootstrap='latest
  }
  return next;
 }
+/** Poll only account-scoped, pending game proposals; never consume service-owned seat invites. */
+export async function reconcileChallenges({api,checkpoint,onChallenge,path}){
+ if(typeof onChallenge!=='function')return checkpoint;
+ const feed=await api.interactions();
+ if(!Array.isArray(feed?.events))throw Error('Invalid Tavi challenge inbox');
+ checkpoint.challenges ||= [];
+ if(!Array.isArray(checkpoint.challenges))throw Error('Invalid challenge checkpoint');
+ const handled=new Set(checkpoint.challenges);
+ const events=feed.events.filter(e=>e?.topic==='game.challenge.requested'&&e.status==='open'&&
+   Number.isSafeInteger(e.id)&&e.id>0&&e.challenge?.schema==='tavi.game-challenge/v1'&&
+   ID.test(e.challenge.sender)&&typeof e.challenge.gameId==='string'&&
+   /^[a-z][a-z0-9-]{1,47}$/.test(e.challenge.gameId)&&!handled.has(e.id))
+   .sort((a,b)=>a.id-b.id);
+ for(const event of events){
+   await onChallenge({id:event.id,peer:event.challenge.sender,gameId:event.challenge.gameId,
+     gameName:String(event.challenge.gameName||event.challenge.gameId).slice(0,64),expires:event.expires});
+   handled.add(event.id);
+   checkpoint.challenges=[...handled].slice(-200);
+   if(path)await persistCheckpoint(path,checkpoint);
+ }
+ return checkpoint;
+}
 export function pulseWake(event){try{return JSON.parse(typeof event==='string'?event:event?.data).resource==='pulses';}catch{return false;}}
 /** WebSocket signals are non-authoritative wake hints: always reconcile over authenticated HTTP. */
-export async function runWatcher({api,onMessage,signal,pollMs=DEFAULT_POLL_MS,WebSocketImpl=globalThis.WebSocket,checkpointFile=join(stateDir(),'inbox.json'),onStatus=()=>{}}){
+export async function runWatcher({api,onMessage,onChallenge=null,signal,pollMs=DEFAULT_POLL_MS,WebSocketImpl=globalThis.WebSocket,checkpointFile=join(stateDir(),'inbox.json'),onStatus=()=>{}}){
  let checkpoint=await readCheckpoint(checkpointFile),pending=true,running=false,closed=false,ws=null;
  const interval=clampPoll(pollMs);
  const reconcile=async()=>{
   if(running||closed)return;
   running=true;
-  try{while(pending&&!closed){pending=false;checkpoint=await reconcileInbox({api,checkpoint,onMessage,path:checkpointFile});}}
+  try{while(pending&&!closed){pending=false;checkpoint=await reconcileInbox({api,checkpoint,onMessage,path:checkpointFile});checkpoint=await reconcileChallenges({api,checkpoint,onChallenge,path:checkpointFile});}}
   catch(e){pending=true;onStatus('reconcile-error',e.message);}
   finally{running=false;}
  };

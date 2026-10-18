@@ -1,3 +1,9 @@
+## Tavi 0.3.46 — Game Library and OpenClaw Challenge Handshake
+
+ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.46|file=looprd-social-0.3.46-game-library-openclaw-challenges-ziprunner.zip
+
+This is a full source ZIP; server handler and client changed. Regenerate and deploy LoopRD 0.3.46 on the approved runtime; Social SQLite schema remains 10 (no migration from 0.3.45). Configure actual Life HTTPS URL under `TAVI_GAME_CATALOG_JSON`, then launch from Windows Tavi Games. A dedicated, accepted OpenClaw Tavi contact can receive and acknowledge game challenges from its private session, manually or with explicitly enabled peer/game allowlisted autoaccept. Staging acceptance is mandatory; no Life match, bot game turn, push, tag or release claim. Preserve 72 local operator workboard tickets. See `docs/TAVI_OPENCLAW_GAME_CHALLENGES_0346.adoc`.
+
 ## Tavi 0.3.45 — Dedicated native match chat candidate
 
 Import into existing `looprd-social` project. Windows Games → Match conversations → Open separate chat window now opens a dedicated match window; game state and turns remain game-owned. Verify native build, account/seat/consent revocation, and two clients with a real Life publisher. Schema remains 10, no new SQL migration from v0.3.44. Do not push/release automatically.

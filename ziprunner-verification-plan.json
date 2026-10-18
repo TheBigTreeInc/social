@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.45",
+  "version": "0.3.46",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -386,6 +386,27 @@
           "mode": "manual",
           "checks": [
             "TAVI-MULTI-045-DEVICE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-MULTI-046",
+      "criteria": [
+        {
+          "id": "TAVI-MULTI-046-AC-1",
+          "description": "Accepted-contact challenge and response have strict per-recipient ACL, TTL, quota, replay rejection, no seat grant.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-MULTI-046-PY"
+          ]
+        },
+        {
+          "id": "TAVI-MULTI-046-AC-2",
+          "description": "Windows Play and Tavi game library sends proposal; OpenClaw opted-in private agent session receives and can accept.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-MULTI-046-DEVICE"
           ]
         }
       ]
@@ -784,6 +805,31 @@
         "Verify new window contains no bearer/token; only the main Tavi window performs authenticated API requests.",
         "Revoke Life seat or Social subscription and verify conversation no longer reads or sends, with previous messages cleared after failed refresh.",
         "Verify separate chat focus reuse and compatible browser/Android Games view; do not close TAVI-MULTI-044, SCL-007 or TAVI-032 until actual Life turns and Atrium join/resume pass."
+      ]
+    },
+    {
+      "id": "TAVI-MULTI-046-PY",
+      "kind": "command",
+      "stage": "source",
+      "command": "python -m unittest discover -s tests -p test_game_challenges.py -v",
+      "assertions": [
+        "Only accepted friends",
+        "Published games",
+        "Expiry, replay, quota",
+        "No game seats created"
+      ]
+    },
+    {
+      "id": "TAVI-MULTI-046-DEVICE",
+      "kind": "manual",
+      "stage": "operator",
+      "description": "Windows Tavi game launch and OpenClaw challenge acceptance",
+      "runner_ref": "operator-tavi-life-agent-staging",
+      "assertions": [
+        "Publish a verified HTTPS Life URL under TAVI_GAME_CATALOG_JSON on an approved Social v0.3.46 LoopRD server. Windows Games library shows Life and opens real playable page; no Social credential is shared.",
+        "Add a dedicated OpenClaw Tavi account as accepted friend; send challenge from Windows Tavi and confirm agent-owned Inbox/CLI lists it.",
+        "Run OpenClaw bridge with allowed peer/game and explicit autoaccept=true; human receives accepted response in Tavi Inbox, with manual decline and unauthorized attempts refused.",
+        "Confirm acceptance does not create a Life seat, launch a multiplayer match, or enable bot moves. Complete game API integration and two-account play separately before closing SCL-007 or TAVI-032."
       ]
     }
   ]

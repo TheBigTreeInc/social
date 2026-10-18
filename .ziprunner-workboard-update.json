@@ -1,9 +1,20 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.45",
-  "summary": "Multiplayer UX: isolated, native Windows match conversation alongside Life game; authenticated main-window broker; schema 10 unchanged. Source and live game acceptance remain separate.",
+  "version": "0.3.46",
+  "summary": "Multiplayer-priority pass: visible game launch and accepted-contact OpenClaw challenge handshake; no game seat or turns, schema 10. Preserve all 72 local operator tickets and statuses.",
   "implemented": [
+    {
+      "id": "TAVI-MULTI-046",
+      "title": "Visible Tavi game library and OpenClaw account challenge response",
+      "summary": "Source candidate: Windows Games shortcut, hosted game catalog cards/Play, accepted-contact challenge with 48-hour expiry and deduplicated recipient inbox replies, OpenClaw CLI receive/accept/decline and opt-in allowlisted bridge autoaccept. Challenge is NOT a Life match. No SQL migration (schema 10).",
+      "operator_checks": [
+        "Publish a verified HTTPS Life URL under TAVI_GAME_CATALOG_JSON on an approved Social v0.3.46 LoopRD server. Windows Games library shows Life and opens real playable page; no Social credential is shared.",
+        "Add a dedicated OpenClaw Tavi account as accepted friend; send challenge from Windows Tavi and confirm agent-owned Inbox/CLI lists it.",
+        "Run OpenClaw bridge with allowed peer/game and explicit autoaccept=true; human receives accepted response in Tavi Inbox, with manual decline and unauthorized attempts refused.",
+        "Confirm acceptance does not create a Life seat, launch a multiplayer match, or enable bot moves. Complete game API integration and two-account play separately before closing SCL-007 or TAVI-032."
+      ]
+    },
     {
       "id": "TAVI-MULTI-045",
       "title": "Dedicated native game match chat next to active multiplayer game",

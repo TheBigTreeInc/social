@@ -1,3 +1,11 @@
+## Multiplayer priority override — Tavi v0.3.46 (review candidate)
+
+- **TAVI-MULTI-046 — Review candidate, NOT Done:** Windows Games roster shortcut and operator-published catalog with Play/Challenge, account-to-account challenge workflow, explicit OpenClaw accept/decline or opt-in allowed auto-accept. Schema 10; no new tables.
+- **Live acceptance pending:** the Windows installer, real Life HTTPS URL, operator LoopRD deploy and OpenClaw supervised process must be tested. Game challenge acceptance is NOT Life match creation or gameplay.
+- **Preserve latest local operator workboard:** 72 tickets; 39 Review, 20 Planned, 12 Deferred, 1 Suggested; no ticket marked Done. Existing SCL-007, TAVI-032, TAVI-MULTI-044/045 remain open. Critical client decomposition remains deferred under the user's multiplayer-priority override.
+- **Next P0:** Life authenticated /play create/join/resume and OpenClaw game-seat/action adapter, then Atrium launch and E2E match acceptance.
+- Contract and setup: `docs/TAVI_OPENCLAW_GAME_CHALLENGES_0346.adoc`.
+
 ## Multiplayer priority override — v0.3.45 source candidate
 
 - **TAVI-MULTI-045** (Review pending operator): separate native Windows match conversation with verified seat/consent; source tests pass. Real Life, Windows, Atrium acceptance open.

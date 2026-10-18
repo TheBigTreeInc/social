@@ -95,6 +95,38 @@ def interaction_feed(db,subject,now):
        'created':r['created'],'expires':r['expires'],'response':r['response']}
       for r in rows]}
 
+def game_challenge_send(db, subject, body, now):
+    # Account-to-account proposal only. Game owns match seats.
+    peer=body.get('peer'); game_id=body.get('gameId')
+    if (not isinstance(peer,str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}',peer)
+            or peer==subject or not isinstance(game_id,str)
+            or not re.fullmatch(r'[a-z][a-z0-9-]{1,47}',game_id)):
+        return error('Invalid game challenge')
+    game=next((g for g in published_games() if g['id']==game_id),None)
+    if not game:return error('Game not published by this server')
+    contact=contact_row(db,subject,peer)
+    if not contact or contact['status']!='accepted':return error('Only accepted contacts can be challenged')
+    count=db.execute(sa.text('''SELECT count(*) FROM "SocialInteraction"
+        WHERE publisher=:publisher AND topic='game.challenge.requested'
+        AND created>=:after'''),{'publisher':'challenge:'+subject,'after':now-86400}).scalar_one()
+    if count>=12:return error('Daily game challenge limit reached')
+    active=db.execute(sa.text('''SELECT count(*) FROM "SocialInteraction"
+        WHERE publisher=:publisher AND recipient=:peer AND topic='game.challenge.requested'
+        AND status='open' AND expires>:now AND json_extract(data,'$.challenge.gameId')=:game'''),
+        {'publisher':'challenge:'+subject,'peer':peer,'game':game_id,'now':now}).scalar_one()
+    if active:return error('A challenge for this game is already pending')
+    account=db.execute(sa.select(ACCOUNT.c.handle).where(ACCOUNT.c.id==int(subject[5:]))).scalar_one_or_none()
+    if not account:return error('Account unavailable')
+    challenge={'title':'Game challenge · '+game['name'],'topic':'game.challenge.requested',
+       'body': account+' challenges you to play '+game['name']+'. Accepting responds to the challenge; the game must create a real match before anyone can play.',
+       'actions':[{'id':'accept-challenge','type':'reply','label':'Accept challenge','fields':[]},
+                  {'id':'decline-challenge','type':'reply','label':'Decline','fields':[]}],
+       'challenge':{'schema':'tavi.game-challenge/v1','sender':subject,'gameId':game_id,'gameName':game['name']}}
+    ident=db.execute(sa.insert(INTERACTION).values(recipient=peer,publisher='challenge:'+subject,
+         topic=challenge['topic'],title=challenge['title'],data=challenge,status='open',response=None,
+         created=now,expires=now+2*86400).returning(INTERACTION.c.id)).scalar_one()
+    return {'ok':True,'schema':'tavi.game-challenge/v1','id':ident,'status':'pending','gameId':game_id,'peer':peer}
+
 def interaction_reply(db,subject,body,now):
     event_id=body.get('id');action=body.get('action');values=body.get('values',{})
     if type(event_id) is not int or not isinstance(action,str) or not isinstance(values,dict):return error('Invalid event response')
@@ -106,6 +138,31 @@ def interaction_reply(db,subject,body,now):
     if not allowed:return error('Action not available')
     fields={f['id']:f for f in allowed['fields']}
     if len(values)>len(fields) or any(k not in fields or not isinstance(v,str) or len(v)>2000 or (fields[k]['type']=='select' and v not in fields[k]['options']) for k,v in values.items()):return error('Invalid field values')
+    if row['topic']=='game.challenge.requested':
+        challenge=row['data'].get('challenge') if isinstance(row['data'],dict) else None
+        sender=row['publisher'].removeprefix('challenge:')
+        if (row['publisher']!='challenge:'+sender or not isinstance(challenge,dict)
+                or challenge.get('schema')!='tavi.game-challenge/v1'
+                or challenge.get('sender')!=sender
+                or action not in ('accept-challenge','decline-challenge') or values):
+            return error('Invalid game challenge')
+        if action=='accept-challenge':
+            friend=contact_row(db,subject,sender)
+            if not friend or friend['status']!='accepted':return error('Challenge is no longer available')
+            if not any(g['id']==challenge.get('gameId') for g in published_games()):
+                return error('Game no longer published')
+        # The originator gets a separate inbox status update. No match, subscription,
+        # game seat or identity grant is created as a side effect of accepting.
+        result={'title':'Challenge '+('accepted' if action=='accept-challenge' else 'declined')+' · '+str(challenge.get('gameName','Game'))[:64],
+          'topic':'game.challenge.response',
+          'body':'Your contact '+('accepted' if action=='accept-challenge' else 'declined')+' the invitation. '+
+             ('Open the game to continue; a verified match is still required.' if action=='accept-challenge' else ''),
+          'actions':[{'id':'acknowledge','type':'reply','label':'OK','fields':[]}],
+          'challenge':{'schema':'tavi.game-challenge/v1','gameId':challenge.get('gameId'),
+                       'responder':subject,'decision':action,'challengeId':event_id}}
+        db.execute(sa.insert(INTERACTION).values(recipient=sender,publisher='challenge:'+subject,
+          topic=result['topic'],title=result['title'],data=result,status='open',response=None,
+          created=now,expires=now+7*86400))
     if row['publisher'].startswith('game:') and row['topic']=='game.invite.created':
         game=row['data'].get('game') if isinstance(row['data'],dict) else None
         if not isinstance(game,dict) or action not in ('accept-game','decline-game'):
@@ -883,6 +940,9 @@ def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
                 return recovery_codes_revoke(db,subject,body),None
             if op=='interaction_feed':
                 return interaction_feed(db,subject,now),None
+            if op=='game_challenge_send':
+                result=game_challenge_send(db,subject,body,now)
+                return result,event_signal(db) if result['ok'] else None
             if op=='game_subscription_set':
                 return set_game_subscription(db,subject,body,now),None
             if op=='game_grant_issue':
@@ -1041,7 +1101,7 @@ def process_event(ctx):
 
 async def handle(ctx):
     op=ctx.body.get('op') if isinstance(ctx.body,dict) else None
-    changing=op in {'interaction_reply','interaction_dismiss','interaction_publish',
+    changing=op in {'game_challenge_send','interaction_reply','interaction_dismiss','interaction_publish',
                     'contact_request','contact_accept','contact_remove','dm_mark_read',
                     'dm_send','game_room_send','save_profile','chat_send','recover_account'}
     if changing:

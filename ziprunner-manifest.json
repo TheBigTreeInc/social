@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.45",
-    "base_version": "0.3.44"
+    "version": "0.3.46",
+    "base_version": "0.3.45"
   },
   "update": {
-    "id": "TAVI-20261018-NATIVE-MATCH-CHAT",
+    "id": "TAVI-20261018-OPENCLAW-GAME-CHALLENGES",
     "kind": "source_update",
-    "created_at": "2026-10-18T14:17:00+02:00",
-    "summary": "Isolated native Windows match conversation next to verified multiplayer game; schema remains 10."
+    "created_at": "2026-10-18T15:20:00+02:00",
+    "summary": "Windows game library, accepted-contact challenge inbox and OpenClaw opt-in acceptance, schema 10 unchanged."
   },
   "planned_work": [
     {
@@ -216,6 +216,18 @@
       "title": "Separate native match conversations",
       "acceptance_criteria": "Sessionless Tauri window; main-only broker; Social seat/consent checks; revocation clears history; native operator tests pending",
       "priority": "high"
+    },
+    {
+      "id": "TAVI-MULTI-046",
+      "title": "Visible Tavi game library and OpenClaw account challenge response",
+      "priority": "high",
+      "acceptance_criteria": "Test staged LoopRD catalog, two trusted Tavi accounts, OpenClaw challenge acceptance and real Windows game launch; verify no false Life seat claim."
+    },
+    {
+      "id": "TAVI-MULTI-045-OP",
+      "title": "Operator acceptance for native match conversation",
+      "priority": "high",
+      "acceptance_criteria": "Install Windows NSIS, open match chat beside a real Life match, verify seat and consent revocation, preserve legacy workboard status."
     }
   ],
   "done_work": [
@@ -849,6 +861,37 @@
           "description": "Deterministic labels, credential isolation and revoked-state behavior"
         }
       ]
+    },
+    {
+      "id": "TAVI-MULTI-046",
+      "summary": "Implemented source-only challenge handshake, Windows game cards and agent receiver; live operator acceptance remains.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "server/looprd_handler.py",
+          "description": "Contact and catalog-gated recipient-specific game challenge interactions"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/main.js",
+          "description": "Visible game library, roster access and challenge form"
+        },
+        {
+          "kind": "source",
+          "ref": "integrations/openclaw/tavi-watch.mjs",
+          "description": "Authenticated OpenClaw challenge polling and durable cursor"
+        },
+        {
+          "kind": "test",
+          "ref": "tests/test_game_challenges.py",
+          "description": "Recipient isolation, replay, rate limits and separation of challenge from real match"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/TAVI_OPENCLAW_GAME_CHALLENGES_0346.adoc",
+          "description": "Staging and next-game contract"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -1115,7 +1158,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Wire Life actual /play and seat roster service with Tavi and Atrium; complete real multiplayer match on two accounts including OpenClaw. Keep existing operator workboard priorities untouched.",
+    "next_pass": "Implement the actual Life authenticated /play create/join/resume and trusted OpenClaw seat/action adapter, then Atrium launch/resume and two-player game acceptance. No additional generic Tavi chat work.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -1127,7 +1170,8 @@
       "Game receipt proves consenting Social account but not game-seat membership; Life must validate participant before requesting delivery.",
       "Tavi-issued game grants prove an account identity only; a game must never treat them as authorization to join or act in a match.",
       "Screenshot production server timeout remains unverified on the device; client source changes improve resilience and diagnosis but cannot repair an unreachable remote backend.",
-      "Room membership is authoritative only insofar as the operator-approved game service verifies Life seats; Social validates caller identity, publisher/game allowlist, issuer, roster revision and per-account consent but not Life game state."
+      "Room membership is authoritative only insofar as the operator-approved game service verifies Life seats; Social validates caller identity, publisher/game allowlist, issuer, roster revision and per-account consent but not Life game state.",
+      "A Tavi game challenge response is not proof of Life seat membership or a playable game; Life public match API and OpenClaw action adapter are still unavailable."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -1135,7 +1179,8 @@
       "No device BLE implementation or Atrium server sync contract in v0.3.39.",
       "Atrium does not yet resolve game/match deep links; Life has not shipped game-turn outbox and caller integration.",
       "No real Life backend calls tavi-game-room-roster/v1 in deployed DAPI; staging proof and end-to-end multiplayer match acceptance remain.",
-      "Life v0.5.87 has internal async command architecture but no public /play; source-only native match chat cannot establish hostless multiplayer."
+      "Life v0.5.87 has internal async command architecture but no public /play; source-only native match chat cannot establish hostless multiplayer.",
+      "Life hostless authenticated create/join and legal action endpoints are not deployed; v0.3.46 only provides the Tavi-to-agent challenge handshake."
     ],
     "notes": [
       "Client-side resume logic and minimal login UI only; Social database schema 6 unchanged.",
@@ -1188,6 +1233,6 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Client match window only: server game room schema stays 10. Real Life/Windows/Atrium acceptance remains; no push/tag/release by source patch."
+    "notes": "Social game challenge and visible game library; server descriptor changes at release 0.3.46 but schema stays 10. Live Windows and OpenClaw acceptance required; no auto push or release."
   }
 }

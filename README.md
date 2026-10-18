@@ -1,3 +1,7 @@
+## Tavi 0.3.46 — Launch published games and challenge OpenClaw
+
+Windows Tavi now has a visible Games shortcut with operator-reviewed HTTPS game cards and Play buttons, plus a Challenge contact selector. The accepted OpenClaw Tavi account can receive challenges through Tavi Inbox and `tavi-agent.mjs challenges`, then manually accept/decline; optional supervised game/peer-allowlisted autoaccept is available in the existing OpenClaw service. This is a Social challenge handshake, **not** a Life game match or an OpenClaw legal-action implementation. No Social database migration from schema 10. See `docs/TAVI_OPENCLAW_GAME_CHALLENGES_0346.adoc` for setup and acceptance.
+
 # Tavi 0.3.45 — Dedicated native multiplayer match chat (source candidate)
 
 Builds on 0.3.44's approved game seat roster and private match messages. Windows Tavi now opens a separate match conversation window beside the Life game. The window carries only an opaque match-room ID, delegates all authorized requests to the main Tavi process and clears rendered message history after revocation. Browser/Android continue using their Games panel. **No new SQL migration** (Social remains schema 10); **no public Life `/play`** integration or game action authorization is claimed. See `docs/TAVI_NATIVE_MATCH_CONVERSATIONS.adoc`.

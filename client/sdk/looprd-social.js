@@ -185,6 +185,14 @@ export class LooprdSocial {
       throw new ProtocolError('Invalid game grant audience');
     return this.command('game_grant_issue', {publisher, gameId, matchId});
   }
+  /** Propose a game to an accepted contact. This never creates a game-owned match. */
+  challengeContact(peer,gameId) {
+    if(!/^acct_[1-9][0-9]{0,18}$/.test(peer||'')||!(/^[a-z][a-z0-9-]{1,47}$/.test(gameId||'')))
+      throw new ProtocolError('Invalid challenge recipient or game');
+    return this.command('game_challenge_send',{peer,gameId});
+  }
+  acceptChallenge(id) {return this.replyInteraction(id,'accept-challenge',{});}
+  declineChallenge(id) {return this.replyInteraction(id,'decline-challenge',{});}
   acceptGameInvitation(id) { return this.replyInteraction(id, 'accept-game', {}); }
   declineGameInvitation(id) { return this.replyInteraction(id, 'decline-game', {}); }
 

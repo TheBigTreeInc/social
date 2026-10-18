@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.45
+release: 0.3.46
 api:
   version: v1
 cors:
@@ -746,7 +746,28 @@ handlers:
     \        query=query.where(sa.not_(INTERACTION.c.publisher.like('service:%')))\n    rows=db.execute(query.order_by(INTERACTION.c.id.desc()).limit(80)).mappings().all()\n\
     \    return {'ok':True,'schema':'tavi.interactions/v1','events':[\n      {'id':r['id'],'publisher':r['publisher'],'topic':r['topic'],**r['data'],\n\
     \       'status':('expired' if r['expires']<=now and r['status']=='open' else r['status']),\n       'created':r['created'],'expires':r['expires'],'response':r['response']}\n\
-    \      for r in rows]}\n\ndef interaction_reply(db,subject,body,now):\n    event_id=body.get('id');action=body.get('action');values=body.get('values',{})\n\
+    \      for r in rows]}\n\ndef game_challenge_send(db, subject, body, now):\n    # Account-to-account proposal\
+    \ only. Game owns match seats.\n    peer=body.get('peer'); game_id=body.get('gameId')\n    if (not isinstance(peer,str)\
+    \ or not re.fullmatch(r'acct_[1-9][0-9]{0,18}',peer)\n            or peer==subject or not isinstance(game_id,str)\n\
+    \            or not re.fullmatch(r'[a-z][a-z0-9-]{1,47}',game_id)):\n        return error('Invalid game challenge')\n\
+    \    game=next((g for g in published_games() if g['id']==game_id),None)\n    if not game:return error('Game\
+    \ not published by this server')\n    contact=contact_row(db,subject,peer)\n    if not contact or contact['status']!='accepted':return\
+    \ error('Only accepted contacts can be challenged')\n    count=db.execute(sa.text('''SELECT count(*) FROM \"\
+    SocialInteraction\"\n        WHERE publisher=:publisher AND topic='game.challenge.requested'\n        AND created>=:after'''),{'publisher':'challenge:'+subject,'after':now-86400}).scalar_one()\n\
+    \    if count>=12:return error('Daily game challenge limit reached')\n    active=db.execute(sa.text('''SELECT\
+    \ count(*) FROM \"SocialInteraction\"\n        WHERE publisher=:publisher AND recipient=:peer AND topic='game.challenge.requested'\n\
+    \        AND status='open' AND expires>:now AND json_extract(data,'$.challenge.gameId')=:game'''),\n       \
+    \ {'publisher':'challenge:'+subject,'peer':peer,'game':game_id,'now':now}).scalar_one()\n    if active:return\
+    \ error('A challenge for this game is already pending')\n    account=db.execute(sa.select(ACCOUNT.c.handle).where(ACCOUNT.c.id==int(subject[5:]))).scalar_one_or_none()\n\
+    \    if not account:return error('Account unavailable')\n    challenge={'title':'Game challenge · '+game['name'],'topic':'game.challenge.requested',\n\
+    \       'body': account+' challenges you to play '+game['name']+'. Accepting responds to the challenge; the\
+    \ game must create a real match before anyone can play.',\n       'actions':[{'id':'accept-challenge','type':'reply','label':'Accept\
+    \ challenge','fields':[]},\n                  {'id':'decline-challenge','type':'reply','label':'Decline','fields':[]}],\n\
+    \       'challenge':{'schema':'tavi.game-challenge/v1','sender':subject,'gameId':game_id,'gameName':game['name']}}\n\
+    \    ident=db.execute(sa.insert(INTERACTION).values(recipient=peer,publisher='challenge:'+subject,\n       \
+    \  topic=challenge['topic'],title=challenge['title'],data=challenge,status='open',response=None,\n         created=now,expires=now+2*86400).returning(INTERACTION.c.id)).scalar_one()\n\
+    \    return {'ok':True,'schema':'tavi.game-challenge/v1','id':ident,'status':'pending','gameId':game_id,'peer':peer}\n\
+    \ndef interaction_reply(db,subject,body,now):\n    event_id=body.get('id');action=body.get('action');values=body.get('values',{})\n\
     \    if type(event_id) is not int or not isinstance(action,str) or not isinstance(values,dict):return error('Invalid\
     \ event response')\n    row=db.execute(sa.select(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject)).mappings().first()\n\
     \    if not row:return error('Event not found')\n    if row['publisher'].startswith('service:') and not account_ecosystem_admin(db,subject):return\
@@ -755,7 +776,24 @@ handlers:
     \    if not allowed:return error('Action not available')\n    fields={f['id']:f for f in allowed['fields']}\n\
     \    if len(values)>len(fields) or any(k not in fields or not isinstance(v,str) or len(v)>2000 or (fields[k]['type']=='select'\
     \ and v not in fields[k]['options']) for k,v in values.items()):return error('Invalid field values')\n    if\
-    \ row['publisher'].startswith('game:') and row['topic']=='game.invite.created':\n        game=row['data'].get('game')\
+    \ row['topic']=='game.challenge.requested':\n        challenge=row['data'].get('challenge') if isinstance(row['data'],dict)\
+    \ else None\n        sender=row['publisher'].removeprefix('challenge:')\n        if (row['publisher']!='challenge:'+sender\
+    \ or not isinstance(challenge,dict)\n                or challenge.get('schema')!='tavi.game-challenge/v1'\n\
+    \                or challenge.get('sender')!=sender\n                or action not in ('accept-challenge','decline-challenge')\
+    \ or values):\n            return error('Invalid game challenge')\n        if action=='accept-challenge':\n\
+    \            friend=contact_row(db,subject,sender)\n            if not friend or friend['status']!='accepted':return\
+    \ error('Challenge is no longer available')\n            if not any(g['id']==challenge.get('gameId') for g in\
+    \ published_games()):\n                return error('Game no longer published')\n        # The originator gets\
+    \ a separate inbox status update. No match, subscription,\n        # game seat or identity grant is created\
+    \ as a side effect of accepting.\n        result={'title':'Challenge '+('accepted' if action=='accept-challenge'\
+    \ else 'declined')+' · '+str(challenge.get('gameName','Game'))[:64],\n          'topic':'game.challenge.response',\n\
+    \          'body':'Your contact '+('accepted' if action=='accept-challenge' else 'declined')+' the invitation.\
+    \ '+\n             ('Open the game to continue; a verified match is still required.' if action=='accept-challenge'\
+    \ else ''),\n          'actions':[{'id':'acknowledge','type':'reply','label':'OK','fields':[]}],\n         \
+    \ 'challenge':{'schema':'tavi.game-challenge/v1','gameId':challenge.get('gameId'),\n                       'responder':subject,'decision':action,'challengeId':event_id}}\n\
+    \        db.execute(sa.insert(INTERACTION).values(recipient=sender,publisher='challenge:'+subject,\n       \
+    \   topic=result['topic'],title=result['title'],data=result,status='open',response=None,\n          created=now,expires=now+7*86400))\n\
+    \    if row['publisher'].startswith('game:') and row['topic']=='game.invite.created':\n        game=row['data'].get('game')\
     \ if isinstance(row['data'],dict) else None\n        if not isinstance(game,dict) or action not in ('accept-game','decline-game'):\n\
     \            return error('Invalid game invitation')\n        if action=='accept-game':\n            caller=game.get('publisher');gid=game.get('gameId');match=game.get('matchId')\n\
     \            inviter=game.get('inviter')\n            if (not isinstance(caller,str) or not COMPONENT_ID.fullmatch(caller)\
@@ -1122,22 +1160,23 @@ handlers:
     \                return recovery_codes_create(db,subject,body,now),None\n            if op=='recovery_codes_status':\n\
     \                return recovery_codes_status(db,subject,now),None\n            if op=='recovery_codes_revoke':\n\
     \                return recovery_codes_revoke(db,subject,body),None\n            if op=='interaction_feed':\n\
-    \                return interaction_feed(db,subject,now),None\n            if op=='game_subscription_set':\n\
-    \                return set_game_subscription(db,subject,body,now),None\n            if op=='game_grant_issue':\n\
-    \                return issue_game_grant(db,subject,body,now),None\n            if op=='game_room_list':\n \
-    \               return game_room_list(db,subject),None\n            if op=='game_room_feed':\n             \
-    \   return game_room_feed(db,subject,body),None\n            if op=='game_room_send':\n                result=game_room_send(db,subject,body,now)\n\
-    \                return result,event_signal(db) if result['ok'] else None\n            if op=='game_event_feed':\n\
-    \                return game_event_feed(db,subject,body),None\n            if op=='interaction_reply':\n   \
-    \             result=interaction_reply(db,subject,body,now)\n                return result,event_signal(db)\
-    \ if result['ok'] else None\n            if op=='interaction_dismiss':\n                result=interaction_dismiss(db,subject,body,now)\n\
-    \                return result,event_signal(db) if result['ok'] else None\n            if op=='interaction_publish':\n\
-    \                # Development/initial integration publisher: only operator-authorized developer accounts.\n\
-    \                if not account_developer_permission(db,subject):\n                    return error('Publisher\
-    \ permission denied'),None\n                recipient=body.get('recipient')\n                if not isinstance(recipient,str)\
-    \ or not re.fullmatch(r'[a-z][a-z0-9_]{2,23}',recipient):return error('Invalid recipient'),None\n          \
-    \      target=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==recipient)).first()\n             \
-    \   if not target:return error('Recipient not found'),None\n                clean=validate_interaction(body.get('interaction'))\n\
+    \                return interaction_feed(db,subject,now),None\n            if op=='game_challenge_send':\n \
+    \               result=game_challenge_send(db,subject,body,now)\n                return result,event_signal(db)\
+    \ if result['ok'] else None\n            if op=='game_subscription_set':\n                return set_game_subscription(db,subject,body,now),None\n\
+    \            if op=='game_grant_issue':\n                return issue_game_grant(db,subject,body,now),None\n\
+    \            if op=='game_room_list':\n                return game_room_list(db,subject),None\n            if\
+    \ op=='game_room_feed':\n                return game_room_feed(db,subject,body),None\n            if op=='game_room_send':\n\
+    \                result=game_room_send(db,subject,body,now)\n                return result,event_signal(db)\
+    \ if result['ok'] else None\n            if op=='game_event_feed':\n                return game_event_feed(db,subject,body),None\n\
+    \            if op=='interaction_reply':\n                result=interaction_reply(db,subject,body,now)\n  \
+    \              return result,event_signal(db) if result['ok'] else None\n            if op=='interaction_dismiss':\n\
+    \                result=interaction_dismiss(db,subject,body,now)\n                return result,event_signal(db)\
+    \ if result['ok'] else None\n            if op=='interaction_publish':\n                # Development/initial\
+    \ integration publisher: only operator-authorized developer accounts.\n                if not account_developer_permission(db,subject):\n\
+    \                    return error('Publisher permission denied'),None\n                recipient=body.get('recipient')\n\
+    \                if not isinstance(recipient,str) or not re.fullmatch(r'[a-z][a-z0-9_]{2,23}',recipient):return\
+    \ error('Invalid recipient'),None\n                target=db.execute(sa.select(ACCOUNT.c.id).where(ACCOUNT.c.handle==recipient)).first()\n\
+    \                if not target:return error('Recipient not found'),None\n                clean=validate_interaction(body.get('interaction'))\n\
     \                expiry=now+min(7*86400,max(60,int(body.get('ttlSeconds',86400))))\n                db.execute(sa.insert(INTERACTION).values(recipient='acct_'+str(target[0]),publisher=subject,\n\
     \                    topic=clean['topic'],title=clean['title'],data=clean,status='open',response=None,created=now,expires=expiry))\n\
     \                return {'ok':True},event_signal(db)\n            if op=='developer_diagnostics':\n        \
@@ -1210,9 +1249,10 @@ handlers:
     \ peer in peers: ctx.notify(db,principal_id(peer))\n            if recipient and recipient != principal and\
     \ re.fullmatch(r'acct_[0-9]{1,19}',recipient):\n                ctx.notify(db,principal_id(recipient))\n   \
     \ return result\n\n\nasync def handle(ctx):\n    op=ctx.body.get('op') if isinstance(ctx.body,dict) else None\n\
-    \    changing=op in {'interaction_reply','interaction_dismiss','interaction_publish',\n                    'contact_request','contact_accept','contact_remove','dm_mark_read',\n\
-    \                    'dm_send','game_room_send','save_profile','chat_send','recover_account'}\n    if changing:\n\
-    \        return await run_in_threadpool(process_event,ctx)\n    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory,principal_subject=ctx.principal.subject)\n\
+    \    changing=op in {'game_challenge_send','interaction_reply','interaction_dismiss','interaction_publish',\n\
+    \                    'contact_request','contact_accept','contact_remove','dm_mark_read',\n                 \
+    \   'dm_send','game_room_send','save_profile','chat_send','recover_account'}\n    if changing:\n        return\
+    \ await run_in_threadpool(process_event,ctx)\n    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory,principal_subject=ctx.principal.subject)\n\
     \    # login/register create an account-specific session; the identity is checked on\n    # the *next* request.\
     \ No push is sent for guest operations or regular reads.\n    return result\n"
 - path: /ecosystem/admin-notify
@@ -1766,4 +1806,4 @@ handlers:
     - game-grants-v1
     - recovery-codes-v1
     - game-session-rooms-v1
-    release: 0.3.45
+    release: 0.3.46

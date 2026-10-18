@@ -46,14 +46,30 @@ export function createAgentConsumer({api,peers,runAgent=invokeAgent,agent='main'
   if(reply)await api.directSend(message.peer,reply);
  };
 }
+/** Explicit operator-granted acceptance of contact game challenges, not actual Life play. */
+export function allowedGames(value){return new Set(String(value||'').split(',').map(x=>x.trim()).filter(x=>/^[a-z][a-z0-9-]{1,47}$/.test(x)));}
+export function createChallengeConsumer({api,peers,games,autoAccept=false,onStatus=()=>{}}){
+ return async challenge=>{
+   if(!peers.has(challenge.peer)||!games.has(challenge.gameId)){
+     onStatus('challenge-not-authorized',String(challenge.id));return;
+   }
+   if(!autoAccept){onStatus('challenge-awaiting-operator',String(challenge.id));return;}
+   await api.acceptChallenge(challenge.id);
+   onStatus('challenge-accepted',String(challenge.id));
+ };
+}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const {TAVI_SERVER,TAVI_TOKEN,TAVI_ALLOWED_PEERS,TAVI_OPENCLAW_AGENT='main'}=process.env;
+ const {TAVI_SERVER,TAVI_TOKEN,TAVI_ALLOWED_PEERS,TAVI_OPENCLAW_AGENT='main',TAVI_AUTO_ACCEPT_GAME_CHALLENGES='false',TAVI_ALLOWED_GAMES=''}=process.env;
  try{
   if(!TAVI_SERVER||!TAVI_TOKEN)throw Error('Set TAVI_SERVER and TAVI_TOKEN from private secrets');
   const api=new LooprdSocial(TAVI_SERVER,TAVI_TOKEN);
   const onMessage=createAgentConsumer({api,peers:allowedPeers(TAVI_ALLOWED_PEERS),agent:TAVI_OPENCLAW_AGENT});
   const controller=new AbortController();
   process.on('SIGINT',()=>controller.abort());process.on('SIGTERM',()=>controller.abort());
-  await runWatcher({api,onMessage,signal:controller.signal,onStatus:(status,info)=>console.error(`tavi-openclaw: ${status}`,info||'')});
+  const onChallenge=createChallengeConsumer({api,peers:allowedPeers(TAVI_ALLOWED_PEERS),
+    games:allowedGames(TAVI_ALLOWED_GAMES),
+    autoAccept:TAVI_AUTO_ACCEPT_GAME_CHALLENGES==='true',
+    onStatus:(status,info)=>console.error('tavi-openclaw:',status,info||'')});
+  await runWatcher({api,onMessage,onChallenge:TAVI_AUTO_ACCEPT_GAME_CHALLENGES==='true'?onChallenge:null,signal:controller.signal,onStatus:(status,info)=>console.error(`tavi-openclaw: ${status}`,info||'')});
  }catch(e){console.error(`tavi-openclaw: ${e.message}`);process.exitCode=1;}
 }

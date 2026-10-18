@@ -1,0 +1,29 @@
+= Tavi Game Library and OpenClaw Challenge Handshake — v0.3.46
+:toc:
+
+== What the operator can test now
+
+* Register a *dedicated* OpenClaw Tavi account (e.g. `pegas`) on the same Social server; add it as an accepted friend of the human Tavi account.
+* Set `TAVI_GAME_CATALOG_JSON` on the **Social server** to a reviewed, reachable, public HTTPS game page (for example Life's real deployed URL). A missing catalog will show a diagnostic; Tavi never constructs an unreviewed Life deployment URL. The catalog ID is `life` (a simple identifier), **not** `life.loop` (Life's optional event contract game ID).
+* Install/launch Windows Tavi 0.3.46; select **Games** directly from the roster toolbar, then **Play** to open the standalone game, or select the agent's Tavi contact and **Send challenge**.
+* On the OpenClaw host use `tavi-agent.mjs challenges`, `challenge-accept ID` or `challenge-decline ID` with the *agent's own* private Tavi credentials. The human sees acceptance/rejection in **Inbox → Needs action**. The original proposal is accessible in the agent's own Tavi Inbox.
+* To enable supervised, **explicitly configured auto-accept**, run `tavi-openclaw-service.mjs` with existing `TAVI_SERVER`, `TAVI_TOKEN`, `TAVI_ALLOWED_PEERS` and additionally `TAVI_ALLOWED_GAMES=life` and `TAVI_AUTO_ACCEPT_GAME_CHALLENGES=true`. Only proposals from allowlisted accepted contacts for exactly allowlisted games are auto-accepted; unset/false disables automatic acceptance. The watcher retries if acceptance fails before checkpoint persistence. Do not enable this on untrusted accounts.
+
+== Data and authorization contract
+
+`game_challenge_send` is an authenticated Social account operation accepting `{peer: "acct_N", gameId: "life"}`. The sender and recipient must be *currently accepted* friends, the game must be on the operator's HTTPS catalog, and a sender may have only one pending proposal to a recipient/game and no more than 12 proposals in 24 hours. It writes an expiring (48-hour), recipient-only `SocialInteraction` with `topic: game.challenge.requested` and two reply actions (`accept-challenge`, `decline-challenge`), and emits a normal LoopRD Social pulse. The recipient may act only once using the existing authenticated `interaction_reply`. A separate `game.challenge.response` interaction is delivered to the original sender.
+
+The challenge never inserts a Life `GameMatch`, `GameParticipant` or Social `SocialGameSubscription`; it never issues a `game_grant_issue` proof or decides game-seat membership, game turns or legal actions. No untrusted URL or game-supplied text is forwarded. OpenClaw's own Tavi identity must be used for receiving and replying. No new Social SQL tables or migration are required, but the **0.3.46 server LoopRD descriptor and client must be deployed together**.
+
+== Explicitly not complete
+
+An accepted challenge is *not yet a playable match*. Life's current internal `/play` facade is not a deployed authenticated create/join/resume route. To make OpenClaw a game opponent, Life must create a durable match, authenticate a seat for the agent Tavi subject using the reviewed Social proof redemption, expose legal actions, execute agent actions via an approved adapter, publish match seats/turns and support completion/restart. Atrium can then register and launch the match based on the existing LoopRD endpoint observation. This is the next P0 implementation scope, not a hidden feature in the Windows client.
+
+== Operator staging acceptance
+
+. Back up the Social database and deploy generated release 0.3.46 on an approved LoopRD runtime (schema stays 10).
+. Confirm `TAVI_GAME_CATALOG_JSON` publishes the actual playable HTTPS Life page and Windows **Games → Play** opens it without a Social token.
+. Confirm accepted human/agent contacts can send and receive a challenge; unaccepted/unrelated identities cannot, and duplicates/oversends reject.
+. Start the agent bridge with approved peer/game env configuration; confirm the agent accepts and the human sees the returned notification after refresh. With auto-accept disabled, confirm explicit CLI accept/decline works.
+. Confirm a successful challenge acknowledgement does not yet expose a private match room or allow any Life game action; game-side authorization remains mandatory.
+. Do not mark SCL-007, TAVI-032, TAVI-MULTI-044/045 or this new source item Done before Windows/Live/agent operator acceptance.
