@@ -1,0 +1,34 @@
+= Tavi 0.3.46 — ZipRunner QA Reconciliation
+:toc:
+
+== Identity and exact artifact
+
+* Canonical project: `be0bf498-ea5a-461e-a84e-d47f5f449e09` (looprd-social).
+* Exact Git commit: `5adc8af8ab986fa21349a6973b8236817e6059b4` on `main`.
+* ZIP SHA-256: `cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615`.
+* ZipRunner handoff says GitHub watch `not_github` and post-update `waiting_for_verification`. These are local evidence-ingestion states, not workflow conclusions.
+* The latest 74-ticket operator snapshot top-level canonical_project_id is blank, even though the handoff header and most ticket records contain the canonical ID.
+
+== Independently verified results
+
+* 8/8 exact-SHA **push** workflows completed successfully; 28 check runs successful, 0 unsuccessful/pending.
+* GitHub release v0.3.46 was automatically published by repository automation; this is NOT operator device/game/migration acceptance or an instruction to release again.
+* Freshly extracted ZIP with the exact stated SHA passed **13/13** declared post-update commands. Evidence: `docs/TAVI_QA_0346_RECONCILIATION.json` and external `TAVI_0346_FRESH_QA.json`.
+* The original server handler embedded `SOCIAL_RELEASE = '0.3.43'` despite v0.3.46 package/descriptor version. This metadata mismatch is documented; v0.3.47 planning ZIP aligns its version constant without changing gameplay/messaging logic.
+
+== Follow-up
+
+* TAVI-QA-047: adjust ZipRunner GitHub watcher head-SHA matching and exact ZIP evidence binding, without rewriting historical results.
+* Keep LRS-004 review and all previously supplied operator tickets unchanged.
+* Windows and Android device acceptance, Life match creation, private rooms, and native OpenClaw channel remain unproven until operator staging QA.
+
+== Exact push workflow URLs
+
+* Web browser client and JavaScript SDK: https://github.com/TheBigTreeInc/social/actions/runs/39136989098
+* SDK source packages and OpenClaw bridge: https://github.com/TheBigTreeInc/social/actions/runs/39136989186
+* Verify Social server and client source: https://github.com/TheBigTreeInc/social/actions/runs/39136989193
+* Publish Tavi web client to GitHub Pages: https://github.com/TheBigTreeInc/social/actions/runs/39136989102
+* SDK cross-platform checks: https://github.com/TheBigTreeInc/social/actions/runs/39136989190
+* Linux and macOS desktop installers: https://github.com/TheBigTreeInc/social/actions/runs/39136989244
+* Windows desktop app: https://github.com/TheBigTreeInc/social/actions/runs/39136989112
+* Android phone app: https://github.com/TheBigTreeInc/social/actions/runs/39136989161

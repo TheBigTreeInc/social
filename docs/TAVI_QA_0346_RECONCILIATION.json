@@ -1,0 +1,83 @@
+{
+  "schema": "tavi.qa-reconciliation.v1",
+  "project": "looprd-social",
+  "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+  "commit": "5adc8af8ab986fa21349a6973b8236817e6059b4",
+  "branch": "main",
+  "ci": {
+    "reported_by_ziprunner": "not_github",
+    "observed_exact_push_runs": 8,
+    "completed_successful_push_runs": 8,
+    "completed_successful_check_runs": 28,
+    "observed_at": "2026-10-18",
+    "runs": [
+      {
+        "name": "Web browser client and JavaScript SDK",
+        "url": "https://github.com/TheBigTreeInc/social/actions/runs/39136989098"
+      },
+      {
+        "name": "SDK source packages and OpenClaw bridge",
+        "url": "https://github.com/TheBigTreeInc/social/actions/runs/39136989186"
+      },
+      {
+        "name": "Verify Social server and client source",
+        "url": "https://github.com/TheBigTreeInc/social/actions/runs/39136989193"
+      },
+      {
+        "name": "Publish Tavi web client to GitHub Pages",
+        "url": "https://github.com/TheBigTreeInc/social/actions/runs/39136989102"
+      },
+      {
+        "name": "SDK cross-platform checks",
+        "url": "https://github.com/TheBigTreeInc/social/actions/runs/39136989190"
+      },
+      {
+        "name": "Linux and macOS desktop installers",
+        "url": "https://github.com/TheBigTreeInc/social/actions/runs/39136989244"
+      },
+      {
+        "name": "Windows desktop app",
+        "url": "https://github.com/TheBigTreeInc/social/actions/runs/39136989112"
+      },
+      {
+        "name": "Android phone app",
+        "url": "https://github.com/TheBigTreeInc/social/actions/runs/39136989161"
+      }
+    ]
+  },
+  "qa": {
+    "artifact": "looprd-social-0.3.46-game-library-openclaw-challenges-ziprunner.zip",
+    "sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+    "fresh_exact_zip_checks": 13,
+    "failed": 0,
+    "source_report": "TAVI_0346_FRESH_QA.json",
+    "ziprunner_reported": "waiting_for_verification",
+    "conclusion": "Fresh source checks passed; operator/device acceptance still open."
+  },
+  "snapshot": {
+    "tickets": 74,
+    "counts": {
+      "review": 40,
+      "planned": 20,
+      "suggested": 1,
+      "deferred": 13
+    },
+    "top_level_canonical_id": "",
+    "handoff_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+  },
+  "release_labels": {
+    "packaged_release": "0.3.46",
+    "handler_embedded_before_plan": "0.3.43",
+    "planning_candidate_release": "0.3.47",
+    "schema": 10,
+    "note": "Source release label discrepancy corrected only in new metadata planning candidate; prior v0.3.46 release is immutable."
+  },
+  "operator_acceptance": false,
+  "pending": [
+    "Live Windows Life game launch",
+    "Real native OpenClaw channel",
+    "Life public create/join/act interface",
+    "Real bot turn and Atrium launch",
+    "Previous LRS-004 staging/device checks"
+  ]
+}

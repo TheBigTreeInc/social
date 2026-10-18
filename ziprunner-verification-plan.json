@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.46",
+  "version": "0.3.47",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -407,6 +407,268 @@
           "mode": "manual",
           "checks": [
             "TAVI-MULTI-046-DEVICE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-AGENT-005",
+      "criteria": [
+        {
+          "id": "TAVI-AGENT-005-AC-1",
+          "description": "Use a pinned, inspected official OpenClaw channel plugin SDK revision and a real example plugin; document actual package exports, entrypoints, lifecycle hooks and version compatibility, without inventing an API.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-005-OP-1"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-005-AC-2",
+          "description": "Specify mapping of Tavi server origin, Tavi account ID, peer/group conversation IDs, signed-in session and inbound/outbound OpenClaw message envelopes; distinguish platform identity from display names.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-005-OP-2"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-005-AC-3",
+          "description": "Specify reliable wake/catch-up, cursor/idempotency and authenticated replay behavior, shutdown/restart cleanup and bounded history. Explicitly document any at-least-once limitations.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-005-OP-3"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-005-AC-4",
+          "description": "Produce a testable, installable native channel scaffold and a design that does not change Tavi general messaging semantics or require OpenClaw on the Social server.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-005-OP-4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-AGENT-006",
+      "criteria": [
+        {
+          "id": "TAVI-AGENT-006-AC-1",
+          "description": "Install and enable the native Tavi channel through OpenClaw plugin management; connect one dedicated ordinary Tavi account with private credentials and no privileged Social or LoopRD service token.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-006-OP-1"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-006-AC-2",
+          "description": "Human -> Tavi DM -> OpenClaw agent -> Tavi reply works with independent per-peer session routing and sender display-name metadata; outgoing messages are sent by the authenticated agent account.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-006-OP-2"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-006-AC-3",
+          "description": "Contact invitations and game.challenge.requested/response events reach the right agent account as typed events; manual acceptance and opt-in peer/game allowlisted automatic acceptance use the normal Social APIs, with no game seat grants.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-006-OP-3"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-006-AC-4",
+          "description": "Groups are supported only when Tavi group APIs and ACLs actually exist; unsupported group capabilities are advertised as unavailable rather than simulated.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-006-OP-4"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-006-AC-5",
+          "description": "Channel starts/stops/reconnects with OpenClaw, uses replay-safe bounded reconciliation and does not require tavi-openclaw-service.mjs to run.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-006-OP-5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-AGENT-007",
+      "criteria": [
+        {
+          "id": "TAVI-AGENT-007-AC-1",
+          "description": "Using two human Tavi accounts and one separately authenticated OpenClaw account, demonstrate DM both directions and a challenged game acceptance entirely through native OpenClaw channel (external watcher disabled).",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-007-OP-1"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-007-AC-2",
+          "description": "Verify authorization for accepted/unaccepted contacts, per-account isolation, event recipient scoping, allowlist enforcement, malicious inbound message containment and no credential in logs, prompts or outbound game URLs.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-007-OP-2"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-007-AC-3",
+          "description": "Stop/restart OpenClaw and disable network during pending messages/challenges; verify bounded catch-up, no unrecoverable loss within server retention, no runaway duplicate sends and explicit limitation documentation.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-007-OP-3"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-007-AC-4",
+          "description": "Confirm native plugin installation/upgrades and downgrade/rollback; only then propose disabling external watcher, without deleting CLI support or changing ordinary Tavi clients.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-007-OP-4"
+          ]
+        },
+        {
+          "id": "TAVI-AGENT-007-AC-5",
+          "description": "Operator reviews actual OpenClaw Gateway runtime traces, Tavi inbox messages, Windows UI and server-side authorization logs before marking Done.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-AGENT-007-OP-5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-MULTI-047",
+      "criteria": [
+        {
+          "id": "TAVI-MULTI-047-AC-1",
+          "description": "Life provides reviewed authenticated create/join/resume, inspect, legal_actions, act and end_turn endpoints with durable match IDs, validated Tavi subject-to-seat bindings and idempotent command IDs.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-MULTI-047-OP-1"
+          ]
+        },
+        {
+          "id": "TAVI-MULTI-047-AC-2",
+          "description": "An accepted Tavi challenge is correlated to one operator-approved Life match; rejection/expiry/replay creates no seat and no game action, and match admission always requires Life authorization.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-MULTI-047-OP-2"
+          ]
+        },
+        {
+          "id": "TAVI-MULTI-047-AC-3",
+          "description": "OpenClaw uses a game-specific legal-action adapter via independent Tavi identity and Life API; cannot act for another player, invent moves or bypass legal-action validation.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-MULTI-047-OP-3"
+          ]
+        },
+        {
+          "id": "TAVI-MULTI-047-AC-4",
+          "description": "Two participants can disconnect, resume and complete legal Life turns; changes to match seats and closed state trigger accurate Social roster and notification updates.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-MULTI-047-OP-4"
+          ]
+        },
+        {
+          "id": "TAVI-MULTI-047-AC-5",
+          "description": "Game backend changes are tracked and approved in the Life project workboard; this Tavi item records the dependency and integration evidence, not a claim of Life implementation.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-MULTI-047-OP-5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-MULTI-048",
+      "criteria": [
+        {
+          "id": "TAVI-MULTI-048-AC-1",
+          "description": "Windows Tavi shows Life, user chooses Challenge against OpenClaw, native channel receives and accepts the invitation, and Life creates a verified playable match whose ID can be launched/resumed via Atrium.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-MULTI-048-OP-1"
+          ]
+        },
+        {
+          "id": "TAVI-MULTI-048-AC-2",
+          "description": "Human plays legal turns versus OpenClaw, OpenClaw observes its own authorized seat and plays via Life game API, and the game progresses to a final state without a continuously connected host.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-MULTI-048-OP-2"
+          ]
+        },
+        {
+          "id": "TAVI-MULTI-048-AC-3",
+          "description": "Open same match from another device after app/agent/backend restart; match and turns persist and all clients agree on the authoritative game state.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-MULTI-048-OP-3"
+          ]
+        },
+        {
+          "id": "TAVI-MULTI-048-AC-4",
+          "description": "Verify two human players can also create/join/complete a game and private match conversation ACLs follow actual Life roster removal and closure.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-MULTI-048-OP-4"
+          ]
+        },
+        {
+          "id": "TAVI-MULTI-048-AC-5",
+          "description": "Attempt replay, unauthorized seat access, expired invitations and stale/duplicate actions; all fail safely with no credential leakage. Obtain explicit operator sign-off.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-MULTI-048-OP-5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-QA-047",
+      "criteria": [
+        {
+          "id": "TAVI-QA-047-AC-1",
+          "description": "For commit 5adc8af8ab986fa21349a6973b8236817e6059b4, ingest the eight completed successful event=push GitHub workflow URLs and 28 completed checks; distinguish missing watcher evidence from a failing workflow.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-QA-047-OP-1"
+          ]
+        },
+        {
+          "id": "TAVI-QA-047-AC-2",
+          "description": "Associate post-update command outcomes with the exact v0.3.46 artifact SHA cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615. Reject evidence from any different ZIP SHA or stale run.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-QA-047-OP-2"
+          ]
+        },
+        {
+          "id": "TAVI-QA-047-AC-3",
+          "description": "Cross-check canonical project ID be0bf498-ea5a-461e-a84e-d47f5f449e09 with the local board payload canonical_project_id blank; fix reporting without changing existing 74 tickets or their statuses.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-QA-047-OP-3"
+          ]
+        },
+        {
+          "id": "TAVI-QA-047-AC-4",
+          "description": "Check application release labels for consistency between server/looprd-release.json, handler embedded SOCIAL_RELEASE, descriptor and installed clients; record any mismatches independently.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-QA-047-OP-4"
+          ]
+        },
+        {
+          "id": "TAVI-QA-047-AC-5",
+          "description": "Operator confirms CI/ZIP evidence and only then approves ticket status; never infer device acceptance or grant permission to push/release.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-QA-047-OP-5"
           ]
         }
       ]

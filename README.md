@@ -1,3 +1,6 @@
+> **v0.3.47 workboard planning pass (no new messaging or gameplay behavior):**
+> Native OpenClaw-as-normal-Tavi-user channel, Life authoritative opponent turns and full Atrium multiplayer acceptance are planned in `docs/TAVI_NATIVE_CHANNEL_MULTIPLAYER_WORKBOARD_0347.adoc`. Reconciled exact v0.3.46 GitHub/ZIP evidence: `docs/TAVI_QA_0346_RECONCILIATION.adoc`.
+
 ## Tavi 0.3.46 — Launch published games and challenge OpenClaw
 
 Windows Tavi now has a visible Games shortcut with operator-reviewed HTTPS game cards and Play buttons, plus a Challenge contact selector. The accepted OpenClaw Tavi account can receive challenges through Tavi Inbox and `tavi-agent.mjs challenges`, then manually accept/decline; optional supervised game/peer-allowlisted autoaccept is available in the existing OpenClaw service. This is a Social challenge handshake, **not** a Life game match or an OpenClaw legal-action implementation. No Social database migration from schema 10. See `docs/TAVI_OPENCLAW_GAME_CHALLENGES_0346.adoc` for setup and acceptance.

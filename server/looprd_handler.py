@@ -534,7 +534,7 @@ def logout(db,token):
 # LoopRD management role. Checked on EVERY privileged request and profile refresh.
 # Development tokens cannot get this privilege, even when their subject resembles
 # a registered user; no public API path changes the flag.
-SOCIAL_RELEASE = '0.3.43'
+SOCIAL_RELEASE = '0.3.47'
 SOCIAL_SCHEMA_VERSION = 9
 
 def account_developer_permission(db, subject):

@@ -1,0 +1,112 @@
+= Tavi Workboard Plan: Native OpenClaw Channel & Shared Multiplayer
+
+:toc:
+
+== Core architecture
+
+Tavi is the general-purpose Social chat platform; OpenClaw is **one ordinary Tavi account/client**. Windows, Android, Web, other bot frameworks and standalone SDK users all use the same Social identity/messaging contracts. Installing OpenClaw is optional and must not be required on a Tavi server. The native plugin integrates with OpenClaw lifecycle and agent sessions using the public Tavi SDK.
+
+Life exclusively owns match creation, player-seat authorization, game logic and turns. Atrium owns discovery, launch and resume. A successful Tavi challenge acknowledgement is not a playable Life match or automatic seat.
+
+== Operator workboard authority
+
+* Latest supplied local snapshot: **74** tickets (40 review, 20 planned, 13 deferred, 1 suggested; 0 Done).
+* Snapshot is preserved byte-for-byte as JSON content in `docs/ZIPRUNNER_LOCAL_WORKBOARD_74_20261018.json`. The top-level canonical_project_id is blank in that snapshot; the handoff and individual ticket records identify `be0bf498-ea5a-461e-a84e-d47f5f449e09`. This mismatch is tracked as QA rather than overwritten.
+* New proposals are **six planned tickets**. The operator workboard remains authoritative, and no original ticket changes status, priority or existing acceptance criteria. Review/deferred/suggested remain intact.
+* Original TAVI-AGENT-002 retains its title, high priority and planned status; this plan elaborates its workstreams without closing or replacing it.
+* User override: prioritize actual shared multiplayer and directly relevant native channel work over unrelated refactoring or the usual LRS-004 suggested next pass. The LRS-004 acceptance checks remain open, not dismissed.
+
+== Implementation order and acceptance
+
+=== 1. TAVI-QA-047 — Reconcile ZipRunner CI watcher and exact-ZIP QA evidence
+
+Status: *planned*; priority: *{d["priority"]}*. Owner: {d["owner"]}.
+Dependencies: TAVI-MULTI-046.
+
+ZipRunner flags not_github despite 8 successful exact-commit GitHub workflows; latest handoff also says post-update awaiting verification for a ZIP whose earlier report has the same SHA. Fix or explain ingestion identity/mapping without rewriting historical evidence.
+
+Acceptance:
+. For commit 5adc8af8ab986fa21349a6973b8236817e6059b4, ingest the eight completed successful event=push GitHub workflow URLs and 28 completed checks; distinguish missing watcher evidence from a failing workflow.
+. Associate post-update command outcomes with the exact v0.3.46 artifact SHA cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615. Reject evidence from any different ZIP SHA or stale run.
+. Cross-check canonical project ID be0bf498-ea5a-461e-a84e-d47f5f449e09 with the local board payload canonical_project_id blank; fix reporting without changing existing 74 tickets or their statuses.
+. Check application release labels for consistency between server/looprd-release.json, handler embedded SOCIAL_RELEASE, descriptor and installed clients; record any mismatches independently.
+. Operator confirms CI/ZIP evidence and only then approves ticket status; never infer device acceptance or grant permission to push/release.
+
+=== 2. TAVI-AGENT-005 — Native Tavi channel contract for OpenClaw
+
+Status: *planned*; priority: *{d["priority"]}*. Owner: {d["owner"]}.
+Dependencies: TAVI-AGENT-002, TAVI-AGENT-001.
+
+Review the current upstream OpenClaw channel plugin lifecycle, installation manifest, message routing and ack contracts; design Tavi as a generic client endpoint using ordinary Social user auth. No LoopRD/OpenClaw-only server dependency.
+
+Acceptance:
+. Use a pinned, inspected official OpenClaw channel plugin SDK revision and a real example plugin; document actual package exports, entrypoints, lifecycle hooks and version compatibility, without inventing an API.
+. Specify mapping of Tavi server origin, Tavi account ID, peer/group conversation IDs, signed-in session and inbound/outbound OpenClaw message envelopes; distinguish platform identity from display names.
+. Specify reliable wake/catch-up, cursor/idempotency and authenticated replay behavior, shutdown/restart cleanup and bounded history. Explicitly document any at-least-once limitations.
+. Produce a testable, installable native channel scaffold and a design that does not change Tavi general messaging semantics or require OpenClaw on the Social server.
+
+=== 3. TAVI-AGENT-006 — OpenClaw native channel for ordinary Tavi messaging
+
+Status: *planned*; priority: *{d["priority"]}*. Owner: {d["owner"]}.
+Dependencies: TAVI-AGENT-005, TAVI-AGENT-002.
+
+Build a properly installed OpenClaw native channel, not an external forever-running CLI bridge; receive/send authenticated Tavi DMs and supported events through shared SDK. Game challenges remain ordinary Tavi interactions; group support is feature gated until SCL-007.
+
+Acceptance:
+. Install and enable the native Tavi channel through OpenClaw plugin management; connect one dedicated ordinary Tavi account with private credentials and no privileged Social or LoopRD service token.
+. Human -> Tavi DM -> OpenClaw agent -> Tavi reply works with independent per-peer session routing and sender display-name metadata; outgoing messages are sent by the authenticated agent account.
+. Contact invitations and game.challenge.requested/response events reach the right agent account as typed events; manual acceptance and opt-in peer/game allowlisted automatic acceptance use the normal Social APIs, with no game seat grants.
+. Groups are supported only when Tavi group APIs and ACLs actually exist; unsupported group capabilities are advertised as unavailable rather than simulated.
+. Channel starts/stops/reconnects with OpenClaw, uses replay-safe bounded reconciliation and does not require tavi-openclaw-service.mjs to run.
+
+=== 4. TAVI-AGENT-007 — Native Tavi channel security, migration and live acceptance
+
+Status: *planned*; priority: *{d["priority"]}*. Owner: {d["owner"]}.
+Dependencies: TAVI-AGENT-006, TAVI-AGENT-003, TAVI-MULTI-046.
+
+Cross-device, restart, account isolation and resilience QA of the native OpenClaw channel, then operator-approved optional retirement of external watcher; preserve CLI fallback until native parity proven.
+
+Acceptance:
+. Using two human Tavi accounts and one separately authenticated OpenClaw account, demonstrate DM both directions and a challenged game acceptance entirely through native OpenClaw channel (external watcher disabled).
+. Verify authorization for accepted/unaccepted contacts, per-account isolation, event recipient scoping, allowlist enforcement, malicious inbound message containment and no credential in logs, prompts or outbound game URLs.
+. Stop/restart OpenClaw and disable network during pending messages/challenges; verify bounded catch-up, no unrecoverable loss within server retention, no runaway duplicate sends and explicit limitation documentation.
+. Confirm native plugin installation/upgrades and downgrade/rollback; only then propose disabling external watcher, without deleting CLI support or changing ordinary Tavi clients.
+. Operator reviews actual OpenClaw Gateway runtime traces, Tavi inbox messages, Windows UI and server-side authorization logs before marking Done.
+
+=== 5. TAVI-MULTI-047 — Life authoritative match creation and OpenClaw turn adapter
+
+Status: *planned*; priority: *{d["priority"]}*. Owner: {d["owner"]}.
+Dependencies: TAVI-MULTI-046, SOC-GAME-02B.
+
+Cross-repository dependency: Life, not Tavi or OpenClaw channel, creates and persists matches after accepted Tavi challenge; verifies Tavi identity proof and per-game seat; exposes legal actions and executes agent turns without UI automation.
+
+Acceptance:
+. Life provides reviewed authenticated create/join/resume, inspect, legal_actions, act and end_turn endpoints with durable match IDs, validated Tavi subject-to-seat bindings and idempotent command IDs.
+. An accepted Tavi challenge is correlated to one operator-approved Life match; rejection/expiry/replay creates no seat and no game action, and match admission always requires Life authorization.
+. OpenClaw uses a game-specific legal-action adapter via independent Tavi identity and Life API; cannot act for another player, invent moves or bypass legal-action validation.
+. Two participants can disconnect, resume and complete legal Life turns; changes to match seats and closed state trigger accurate Social roster and notification updates.
+. Game backend changes are tracked and approved in the Life project workboard; this Tavi item records the dependency and integration evidence, not a claim of Life implementation.
+
+=== 6. TAVI-MULTI-048 — End-to-end Tavi, Atrium and Life multiplayer acceptance
+
+Status: *planned*; priority: *{d["priority"]}*. Owner: {d["owner"]}.
+Dependencies: TAVI-MULTI-047, TAVI-AGENT-007, TAVI-031, TAVI-MULTI-044, TAVI-MULTI-045, TAVI-032.
+
+Prove the requested human-vs-OpenClaw and two-human hostless matches from Windows Tavi through Atrium/Life, including restart/resume, private match chat, server-owned rules and notifications.
+
+Acceptance:
+. Windows Tavi shows Life, user chooses Challenge against OpenClaw, native channel receives and accepts the invitation, and Life creates a verified playable match whose ID can be launched/resumed via Atrium.
+. Human plays legal turns versus OpenClaw, OpenClaw observes its own authorized seat and plays via Life game API, and the game progresses to a final state without a continuously connected host.
+. Open same match from another device after app/agent/backend restart; match and turns persist and all clients agree on the authoritative game state.
+. Verify two human players can also create/join/complete a game and private match conversation ACLs follow actual Life roster removal and closure.
+. Attempt replay, unauthorized seat access, expired invitations and stale/duplicate actions; all fail safely with no credential leakage. Obtain explicit operator sign-off.
+
+== Milestones
+
+* **Channel ready:** OpenClaw can participate in normal Tavi messaging and respond to Tavi game challenges using the installed native plugin alone, with no external `tavi-openclaw-service.mjs` process. This proves messaging, not game play.
+* **Life opponent ready:** The authoritative Life backend creates a match, validates two Tavi seats, and accepts OpenClaw turns through its own game API.
+* **Shared multiplayer accepted:** A user launches from Tavi/Atrium, challenges OpenClaw, plays a complete match, resumes on another device and passes access-control/restart tests. This requires operator sign-off.
+
+== Out of scope for this planning-only ZIP
+
+No native OpenClaw channel implementation, no bot-exclusive Social endpoint, no agent provisioning privilege, no Life game code changes, no Atrium registration change, no new Social SQL schema migration, no claimed production acceptance. The v0.3.47 version bump keeps ZipRunner package records consistent. Do not auto-deploy or push it.

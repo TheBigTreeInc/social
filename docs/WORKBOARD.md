@@ -1,3 +1,11 @@
+## v0.3.47 — Native Tavi channel & multiplayer workboard plan (no runtime feature delivery)
+
+Operator-supplied canonical workboard: **74 tickets** (40 review, 20 planned, 13 deferred, 1 suggested). The full snapshot is archived in `docs/ZIPRUNNER_LOCAL_WORKBOARD_74_20261018.json` without changes. Preserve all existing IDs, statuses, priorities and operator acceptance checks. Existing `TAVI-AGENT-002` remains high/planned. No item is marked Done.
+
+New high/planned workboard proposals: `TAVI-QA-047` (ZipRunner CI and ZIP evidence), `TAVI-AGENT-005` (verified native channel SDK and lifecycle design), `TAVI-AGENT-006` (installable native Tavi channel with normal account DM/invite/event support), `TAVI-AGENT-007` (security/restart/cross-account live QA), `TAVI-MULTI-047` (Life-owned authenticated matches and OpenClaw game-action adapter), and `TAVI-MULTI-048` (Atrium/Tavi/Life/OpenClaw full two-player multiplayer acceptance). All remain PLANNED pending implementation/operator review.
+
+Tavi is a general chat platform; OpenClaw is merely an optional client. A challenge acknowledgement is not a Life game seat. User requested shared-multiplayer prioritization ahead of unrelated refactors; older unresolved QA/acceptance criteria remain open. Full architecture and testable acceptance: `docs/TAVI_NATIVE_CHANNEL_MULTIPLAYER_WORKBOARD_0347.adoc`. Source QA reconciliation: `docs/TAVI_QA_0346_RECONCILIATION.adoc`.
+
 ## Multiplayer priority override — Tavi v0.3.46 (review candidate)
 
 - **TAVI-MULTI-046 — Review candidate, NOT Done:** Windows Games roster shortcut and operator-published catalog with Play/Challenge, account-to-account challenge workflow, explicit OpenClaw accept/decline or opt-in allowed auto-accept. Schema 10; no new tables.

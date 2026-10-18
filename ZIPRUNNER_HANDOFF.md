@@ -1,3 +1,11 @@
+## Tavi 0.3.47 — Native channel workboard & v0.3.46 QA reconciliation ONLY
+
+ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.47|file=looprd-social-0.3.47-native-channel-workboard-qa-ziprunner.zip
+
+Full-source ZipRunner planning update from v0.3.46. Imported workboard update proposes six NEW **planned** items under the user multiplayer priority override, while preserving the original 74-ticket snapshot and all existing operator decisions. TAVI-AGENT-002 stays high/planned. Native OpenClaw plugin, Life game turns and Atrium integration are NOT implemented in this documentation/metadata pass. Schema 10 unchanged; no SQL migration. 0.3.46 exact push CI 8/8 and fresh SHA-bound exact ZIP post-update checks 13/13 passed, but ZipRunner watcher says not_github and must be reconciled under TAVI-QA-047. Separate native/device/operator acceptance remains open. Never mark Done, auto-push, tag, release or deploy.
+
+See `docs/TAVI_NATIVE_CHANNEL_MULTIPLAYER_WORKBOARD_0347.adoc` and `docs/TAVI_QA_0346_RECONCILIATION.adoc`.
+
 ## Tavi 0.3.46 — Game Library and OpenClaw Challenge Handshake
 
 ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.46|file=looprd-social-0.3.46-game-library-openclaw-challenges-ziprunner.zip

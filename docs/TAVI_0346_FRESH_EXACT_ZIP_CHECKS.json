@@ -1,0 +1,114 @@
+{
+  "version": "0.3.46",
+  "archive": "looprd-social-0.3.46-game-library-openclaw-challenges-ziprunner.zip",
+  "sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+  "checksCount": 13,
+  "passed": 13,
+  "failed": 0,
+  "tests": [
+    {
+      "id": "social-regression-suite",
+      "command": "npm run test",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 1.64,
+      "log": "/mnt/data/qa_0346_01.log"
+    },
+    {
+      "id": "integrated-client-project-check",
+      "command": "node client/tools/check-package.mjs",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 0.06,
+      "log": "/mnt/data/qa_0346_02.log"
+    },
+    {
+      "id": "social-web-sdk-parity",
+      "command": "node --test client/tests/browser-sdk.test.mjs",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 0.11,
+      "log": "/mnt/data/qa_0346_03.log"
+    },
+    {
+      "id": "social-classic-native-window-contract",
+      "command": "node --test client/tests/native-windows.test.mjs",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 0.11,
+      "log": "/mnt/data/qa_0346_04.log"
+    },
+    {
+      "id": "tavi-game-event-transport-contract",
+      "command": "python -m unittest discover -s tests -p test_game_events.py -v",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 2.12,
+      "log": "/mnt/data/qa_0346_05.log"
+    },
+    {
+      "id": "tavi-game-invite-grant",
+      "command": "python -m unittest discover -s tests -p test_game_invites_grants.py -v",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 3.43,
+      "log": "/mnt/data/qa_0346_06.log"
+    },
+    {
+      "id": "tavi-account-recovery",
+      "command": "python -m unittest discover -s tests -p test_account_recovery.py -v",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 2.93,
+      "log": "/mnt/data/qa_0346_07.log"
+    },
+    {
+      "id": "tavi-multiplayer-match-chat",
+      "command": "python -m unittest discover -s tests -p test_game_rooms.py -v",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 3.43,
+      "log": "/mnt/data/qa_0346_08.log"
+    },
+    {
+      "id": "tavi-match-chat-js-sdk",
+      "command": "node --test client/tests/game-rooms-sdk.test.mjs",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 0.11,
+      "log": "/mnt/data/qa_0346_09.log"
+    },
+    {
+      "id": "tavi-native-multiplayer-match-window",
+      "command": "node --test client/tests/match-window.test.mjs",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 0.11,
+      "log": "/mnt/data/qa_0346_10.log"
+    },
+    {
+      "id": "tavi-openclaw-game-challenge-authorization",
+      "command": "python -m unittest discover -s tests -p test_game_challenges.py -v",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 3.58,
+      "log": "/mnt/data/qa_0346_11.log"
+    },
+    {
+      "id": "tavi-game-library-challenge-sdk",
+      "command": "node --test client/tests/game-challenges-sdk.test.mjs",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 0.12,
+      "log": "/mnt/data/qa_0346_12.log"
+    },
+    {
+      "id": "tavi-openclaw-inbound-challenge-watcher",
+      "command": "node --test integrations/openclaw/tests/challenges.test.mjs",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 0.11,
+      "log": "/mnt/data/qa_0346_13.log"
+    }
+  ]
+}

@@ -1,0 +1,2804 @@
+ZIPRUNNER QA & NEXT PASS
+Project: looprd-social
+Canonical project ID: be0bf498-ea5a-461e-a84e-d47f5f449e09
+Git push: observed successful (not CI or release proof)
+Pushed at (local): 2026-10-18T16:39:40
+Commit: 5adc8af8ab986fa21349a6973b8236817e6059b4
+
+GITHUB ACTIONS — EXACT PUSH WORKFLOWS
+Watch: not_github
+- No exact-commit push workflow results recorded.
+Full project test success NOT proven.
+IMMEDIATE NEXT ACTION: Resolve failed, pending or missing CI evidence before another development pass.
+
+LOCAL ZIP BUILD AND POST-UPDATE CHECKS (separate from Git commit)
+ZIP: looprd-social-0.3.46-game-library-openclaw-challenges-ziprunner (1).zip / 0.3.46
+ZIP SHA256: cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615
+Observed build: build_passed_operator_unverified (not operator acceptance)
+Post-update: waiting_for_verification — The recorded checks belong to different ZIP bytes. Fresh checks for the latest ZIP are required.
+- test-1: passed
+- test-2: passed
+- test-3: passed
+- test-4: passed
+
+WORK BOARD — DURABLE PRIORITIES
+- [high / review] LRS-004: Account recovery and hardened public registration
+- [high / planned] SCL-007: Private groups and game invitations
+- [high / planned] SCL-009: Android background push and turn delivery
+- [high / planned] SCL-010: Native build and device acceptance
+- [high / planned] TAVI-031: Embedded Life actual game acceptance
+- [high / planned] TAVI-032: Dedicated game session chat and invitations
+- [high / planned] TAVI-ADMIN-002: Live admin notifications acceptance
+- [high / planned] TAVI-AGENT-002: Native OpenClaw channel plugin and game actions
+Recommended next Work board item AFTER CI verification: LRS-004 — Account recovery and hardened public registration
+Verify acceptance criteria and obtain operator approval first.
+Acceptance: Back up Social database and validate schema 8→9 migration against current LoopRD.
+Acceptance: Generate eight codes on account A, store securely offline, then recover without an active session; validate other sessions revoked and new device usable.
+Acceptance: Verify invalid/reused/expired/rotated codes are rejected without account enumeration; verify 5-failure recovery lockout.
+Acceptance: Verify production registration rate settings, legitimate registrations, and existing users signing in.
+Acceptance: Test recovery UI on Android and Windows; do not copy tokens or codes into logs/reports.
+
+MODEL NEXT-PASS INSTRUCTIONS
+- Cross-check exact push SHA, workflow URLs and failed/pending checks; do not claim unobserved tests passed.
+- Preserve existing Work board IDs, priority and acceptance criteria. Record new bugs with priority and reproduction.
+- Update the Work board in the next versioned source ZIP with .ziprunner-workboard-update.json (implemented and remaining).
+- Only operator-verified reviewed work becomes Done; CI/build success does not approve release or close work.
+- Report implemented work, observed tests, remaining tasks and the next priority; do not auto-send/push/tag/release.
+
+ZIPRUNNER LOCAL WORK BOARD — MODEL SYNC v1
+Project: looprd-social
+Canonical project ID: unverified
+Local installed version: 0.3.46
+Captured UTC: 2026-10-18T14:49:01+00:00
+Last local board update: 2026-10-18T16:41:13.439819
+Tickets: 74 (exported 74)
+Statuses: blocked=0, deferred=13, done=0, in_progress=0, planned=20, removed=0, review=40, suggested=1
+
+MODEL INSTRUCTIONS
+- Treat this snapshot as the latest *local* operator Work board, not as proof of completed QA.
+- Preserve every ticket ID, priority, acceptance criterion, status, and operator decision.
+- Reconcile with your existing work plan by ID; do not replace newer evidence with older ZIP defaults.
+- A successful build/CI is not operator verification or permission to mark Done.
+- When packaging the next source ZIP, update .ziprunner-workboard-update.json and preserve unfinished tickets.
+- If a ticket conflicts with proposed model work, flag the conflict instead of silently changing status.
+
+LOCAL WORK BOARD DATA (JSON)
+```json
+{
+  "schema": "ziprunner.workboard-snapshot.v1",
+  "source": "ziprunner-local-durable-project-pass-state",
+  "project": "looprd-social",
+  "canonical_project_id": "",
+  "captured_at_utc": "2026-10-18T14:49:01+00:00",
+  "version": "0.3.46",
+  "state_updated_at": "2026-10-18T16:41:13.439819",
+  "total_tickets": 74,
+  "truncated": false,
+  "tickets": [
+    {
+      "id": "LRS-004",
+      "title": "Account recovery and hardened public registration",
+      "summary": "Social-owned password recovery and device management, optional email verification/invite controls, abuse prevention, security review and production readiness remain to be implemented. External OIDC not required.",
+      "priority": "high",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-18T10:06:39",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Back up Social database and validate schema 8→9 migration against current LoopRD.",
+        "Generate eight codes on account A, store securely offline, then recover without an active session; validate other sessions revoked and new device usable.",
+        "Verify invalid/reused/expired/rotated codes are rejected without account enumeration; verify 5-failure recovery lockout.",
+        "Verify production registration rate settings, legitimate registrations, and existing users signing in.",
+        "Test recovery UI on Android and Windows; do not copy tokens or codes into logs/reports."
+      ],
+      "operator_checks": [
+        "Back up Social database and validate schema 8→9 migration against current LoopRD.",
+        "Generate eight codes on account A, store securely offline, then recover without an active session; validate other sessions revoked and new device usable.",
+        "Verify invalid/reused/expired/rotated codes are rejected without account enumeration; verify 5-failure recovery lockout.",
+        "Verify production registration rate settings, legitimate registrations, and existing users signing in.",
+        "Test recovery UI on Android and Windows; do not copy tokens or codes into logs/reports."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Source candidate: signed-in password-confirmed recovery-code issue/rotation; one-time 160-bit hashed codes and authenticated revocation/status; username+code recovery resets password and revokes existing sessions, with 15-minute per-account recovery backoff. Additive Social schema 9; global hourly registration backstop and portable SDK/Windows/Android/Web UI. This does NOT close LRS-004: operator migration, device acceptance and abuse review remain."
+    },
+    {
+      "id": "SCL-007",
+      "title": "Private groups and game invitations",
+      "summary": "Buddy list/direct messages are implemented in this pass. Group conversation membership, game invitations, moderation and game ticket authorization still need Social and game-side contracts.",
+      "priority": "high",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "SCL-009",
+      "title": "Android background push and turn delivery",
+      "summary": "Turn notifications work while the client is running; provide Social-owned device push registration and a push provider to wake Android after app termination.",
+      "priority": "high",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "SCL-010",
+      "title": "Native build and device acceptance",
+      "summary": "Current v0.3.1 native Windows/Android installers and GUI acceptance remain to be verified on GitHub/physical devices; source tests only are locally available.",
+      "priority": "high",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-031",
+      "title": "Embedded Life actual game acceptance",
+      "summary": "Configure Life deployment URL via operator catalog, verify iframe policies, cookies, sign-in and actual game functionality. Life integration must be validated against its deployment.",
+      "priority": "high",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-032",
+      "title": "Dedicated game session chat and invitations",
+      "summary": "Companion currently uses existing shared community lobby; build room-scoped conversations and short-lived audience-bound game join tickets after agreeing game API contract.",
+      "priority": "high",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-ADMIN-002",
+      "title": "Live admin notifications acceptance",
+      "summary": "Awaiting operator acceptance after the 0.3.21 Git revision is pushed and LoopRD reconciles schema 6. Verify promotion/revocation in protected Data & actions, privately enrolled service-to-Tavi administrator notifications, recipient-only inbox access, and ntfy wake delivery. Requires a running compatible LoopRD instance and private service credential enrollment; these live checks are not claimed complete.",
+      "priority": "high",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-AGENT-002",
+      "title": "Native OpenClaw channel plugin and game actions",
+      "summary": "The v0.3.27 CLI bridge is usable via OpenClaw exec. A native OpenClaw channel plugin for automatic inbound dispatch, distinct agent badges, agent provisioning and game-specific authorized join/turn/action APIs remain future work; require upstream OpenClaw plugin API and game implementation acceptance.",
+      "priority": "high",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-ANDROID-042",
+      "title": "Android sign-in discovery timeout and failed login-problem reporter",
+      "summary": "Screenshots: api.thebigtree.life discovery timed out, bug report threw raw invalid URL when origin absent, and status bar overlaid header. Source fixes shipped in 0.3.42; underlying phone/server reachability and Android UI still require on-device verification.",
+      "priority": "high",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-BUILD-LOCK-025",
+      "title": "Windows native rebuild acceptance after targeted process shutdown",
+      "summary": "Requires an actual ZipRunner Windows build with a running prior Tavi target executable to prove file-lock handling. Confirm accurate stop diagnostics, successful NSIS compilation, previous-installer rollback, and no unrelated process termination. The author environment cannot run Windows PowerShell or Rust NSIS builds.",
+      "priority": "high",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-CHAT-003",
+      "title": "Android UnifiedPush background delivery and notification actions",
+      "summary": "LoopRD server verified principal and push device APIs are now integrated in Tavi v0.3.20. Still requires native Android UnifiedPush distributor enrollment/receiver (endpoint and challenge), 24-hour device renewal/rotation, lifecycle revocation, OS channels, closed-app wake testing and live ntfy acceptance.",
+      "priority": "high",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-EVENTS-002",
+      "title": "LoopRD role-driven routing and scoped panel SSO",
+      "summary": "Requires LoopRD/DAPI admin-principal contracts, external publisher identity, durable role-driven subscriptions and one-time destination-scoped web handoff.",
+      "priority": "high",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-SESSION-003",
+      "title": "Windows native DPAPI and compact Settings acceptance",
+      "summary": "Windows source tests pass, but v0.3.23 NSIS failed replacing a running target/release executable (WinError 5). v0.3.24 adds a path-specific pre-build close/stop; repeat native build and then validate DPAPI session restoration, logout, outage behavior and chat window isolation. Android Keystore is separate.",
+      "priority": "high",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "define-next-pass",
+      "title": "Define the next bounded implementation pass",
+      "summary": "Collect the latest project state and convert it into one reviewable implementation slice.",
+      "priority": "high",
+      "status": "suggested",
+      "acceptance_criteria": [
+        "The manager/QA session has reviewed the current project state.",
+        "The next pass has a bounded scope and screenshot/log/code-verifiable acceptance criteria.",
+        "Worker execution and promotion remain explicitly gated."
+      ]
+    },
+    {
+      "id": "SCL-011",
+      "title": "Game activity integration",
+      "summary": "Each game hosted on the selected LoopRD server must implement its own turn-activity contract for automatic alerts; the Social app cannot fabricate turns.",
+      "priority": "medium",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "SCL-017",
+      "title": "Secure persistent device login",
+      "summary": "Currently device session token is memory-only; add native OS-secure storage with explicit remembered-device management and logout/remote revoke controls.",
+      "priority": "medium",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "SCL-018",
+      "title": "Server-gated Admin / Debug developer diagnostics",
+      "status": "review",
+      "updated_at": "2026-10-16T15:17:24",
+      "status_updated_at": "2026-10-16T15:17:24",
+      "acceptance_criteria": [
+        "Back up LoopRD Social SQLite database and activate the v3 additive migration; verify previously registered accounts retain sign-in and developerEnabled defaults to false.",
+        "Run tools/social-developer-access.py on the LoopRD host with --db, --user and --enable; sign in and check Settings gains Show developer tools, initially off.",
+        "Enable the UI switch; verify the read-only Admin / Debug tab shows sanitized platform release, schema, session counts and client connection diagnostics.",
+        "Disable the flag on the server; verify the client removes the diagnostics on the next sync or request and that direct developer_diagnostics calls fail even for previously enabled sessions.",
+        "Verify another account and a legacy development token cannot access developer_diagnostics or grant themselves developerEnabled."
+      ],
+      "operator_checks": [
+        "Back up LoopRD Social SQLite database and activate the v3 additive migration; verify previously registered accounts retain sign-in and developerEnabled defaults to false.",
+        "Run tools/social-developer-access.py on the LoopRD host with --db, --user and --enable; sign in and check Settings gains Show developer tools, initially off.",
+        "Enable the UI switch; verify the read-only Admin / Debug tab shows sanitized platform release, schema, session counts and client connection diagnostics.",
+        "Disable the flag on the server; verify the client removes the diagnostics on the next sync or request and that direct developer_diagnostics calls fail even for previously enabled sessions.",
+        "Verify another account and a legacy development token cannot access developer_diagnostics or grant themselves developerEnabled."
+      ],
+      "candidate_version": "0.3.1",
+      "candidate_sha256": "6d8e2937329440072f01a6b29b000594d00829256ffa56dbc27b89c3ae8d94d5",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-16T15:17:24",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Add SocialAccount.developerEnabled (default false) and a local LoopRD host operator command to set/revoke it; server checks flag per diagnostics request. Client hides the switch and page for normal users and clears it on server revocation."
+    },
+    {
+      "id": "SCL-019",
+      "title": "Classic messenger window design and responsive roster",
+      "status": "review",
+      "updated_at": "2026-10-16T15:17:31",
+      "status_updated_at": "2026-10-16T15:17:31",
+      "acceptance_criteria": [
+        "Open the new Windows NSIS client and verify the roster is narrow and separate-looking from the conversation; no permanent right game sidebar or message bubbles.",
+        "Sign in and open public lobby and friend DMs; verify Enter sends, Shift+Enter inserts a newline, roster search and collapsing groups work.",
+        "Click menus and toolbar actions for Contacts, Games, Alerts, Portrait, Options and Logout; verify each acts or reports a clear error.",
+        "Resize to mobile width or install the Android build; confirm switching between contacts and conversation without clipped controls.",
+        "Verify non-developer users have no Admin/Debug controls; grant operator permission and confirm the existing toggle still works; revoke to hide it.",
+        "Compare against a real LoopRD Social v0.3.1+ deployment and confirm registration, messages, games and portraits were not affected."
+      ],
+      "operator_checks": [
+        "Open the new Windows NSIS client and verify the roster is narrow and separate-looking from the conversation; no permanent right game sidebar or message bubbles.",
+        "Sign in and open public lobby and friend DMs; verify Enter sends, Shift+Enter inserts a newline, roster search and collapsing groups work.",
+        "Click menus and toolbar actions for Contacts, Games, Alerts, Portrait, Options and Logout; verify each acts or reports a clear error.",
+        "Resize to mobile width or install the Android build; confirm switching between contacts and conversation without clipped controls.",
+        "Verify non-developer users have no Admin/Debug controls; grant operator permission and confirm the existing toggle still works; revoke to hide it.",
+        "Compare against a real LoopRD Social v0.3.1+ deployment and confirm registration, messages, games and portraits were not affected."
+      ],
+      "candidate_version": "0.3.2",
+      "candidate_sha256": "f81b76b2c28ae2dea2548f50aa68d0f8c05df24eb7032e9c958cf9eee3ae9bf4",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-16T15:17:31",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Slim Windows-style chrome, buddy groups with search/collapse, lightweight conversation transcript, traditional menus, compact game alerts and mobile roster/conversation navigation. Existing server actions retained; no new database migration."
+    },
+    {
+      "id": "SCL-021",
+      "title": "Replace oversized Windows client with native buddy list and separate conversations",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-16T15:17:39",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Install the Windows NSIS artifact; sign-in opens as a narrow 355×630 window, with no blue 1060px background or a duplicate app title bar.",
+        "Sign in with an existing Social account; the same window displays buddy groups and turn alerts; verify there is no permanent right-side panel.",
+        "Double-click a buddy or open Community Lobby: a separate approximately 585×525 Windows chat window opens, and reselecting the same buddy focuses it.",
+        "Send and receive a message in the native conversation; verify chat windows do not need another login and can open simultaneously.",
+        "Verify Settings/Games/Portrait and server-authorized developer switch work within the roster-sized native host.",
+        "Run the Web, Windows and Android workflows; confirm Android navigation and browser API/account parity remain functional."
+      ],
+      "operator_checks": [
+        "Install the Windows NSIS artifact; sign-in opens as a narrow 355×630 window, with no blue 1060px background or a duplicate app title bar.",
+        "Sign in with an existing Social account; the same window displays buddy groups and turn alerts; verify there is no permanent right-side panel.",
+        "Double-click a buddy or open Community Lobby: a separate approximately 585×525 Windows chat window opens, and reselecting the same buddy focuses it.",
+        "Send and receive a message in the native conversation; verify chat windows do not need another login and can open simultaneously.",
+        "Verify Settings/Games/Portrait and server-authorized developer switch work within the roster-sized native host.",
+        "Run the Web, Windows and Android workflows; confirm Android navigation and browser API/account parity remain functional."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Windows main window is roster-sized instead of 1060px dashboard. Open individual Tauri chat windows and broker authenticated operations via main window without copying credentials. Build emits standalone chat page, leaves Android/web responsive, and adds native geometry/IPC checks."
+    },
+    {
+      "id": "SOC-GAME-02A",
+      "title": "Game-turn notification transport and account-scoped consent",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-18T01:43:05",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Back up the Social database then validate/reconcile LoopRD social schema 7 with approved runtime.",
+        "Provision LOOPRD_TAVI_SOCIAL_ISSUER, LOOPRD_TAVI_GAME_CALLERS_JSON, and a private game service credential mapped by existing LOOPRD_SOCIAL_SERVICE_SECRETS_JSON.",
+        "From a signed-in account set a subscription to an approved match; submit a service turn.ready event twice, verify one inbox entry and one push queue write; reject nonconsenting recipient and nonservice caller.",
+        "Close Tavi and re-open after the event; inbox remains visible independently from Redis; test against Atrium only when its route resolves."
+      ],
+      "operator_checks": [
+        "Back up the Social database then validate/reconcile LoopRD social schema 7 with approved runtime.",
+        "Provision LOOPRD_TAVI_SOCIAL_ISSUER, LOOPRD_TAVI_GAME_CALLERS_JSON, and a private game service credential mapped by existing LOOPRD_SOCIAL_SERVICE_SECRETS_JSON.",
+        "From a signed-in account set a subscription to an approved match; submit a service turn.ready event twice, verify one inbox entry and one push queue write; reject nonconsenting recipient and nonservice caller.",
+        "Close Tavi and re-open after the event; inbox remains visible independently from Redis; test against Atrium only when its route resolves."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Server-only reviewed game caller delivery, publisher/game allowlist, issuer verification, private match opt-in, additive schema 7, stable event ID dedupe, durable Social inbox, transactional pulse+UnifiedPush hint, bounded pagination and Tavi SDK/link. No real Life game grant or Atrium route yet."
+    },
+    {
+      "id": "SOC-GAME-02B",
+      "title": "Game identity grant, invitation and full Atrium interaction",
+      "summary": "Integrate trusted match membership proof, Social game-grant issuer and safe real invite route. Life game backend plus Atrium must authorize actual join/resume. Add recipient-specific invite creation and native OS background delivery acceptance.",
+      "priority": "medium",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-030",
+      "title": "Server-promoted browser games and Windows companion lobby chat",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-16T16:17:16",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Set TAVI_GAME_CATALOG_JSON to a reviewed HTTPS game URL on the Social server and redeploy the generated LoopRD handler.",
+        "Refresh games in Tavi; verify only server-promoted games appear.",
+        "Open promoted embedded web game on Windows; verify separate window and community lobby chat while playing.",
+        "Test browser refusal to frame: open browser fallback; verify no Social token is disclosed to embedded game.",
+        "Verify Windows NSIS and web build before deployment."
+      ],
+      "operator_checks": [
+        "Set TAVI_GAME_CATALOG_JSON to a reviewed HTTPS game URL on the Social server and redeploy the generated LoopRD handler.",
+        "Refresh games in Tavi; verify only server-promoted games appear.",
+        "Open promoted embedded web game on Windows; verify separate window and community lobby chat while playing.",
+        "Test browser refusal to frame: open browser fallback; verify no Social token is disclosed to embedded game.",
+        "Verify Windows NSIS and web build before deployment."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Server operator publishes HTTPS game allowlist using TAVI_GAME_CATALOG_JSON; client shows catalog; isolated Tauri game window displays sandboxed game iframe and authenticated lobby chat via main-only request broker. External-browser fallback supported."
+    },
+    {
+      "id": "TAVI-034",
+      "title": "Web/Android integrated player",
+      "summary": "Standalone browser and Android currently open promoted games in external browser; add secure embedded player with parity after WebView acceptance.",
+      "priority": "medium",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-041",
+      "title": "Local client build and explicit descriptor deployment check",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-16T16:58:51",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Run BUILD-LOCAL.ps1 -Target Web on Windows with dependencies installed and inspect client/dist.",
+        "Run BUILD-LOCAL.ps1 -Target Windows with Rust/MSVC toolchain and inspect NSIS installer.",
+        "Run CHECK-LOOPRD-DEPLOY.ps1 against unchanged and modified looprd.yaml in a Git checkout."
+      ],
+      "operator_checks": [
+        "Run BUILD-LOCAL.ps1 -Target Web on Windows with dependencies installed and inspect client/dist.",
+        "Run BUILD-LOCAL.ps1 -Target Windows with Rust/MSVC toolchain and inspect NSIS installer.",
+        "Run CHECK-LOOPRD-DEPLOY.ps1 against unchanged and modified looprd.yaml in a Git checkout."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Provide PowerShell local Web, Windows and verify build entrypoints and read-only Git HEAD comparison for looprd.yaml; no automatic push or release deployment."
+    },
+    {
+      "id": "TAVI-042",
+      "title": "ZipRunner automatic local Tavi builds",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-16T17:18:41",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "On Windows import source ZIP with working NSIS dependencies and confirm TAVI_AUTO_BUILD_PASSED in ZipRunner build log.",
+        "Reapply doc-only changes and confirm cached build when client sources unchanged.",
+        "Intentionally break native build, confirm job fails and previous NSIS installer remains.",
+        "Check looprd.yaml diff independently and publish server changes only when required."
+      ],
+      "operator_checks": [
+        "On Windows import source ZIP with working NSIS dependencies and confirm TAVI_AUTO_BUILD_PASSED in ZipRunner build log.",
+        "Reapply doc-only changes and confirm cached build when client sources unchanged.",
+        "Intentionally break native build, confirm job fails and previous NSIS installer remains.",
+        "Check looprd.yaml diff independently and publish server changes only when required."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Windows default; Web/Android configurable; incremental digest and installer rollback; never pushes Git."
+    },
+    {
+      "id": "TAVI-043",
+      "title": "Tavi visual identity and branded launcher assets",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-16T17:29:13",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Import into looprd-social ZipRunner and confirm 0.3.10 stamp.",
+        "Verify tests and Windows auto-build on Windows host; open installer and check taskbar/launcher icon.",
+        "Confirm compact roster and independent chat/game windows retain original size and layout.",
+        "Confirm client-only change does not require looprd.yaml publication."
+      ],
+      "operator_checks": [
+        "Import into looprd-social ZipRunner and confirm 0.3.10 stamp.",
+        "Verify tests and Windows auto-build on Windows host; open installer and check taskbar/launcher icon.",
+        "Confirm compact roster and independent chat/game windows retain original size and layout.",
+        "Confirm client-only change does not require looprd.yaml publication."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Custom Tavi speech/leaf icon rendered to PNG/ICO from versioned SVG source; forest/teal accents on welcome/roster/chat/game window; Tavi web metadata and existing ZipRunner local Windows autobuild. No server descriptor changes."
+    },
+    {
+      "id": "TAVI-044",
+      "title": "Windows native build environment and SQLite cleanup reliability",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-16T18:47:10",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "On Windows run BUILD-LOCAL.ps1 -Target Windows without manually activating a venv; verify Python tests pass without WinError 32 and compilation advances to Tauri.",
+        "Confirm TAVI_AUTO_BUILD_PASSED and a real NSIS executable before accepting native build; retain prior installer if a build fails."
+      ],
+      "operator_checks": [
+        "On Windows run BUILD-LOCAL.ps1 -Target Windows without manually activating a venv; verify Python tests pass without WinError 32 and compilation advances to Tauri.",
+        "Confirm TAVI_AUTO_BUILD_PASSED and a real NSIS executable before accepting native build; retain prior installer if a build fails."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Temporary SQLite fixtures now close all connections before cleanup; local build establishes .venv and installs requirements-dev.txt without modifying global Python."
+    },
+    {
+      "id": "TAVI-045",
+      "title": "Bind native WebView2 network requests correctly",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-16T19:10:56",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Build and launch Tavi on Windows; connect to the existing server, register a NEW username with a >=12 character password, and verify a buddy list appears without Illegal invocation.",
+        "Close and reopen Tavi; sign in and check that contact list, direct messages and server catalog load.",
+        "Verify browser SDK tests and no looprd.yaml change; ensure no tokens are logged or sent to game URLs."
+      ],
+      "operator_checks": [
+        "Build and launch Tavi on Windows; connect to the existing server, register a NEW username with a >=12 character password, and verify a buddy list appears without Illegal invocation.",
+        "Close and reopen Tavi; sign in and check that contact list, direct messages and server catalog load.",
+        "Verify browser SDK tests and no looprd.yaml change; ensure no tokens are logged or sent to game URLs."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "The shared JavaScript SDK now invokes window fetch on globalThis rather than calling a detached browser method. Adds a failing-before regression test that exercises discovery, account registration, and authenticated profile read."
+    },
+    {
+      "id": "TAVI-046",
+      "title": "Remember Tavi login on Windows and Web",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-16T20:40:21",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "On Windows, sign in with Remember enabled, close Tavi, relaunch and confirm buddy list restores without a password.",
+        "Disable remembering, sign out, restart, and confirm the password is required.",
+        "Repeat with the standalone web client; confirm an invalid or revoked token is cleared and prompts for sign-in.",
+        "Verify no game iframe, external site or public endpoint receives the saved Social token."
+      ],
+      "operator_checks": [
+        "On Windows, sign in with Remember enabled, close Tavi, relaunch and confirm buddy list restores without a password.",
+        "Disable remembering, sign out, restart, and confirm the password is required.",
+        "Repeat with the standalone web client; confirm an invalid or revoked token is cleared and prompts for sign-in.",
+        "Verify no game iframe, external site or public endpoint receives the saved Social token."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Save a revocable server-scoped Social token after explicit opt-in and restore it only after authenticated me() validation. Session-only fallback, remembered-device setting, expiration guard and logout cleanup added; never persist passwords."
+    },
+    {
+      "id": "TAVI-ADMIN-001",
+      "title": "LoopRD operator-granted ecosystem admin notifications",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T11:26:27",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Back up the Social DB and push looprd.yaml plus server sources to the existing Git repository; confirm LoopRD activates release 0.3.21/schema 6 and management.data capability.",
+        "Create two Tavi accounts. Promote one using LoopRD Data & actions, with an operator reason; verify the audit entry and per-account me.permissions.ecosystemAdmin.",
+        "Configure a private caller secret reference and LOOPRD_SOCIAL_SERVICE_SECRETS_JSON mapping; call tavi-admin-notify from the approved LoopRD component using ctx.call.",
+        "Confirm only the promoted account gets the inbox event. An active enrolled device should receive a content-free sync wake; native Android closed-app behavior is still pending.",
+        "Revoke the account role. Confirm service events immediately disappear and cannot be responded to; unpromoted account never sees them.",
+        "Verify account clients and unapproved components cannot call service-only contracts or browse the management-only /operator-accounts resource.",
+        "Back up the Social DB and push looprd.yaml plus server sources to the existing Git repository; confirm LoopRD activates release 0.3.22/schema 6 and management.data capability.",
+        "Back up the Social DB and push looprd.yaml plus server sources to the existing Git repository; confirm LoopRD activates release 0.3.23/schema 6 and management.data capability."
+      ],
+      "operator_checks": [
+        "Back up the Social DB and push looprd.yaml plus server sources to the existing Git repository; confirm LoopRD activates release 0.3.23/schema 6 and management.data capability.",
+        "Create two Tavi accounts. Promote one using LoopRD Data & actions, with an operator reason; verify the audit entry and per-account me.permissions.ecosystemAdmin.",
+        "Configure a private caller secret reference and LOOPRD_SOCIAL_SERVICE_SECRETS_JSON mapping; call tavi-admin-notify from the approved LoopRD component using ctx.call.",
+        "Confirm only the promoted account gets the inbox event. An active enrolled device should receive a content-free sync wake; native Android closed-app behavior is still pending.",
+        "Revoke the account role. Confirm service events immediately disappear and cannot be responded to; unpromoted account never sees them.",
+        "Verify account clients and unapproved components cannot call service-only contracts or browse the management-only /operator-accounts resource."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Data & actions exposes safe accounts projection and promote/revoke operations; approved private machine callers can broadcast administrator events or check Tavi role. Events persist and wake recipient devices transactionally; revocation removes access to previous service-origin events."
+    },
+    {
+      "id": "TAVI-AGENT-001",
+      "title": "OpenClaw headless Tavi account bridge",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T15:42:45",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Provision a dedicated Tavi account; configure TAVI_SERVER and private session on the OpenClaw host without committing credentials.",
+        "Run me, contacts, request/accept and dm commands; verify normal Tavi user sees the bot account and replies.",
+        "Send a DM to the agent; run updates twice; verify first response has new inbound message and second suppresses duplicate cursor.",
+        "Run games and confirm promoted catalog is visible but no unsupported game actions are claimed.",
+        "Test OpenClaw exec tool with OPENCLAW_SKILL.md; verify no secrets or management credentials appear in tool output."
+      ],
+      "operator_checks": [
+        "Provision a dedicated Tavi account; configure TAVI_SERVER and private session on the OpenClaw host without committing credentials.",
+        "Run me, contacts, request/accept and dm commands; verify normal Tavi user sees the bot account and replies.",
+        "Send a DM to the agent; run updates twice; verify first response has new inbound message and second suppresses duplicate cursor.",
+        "Run games and confirm promoted catalog is visible but no unsupported game actions are claimed.",
+        "Test OpenClaw exec tool with OPENCLAW_SKILL.md; verify no secrets or management credentials appear in tool output."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Standalone Node.js CLI uses a separate Tavi account for contacts, DM/lobby send, inbound cursor polling and game discovery. Includes copyable OpenClaw instructions, secret/session handling and regression tests. This is a CLI integration, not a native OpenClaw channel plugin or game action API."
+    },
+    {
+      "id": "TAVI-AGENT-003",
+      "title": "OpenClaw notification-to-agent bridge",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T22:57:58",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Start dedicated Tavi account bridge as supervised process",
+        "Message it from an accepted allowlisted account",
+        "Observe OpenClaw agent reply and successful retry/restart"
+      ],
+      "operator_checks": [
+        "Start dedicated Tavi account bridge as supervised process",
+        "Message it from an accepted allowlisted account",
+        "Observe OpenClaw agent reply and successful retry/restart"
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "New persistent Tavi watcher and OpenClaw CLI responder using existing LoopRD pulse WebSockets, authenticated HTTP inbox, cursor checkpoints and explicit allowlist. Native plugin remains follow-up."
+    },
+    {
+      "id": "TAVI-AGENT-004",
+      "title": "OpenClaw sender display identity",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T23:34:47",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Deploy updated LoopRD Social component",
+        "Update and restart OpenClaw Tavi bridge",
+        "DM from a contact with distinct display name and username; verify OpenClaw uses the display name"
+      ],
+      "operator_checks": [
+        "Deploy updated LoopRD Social component",
+        "Update and restart OpenClaw Tavi bridge",
+        "DM from a contact with distinct display name and username; verify OpenClaw uses the display name"
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Server contacts expose chosen displayName; bridge forwards it and verified username to OpenClaw, preserving account ID solely for routing and per-peer sessions. Existing contacts fallback to username."
+    },
+    {
+      "id": "TAVI-ANDROID-034",
+      "title": "Repair Android signed APK GitHub artifact path",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T19:52:18",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Push v0.3.34 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
+        "Confirm tavi-android-arm64-signed-release uploaded as a ZIP containing exactly one APK.",
+        "Confirm gated GitHub Release attaches direct v0.3.34 Android APK asset.",
+        "Push v0.3.35 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
+        "Confirm gated GitHub Release attaches direct v0.3.35 Android APK asset.",
+        "Push v0.3.37 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
+        "Confirm gated GitHub Release attaches direct v0.3.37 Android APK asset.",
+        "Push v0.3.38 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
+        "Confirm gated GitHub Release attaches direct v0.3.38 Android APK asset.",
+        "Push v0.3.39 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
+        "Confirm gated GitHub Release attaches direct v0.3.39 Android APK asset."
+      ],
+      "operator_checks": [
+        "Push v0.3.39 and verify Android workflow finds universal/release/app-universal-release.apk and passes apksigner verification.",
+        "Confirm tavi-android-arm64-signed-release uploaded as a ZIP containing exactly one APK.",
+        "Confirm gated GitHub Release attaches direct v0.3.39 Android APK asset."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Find Tauri APK in universal/release, verify apksigner signature, and stage it for stable GitHub Actions artifact upload. No change to app runtime or Social database."
+    },
+    {
+      "id": "TAVI-ANDROID-042-FIX",
+      "title": "Android login network diagnostics and safe reporting (source)",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-18T09:28:08",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Inspect TAVI-ANDROID-042 screenshot bug and confirm source tests passing",
+        "Deploy test APK and verify insets and real Social discovery on Android before clearing TAVI-ANDROID-042"
+      ],
+      "operator_checks": [
+        "Inspect TAVI-ANDROID-042 screenshot bug and confirm source tests passing",
+        "Deploy test APK and verify insets and real Social discovery on Android before clearing TAVI-ANDROID-042"
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Independent bounded 15-second /info and /social probes, explicit timeouts/network/503 wording, validated reporting origin, guarded Android status bar inset. Regression-tested source behavior; not real device connectivity."
+    },
+    {
+      "id": "TAVI-BUILD-LOCK-024",
+      "title": "Close running build-directory Tavi before Windows NSIS compilation",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T13:36:12",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Import 0.3.24 and verify ZipRunner Work board metadata passes before overlay and build.",
+        "Run an earlier Tavi executable directly from client/src-tauri/target/release, then apply this version. Confirm the pre-build log reports TAVI_BUILD_STOP_* and the running build-target copy closes before Cargo overwrites it.",
+        "Verify that the newly built Windows NSIS installer and executable report 0.3.24, then launch Tavi normally.",
+        "Confirm an independently installed Tavi executable at a different path is not stopped by this build script, and that app settings and runtime data remain unchanged.",
+        "If Rust still reports Access denied with no matching process, investigate antivirus or folder permissions rather than deleting target/release or changing folder ACLs.",
+        "Import 0.3.25 and verify ZipRunner Work board metadata passes before overlay and build.",
+        "Verify that the newly built Windows NSIS installer and executable report 0.3.25, then launch Tavi normally."
+      ],
+      "operator_checks": [
+        "Import 0.3.25 and verify ZipRunner Work board metadata passes before overlay and build.",
+        "Run an earlier Tavi executable directly from client/src-tauri/target/release, then apply this version. Confirm the pre-build log reports TAVI_BUILD_STOP_* and the running build-target copy closes before Cargo overwrites it.",
+        "Verify that the newly built Windows NSIS installer and executable report 0.3.25, then launch Tavi normally.",
+        "Confirm an independently installed Tavi executable at a different path is not stopped by this build script, and that app settings and runtime data remain unchanged.",
+        "If Rust still reports Access denied with no matching process, investigate antivirus or folder permissions rather than deleting target/release or changing folder ACLs."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "The Windows build now checks for a running release/looprd-social-client.exe at the exact project target path, requests graceful shutdown, and terminates only that path-verified PID when necessary before the Tauri/Rust compilation. Installed copies at other paths are unaffected. Existing NSIS installer rollback stays in place."
+    },
+    {
+      "id": "TAVI-CHAT-001",
+      "title": "Readable chat inbox with Windows and Android foreground alerts",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-16T22:31:54",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "On Windows with two accounts, verify new private messages show per-contact unread badges and native toast after OS permission; selecting/focusing the chat clears unread.",
+        "Send a private message while editing another draft in a separate native chat window: verify the draft/caret are preserved and the message arrives.",
+        "Restart Tavi and verify an already-notified message is not notified again; verify session tokens and message bodies are absent from unread-state localStorage records.",
+        "Install the Android client and verify 48px touch targets, safe-area navigation and foreground notifications when permission is granted.",
+        "Check that looprd.yaml is unchanged and no LoopRD server migration/deployment is required."
+      ],
+      "operator_checks": [
+        "On Windows with two accounts, verify new private messages show per-contact unread badges and native toast after OS permission; selecting/focusing the chat clears unread.",
+        "Send a private message while editing another draft in a separate native chat window: verify the draft/caret are preserved and the message arrives.",
+        "Restart Tavi and verify an already-notified message is not notified again; verify session tokens and message bodies are absent from unread-state localStorage records.",
+        "Install the Android client and verify 48px touch targets, safe-area navigation and foreground notifications when permission is granted.",
+        "Check that looprd.yaml is unchanged and no LoopRD server migration/deployment is required."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Per-peer unread counts in the contact roster, local read/notified cursors scoped by server and account, privacy-first OS notifications, separate-window read acknowledgments, composer-preserving conversation refresh, and phone-safe navigation. This is a client-only release; background mobile push remains future work."
+    },
+    {
+      "id": "TAVI-CHAT-002",
+      "title": "Server-backed inbox heads and background mobile push",
+      "summary": "Specify and build server-side DM summaries and synchronized read state; later add authenticated mobile push enrollment, safe push payloads, Android FCM and proper delivery diagnostics. Do not claim closed-app mobile notifications.",
+      "priority": "medium",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T11:26:27",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Back up the Social database and deploy release 0.3.18 with migration 5. Confirm existing accounts, DM contents and friendships remain intact.",
+        "With two signed-in devices on one account and a second account sending private messages, confirm new messages are counted on both devices; opening a conversation clears unread on both after refresh.",
+        "Verify no notifications repeat for already-seen message IDs and no private message bodies are written to local notification/read-state storage.",
+        "Check that unaccepted contacts cannot read messages or manipulate read markers and that the prior client-only 0.3.17 app continues operating against the upgraded server.",
+        "Build Tavi locally using ZipRunner; confirm the compact roster orders recent conversations and the older-server fallback still functions."
+      ],
+      "operator_checks": [
+        "Back up the Social database and deploy release 0.3.18 with migration 5. Confirm existing accounts, DM contents and friendships remain intact.",
+        "With two signed-in devices on one account and a second account sending private messages, confirm new messages are counted on both devices; opening a conversation clears unread on both after refresh.",
+        "Verify no notifications repeat for already-seen message IDs and no private message bodies are written to local notification/read-state storage.",
+        "Check that unaccepted contacts cannot read messages or manipulate read markers and that the prior client-only 0.3.17 app continues operating against the upgraded server.",
+        "Build Tavi locally using ZipRunner; confirm the compact roster orders recent conversations and the older-server fallback still functions."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "LoopRD Social schema 5 adds recipient-scoped DM mailbox heads and monotonically increasing read cursor. Tavi uses one summary request for the roster and fetches the selected conversation separately; old servers retain a bounded fallback. Historical local read IDs migrate per account and server; native chat views acknowledge through the main authenticated broker."
+    },
+    {
+      "id": "TAVI-CI-028",
+      "title": "GitHub Actions desktop coverage and independent distributables",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T16:04:33",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Enable GitHub Pages via Settings > Pages > GitHub Actions then rerun Pages deployment.",
+        "Verify the tavi-web-client-pages-ready workflow artifact exists even if Pages deployment is disabled.",
+        "Check Linux DEB and macOS DMG workflow results and download artifacts after CI completes.",
+        "Verify the sdk-distributions workflow emits 5 ZIPs with JavaScript, Python, Go, C# and OpenClaw sources."
+      ],
+      "operator_checks": [
+        "Enable GitHub Pages via Settings > Pages > GitHub Actions then rerun Pages deployment.",
+        "Verify the tavi-web-client-pages-ready workflow artifact exists even if Pages deployment is disabled.",
+        "Check Linux DEB and macOS DMG workflow results and download artifacts after CI completes.",
+        "Verify the sdk-distributions workflow emits 5 ZIPs with JavaScript, Python, Go, C# and OpenClaw sources."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Enable Linux/macOS CI on main and PR changes; validate Pages site independently; distribute reusable SDK source bundles and OpenClaw bridge artifacts. Pages hosting remains an operator setting."
+    },
+    {
+      "id": "TAVI-EVENTS-001",
+      "title": "Initial Tavi interactive event inbox",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-16T20:40:21",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Deploy schema v4 descriptor and activate server release 0.3.15; verify old accounts remain available.",
+        "Publish a test event from an operator-approved developer account; confirm recipient inbox displays it after refresh.",
+        "Reply once and verify replay is refused and state survives restart.",
+        "Open an HTTPS link and confirm no Social session token is sent to destination.",
+        "Confirm no permanent admin panel is added and old server behavior reports inbox unavailable rather than corrupting login.",
+        "Deploy schema v4 descriptor and activate server release 0.3.16; verify old accounts remain available."
+      ],
+      "operator_checks": [
+        "Deploy schema v4 descriptor and activate server release 0.3.16; verify old accounts remain available.",
+        "Publish a test event from an operator-approved developer account; confirm recipient inbox displays it after refresh.",
+        "Reply once and verify replay is refused and state survives restart.",
+        "Open an HTTPS link and confirm no Social session token is sent to destination.",
+        "Confirm no permanent admin panel is added and old server behavior reports inbox unavailable rather than corrupting login."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Persistence and bounded action schemas in Social; reply controls and HTTPS links in client. Operator-authorized publisher only; LoopRD admin role automation and scoped web SSO remain future work."
+    },
+    {
+      "id": "TAVI-EVENTS-003",
+      "title": "Actionable and historical inbox UX with recipient dismissal",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-16T22:31:54",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Publish an event to one user and confirm it appears under Needs action only for that user.",
+        "Dismiss the event and verify it moves to History after refresh and restart.",
+        "Verify a different user cannot dismiss or reply to the event.",
+        "Open a safe HTTPS link and confirm the Social bearer is not forwarded to the destination."
+      ],
+      "operator_checks": [
+        "Publish an event to one user and confirm it appears under Needs action only for that user.",
+        "Dismiss the event and verify it moves to History after refresh and restart.",
+        "Verify a different user cannot dismiss or reply to the event.",
+        "Open a safe HTTPS link and confirm the Social bearer is not forwarded to the destination."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Filters open/history events, renders transient native action forms, and atomically records dismissals for the authenticated recipient without schema changes."
+    },
+    {
+      "id": "TAVI-GAME-002",
+      "title": "Trusted game invitations and one-use account proof",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-18T09:28:08",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Back up production Social DB before schema 8 migration.",
+        "Stage Life and Social together with operator-provisioned credentials; confirm only matched service can redeem proof.",
+        "Verify the game still refuses wrong-seat actions after successfully redeeming an identity proof.",
+        "Verify OS/native push independently; not established by unit tests."
+      ],
+      "operator_checks": [
+        "Back up production Social DB before schema 8 migration.",
+        "Stage Life and Social together with operator-provisioned credentials; confirm only matched service can redeem proof.",
+        "Verify the game still refuses wrong-seat actions after successfully redeeming an identity proof.",
+        "Verify OS/native push independently; not established by unit tests."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Game service submits invite for accepted contacts. Tavi inbox acceptance enables notifications; a short-lived grant is one-time redeemed by matching game service. Source tests passed; live admission and hostless gameplay await Life."
+    },
+    {
+      "id": "TAVI-MULTI-044",
+      "title": "Game-seat-scoped private multiplayer match conversations",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-18T14:07:54",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Back up Social database and validate additive schema 9→10 against deployed DAPI.",
+        "Provide an approved Life service credential and issuer; test real game-owned match rosters and seat revocation.",
+        "Complete Android/Windows/web cross-client chat and restart acceptance; verify no unauthorized account or token leaks.",
+        "Prove real shared multiplayer game play and Atrium join/resume separately before closing SCL-007 or TAVI-032."
+      ],
+      "operator_checks": [
+        "Back up Social database and validate additive schema 9→10 against deployed DAPI.",
+        "Provide an approved Life service credential and issuer; test real game-owned match rosters and seat revocation.",
+        "Complete Android/Windows/web cross-client chat and restart acceptance; verify no unauthorized account or token leaks.",
+        "Prove real shared multiplayer game play and Atrium join/resume separately before closing SCL-007 or TAVI-032."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Source candidate: reviewed Life game roster sync with monotonically increasing revisions, Social schema 10, opt-in account room ACL, bounded private chat, content-free wake hints, browser/native shared SDK, Games tab UI. Life integration and native/remote acceptance remain."
+    },
+    {
+      "id": "TAVI-MULTI-045",
+      "title": "Dedicated native game match chat next to active multiplayer game",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-18T14:53:19",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Open a real verified, consenting match under Games on Windows and launch a dedicated match chat alongside Life.",
+        "Verify new window contains no bearer/token; only the main Tavi window performs authenticated API requests.",
+        "Revoke Life seat or Social subscription and verify conversation no longer reads or sends, with previous messages cleared after failed refresh.",
+        "Verify separate chat focus reuse and compatible browser/Android Games view; do not close TAVI-MULTI-044, SCL-007 or TAVI-032 until actual Life turns and Atrium join/resume pass."
+      ],
+      "operator_checks": [
+        "Open a real verified, consenting match under Games on Windows and launch a dedicated match chat alongside Life.",
+        "Verify new window contains no bearer/token; only the main Tavi window performs authenticated API requests.",
+        "Revoke Life seat or Social subscription and verify conversation no longer reads or sends, with previous messages cleared after failed refresh.",
+        "Verify separate chat focus reuse and compatible browser/Android Games view; do not close TAVI-MULTI-044, SCL-007 or TAVI-032 until actual Life turns and Atrium join/resume pass."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Source implementation: separate match window with opaque ID only, main-window-only authenticated message broker, live Social seat/consent checks, focus reuse, draft retention and revocation-clearing UI; no new SQL migrations."
+    },
+    {
+      "id": "TAVI-MULTI-046",
+      "title": "Visible Tavi game library and OpenClaw account challenge response",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-18T16:34:50",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Publish a verified HTTPS Life URL under TAVI_GAME_CATALOG_JSON on an approved Social v0.3.46 LoopRD server. Windows Games library shows Life and opens real playable page; no Social credential is shared.",
+        "Add a dedicated OpenClaw Tavi account as accepted friend; send challenge from Windows Tavi and confirm agent-owned Inbox/CLI lists it.",
+        "Run OpenClaw bridge with allowed peer/game and explicit autoaccept=true; human receives accepted response in Tavi Inbox, with manual decline and unauthorized attempts refused.",
+        "Confirm acceptance does not create a Life seat, launch a multiplayer match, or enable bot moves. Complete game API integration and two-account play separately before closing SCL-007 or TAVI-032."
+      ],
+      "operator_checks": [
+        "Publish a verified HTTPS Life URL under TAVI_GAME_CATALOG_JSON on an approved Social v0.3.46 LoopRD server. Windows Games library shows Life and opens real playable page; no Social credential is shared.",
+        "Add a dedicated OpenClaw Tavi account as accepted friend; send challenge from Windows Tavi and confirm agent-owned Inbox/CLI lists it.",
+        "Run OpenClaw bridge with allowed peer/game and explicit autoaccept=true; human receives accepted response in Tavi Inbox, with manual decline and unauthorized attempts refused.",
+        "Confirm acceptance does not create a Life seat, launch a multiplayer match, or enable bot moves. Complete game API integration and two-account play separately before closing SCL-007 or TAVI-032."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Source candidate: Windows Games shortcut, hosted game catalog cards/Play, accepted-contact challenge with 48-hour expiry and deduplicated recipient inbox replies, OpenClaw CLI receive/accept/decline and opt-in allowlisted bridge autoaccept. Challenge is NOT a Life match. No SQL migration (schema 10)."
+    },
+    {
+      "id": "TAVI-NEARBY-001",
+      "title": "Transport-neutral offline game session journal",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T22:27:18",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Run node --test client/tests/nearby-local-session.test.mjs",
+        "Confirm no Android Bluetooth transport, pairing or real game advertised as implemented.",
+        "Keep existing LoopRD Social schema and APIs unchanged."
+      ],
+      "operator_checks": [
+        "Run node --test client/tests/nearby-local-session.test.mjs",
+        "Confirm no Android Bluetooth transport, pairing or real game advertised as implemented.",
+        "Keep existing LoopRD Social schema and APIs unchanged."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Client-owned append-only revision journal, hash corruption checking, bounded game-action payloads, persistence adapter and conflict-safe sync intent. No BLE or server game sync implemented."
+    },
+    {
+      "id": "TAVI-NEARBY-002",
+      "title": "Native nearby pairing and transport",
+      "summary": "Android permissions + verified encrypted pairing, BLE/Wi-Fi transport, two-device acceptance and nearby UI.",
+      "priority": "medium",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-NEARBY-003",
+      "title": "Atrium offline game adapter and online sync",
+      "summary": "Obtain game rules/state reducer and server-authorized transactional sync contract; reject divergent heads; restart and train-mode device testing.",
+      "priority": "medium",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-OPENCLAW-027",
+      "title": "GitHub-first cross-platform clients and Pages",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T15:42:45",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Push source to TheBigTreeInc/social and enable GitHub Actions Pages; verify static client opens from /social/ and connects to the deployed LoopRD origin.",
+        "Clone repository on OpenClaw host; run tavi-agent help and authenticate its dedicated account.",
+        "Run Python, Go and .NET client compile/test checks on their supported platforms."
+      ],
+      "operator_checks": [
+        "Push source to TheBigTreeInc/social and enable GitHub Actions Pages; verify static client opens from /social/ and connects to the deployed LoopRD origin.",
+        "Clone repository on OpenClaw host; run tavi-agent help and authenticate its dedicated account.",
+        "Run Python, Go and .NET client compile/test checks on their supported platforms."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Add Pages workflow publishing Vite web client, GitHub-based OpenClaw installation guidance, and Python/Go/C# standard-library SDKs alongside canonical JavaScript SDK. No new server schema or game action API."
+    },
+    {
+      "id": "TAVI-PUSH-001",
+      "title": "Provider-independent push client preparation and resume UX",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T11:26:27",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "On Windows, import this ZIP, complete the local Windows build and sign in; enable and test OS notification permission in Settings. Confirm notification settings and conversations survive restart.",
+        "On Android, open Settings and opt in to background alerts. Verify it reports waiting for deployed LoopRD and the Android distributor adapter rather than claiming push registration.",
+        "Suspend Tavi and resume; verify unread/message status refreshes immediately, without repeated notifications or duplicate work from rapid focus events.",
+        "Confirm no endpoint, token, message body or Social credential is stored in the push preference key or exposed through wake-up payloads.",
+        "Confirm looprd.yaml has no diff from 0.3.18, backend remains schema 5 and Git push is not required."
+      ],
+      "operator_checks": [
+        "On Windows, import this ZIP, complete the local Windows build and sign in; enable and test OS notification permission in Settings. Confirm notification settings and conversations survive restart.",
+        "On Android, open Settings and opt in to background alerts. Verify it reports waiting for deployed LoopRD and the Android distributor adapter rather than claiming push registration.",
+        "Suspend Tavi and resume; verify unread/message status refreshes immediately, without repeated notifications or duplicate work from rapid focus events.",
+        "Confirm no endpoint, token, message body or Social credential is stored in the push preference key or exposed through wake-up payloads.",
+        "Confirm looprd.yaml has no diff from 0.3.18, backend remains schema 5 and Git push is not required."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Clients opt in locally to future background alerts, check only an explicit Social push-capability schema, reject malformed/credential-bearing wakeups, resume mailbox sync when visible, and offer an OS notification test. Does not register a UnifiedPush endpoint or claim delivery while suspended."
+    },
+    {
+      "id": "TAVI-PUSH-002",
+      "title": "Verified LoopRD Social principals and actual UnifiedPush API integration",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T11:26:27",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Upgrade LoopRD runtime to support auth.verified, push.unifiedpush and events.transactional; set LoopRD Python verifier support, configure ntfy public provider and keep management credentials private.",
+        "Apply this release looprd.yaml from Git and confirm the component loads, registration/login work from a new Tavi 0.3.20 Windows/Web client, and old clients are retired (no existing users require migration).",
+        "With two test accounts and accepted friendship, send a DM; verify one recipient wake in ntfy contains only {apiVersion: looprd-push/v1, type: sync}; blocked users and guests cannot register devices.",
+        "Receive a registration challenge on an actual distributor endpoint, verify it, list and revoke the owned device, then confirm session revocation denies further enrollment.",
+        "Confirm Android closed-app notifications remain disabled until native distributor plugin and real-device testing are implemented."
+      ],
+      "operator_checks": [
+        "Upgrade LoopRD runtime to support auth.verified, push.unifiedpush and events.transactional; set LoopRD Python verifier support, configure ntfy public provider and keep management credentials private.",
+        "Apply this release looprd.yaml from Git and confirm the component loads, registration/login work from a new Tavi 0.3.20 Windows/Web client, and old clients are retired (no existing users require migration).",
+        "With two test accounts and accepted friendship, send a DM; verify one recipient wake in ntfy contains only {apiVersion: looprd-push/v1, type: sync}; blocked users and guests cannot register devices.",
+        "Receive a registration challenge on an actual distributor endpoint, verify it, list and revoke the owned device, then confirm session revocation denies further enrollment.",
+        "Confirm Android closed-app notifications remain disabled until native distributor plugin and real-device testing are implemented."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Moved LoopRD component to auth.verified with scoped public guest registration/login and 30-day Social sessions, transactional opaque pulse/event wake messages, recipient-bound ctx.notify, exact LoopRD device enrollment/verification/revoke SDK and verified WebSocket tickets. No native Android closed-app distributor receiver is claimed."
+    },
+    {
+      "id": "TAVI-RELEASE-001",
+      "title": "Verified GitHub release gate and version tags",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T17:15:33",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Push 0.3.30 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.30 and a release containing six ZIP assets.",
+        "Force a build failure in a later test branch and confirm no release is created.",
+        "Confirm rerunning an already-released commit never overwrites an existing tag or release.",
+        "Push 0.3.33 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.33 and a release containing six ZIP assets.",
+        "Push 0.3.34 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.34 and a release containing six ZIP assets.",
+        "Push 0.3.35 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.35 and a release containing six ZIP assets.",
+        "Push 0.3.37 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.37 and a release containing six ZIP assets.",
+        "Push 0.3.38 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.38 and a release containing six ZIP assets.",
+        "Push 0.3.39 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.39 and a release containing six ZIP assets."
+      ],
+      "operator_checks": [
+        "Push 0.3.39 to main and confirm seven required workflows complete successfully.",
+        "Check Publish verified Tavi release creates tag v0.3.39 and a release containing six ZIP assets.",
+        "Force a build failure in a later test branch and confirm no release is created.",
+        "Confirm rerunning an already-released commit never overwrites an existing tag or release."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "GitHub workflow_run gate waits for 7 required CI workflows on the same current main SHA; checks artifact completeness, creates immutable vX.Y.Z release with downloadable Windows, Android, Linux, macOS, web and SDK/OpenClaw bundles. Pages hosting remains independent."
+    },
+    {
+      "id": "TAVI-RELEASE-022",
+      "title": "Correct ZipRunner workboard and advance version after packaging fix",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T12:01:00",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Import 0.3.22 into the existing looprd-social ZipRunner project and confirm mandatory workboard gate succeeds.",
+        "Confirm the active package metadata and built Tavi client version read 0.3.22.",
+        "Push the reviewed source and verify LoopRD reports release 0.3.22 with schema 6; complete previously listed administrator acceptance checks.",
+        "Import 0.3.23 into the existing looprd-social ZipRunner project and confirm mandatory workboard gate succeeds.",
+        "Confirm the active package metadata and built Tavi client version read 0.3.23.",
+        "Push the reviewed source and verify LoopRD reports release 0.3.23 with schema 6; complete previously listed administrator acceptance checks."
+      ],
+      "operator_checks": [
+        "Import 0.3.23 into the existing looprd-social ZipRunner project and confirm mandatory workboard gate succeeds.",
+        "Confirm the active package metadata and built Tavi client version read 0.3.23.",
+        "Push the reviewed source and verify LoopRD reports release 0.3.23 with schema 6; complete previously listed administrator acceptance checks."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Correct the mandatory remaining-item summary shape that blocked ZipRunner 1.2.304.92 before source overlay; advance client, server, LoopRD descriptor, handoff and verification metadata to 0.3.23 without changing application behavior. Supersedes rejected release 0.3.21."
+    },
+    {
+      "id": "TAVI-REPORTS-035",
+      "title": "Pre-login LoopRD bug report",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T21:10:15",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Deploy LoopRD with reports.bugs enabled and update Social descriptor",
+        "On Android trigger login failure and submit report; inspect LoopRD management Bug reports",
+        "Confirm no credentials or username submitted",
+        "Verify Android login error independently"
+      ],
+      "operator_checks": [
+        "Deploy LoopRD with reports.bugs enabled and update Social descriptor",
+        "On Android trigger login failure and submit report; inspect LoopRD management Bug reports",
+        "Confirm no credentials or username submitted",
+        "Verify Android login error independently"
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Adds explicit consent button at Tavi sign-in, calls the built-in _bugreports endpoint with a public limited guest principal, safe login/discovery context, and displays LoopRD report ID."
+    },
+    {
+      "id": "TAVI-SESSION-002",
+      "title": "OS-protected Windows remembered-device sessions and compact Settings UX",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T13:36:12",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Sign in to Windows Tavi with Remember enabled, completely close the app, reopen, and verify automatic authenticated restoration without entering a password.",
+        "Inspect the per-user Tavi local app-data file remembered-session.v1.dpapi and confirm old localStorage no longer contains a Social token after migration.",
+        "Disconnect server/network, restart Tavi and verify encrypted credentials remain; reconnect and verify successful restoration.",
+        "Sign out and restart; verify account prompts for sign-in. Confirm separate chat and game webviews cannot invoke main-only native session commands.",
+        "Inspect 355px wide Settings on Windows: sections expand/collapse and scrolling keeps account controls reachable."
+      ],
+      "operator_checks": [
+        "Sign in to Windows Tavi with Remember enabled, completely close the app, reopen, and verify automatic authenticated restoration without entering a password.",
+        "Inspect the per-user Tavi local app-data file remembered-session.v1.dpapi and confirm old localStorage no longer contains a Social token after migration.",
+        "Disconnect server/network, restart Tavi and verify encrypted credentials remain; reconnect and verify successful restoration.",
+        "Sign out and restart; verify account prompts for sign-in. Confirm separate chat and game webviews cannot invoke main-only native session commands.",
+        "Inspect 355px wide Settings on Windows: sections expand/collapse and scrolling keeps account controls reachable."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Added Windows DPAPI-encrypted application-data session vault restricted to Tauri main window, migrated legacy localStorage entries after protected save, preserved saved credentials on transient offline failures, and collapsed notification settings. Browser/Android existing storage behavior retained. JavaScript integration is tested; Windows compilation and on-device acceptance are outstanding."
+    },
+    {
+      "id": "TAVI-SESSION-RECOVERY-025",
+      "title": "Resilient session restore and automatic offline reconnection",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T14:44:31",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "With Remember enabled, close Tavi and reopen while LoopRD is unreachable: confirm the DPAPI session is not deleted and manual Retry appears.",
+        "Restore network; confirm Tavi retries without needing a restart and opens the same account roster only after server-side verification.",
+        "Verify a revoked session (HTTP 401) is removed from remembered storage and login is required, while HTTP 403 retains the record for manual retry.",
+        "Use another account while recovery is pending; confirm no old-account automatic restoration takes over the new login.",
+        "Build Windows NSIS through ZipRunner; check separate chats, unread badges, interactive inbox and legacy DPAPI migration still work."
+      ],
+      "operator_checks": [
+        "With Remember enabled, close Tavi and reopen while LoopRD is unreachable: confirm the DPAPI session is not deleted and manual Retry appears.",
+        "Restore network; confirm Tavi retries without needing a restart and opens the same account roster only after server-side verification.",
+        "Verify a revoked session (HTTP 401) is removed from remembered storage and login is required, while HTTP 403 retains the record for manual retry.",
+        "Use another account while recovery is pending; confirm no old-account automatic restoration takes over the new login.",
+        "Build Windows NSIS through ZipRunner; check separate chats, unread badges, interactive inbox and legacy DPAPI migration still work."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Introduces client-side session-recovery policy, expiring-token rejection on HTTP 401 only, saved credential retention on HTTP 403 and network/5xx failures, bounded 8–60s reconnect attempts, online/focus recovery, manual Retry and Use another account, cancel-on-login/signout, and compact copy fix."
+    },
+    {
+      "id": "TAVI-SYNC-037",
+      "title": "DAPI-aligned notifications and reduced request load",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T22:27:18",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Verify incoming chats update quickly while Tavi is foregrounded.",
+        "Verify multiple rapid messages result in a bounded number of requests.",
+        "Verify game turn monitoring still works on 25-second full poll.",
+        "Verify Android foreground/resume messages after network reconnection."
+      ],
+      "operator_checks": [
+        "Verify incoming chats update quickly while Tavi is foregrounded.",
+        "Verify multiple rapid messages result in a bounded number of requests.",
+        "Verify game turn monitoring still works on 25-second full poll.",
+        "Verify Android foreground/resume messages after network reconnection."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Coalesce LoopRD generic WebSocket and native push wake hints; retain dirty wake during active full sync and fetch only contacts, message summaries, active DM feed, interactions and visible lobby. Full periodic scan and game polling remain as fallback."
+    },
+    {
+      "id": "TAVI-UPDATES-001",
+      "title": "Safe in-client release update notifications",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T19:24:47",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "After GitHub Release v0.3.33 is published, start v0.3.33 Tavi and confirm the update notice appears.",
+        "Choose Download update and verify it opens the official GitHub Release, without installing anything.",
+        "Check Help > Check for updates with an unavailable network and confirm messaging remains usable.",
+        "After GitHub Release v0.3.34 is published, start v0.3.34 Tavi and confirm the update notice appears.",
+        "After GitHub Release v0.3.35 is published, start v0.3.35 Tavi and confirm the update notice appears.",
+        "After GitHub Release v0.3.37 is published, start v0.3.37 Tavi and confirm the update notice appears.",
+        "After GitHub Release v0.3.38 is published, start v0.3.38 Tavi and confirm the update notice appears.",
+        "After GitHub Release v0.3.39 is published, start v0.3.39 Tavi and confirm the update notice appears."
+      ],
+      "operator_checks": [
+        "After GitHub Release v0.3.39 is published, start v0.3.39 Tavi and confirm the update notice appears.",
+        "Choose Download update and verify it opens the official GitHub Release, without installing anything.",
+        "Check Help > Check for updates with an unavailable network and confirm messaging remains usable."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Checks published GitHub Releases at startup and every six hours; displays a download notice and Help action. No automatic installer execution. Live platform acceptance pending."
+    },
+    {
+      "id": "TAVI-UPDATES-002",
+      "title": "Signed native in-app updater",
+      "summary": "Needs Tauri updater signing keys, platform-specific signed artifacts, trusted update manifest and user-approved restart.",
+      "priority": "medium",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "TAVI-UPDATES-003",
+      "title": "Android-native in-app update download and installation handoff",
+      "status": "review",
+      "updated_at": "2026-10-18T16:34:50",
+      "status_updated_at": "2026-10-17T19:24:47",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Configure signing secrets and confirm GitHub Actions builds Android signed release APK.",
+        "Install a release-signed Tavi build on Android; then update to a future version from inside Tavi and verify account/session data stays intact.",
+        "Confirm Android handles unknown-sources permission and APK installation confirmation; test cancellation and download failures."
+      ],
+      "operator_checks": [
+        "Configure signing secrets and confirm GitHub Actions builds Android signed release APK.",
+        "Install a release-signed Tavi build on Android; then update to a future version from inside Tavi and verify account/session data stays intact.",
+        "Confirm Android handles unknown-sources permission and APK installation confirmation; test cancellation and download failures."
+      ],
+      "candidate_version": "0.3.46",
+      "candidate_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "candidate_build_status": "passed",
+      "candidate_recorded_at": "2026-10-18T16:34:50",
+      "review_reason": "build_passed_operator_unverified",
+      "implementation_summary": "Tauri Android bridge uses official release APK and Android DownloadManager/FileProvider package installer; hardware acceptance pending"
+    },
+    {
+      "id": "TAVI-033",
+      "title": "Native game launch and overlay",
+      "summary": "Design trusted local executable registration, user-consented launches, Windows overlay injection avoidance and platform support; no arbitrary remote command execution.",
+      "priority": "low",
+      "status": "planned",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09"
+    },
+    {
+      "id": "engineering-review-config-1119be2c",
+      "title": "Characterize and plan decomposition of client/node_modules/vite/dist/node/chunks/config.js",
+      "summary": "Review the 36236-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "critical",
+      "status": "deferred",
+      "created_at": "2026-10-16T19:11:01",
+      "updated_at": "2026-10-16T20:40:26",
+      "status_updated_at": "2026-10-16T20:40:26",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-16T20:36:14",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-16T20:40:26",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-main-cc2aac2e",
+      "title": "Characterize and plan decomposition of client/src/main.js",
+      "summary": "Review the 522-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "critical",
+      "status": "deferred",
+      "created_at": "2026-10-18T14:08:00",
+      "updated_at": "2026-10-18T15:27:49",
+      "status_updated_at": "2026-10-18T15:27:49",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-18T14:58:08",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-18T15:27:49",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-build2-5e7a32ab",
+      "title": "Characterize and plan decomposition of client/node_modules/vite/dist/node/chunks/build2.js",
+      "summary": "Review the 5538-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T21:10:23",
+      "updated_at": "2026-10-17T22:27:27",
+      "status_updated_at": "2026-10-17T22:27:27",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T21:27:32",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T22:27:27",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-dist-66cbee98",
+      "title": "Characterize and plan decomposition of client/node_modules/vite/dist/node/chunks/dist.js",
+      "summary": "Review the 6758-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T19:24:51",
+      "updated_at": "2026-10-17T19:52:24",
+      "status_updated_at": "2026-10-17T19:52:24",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T19:47:37",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T19:52:24",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-generated-861a170d",
+      "title": "Characterize and plan decomposition of client/src-tauri/target/release/build/web_atoms-ca77b5b51be7c95b/out/generated.rs",
+      "summary": "Review the 4202-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T22:58:03",
+      "updated_at": "2026-10-17T23:34:53",
+      "status_updated_at": "2026-10-17T23:34:53",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T23:23:13",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T23:34:53",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-index-b33dc2a4",
+      "title": "Characterize and plan decomposition of client/node_modules/rollup/dist/shared/index.js",
+      "summary": "Review the 9615-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T16:04:38",
+      "updated_at": "2026-10-17T17:15:37",
+      "status_updated_at": "2026-10-17T17:15:37",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T16:09:36",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T17:15:37",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-index.d-4484a0e0",
+      "title": "Characterize and plan decomposition of client/node_modules/vite/dist/node/index.d.ts",
+      "summary": "Review the 3717-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-18T01:43:14",
+      "updated_at": "2026-10-18T10:33:52",
+      "status_updated_at": "2026-10-18T10:33:52",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-18T10:04:58",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-18T10:06:45",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-main-fea62b53",
+      "title": "Characterize and plan decomposition of client/node_modules/esbuild/lib/main.js",
+      "summary": "Review the 2536-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-18T16:32:19",
+      "updated_at": "2026-10-18T16:41:12",
+      "status_updated_at": "2026-10-18T16:41:12",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-18T16:41:12",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        }
+      ]
+    },
+    {
+      "id": "engineering-review-named_entities-f7535bae",
+      "title": "Characterize and plan decomposition of client/src-tauri/target/release/build/web_atoms-ca77b5b51be7c95b/out/named_entities.rs",
+      "summary": "Review the 11844-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T12:01:06",
+      "updated_at": "2026-10-17T13:36:18",
+      "status_updated_at": "2026-10-17T13:36:18",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T12:12:09",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T13:36:18",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-node-entry-a4eea016",
+      "title": "Characterize and plan decomposition of client/node_modules/rollup/dist/es/shared/node-entry.js",
+      "summary": "Review the 25136-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-16T22:32:01",
+      "updated_at": "2026-10-17T01:51:31",
+      "status_updated_at": "2026-10-17T01:51:31",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-16T22:39:50",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T01:51:31",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-rollup-8af86f10",
+      "title": "Characterize and plan decomposition of client/node_modules/rollup/dist/shared/rollup.js",
+      "summary": "Review the 25029-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T07:59:24",
+      "updated_at": "2026-10-17T11:26:32",
+      "status_updated_at": "2026-10-17T11:26:32",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T10:41:52",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T11:26:32",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-watch-9b142110",
+      "title": "Characterize and plan decomposition of client/node_modules/rollup/dist/es/shared/watch.js",
+      "summary": "Review the 9971-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T14:25:00",
+      "updated_at": "2026-10-17T15:42:51",
+      "status_updated_at": "2026-10-17T15:42:51",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T14:54:28",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T15:42:51",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-looprd_handler-49609733",
+      "title": "Characterize and plan decomposition of server/looprd_handler.py",
+      "summary": "Review the 466-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "medium",
+      "status": "deferred",
+      "created_at": "2026-10-16T15:17:24",
+      "updated_at": "2026-10-16T15:27:49",
+      "status_updated_at": "2026-10-16T15:27:49",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-16T15:25:47",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-16T15:27:49",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    }
+  ],
+  "recent_passes": [
+    {
+      "id": "zip:f7c7f99db4b2883a46767210",
+      "version": "0.3.17",
+      "date": "2026-10-16T22:31:54",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "f7c7f99db4b2883a4676721002206569183d1c49b35ba30d5e3d5c955af63792",
+      "implemented": [
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-002"
+      ]
+    },
+    {
+      "id": "zip:4e9637a3734e4e77a3789cd5",
+      "version": "0.3.21",
+      "date": "2026-10-17T11:26:27",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "4e9637a3734e4e77a3789cd5db419df3e995ce1a2b905cbdffddd961272c7cf5",
+      "implemented": [
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002"
+      ]
+    },
+    {
+      "id": "zip:6bb122fa18d6e404ee46f8b9",
+      "version": "0.3.22",
+      "date": "2026-10-17T12:01:00",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "6bb122fa18d6e404ee46f8b9559a2b7448195ef0bc3501ef69b75d6dc010cc15",
+      "implemented": [
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002"
+      ]
+    },
+    {
+      "id": "zip:bcfdfe95af68c241899346d5",
+      "version": "0.3.24",
+      "date": "2026-10-17T13:36:12",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "bcfdfe95af68c241899346d5ffa721d90f48e89e9e99f63bb391c91af92d1b93",
+      "implemented": [
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025"
+      ]
+    },
+    {
+      "id": "zip:1c3a0815e9631be4594688c4",
+      "version": "0.3.25",
+      "date": "2026-10-17T14:44:31",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "1c3a0815e9631be4594688c4fd7f81649d67ffb4e4bfdd4aaec777dd8bc442ed",
+      "implemented": [
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025"
+      ]
+    },
+    {
+      "id": "zip:243ad39472e4c6139dc010b0",
+      "version": "0.3.27",
+      "date": "2026-10-17T15:42:45",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "243ad39472e4c6139dc010b03dfa2f5d3a60d9bc66c76ddb055120c0845499e6",
+      "implemented": [
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002"
+      ]
+    },
+    {
+      "id": "zip:0f975abaa4cd9573069104b2",
+      "version": "0.3.29",
+      "date": "2026-10-17T16:04:33",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "0f975abaa4cd9573069104b2d35c77946db73433be00a4168ddf1b7e4c31cf13",
+      "implemented": [
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002"
+      ]
+    },
+    {
+      "id": "zip:ceb12356b1af403fbb06d6cd",
+      "version": "0.3.30",
+      "date": "2026-10-17T17:15:33",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "ceb12356b1af403fbb06d6cd349683d3a5f1476881337999c1ed5b1b93f1e181",
+      "implemented": [
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002"
+      ]
+    },
+    {
+      "id": "zip:30372628f8d626257d1478fd",
+      "version": "0.3.33",
+      "date": "2026-10-17T19:24:47",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "30372628f8d626257d1478fdbb61d228f30fb28ea506cf73ea32a32ec29859b7",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "implemented": [
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028",
+        "TAVI-UPDATES-001",
+        "TAVI-UPDATES-003"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002",
+        "TAVI-UPDATES-002"
+      ]
+    },
+    {
+      "id": "zip:99dbd2c1384d976b3d8cfc49",
+      "version": "0.3.34",
+      "date": "2026-10-17T19:52:18",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "99dbd2c1384d976b3d8cfc49426e1601d9226c76212ba9da4fbbf7f99bc1208d",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "implemented": [
+        "TAVI-ANDROID-034",
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028",
+        "TAVI-UPDATES-001",
+        "TAVI-UPDATES-003"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002",
+        "TAVI-UPDATES-002"
+      ]
+    },
+    {
+      "id": "zip:7d539df568b4d2279679721c",
+      "version": "0.3.35",
+      "date": "2026-10-17T21:10:15",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "7d539df568b4d2279679721c971432740e2bb235039d68914abc3a8d45a7e671",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "implemented": [
+        "TAVI-REPORTS-035",
+        "TAVI-ANDROID-034",
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028",
+        "TAVI-UPDATES-001",
+        "TAVI-UPDATES-003"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002",
+        "TAVI-UPDATES-002"
+      ]
+    },
+    {
+      "id": "zip:58a8ee2c2bb8632c79bdbcea",
+      "version": "0.3.37",
+      "date": "2026-10-17T22:27:18",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "58a8ee2c2bb8632c79bdbcea44b5d0e83c201671404a00ae346b9a874dbecbc3",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "implemented": [
+        "TAVI-SYNC-037",
+        "TAVI-REPORTS-035",
+        "TAVI-ANDROID-034",
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028",
+        "TAVI-UPDATES-001",
+        "TAVI-UPDATES-003",
+        "TAVI-NEARBY-001"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002",
+        "TAVI-UPDATES-002",
+        "TAVI-NEARBY-002",
+        "TAVI-NEARBY-003"
+      ]
+    },
+    {
+      "id": "zip:67b191fd43cfa60ef5613509",
+      "version": "0.3.38",
+      "date": "2026-10-17T22:57:58",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "67b191fd43cfa60ef5613509d5909f53354886dabd412c26cbfcdb79ce64c57f",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "implemented": [
+        "TAVI-AGENT-003",
+        "TAVI-SYNC-037",
+        "TAVI-REPORTS-035",
+        "TAVI-ANDROID-034",
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028",
+        "TAVI-UPDATES-001",
+        "TAVI-UPDATES-003",
+        "TAVI-NEARBY-001"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002",
+        "TAVI-UPDATES-002",
+        "TAVI-NEARBY-002",
+        "TAVI-NEARBY-003"
+      ]
+    },
+    {
+      "id": "zip:dee79e87414ee45906eded45",
+      "version": "0.3.39",
+      "date": "2026-10-17T23:34:47",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "dee79e87414ee45906eded45bd36ebf2a846691bda806d29fc3a9c382c02b192",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "implemented": [
+        "TAVI-AGENT-004",
+        "TAVI-AGENT-003",
+        "TAVI-SYNC-037",
+        "TAVI-REPORTS-035",
+        "TAVI-ANDROID-034",
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028",
+        "TAVI-UPDATES-001",
+        "TAVI-UPDATES-003",
+        "TAVI-NEARBY-001"
+      ],
+      "remaining": [
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002",
+        "TAVI-UPDATES-002",
+        "TAVI-NEARBY-002",
+        "TAVI-NEARBY-003"
+      ]
+    },
+    {
+      "id": "zip:c8597133ea44e9425d4f7f81",
+      "version": "0.3.40",
+      "date": "2026-10-18T01:43:05",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "c8597133ea44e9425d4f7f8141f25ad45b38372fcffb65e024c326bd36c39f50",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "implemented": [
+        "SOC-GAME-02A",
+        "TAVI-AGENT-004",
+        "TAVI-AGENT-003",
+        "TAVI-SYNC-037",
+        "TAVI-REPORTS-035",
+        "TAVI-ANDROID-034",
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028",
+        "TAVI-UPDATES-001",
+        "TAVI-UPDATES-003",
+        "TAVI-NEARBY-001"
+      ],
+      "remaining": [
+        "SOC-GAME-02B",
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002",
+        "TAVI-UPDATES-002",
+        "TAVI-NEARBY-002",
+        "TAVI-NEARBY-003"
+      ]
+    },
+    {
+      "id": "zip:047c586e3e85e40a0054b1c7",
+      "version": "0.3.42",
+      "date": "2026-10-18T09:28:08",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "047c586e3e85e40a0054b1c7a4174c93764bba8b4f605e4b92e12f1fbcd5fd56",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "implemented": [
+        "SOC-GAME-02A",
+        "TAVI-AGENT-004",
+        "TAVI-AGENT-003",
+        "TAVI-SYNC-037",
+        "TAVI-REPORTS-035",
+        "TAVI-ANDROID-034",
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028",
+        "TAVI-UPDATES-001",
+        "TAVI-UPDATES-003",
+        "TAVI-NEARBY-001",
+        "TAVI-GAME-002",
+        "TAVI-ANDROID-042-FIX"
+      ],
+      "remaining": [
+        "SOC-GAME-02B",
+        "LRS-004",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002",
+        "TAVI-UPDATES-002",
+        "TAVI-NEARBY-002",
+        "TAVI-NEARBY-003",
+        "TAVI-ANDROID-042"
+      ]
+    },
+    {
+      "id": "zip:c650de6c07d364eb032207f4",
+      "version": "0.3.43",
+      "date": "2026-10-18T10:06:39",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "c650de6c07d364eb032207f4a11cdad325ea587b3056ff1d2c760f7c6afb0f0e",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "implemented": [
+        "SOC-GAME-02A",
+        "TAVI-AGENT-004",
+        "TAVI-AGENT-003",
+        "TAVI-SYNC-037",
+        "TAVI-REPORTS-035",
+        "TAVI-ANDROID-034",
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028",
+        "TAVI-UPDATES-001",
+        "TAVI-UPDATES-003",
+        "TAVI-NEARBY-001",
+        "TAVI-GAME-002",
+        "TAVI-ANDROID-042-FIX",
+        "LRS-004"
+      ],
+      "remaining": [
+        "SOC-GAME-02B",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002",
+        "TAVI-UPDATES-002",
+        "TAVI-NEARBY-002",
+        "TAVI-NEARBY-003",
+        "TAVI-ANDROID-042"
+      ]
+    },
+    {
+      "id": "zip:28618d8887ddd370b26d272c",
+      "version": "0.3.44",
+      "date": "2026-10-18T14:07:54",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "28618d8887ddd370b26d272c4286841c9cebad0ead2d6d5f5fdedcb83d279977",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "implemented": [
+        "TAVI-MULTI-044",
+        "SOC-GAME-02A",
+        "TAVI-AGENT-004",
+        "TAVI-AGENT-003",
+        "TAVI-SYNC-037",
+        "TAVI-REPORTS-035",
+        "TAVI-ANDROID-034",
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028",
+        "TAVI-UPDATES-001",
+        "TAVI-UPDATES-003",
+        "TAVI-NEARBY-001",
+        "TAVI-GAME-002",
+        "TAVI-ANDROID-042-FIX",
+        "LRS-004"
+      ],
+      "remaining": [
+        "SOC-GAME-02B",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002",
+        "TAVI-UPDATES-002",
+        "TAVI-NEARBY-002",
+        "TAVI-NEARBY-003",
+        "TAVI-ANDROID-042"
+      ]
+    },
+    {
+      "id": "zip:4f36a7b55496e56f5d5e776b",
+      "version": "0.3.45",
+      "date": "2026-10-18T14:53:19",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "4f36a7b55496e56f5d5e776b146fb7351b43196e5fcff73ae1da836d6499b5b9",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "implemented": [
+        "TAVI-MULTI-045",
+        "TAVI-MULTI-044",
+        "SOC-GAME-02A",
+        "TAVI-AGENT-004",
+        "TAVI-AGENT-003",
+        "TAVI-SYNC-037",
+        "TAVI-REPORTS-035",
+        "TAVI-ANDROID-034",
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028",
+        "TAVI-UPDATES-001",
+        "TAVI-UPDATES-003",
+        "TAVI-NEARBY-001",
+        "TAVI-GAME-002",
+        "TAVI-ANDROID-042-FIX",
+        "LRS-004"
+      ],
+      "remaining": [
+        "engineering-review-main-cc2aac2e",
+        "SOC-GAME-02B",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002",
+        "TAVI-UPDATES-002",
+        "TAVI-NEARBY-002",
+        "TAVI-NEARBY-003",
+        "TAVI-ANDROID-042"
+      ]
+    },
+    {
+      "id": "zip:cb837d71f5d04731ea9c6c5f",
+      "version": "0.3.46",
+      "date": "2026-10-18T16:34:50",
+      "status": "build_passed_operator_unverified",
+      "artifact_sha256": "cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "implemented": [
+        "TAVI-MULTI-046",
+        "TAVI-MULTI-045",
+        "TAVI-MULTI-044",
+        "SOC-GAME-02A",
+        "TAVI-AGENT-004",
+        "TAVI-AGENT-003",
+        "TAVI-SYNC-037",
+        "TAVI-REPORTS-035",
+        "TAVI-ANDROID-034",
+        "TAVI-RELEASE-001",
+        "SCL-021",
+        "TAVI-030",
+        "TAVI-041",
+        "TAVI-042",
+        "TAVI-043",
+        "TAVI-044",
+        "TAVI-045",
+        "TAVI-046",
+        "TAVI-EVENTS-001",
+        "TAVI-EVENTS-003",
+        "TAVI-CHAT-001",
+        "TAVI-CHAT-002",
+        "TAVI-PUSH-001",
+        "TAVI-PUSH-002",
+        "TAVI-ADMIN-001",
+        "TAVI-RELEASE-022",
+        "TAVI-SESSION-002",
+        "TAVI-BUILD-LOCK-024",
+        "TAVI-SESSION-RECOVERY-025",
+        "TAVI-AGENT-001",
+        "TAVI-OPENCLAW-027",
+        "TAVI-CI-028",
+        "TAVI-UPDATES-001",
+        "TAVI-UPDATES-003",
+        "TAVI-NEARBY-001",
+        "TAVI-GAME-002",
+        "TAVI-ANDROID-042-FIX",
+        "LRS-004"
+      ],
+      "remaining": [
+        "engineering-review-main-cc2aac2e",
+        "SOC-GAME-02B",
+        "SCL-007",
+        "SCL-009",
+        "SCL-010",
+        "SCL-011",
+        "SCL-017",
+        "TAVI-031",
+        "TAVI-032",
+        "TAVI-033",
+        "TAVI-034",
+        "TAVI-EVENTS-002",
+        "TAVI-CHAT-003",
+        "TAVI-ADMIN-002",
+        "TAVI-SESSION-003",
+        "TAVI-BUILD-LOCK-025",
+        "TAVI-AGENT-002",
+        "TAVI-UPDATES-002",
+        "TAVI-NEARBY-002",
+        "TAVI-NEARBY-003",
+        "TAVI-ANDROID-042"
+      ]
+    }
+  ]
+}
+```
+
+
+OPERATOR BUG REPORTS: none recorded for this verified canonical project.
