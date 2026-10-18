@@ -1,0 +1,22 @@
+= Tavi Native Match Chat v0.3.45
+:toc:
+
+== Scope
+
+When Tavi is running on Windows, a consenting game participant can open a dedicated native match conversation next to a separate game window. Match chat remains optional. Life (the game) owns game seats, game state and actions; Social owns messaging, consent and access checks. Atrium launches/resumes games. This pass **does not implement game turns**.
+
+== How to try
+
+. Deploy schema 10 from v0.3.44 or newer and approve `tavi-game-room-roster/v1` caller credentials.
+. Have Life publish the verified match seat roster and invite both actual Tavi accounts. Accounts must separately consent to the matching game/match subscription.
+. Sign in to Windows Tavi, open Games and select the match in *Match conversations*.
+. Select *Open separate chat window*. The native window opens next to the current app or game; reopening focuses the same match window.
+. Send a message; verify it arrives to another consenting, seated account. Switch accounts or revoke consent/seat and ensure reads and sends are refused, with private messages removed from the native view on failed refresh.
+
+== Security boundary
+
+The native match window receives only the opaque room ID in its URL, never a Social session token or game grant. The webview is restricted to the `match-*` Tauri capability (event operations only; no opener, vault or window creation). It asks the Tavi `main` window for snapshots or sends using the `social-match-request`/`social-match-response` event channel. The broker checks current account and room visibility and delegates every read and send to authenticated Social operations. Social rechecks latest game roster and consent independently. The native window clears previously rendered messages on any failed refresh. It cannot modify game state or issue Life actions.
+
+== Verification and pending acceptance
+
+Source tests cover the derived window label, Tauri capability restrictions, authenticated broker, cross-account race guard, and revocation-clearing behavior. Must still test **actual Windows NSIS installation** with two real participants, live match seat updates, browser/Android parity, and closed/revoked room behavior before operator acceptance. No database migration in this pass (Social remains schema 10).

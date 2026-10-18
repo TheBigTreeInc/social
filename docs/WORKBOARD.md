@@ -1,3 +1,11 @@
+## Multiplayer priority override — v0.3.45 source candidate
+
+- **TAVI-MULTI-045** (Review pending operator): separate native Windows match conversation with verified seat/consent; source tests pass. Real Life, Windows, Atrium acceptance open.
+- **TAVI-MULTI-044** (Review pending operator): game-owned seat roster and private room conversation remains open until real Life publication and cross-client testing.
+- **SCL-007 / TAVI-032**: remain Planned; Tavi chat infrastructure alone does not finish hostless multiplayer.
+- **engineering-review-main-cc2aac2e**: preserve as Suggested/Critical in latest operator snapshot; temporarily postponed under explicit user multiplayer-priority override. No decomposition done.
+- Local ZipRunner operator workboard (71 tickets) remains the authority. A source update must not delete or change statuses of unrelated tickets.
+
 ## TAVI-ADMIN-001 — Ecosystem administrator event delivery (0.3.23)
 
 Implemented in source: LoopRD protected Tavi accounts management declarations,

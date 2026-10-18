@@ -15,9 +15,10 @@ import {isTauri,invoke} from '@tauri-apps/api/core';
 import {WebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {listen, emitTo} from '@tauri-apps/api/event';
 import {isValidChatPeer,chatWindowLabel} from './native-windows.js';
+import {isValidMatchRoom,matchWindowLabel} from './match-windows.js';
 import {openUrl} from '@tauri-apps/plugin-opener';
 
-const CLIENT_VERSION='0.3.44';
+const CLIENT_VERSION='0.3.45';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
@@ -104,7 +105,7 @@ function gameRoomPanel(){
  <p class="fineprint">Private to consenting players confirmed by the game. Match rules and player seats remain with the game.</p>
  ${state.roomError?`<p class="notice" role="alert">${esc(state.roomError)}</p>`:''}
  <div class="row-actions game-room-list">${available}</div>
- ${room?`<div class="game-room-thread"><h4>${esc(room.gameId)} · Match chat</h4>
+ ${room?`<div class="game-room-thread"><h4>${esc(room.gameId)} · Match chat</h4>${nativeDesktop?`<button type="button" data-open-match-window="${esc(room.roomId)}">Open separate chat window ↗</button>`:''}
  <div class="game-room-messages" role="log" aria-label="Match messages">${state.roomMessages.length?state.roomMessages.map(m=>
   `<p><strong>${esc(m.displayName)}</strong>: ${esc(m.text)}</p>`).join(''):'<p>No messages yet.</p>'}</div>
  <form id="game-room-form" class="game-room-compose"><label>Message to match players
@@ -400,6 +401,7 @@ function wire(){
    catch(err){state.roomError=err.message||'Could not send to match';}
    finally{state.busy=false;render();}
  });}
+ document.querySelectorAll('[data-open-match-window]').forEach(el=>el.addEventListener('click',()=>void openMatchWindow(el.dataset.openMatchWindow)));
  document.querySelectorAll('[data-remove-game]').forEach(el=>el.addEventListener('click',()=>{config.games=config.games.filter(x=>x!==el.dataset.removeGame);writeConfig(config);refresh();}));
  document.querySelectorAll('[data-game-token]').forEach(el=>el.addEventListener('click',()=>{const text=prompt('Game bearer token (blank for public; held in memory only):');if(text!==null){state.gameTokens.set(el.dataset.gameToken,text);refresh();}}));
  document.querySelectorAll('[data-route]').forEach(el=>el.addEventListener('click',()=>openGame(el.dataset.route)));
@@ -454,6 +456,55 @@ async function initializeNativeChatBridge(){
      if(kind!=='snapshot')void refresh();
    }catch(err){await emitTo(label,'social-chat-response',{requestId,ok:false,error:err.message||'Request failed.'}).catch(()=>{});}
  });
+}
+let nativeMatchBridgeReady=false;
+async function nativeMatchSnapshot(roomId,api){
+ if(!api || !state.profile || !state.gameRooms.some(r=>r.roomId===roomId))throw Error('Match is not available to this account.');
+ const feed=await api.gameRoomFeed(roomId); // Social verifies current game seat and match consent on each request.
+ if(api!==state.api)throw Error('Account changed. Reopen the match conversation.');
+ const room=state.gameRooms.find(r=>r.roomId===roomId);
+ if(!room || feed.roomId!==roomId)throw Error('Match access was revoked.');
+ return {room:{roomId,gameId:room.gameId,matchId:room.matchId,participants:room.participants},
+   myId:state.profile.profileId,messages:feed.messages||[]};
+}
+async function initializeNativeMatchBridge(){
+ if(!nativeDesktop||nativeMatchBridgeReady)return;
+ nativeMatchBridgeReady=true;
+ await listen('social-match-request',async e=>{
+  const {roomId,label,requestId,kind,text}=e.payload||{};
+  if(!isValidMatchRoom(roomId)||matchWindowLabel(roomId)!==label||
+      !Number.isSafeInteger(requestId)||requestId<1)return;
+  try{
+   const api=state.api;
+   if(!api || !state.gameRooms.some(r=>r.roomId===roomId))throw Error('Match access is unavailable.');
+   if(kind==='send'){
+    if(typeof text!=='string'||!text.trim()||text.length>1000)throw Error('Invalid match message.');
+    await api.gameRoomSend(roomId,text.trim());
+   }else if(kind!=='snapshot')throw Error('Unsupported match action.');
+   const snapshot=await nativeMatchSnapshot(roomId,api);
+   await emitTo(label,'social-match-response',{label,roomId,requestId,ok:true,snapshot});
+  }catch(error){
+   await emitTo(label,'social-match-response',{label,roomId,requestId,ok:false,
+     error:error.message||'Match request denied'}).catch(()=>{});
+  }
+ });
+}
+async function openMatchWindow(roomId){
+ if(!nativeDesktop)return;
+ if(!state.api||!isValidMatchRoom(roomId)||!state.gameRooms.some(r=>r.roomId===roomId)){
+  toast('Match is not available to this account.');return;
+ }
+ try{
+  await initializeNativeMatchBridge();
+  const label=matchWindowLabel(roomId);
+  const existing=await WebviewWindow.getByLabel(label);
+  if(existing){await existing.setFocus();return;}
+  const room=state.gameRooms.find(r=>r.roomId===roomId);
+  const windowHandle=new WebviewWindow(label,{url:`match.html?room=${roomId}`,
+    title:`${room.gameId} · Match chat - Tavi`,width:570,height:520,
+    minWidth:410,minHeight:365,resizable:true,center:true});
+  windowHandle.once('tauri://error',e=>toast('Could not open match conversation: '+String(e.payload)));
+ }catch(e){toast('Cannot open match chat: '+e.message);}
 }
 async function openChatWindow(peer){
  if(!nativeDesktop)return;

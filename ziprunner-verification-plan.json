@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.44",
+  "version": "0.3.45",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -365,6 +365,27 @@
           "mode": "manual",
           "checks": [
             "LRS-004-DEVICE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-MULTI-045",
+      "criteria": [
+        {
+          "id": "TAVI-MULTI-045-AC-1",
+          "description": "Native match webview is sessionless, broker-only and uses deterministic opaque ID labels.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-MULTI-045-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-MULTI-045-AC-2",
+          "description": "Windows match conversation works beside a real Life game, and seat/consent revocation refuses message reads and sends.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-MULTI-045-DEVICE"
           ]
         }
       ]
@@ -737,6 +758,32 @@
         "Life backend verifies seat independently",
         "Native client chat cross-seat and restart",
         "Atrium join/resume checked separately"
+      ]
+    },
+    {
+      "id": "TAVI-MULTI-045-NODE",
+      "kind": "command",
+      "stage": "source",
+      "command": "node --test client/tests/match-window.test.mjs",
+      "assertions": [
+        "One-match one-window labels",
+        "Restricted window permissions",
+        "No bearer in match window",
+        "Main window brokers server authorization",
+        "History hidden on access failure"
+      ]
+    },
+    {
+      "id": "TAVI-MULTI-045-DEVICE",
+      "kind": "manual",
+      "stage": "operator",
+      "description": "Two-seat Life + Tavi dedicated native match chat acceptance",
+      "runner_ref": "operator-multiplayer-staging",
+      "assertions": [
+        "Open a real verified, consenting match under Games on Windows and launch a dedicated match chat alongside Life.",
+        "Verify new window contains no bearer/token; only the main Tavi window performs authenticated API requests.",
+        "Revoke Life seat or Social subscription and verify conversation no longer reads or sends, with previous messages cleared after failed refresh.",
+        "Verify separate chat focus reuse and compatible browser/Android Games view; do not close TAVI-MULTI-044, SCL-007 or TAVI-032 until actual Life turns and Atrium join/resume pass."
       ]
     }
   ]

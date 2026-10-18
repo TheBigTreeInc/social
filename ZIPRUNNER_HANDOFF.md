@@ -1,3 +1,9 @@
+## Tavi 0.3.45 — Dedicated native match chat candidate
+
+Import into existing `looprd-social` project. Windows Games → Match conversations → Open separate chat window now opens a dedicated match window; game state and turns remain game-owned. Verify native build, account/seat/consent revocation, and two clients with a real Life publisher. Schema remains 10, no new SQL migration from v0.3.44. Do not push/release automatically.
+
+ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.45|file=looprd-social-0.3.45-native-match-chat-ziprunner.zip
+
 ## Tavi 0.3.44 — Game-seat-scoped match chat source candidate
 
 Import as `looprd-social` from the full source ZIP; back up the Social SQLite database before migration 9→10. An approved Life backend must send versioned complete seat rosters via `tavi-game-room-roster/v1`. Accounts still explicitly opt into each match. Test cross-client room authorization and revocation before operator acceptance. No repository push, tag or release.

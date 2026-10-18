@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.44",
-    "base_version": "0.3.43"
+    "version": "0.3.45",
+    "base_version": "0.3.44"
   },
   "update": {
-    "id": "TAVI-20261018-MULTIPLAYER-ROOMS",
+    "id": "TAVI-20261018-NATIVE-MATCH-CHAT",
     "kind": "source_update",
-    "created_at": "2026-10-18T09:45:00+02:00",
-    "summary": "Tavi multiplayer match chat source: game-owned verified seats, per-account opt-in ACL, schema 10."
+    "created_at": "2026-10-18T14:17:00+02:00",
+    "summary": "Isolated native Windows match conversation next to verified multiplayer game; schema remains 10."
   },
   "planned_work": [
     {
@@ -210,6 +210,12 @@
       "title": "Implement source-side discovery and reporting diagnostics",
       "priority": "high",
       "acceptance_criteria": "Independent bounded Social discovery probes, safe network/503 failures, valid reporting endpoint, Android safe-area guard, passing source tests. Device acceptance remains TAVI-ANDROID-042."
+    },
+    {
+      "id": "TAVI-MULTI-045",
+      "title": "Separate native match conversations",
+      "acceptance_criteria": "Sessionless Tauri window; main-only broker; Social seat/consent checks; revocation clears history; native operator tests pending",
+      "priority": "high"
     }
   ],
   "done_work": [
@@ -817,6 +823,32 @@
           "description": "User-reported bug and on-device acceptance gates"
         }
       ]
+    },
+    {
+      "id": "TAVI-MULTI-045",
+      "summary": "Source: Windows native match window and main-window broker, source-only verification. Does not mark operator ticket Done.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/match.js",
+          "description": "Separate native match conversation without session material"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/main.js",
+          "description": "Main-only match request bridge and authorized API calls"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src-tauri/capabilities/matches.json",
+          "description": "Restricted native window permissions"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/match-window.test.mjs",
+          "description": "Deterministic labels, credential isolation and revoked-state behavior"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -881,6 +913,11 @@
       "blockers": [
         "Requires Android device and reachable deployed LoopRD Social backend; source tests cannot certify production connectivity."
       ]
+    },
+    {
+      "id": "TAVI-MULTI-045-OP",
+      "status": "review",
+      "next_action": "Staging Windows NSIS acceptance with real Life match seats, two Tavi accounts, revoked consent and room removal. Complete actual Life/Atrium play before closing multiplayer."
     }
   ],
   "validation": {
@@ -1066,11 +1103,19 @@
         "command": "npm run verify",
         "environment": "Linux Node.js",
         "evidence_ref": "evidence/tavi-0.3.44-node.log"
+      },
+      {
+        "id": "TAVI-MULTI-045-SOURCE",
+        "description": "Native match chat label/capability and broker source assertions",
+        "status": "passed_source_only",
+        "command": "node --test client/tests/match-window.test.mjs",
+        "environment": "Linux Node.js",
+        "evidence_ref": "client/tests/match-window.test.mjs"
       }
     ]
   },
   "handover": {
-    "next_pass": "Confirm v0.3.44 schema 9→10 operator backup/migration, approved Life roster sync, cross-client private chat and revocation. Continue real Life/Atrium multiplayer integration; no release approval.",
+    "next_pass": "Wire Life actual /play and seat roster service with Tavi and Atrium; complete real multiplayer match on two accounts including OpenClaw. Keep existing operator workboard priorities untouched.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -1089,7 +1134,8 @@
       "Android UnifiedPush distributor and device testing not delivered in this pass.",
       "No device BLE implementation or Atrium server sync contract in v0.3.39.",
       "Atrium does not yet resolve game/match deep links; Life has not shipped game-turn outbox and caller integration.",
-      "No real Life backend calls tavi-game-room-roster/v1 in deployed DAPI; staging proof and end-to-end multiplayer match acceptance remain."
+      "No real Life backend calls tavi-game-room-roster/v1 in deployed DAPI; staging proof and end-to-end multiplayer match acceptance remain.",
+      "Life v0.5.87 has internal async command architecture but no public /play; source-only native match chat cannot establish hostless multiplayer."
     ],
     "notes": [
       "Client-side resume logic and minimal login UI only; Social database schema 6 unchanged.",
@@ -1132,11 +1178,16 @@
       "id": "TAVI-MULTI-044-OP",
       "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
       "status": "required"
+    },
+    {
+      "id": "TAVI-MULTI-045-OP",
+      "description": "Import 0.3.45, test 2-account Windows native match chat, revoked seat/consent and simultaneous game window; preserve the 71-ticket operator workboard and avoid auto-release.",
+      "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Backend changes add Social SQL schema 10. Back up/migrate staging first; approved Life roster service and real Android/Windows/web chat are not operator-accepted. No automatic Git push, tag or release."
+    "notes": "Client match window only: server game room schema stays 10. Real Life/Windows/Atrium acceptance remains; no push/tag/release by source patch."
   }
 }

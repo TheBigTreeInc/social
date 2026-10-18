@@ -1,3 +1,9 @@
+# Tavi 0.3.45 — Dedicated native multiplayer match chat (source candidate)
+
+Builds on 0.3.44's approved game seat roster and private match messages. Windows Tavi now opens a separate match conversation window beside the Life game. The window carries only an opaque match-room ID, delegates all authorized requests to the main Tavi process and clears rendered message history after revocation. Browser/Android continue using their Games panel. **No new SQL migration** (Social remains schema 10); **no public Life `/play`** integration or game action authorization is claimed. See `docs/TAVI_NATIVE_MATCH_CONVERSATIONS.adoc`.
+
+Prior exact v0.3.44 commit `f72dc541cdd338c463a75f61563dd754457febe1` has all eight GitHub push workflows successful; these are *not* v0.3.45 CI results. Multiplayer and native device acceptance remain open. Next implementation work should wire Life's actual authoritative async match API to Tavi consent, invitations and roster publication, then validate Atrium join/resume and headless OpenClaw turns.
+
 # Tavi 0.3.44 — Multiplayer match conversations (source candidate)
 
 Approved game backends may synchronize verified match seats into consenting-player-only private Tavi chat rooms via `tavi-game-room-roster/v1`. Revision-safe roster replacement and termination, private message feeds, shared SDK and Games-pane conversation UI. Adds Social schema 10. Life remains game authority, Atrium owns launch, Tavi owns only chat; no real match integration or operator approval yet. See `docs/TAVI_MULTIPLAYER_MATCH_CHAT.adoc`.

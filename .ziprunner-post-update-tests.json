@@ -1,6 +1,6 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.44",
+  "version": "0.3.45",
   "tests": [
     {
       "kind": "command",
@@ -80,6 +80,15 @@
       "definition_revision": "1",
       "rerun_policy": "every_update",
       "command": "node --test client/tests/game-rooms-sdk.test.mjs",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "tavi-native-multiplayer-match-window",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "node --test client/tests/match-window.test.mjs",
       "attention_on_failure": true,
       "gating": false
     }

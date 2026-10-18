@@ -1,9 +1,20 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.44",
-  "summary": "Multiplayer source slice: approved game-roster service and consenting player-only private match chat; schema 10. Operator/live Life acceptance is open.",
+  "version": "0.3.45",
+  "summary": "Multiplayer UX: isolated, native Windows match conversation alongside Life game; authenticated main-window broker; schema 10 unchanged. Source and live game acceptance remain separate.",
   "implemented": [
+    {
+      "id": "TAVI-MULTI-045",
+      "title": "Dedicated native game match chat next to active multiplayer game",
+      "summary": "Source implementation: separate match window with opaque ID only, main-window-only authenticated message broker, live Social seat/consent checks, focus reuse, draft retention and revocation-clearing UI; no new SQL migrations.",
+      "operator_checks": [
+        "Open a real verified, consenting match under Games on Windows and launch a dedicated match chat alongside Life.",
+        "Verify new window contains no bearer/token; only the main Tavi window performs authenticated API requests.",
+        "Revoke Life seat or Social subscription and verify conversation no longer reads or sends, with previous messages cleared after failed refresh.",
+        "Verify separate chat focus reuse and compatible browser/Android Games view; do not close TAVI-MULTI-044, SCL-007 or TAVI-032 until actual Life turns and Atrium join/resume pass."
+      ]
+    },
     {
       "id": "TAVI-MULTI-044",
       "title": "Game-seat-scoped private multiplayer match conversations",
@@ -406,6 +417,12 @@
     }
   ],
   "remaining": [
+    {
+      "id": "engineering-review-main-cc2aac2e",
+      "title": "Characterize and plan decomposition of client/src/main.js",
+      "summary": "Operator workboard suggested critical engineering review. Deferred by user multiplayer-priority override until shared multiplayer is proved or relevant to a required multiplayer change. Preserve suggested priority/status in operator workboard; source metadata does not promote or close it.",
+      "priority": "critical"
+    },
     {
       "id": "SOC-GAME-02B",
       "title": "Game identity grant, invitation and full Atrium interaction",

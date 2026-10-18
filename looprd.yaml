@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.44
+release: 0.3.45
 api:
   version: v1
 cors:
@@ -1766,4 +1766,4 @@ handlers:
     - game-grants-v1
     - recovery-codes-v1
     - game-session-rooms-v1
-    release: 0.3.44
+    release: 0.3.45

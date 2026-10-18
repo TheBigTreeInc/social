@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "matches",
+  "description": "Private match chat. Main window brokers all authorized reads/writes; no game or Social bearer.",
+  "windows": ["match-*"],
+  "permissions": ["core:default", "core:event:allow-listen", "core:event:allow-emit-to"]
+}
