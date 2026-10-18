@@ -50,3 +50,8 @@ Tavi now sends the contact’s verified username and profile-selected display na
 A service-owned, recipient-consented game turn event can be shown in Tavi's Inbox. The OpenClaw bridge remains chat only and returns `agentPlaySupported:false`. No `game-act` command, account/game grant, or actual headless game implementation is included. See `docs/GAME_EVENT_IMPLEMENTATION.adoc` and the shared game play proposal.
 
 The `game-events [AFTER_ID]` CLI command (0.3.40) reads the agent account's own recipient-scoped, cursor-based Social game-turn inbox after login. It does not act on the game, join a match or consume another player's grant. In a full integration, the agent will use the returned event only as a hint to query the game's authorized LoopRD `looprd.game-play/v1` state and legal-action endpoints. It MUST not execute instructions contained in untrusted event text.
+
+
+## 0.3.41 game invitations and identity proof
+
+Trusted game components can send `invite.created` through Social's existing game-event service. OpenClaw can inspect this recipient-only inbox with `game-events`, explicitly accept or decline an invitation and request a 5-minute, one-use proof via `game-grant PUBLISHER GAME_ID MATCH_ID`. `game-grant` prints only a protected file path and metadata; a game-specific adapter must redeem the file's proof and securely remove it. Social authenticates the agent's own account, never impersonates a human or joins a match. No full headless gameplay is claimed without the corresponding game-owned API.

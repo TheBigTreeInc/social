@@ -1,4 +1,8 @@
-ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.40|file=looprd-social-0.3.40-game-events-ziprunner.zip
+## Tavi 0.3.42 — Android sign-in and reporter repair
+
+TAVI-ANDROID-042 logged from Android screenshots: Social discovery timeout on api.thebigtree.life; raw Invalid URL when submitting pre-login report without valid server; system status bar overlaps Tavi header. This client-only pass makes discovery stages and transient 503 failures explicit, validates report origin, and applies Android status-bar spacing. Social schema 8 is unchanged; the real device/backend timeout remains an operator acceptance blocker. See docs/WORKBOARD.md.
+
+ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.42|file=looprd-social-0.3.42-android-discovery-ziprunner.zip
 
 
 ## v0.3.39 — DAPI notification efficiency
@@ -103,3 +107,8 @@ Tavi now sends the contact’s verified username and profile-selected display na
 
 ## 0.3.40 game-turn events
 New opt-in, private service-backed game notifications; schema 7, durable inbox. Cross-project identity grants and launch routes pending; see `docs/GAME_EVENT_IMPLEMENTATION.adoc`.
+
+
+## 0.3.41 — Game invitations and proof redemption
+
+Additive schema 8; back up Social database before staging migration. Source implementation adds service-origin invitations from accepted contacts, account consent on accept, one-use short-lived identity grants and same-runtime service redemption. No actual Life seat authorization or cross-runtime RPC. Run npm run verify, full Python tests and then operator staging checks. See docs/GAME_INVITES_AND_GRANTS_0.3.41.adoc.

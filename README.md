@@ -1,3 +1,11 @@
+## Tavi 0.3.42 — Android sign-in and reporter repair
+
+TAVI-ANDROID-042 logged from Android screenshots: Social discovery timeout on api.thebigtree.life; raw Invalid URL when submitting pre-login report without valid server; system status bar overlaps Tavi header. This client-only pass makes discovery stages and transient 503 failures explicit, validates report origin, and applies Android status-bar spacing. Social schema 8 is unchanged; the real device/backend timeout remains an operator acceptance blocker. See docs/WORKBOARD.md.
+
+## v0.3.41 — Game invitations and scoped identity proof
+
+Tavi now supports service-origin invitations from approved games to accepted Social contacts, a recipient-controlled accept/decline path, and 5-minute one-use game-scoped account identity proofs redeemable by an approved same-runtime game component. This does **not** authorize Life seats or provide headless game rules. See `docs/GAME_INVITES_AND_GRANTS_0.3.41.adoc`.
+
 ## 0.3.40 — Game turn notifications (first integration pass)
 
 Additive Social SQL schema 7, service-only `tavi-game-event/v1`, consented per-match notifications, durable Social inbox and SDK methods. Requires an operator-approved game caller, issuer and credential; actual Life/Atrium integration and shared game grants are NOT yet available. See `docs/GAME_EVENT_IMPLEMENTATION.adoc`.

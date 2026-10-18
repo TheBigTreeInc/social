@@ -106,6 +106,30 @@ def interaction_reply(db,subject,body,now):
     if not allowed:return error('Action not available')
     fields={f['id']:f for f in allowed['fields']}
     if len(values)>len(fields) or any(k not in fields or not isinstance(v,str) or len(v)>2000 or (fields[k]['type']=='select' and v not in fields[k]['options']) for k,v in values.items()):return error('Invalid field values')
+    if row['publisher'].startswith('game:') and row['topic']=='game.invite.created':
+        game=row['data'].get('game') if isinstance(row['data'],dict) else None
+        if not isinstance(game,dict) or action not in ('accept-game','decline-game'):
+            return error('Invalid game invitation')
+        if action=='accept-game':
+            caller=game.get('publisher');gid=game.get('gameId');match=game.get('matchId')
+            inviter=game.get('inviter')
+            if (not isinstance(caller,str) or not COMPONENT_ID.fullmatch(caller) or
+                    not isinstance(gid,str) or not GAME_ID.fullmatch(gid) or
+                    not isinstance(match,str) or not MATCH_ID.fullmatch(match) or
+                    gid not in approved_game_publishers().get(caller,set()) or
+                    not isinstance(inviter,str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}',inviter)):
+                return error('Game invitation no longer available')
+            contact=contact_row(db,subject,inviter)
+            if not contact or contact['status']!='accepted':return error('Game invitation no longer available')
+            keys={'subject':subject,'publisher':caller,'game':gid,'match':match}
+            existing=db.execute(sa.text('''SELECT id FROM "SocialGameSubscription" WHERE
+                subjectId=:subject AND publisher=:publisher AND gameId=:game AND matchId=:match'''),keys).scalar_one_or_none()
+            if existing:
+                db.execute(sa.text('UPDATE "SocialGameSubscription" SET enabled=1,updated=:now WHERE id=:id'),{'now':now,'id':existing})
+            else:
+                db.execute(sa.text('''INSERT INTO "SocialGameSubscription"
+                    (subjectId,publisher,gameId,matchId,enabled,updated)
+                    VALUES (:subject,:publisher,:game,:match,1,:now)'''),{**keys,'now':now})
     response={'action':action,'values':values,'at':now,'by':subject}
     db.execute(sa.update(INTERACTION).where(INTERACTION.c.id==event_id,INTERACTION.c.recipient==subject,INTERACTION.c.status=='open').values(status='responded',response=response))
     return {'ok':True,'response':response}
@@ -363,8 +387,8 @@ def logout(db,token):
 # LoopRD management role. Checked on EVERY privileged request and profile refresh.
 # Development tokens cannot get this privilege, even when their subject resembles
 # a registered user; no public API path changes the flag.
-SOCIAL_RELEASE = '0.3.39'
-SOCIAL_SCHEMA_VERSION = 6
+SOCIAL_RELEASE = '0.3.41'
+SOCIAL_SCHEMA_VERSION = 8
 
 def account_developer_permission(db, subject):
     if not isinstance(subject, str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):
@@ -600,6 +624,38 @@ def set_game_subscription(db,subject,body,now):
             {**keys,'enabled':enabled,'now':now})
     return {'ok':True,'schema':'tavi.game-subscription/v1','enabled':enabled}
 
+def issue_game_grant(db, subject, body, now):
+    """Issue a one-use proof of this exact signed-in account, NOT a game-seat grant."""
+    import secrets
+    caller=body.get('publisher');game=body.get('gameId');match=body.get('matchId')
+    token=body.get('token')
+    if (not isinstance(subject,str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject)
+            or not isinstance(caller,str) or not COMPONENT_ID.fullmatch(caller)
+            or not isinstance(game,str) or not GAME_ID.fullmatch(game)
+            or not isinstance(match,str) or not MATCH_ID.fullmatch(match)
+            or game not in approved_game_publishers().get(caller,set())
+            or session_identity(db,token,now)!=subject):
+        return error('Game identity grant unavailable')
+    eligible=db.execute(sa.text("""SELECT id FROM "SocialGameSubscription" WHERE subjectId=:subject
+        AND publisher=:publisher AND gameId=:game AND matchId=:match AND enabled=1"""),
+        {'subject':subject,'publisher':caller,'game':game,'match':match}).first()
+    if not eligible:return error('Game identity grant unavailable')
+    # Account/grant quotas avoid using the durable grant table as an unbounded token store.
+    db.execute(sa.text('DELETE FROM "SocialGameGrant" WHERE expires<=:now OR consumed=1'),{'now':now})
+    active=db.execute(sa.text('SELECT count(*) FROM "SocialGameGrant" WHERE subjectId=:subject AND consumed=0'),
+                      {'subject':subject}).scalar_one()
+    if active>=8:return error('Too many active game grants')
+    value=secrets.token_urlsafe(32)
+    db.execute(sa.text("""INSERT INTO "SocialGameGrant"
+        (tokenHash,sessionHash,subjectId,publisher,gameId,matchId,created,expires,consumed)
+        VALUES (:hash,:session,:subject,:publisher,:game,:match,:created,:expires,0)"""),
+        {'hash':hashlib.sha256(value.encode('ascii')).hexdigest(),
+         'session':hashlib.sha256(token.encode()).hexdigest(),'subject':subject,'publisher':caller,
+         'game':game,'match':match,'created':now,'expires':now+300})
+    return {'ok':True,'schema':'tavi.game-grant/v1','grant':value,
+            'expiresAt':now+300,'audience':caller,'gameId':game,'matchId':match}
+
+
 def game_event_feed(db,subject,body):
     after=body.get('after',0)
     if type(after) is not int or after<0:return error('Invalid feed cursor')
@@ -669,6 +725,8 @@ def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
                 return interaction_feed(db,subject,now),None
             if op=='game_subscription_set':
                 return set_game_subscription(db,subject,body,now),None
+            if op=='game_grant_issue':
+                return issue_game_grant(db,subject,body,now),None
             if op=='game_event_feed':
                 return game_event_feed(db,subject,body),None
             if op=='interaction_reply':

@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.40",
+  "version": "0.3.42",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -295,6 +295,49 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-GAME-002",
+      "criteria": [
+        {
+          "id": "TAVI-GAME-002-SOURCE",
+          "description": "Trusted invite acceptance, consent and one-use account proof pass Python and SDK regressions.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-GAME-002-PY",
+            "TAVI-GAME-002-SDK"
+          ]
+        },
+        {
+          "id": "TAVI-GAME-002-OP",
+          "description": "Prove same-runtime service redemption and game-owned seat check on staging.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-GAME-002-LIVE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-ANDROID-042",
+      "criteria": [
+        {
+          "id": "TAVI-ANDROID-042-AC-1",
+          "description": "Discovery uses separate bounded server-info/capability probes and diagnoses timeout/network/503 without leaking credentials.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-ANDROID-042-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-ANDROID-042-AC-2",
+          "description": "Android real server sign-in and report UX work without raw URL exceptions or status bar overlap.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-ANDROID-042-DEVICE"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -550,6 +593,60 @@
       "stage": "acceptance",
       "description": "Operator verifies live Social schema migration, service binding and real device notification",
       "instructions": "Back up Social data, deploy LoopRD schema 7 on staging, configure private service credential/caller/issuer, consent as player, send duplicate event, verify one inbox event and a push hint, restart client and Redis, and confirm replay. Never mark Life gameplay or Android terminated delivery complete."
+    },
+    {
+      "id": "TAVI-GAME-002-PY",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Python service/source contract tests for game invitations and grants",
+      "runner_ref": "tavi-game-invite-grant",
+      "assertions": [
+        "Invitation is service-origin and requires accepted contacts",
+        "Proof scope is exact game/match/publisher",
+        "A consumed, revoked or expired proof fails"
+      ],
+      "test_ref": "tests/test_game_invites_grants.py"
+    },
+    {
+      "id": "TAVI-GAME-002-SDK",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Shared browser/native SDK grant and reply methods",
+      "runner_ref": "tavi-game-client-invite-grant",
+      "assertions": [
+        "SDK follows existing authenticated Social command channel",
+        "Wrong game or audience rejected before request"
+      ],
+      "test_ref": "client/tests/browser-sdk.test.mjs"
+    },
+    {
+      "id": "TAVI-GAME-002-LIVE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Staging proof redemption and game owned admission",
+      "instructions": "Migrate Social schema 8 with backup; provision Life as approved service; create accepted contacts, send invite from seated Life player, accept it, issue grant, redeem via Life exactly once, verify seat validation and invalid wrong-seat action rejection, then test logout and outage."
+    },
+    {
+      "id": "TAVI-ANDROID-042-NODE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "LoopRD Social discovery request timeout/error classification and report input validation",
+      "runner_ref": "tavi-android-client",
+      "assertions": [
+        "No server address returns friendly explanation and does not send request.",
+        "Distinct discovery fetch AbortSignals allow independent request deadlines.",
+        "503 is not declared an absent component.",
+        "Network errors are sanitized.",
+        "Android system status bar top inset code remains present."
+      ],
+      "test_ref": "client/tests/protocol.test.mjs client/tests/bug-report.test.mjs"
+    },
+    {
+      "id": "TAVI-ANDROID-042-DEVICE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Android device sign-in and status bar checks",
+      "instructions": "Install v0.3.42 signed APK. On actual phone, test https://api.thebigtree.life discovery over Wi-Fi and cellular, verify successful sign-in or stage-specific failure; open report with empty URL and verify friendly text, then with valid reachable URL submit a failure report; verify header not covered by status icons or keyboard. If still timed out, inspect server deployment/network; do not pass this gate."
     }
   ]
 }

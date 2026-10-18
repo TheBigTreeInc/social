@@ -1,12 +1,14 @@
 /** LoopRD reports.bugs/v1: explicit user-consented, credential-free reports. */
+import {normalizeServer} from '../sdk/looprd-social.js';
 export const REPORT_API='looprd-bugreport/v1';
 export const REPORT_COMPONENT='looprd-social';
 const PUBLIC_GUEST='tavi_guest_v1'; // Public, verifier-scoped guest marker, not a password.
 export function reportEndpoint(origin){
-  const u=new URL(origin);
-  if(u.protocol!=='https:' && !(u.protocol==='http:' && ['localhost','127.0.0.1'].includes(u.hostname)))throw Error('Use an HTTPS LoopRD server.');
-  if(u.username||u.password||u.search||u.hash||u.pathname!=='/')throw Error('Enter the LoopRD server origin only.');
-  return `${u.origin}/looprd/${REPORT_COMPONENT}/v1/_bugreports`;
+  let base;
+  try{base=normalizeServer(origin);}catch{
+    throw Error('Enter a valid LoopRD server address above before sending a report.');
+  }
+  return `${base}/looprd/${REPORT_COMPONENT}/v1/_bugreports`;
 }
 export function reportPayload({version,platform,stage='login',code='LOGIN_FAILED',note=''}){
   const cleanStage=['discovery','login','session'].includes(stage)?stage:'login';
@@ -17,7 +19,7 @@ export function reportPayload({version,platform,stage='login',code='LOGIN_FAILED
     message:`Tavi ${cleanStage} failed${cleanNote?': '+cleanNote:''}`,platform,
     diagnostics:{stage:cleanStage,client:'Tavi',authenticated:false}};
 }
-export async function sendBugReport({origin,version,platform,stage,code,note='',fetcher=fetch}){
+export async function sendBugReport({origin,version,platform,stage,code,note='',fetcher=(url,options)=>globalThis.fetch(url,options)}){
   const endpoint=reportEndpoint(origin);
   const payload=reportPayload({version,platform,stage,code,note});
   const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),12000);
@@ -27,6 +29,8 @@ export async function sendBugReport({origin,version,platform,stage,code,note='',
     const result=await response.json();
     if(typeof result?.id!=='string' || !result.id)throw Error('LoopRD did not return a report ID.');
     return {id:result.id,deduplicated:result.deduplicated===true};
-  }catch(e){if(e.name==='AbortError')throw Error('Report submission timed out.');throw e;}
+  }catch(e){if(e.name==='AbortError')throw Error('Report submission timed out. Check your connection and retry.');
+    if(e.name==='TypeError'||e.name==='NetworkError')throw Error('Cannot reach LoopRD to submit the report. Check the network or try again later.');
+    throw e;}
   finally{clearTimeout(timeout);}
 }

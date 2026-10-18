@@ -1,0 +1,140 @@
+= Tavi / Social v0.3.41: Game invitations and one-use identity proof
+:revnumber: 0.3.41
+:revdate: 2026-10-18
+:toc: left
+:sectnums:
+
+== Purpose and deployment status
+
+This is a *source implementation candidate*. It extends the verified Social
+`0.3.40` game-event delivery, preserving the human-focused Tavi inbox and all
+existing user sessions, contacts and historical notifications. It adds trusted
+contact invitations and a one-use proof exchange so Life and OpenClaw can identify
+an authenticated Social account. It does *not* create or authorize a seat in
+Life, deliver cross-runtime network RPC, implement an Atrium hosted launcher,
+or provide browserless gameplay rules.
+
+== Changes
+
+* The existing `tavi-game-event/v1` service accepts an additional
+  `kind: invite.created` with `inviter: {issuer, subject}`. Exactly the approved
+  service component may request an invitation. The two users must already be
+  accepted Social contacts, the issuer must match the operator-configured Social
+  issuer, and the publisher/game combination must be explicitly allowlisted.
+  The trusted game MUST first verify the inviter has permission to invite in that
+  match. An event key is deduplicated and delivery persists in the recipient's
+  inbox. No game-selected text, URL or title is accepted.
+* The recipient can accept or decline an invitation using the existing Tavi
+  interaction API (`interaction_reply` with `accept-game` / `decline-game`).
+  Accepting creates an enabled notification subscription for the recipient's
+  account and exact match. It does NOT join the match or identify an account to
+  an unauthenticated game. Rejecting does not create a subscription. Revoked
+  friendship at acceptance time fails closed.
+* Signed-in clients and the OpenClaw bridge may call
+  `op: game_grant_issue` with `publisher`, `gameId`, `matchId` and their *own*
+  authenticated Social session. The account must have an enabled subscription.
+  A cryptographically random bearer value is returned only to that account,
+  with a 300-second lifetime. Only its SHA-256, the issuing Social session hash,
+  subject, audience, game and match are saved. At most eight active grants are
+  permitted per account. Grants expire or become unusable after account logout,
+  notification opt-out, service allowlist removal or first redemption.
+* A new `tavi-game-grant-redeem/v1` typed service contract accepts
+  `{grant,gameId,matchId}` from the approved caller component *on the same
+  LoopRD runtime*. The caller must match the stored audience. Successful
+  redemption atomically consumes the grant and returns
+  `{accepted:true,issuer,subject,gameId,matchId,scope:'game:identify'}`.
+  Failures give only `accepted:false,reason:'not_available'`, preventing account
+  enumeration through the redemption API. A proof is not a permission to enter
+  the game: Life independently verifies seat membership, invitation and turn.
+* The canonical shared JS SDK adds `issueGameGrant`, `acceptGameInvitation` and
+  `declineGameInvitation`. The existing Inbox displays the new reply actions on
+  every Tavi client. The OpenClaw CLI adds `game-invite-accept`,
+  `game-invite-decline`, and `game-grant` commands. The latter writes the secret
+  to a protected mode-0600 file, emits only its path, and requires the future
+  game adapter to delete the file after redemption. Never paste a grant in chat.
+
+== LoopRD service setup
+
+The existing operator-controlled settings are retained. These values are
+*examples*, not defaults or credentials:
+
+[source,shell]
+----
+LOOPRD_SOCIAL_SERVICE_SECRETS_JSON='{"the-life-loop":"tavi/services/the-life-loop"}'
+LOOPRD_TAVI_GAME_CALLERS_JSON='{"the-life-loop":["life.loop"]}'
+LOOPRD_TAVI_SOCIAL_ISSUER='social-local-issuer'
+----
+
+The actual issuer must be a unique stable ID for that Social installation, and
+not a guessed global namespace. The operator provisions an appropriate private
+service credential, making the Social verifier grant `social:service` only to
+that admitted game component. The game descriptor may declare optional service
+bindings (supported by current DAPI) so notification outages do not prevent
+Life match commits:
+
+[source,yaml]
+----
+dependencies:
+  - component: looprd-social
+    contract: tavi-game-event
+    version: 1
+    credentialSecret: tavi/services/the-life-loop
+    optional: true
+  - component: looprd-social
+    contract: tavi-game-grant-redeem
+    version: 1
+    credentialSecret: tavi/services/the-life-loop
+    optional: true
+----
+
+`optional: true` permits component activation when Social is absent; it does
+not permit unauthenticated game entry. On `503` or unavailable Social, Life
+must retry its own durable event outbox. A failed grant redemption means no
+identity and game play must be refused until the user reauthenticates or the
+service returns. `ctx.call()` remains restricted to components loaded in one
+DAPI runtime. For an independent remote game backend, design an approved HTTPS
+machine-to-machine redemption path, issuer trust and rate limits separately.
+Do not put these instance-specific details in portable `looprd.yaml` files except
+operator-provisioned *secret reference names*; do not put an Atrium URL there.
+
+== Request example: game-owned invitation
+
+[source,json]
+----
+{
+  "schema": "tavi.game-event/v1",
+  "eventId": "invitation_000042",
+  "kind": "invite.created",
+  "gameId": "life.loop",
+  "matchId": "match_test_012345",
+  "turnIndex": 0,
+  "recipient": {"issuer": "social-local-issuer", "subject": "acct_2"},
+  "inviter": {"issuer": "social-local-issuer", "subject": "acct_1"}
+}
+----
+
+The sender/recipient account IDs above are illustrative. The game must validate
+its own seated inviter before sending the invitation. A successful Social
+response means an inbox invitation exists, *not* that the recipient joined a
+match. After Tavi acceptance, the recipient obtains a short-lived proof to
+pass to Life; Life redeems it and checks its own admission rules.
+
+== Data and migration
+
+Social schema 8 adds `SocialGameGrant`, its token-hash uniqueness and an index
+for bounded account quota and expiration. Schema 7 tables and all earlier data
+remain in place. Before upgrading, back up and test migration of the actual
+Social SQLite database. A rollback must not delete schema 8 tables or prior
+messages. Do not enable new service calls in the game until Social schema 8
+and the new typed service are successfully activated.
+
+== Local evidence and remaining acceptance
+
+Run `python tools/generate-looprd.py --check`, `npm run verify` and
+`python -m unittest discover -s tests -p 'test_*.py'`. The new tests include
+wrong caller, no contact, missing subscription, revoked contact, decline,
+accepted invitation, one-use, wrong match/audience, session logout and
+cross-account inbox checks. They do *not* demonstrate live DAPI activation,
+a production credential exchange, installed OS notifications, actual Life seat
+admission, or real OpenClaw moves. Live acceptance requires all of those
+relevant target systems to be deployed and exercised under their own test gates.

@@ -130,3 +130,23 @@ test('messenger developer UI cannot be promoted by a client-side toggle alone',a
  assert(main.includes('developer-switch'));
  assert(main.includes('updateDeveloperPermission(me)'));
 });
+
+test('independent time budget for Social discovery info and capabilities',async()=>{
+ let probes=[];const fetcher=async(url,options)=>{probes.push({url,signal:options.signal});
+  return {status:200,ok:true,json:async()=>url.endsWith('/info')?{protocol:'looprd.social/1',auth:'social-accounts',release:'0.3.42'}:{ok:true,schema:'looprd.social.capabilities/v1',accounts:true,registration:true}};};
+ assert.equal((await discoverSocial(server,fetcher)).available,true);
+ assert.equal(probes.length,2);assert.notEqual(probes[0].signal,probes[1].signal);
+});
+test('Social discovery produces safe status classifications',async()=>{
+ assert.match((await discoverSocial(server,async()=>({status:503}))).reason,/temporarily unavailable/);
+ assert.match((await discoverSocial(server,async()=>({status:404}))).reason,/not have the Social component/);
+ await assert.rejects(discoverSocial(server,async()=>{const e=Error('request aborted');e.name='AbortError';throw e;}),e=>e.code==='DISCOVERY_TIMEOUT'&&/timed out during server information/.test(e.message));
+ await assert.rejects(discoverSocial(server,async()=>{throw new TypeError('Failed to fetch host private.example');}),e=>e.code==='DISCOVERY_NETWORK'&&!e.message.includes('private.example'));
+});
+test('Android safe-area guard and report stage are present without altering native desktop behavior',async()=>{
+ const fs=await import('node:fs/promises');const css=await fs.readFile(new URL('../src/style.css',import.meta.url),'utf8');
+ const main=await fs.readFile(new URL('../src/main.js',import.meta.url),'utf8');
+ assert.match(css,/\.android-shell #app/);assert.match(css,/safe-area-inset-top/);
+ assert.match(main,/Android.*navigator\.userAgent.*android-shell/);
+ assert.match(main,/DISCOVERY_TIMEOUT/);
+});

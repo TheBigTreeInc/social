@@ -77,3 +77,27 @@ test('native WebView2 fetch retains its browser invocation context through regis
     assert.deepEqual(ops,['info','capabilities','register','me']);
   } finally {globalThis.fetch = previous;}
 });
+
+test('game invitations and one-use identity proofs use the signed-in Social API without leaking Social token',async()=>{
+ const seen=[];
+ const mock=async (url,opts)=>{
+   assert.equal(url,base+'social');
+   const request=JSON.parse(opts.body);
+   seen.push(request);
+   return {ok:true,status:200,json:async()=>request.op==='game_grant_issue'
+     ? {ok:true,schema:'tavi.game-grant/v1',grant:'g'.repeat(43),audience:request.publisher,
+        gameId:request.gameId,matchId:request.matchId,expiresAt:5000}
+     : {ok:true,response:{action:request.action}}};
+ };
+ const api=new sdk.LooprdSocial(origin,'secret-token-'+'z'.repeat(34),mock);
+ const grant=await api.issueGameGrant('the-life-loop','life.loop','match_test_012345');
+ assert.equal(grant.audience,'the-life-loop');
+ assert.equal(grant.grant.length,43);
+ assert.equal((await api.acceptGameInvitation(11)).response.action,'accept-game');
+ assert.equal((await api.declineGameInvitation(12)).response.action,'decline-game');
+ assert.deepEqual(seen.map(x=>x.op),['game_grant_issue','interaction_reply','interaction_reply']);
+ assert.throws(()=>api.issueGameGrant('wrong/url','life.loop','match_test_012345'),/Invalid game grant audience/);
+ assert.throws(()=>api.issueGameGrant('the-life-loop','life.loop','short'),/Invalid game grant audience/);
+ assert(seen.every(x=>!x.grant),'A reusable bearer proof must never be sent in a Tavi inbox request');
+ assert.equal(nativeFacade.LooprdSocial,sdk.LooprdSocial);
+});

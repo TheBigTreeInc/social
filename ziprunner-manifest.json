@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.40",
-    "base_version": "0.3.39"
+    "version": "0.3.42",
+    "base_version": "0.3.41"
   },
   "update": {
-    "id": "TAVI-20261018-GAME-EVENT-040",
+    "id": "TAVI-20261018-ANDROID-042",
     "kind": "source_update",
-    "created_at": "2026-10-18T01:00:00+02:00",
-    "summary": "First Social game event transport: consent, private trusted game component delivery, durable inbox, dedupe, SDK and Atrium app navigation."
+    "created_at": "2026-10-18T09:01:00+02:00",
+    "summary": "Android sign-in discovery network error classification, per-probe timeout, validated pre-login bug reporting and status bar safe-area repair."
   },
   "planned_work": [
     {
@@ -192,6 +192,24 @@
       "title": "Consented turn alerts via trusted component service",
       "acceptance_criteria": "Additive SQL migration, operator-approved component/game mapping, issuer check, per-match consent, exactly-once inbox effect on repeated ID, durable Social event and optional push hint, client navigation and tests.",
       "priority": "high"
+    },
+    {
+      "id": "TAVI-GAME-002",
+      "title": "Trusted game invitations and account-scoped identity proofs",
+      "acceptance_criteria": "Authenticated approved game service can invite accepted contacts; recipient action creates consent, not seat membership; short-lived one-use grants redeemed by matching service only; logout/revoke/outage gates; tests and deployment checks.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-ANDROID-042",
+      "title": "Android sign-in timeout and failed diagnostic reporting",
+      "priority": "high",
+      "acceptance_criteria": "With reachable LoopRD Social server the native Android app completes discovery; unreachable/slow network clearly indicates stage; empty report origin never displays raw Invalid URL; status bar no longer obscures Tavi controls. Confirm on real Android and preserve secure report payloads."
+    },
+    {
+      "id": "TAVI-ANDROID-042-FIX",
+      "title": "Implement source-side discovery and reporting diagnostics",
+      "priority": "high",
+      "acceptance_criteria": "Independent bounded Social discovery probes, safe network/503 failures, valid reporting endpoint, Android safe-area guard, passing source tests. Device acceptance remains TAVI-ANDROID-042."
     }
   ],
   "done_work": [
@@ -732,6 +750,73 @@
           "description": "Local service authorization/dedupe/rollback tests"
         }
       ]
+    },
+    {
+      "id": "TAVI-GAME-002",
+      "summary": "Trusted same-runtime game invitations for accepted Social contacts and one-use, account/issuer/audience/match-bound identity proofs. Schema 8; no Life seat creation or remote RPC.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "server/game_event_service.py",
+          "description": "Trusted invitation and recipient-consent checks"
+        },
+        {
+          "kind": "source",
+          "ref": "server/game_grant_service.py",
+          "description": "One-use same-runtime grant redemption"
+        },
+        {
+          "kind": "source",
+          "ref": "server/looprd_handler.py",
+          "description": "Issue proof for current verified session and bind invitation acceptance to consent"
+        },
+        {
+          "kind": "test",
+          "ref": "tests/test_game_invites_grants.py",
+          "description": "Authorization, dedupe, revocation, and one-use regression coverage"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/GAME_INVITES_AND_GRANTS_0.3.41.adoc",
+          "description": "Deployment contract and limitations"
+        }
+      ]
+    },
+    {
+      "id": "TAVI-ANDROID-042-FIX",
+      "summary": "Source implementation: per-probe discovery deadlines, safe structured diagnostics, report origin validation, Android header safe-area, Node tests; production endpoint and device unverified.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/sdk/looprd-social.js",
+          "description": "Separated bounded discovery probes and network errors"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/bug-report.js",
+          "description": "No invalid URL exception for empty input"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/style.css",
+          "description": "Native Android status inset"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/protocol.test.mjs",
+          "description": "Discovery/error and Android layout assertions"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/bug-report.test.mjs",
+          "description": "Invalid input and network reporting regression tests"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/WORKBOARD.md",
+          "description": "User-reported bug and on-device acceptance gates"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -788,6 +873,14 @@
     {
       "id": "TAVI-NEARBY-003",
       "next_action": "Coordinate Atrium game rule reducer and authenticated server sync protocol; implement one sample game."
+    },
+    {
+      "id": "TAVI-ANDROID-042",
+      "status": "review",
+      "next_action": "Install the v0.3.42 native Android APK. Verify real https://api.thebigtree.life discovery on Wi-Fi/cellular and inspect phone TLS/DNS/proxy if still timed out. Test reporter with a valid server, and view status-bar insets on device.",
+      "blockers": [
+        "Requires Android device and reachable deployed LoopRD Social backend; source tests cannot certify production connectivity."
+      ]
     }
   ],
   "validation": {
@@ -930,11 +1023,38 @@
         "description": "Real LoopRD schema 7 and Life-to-Social live integration",
         "status": "not_run",
         "reason": "Requires operator-managed staging deployment, Life game turn API and match authorization."
+      },
+      {
+        "id": "TAVI-GAME-002-SOURCE",
+        "description": "Source-level invitation and one-use game grant tests",
+        "status": "passed",
+        "command": "python -m unittest discover -s tests -p test_*.py",
+        "evidence_ref": "tests/test_game_invites_grants.py"
+      },
+      {
+        "id": "TAVI-GAME-002-STAGING",
+        "description": "Staging DAPI service redemption and Life seat validation",
+        "status": "not_run",
+        "reason": "Requires operator-provisioned same-runtime Life/Social deployment, credentials, migrations and game API."
+      },
+      {
+        "id": "TAVI-ANDROID-042-NODE",
+        "description": "Discovery and pre-login report/source safe-area regression tests",
+        "status": "passed",
+        "command": "node --test client/tests/protocol.test.mjs client/tests/bug-report.test.mjs",
+        "environment": "Linux Node.js",
+        "evidence_ref": "client/tests/bug-report.test.mjs"
+      },
+      {
+        "id": "TAVI-ANDROID-042-DEVICE",
+        "description": "Android network timeout reproduction, pre-login reports, status-bar inset",
+        "status": "not_run",
+        "reason": "Requires signed APK on Android with actual network/server and visual inspection."
       }
     ]
   },
   "handover": {
-    "next_pass": "Add recipient-verified game invitations and Social-issued game-scoped identity grants; integrate Life participant assertions and actual Atrium game/match deep links before production activation.",
+    "next_pass": "After v0.3.42 source import, test native Android discovery + reporter against deployed DAPI, then proceed with Life-game game-event and identity-grant integration. Do not mark TAVI-ANDROID-042 complete without an actual phone check.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -943,7 +1063,9 @@
       "SHA journal checks detect corruption but do not authenticate other participants; pairing/signatures are not implemented.",
       "Generic LoopRD pulses remain wake hints, not message payloads; Tavi Social DMs are custom handler tables and are not available as LoopRD generic _sync snapshots. Periodic authenticated summary reconciliation remains authoritative.",
       "Bridge is an external supervised OpenClaw CLI service, not a native OpenClaw channel. Native Gateway acceptance and exactly-once downstream delivery are unverified.",
-      "Game receipt proves consenting Social account but not game-seat membership; Life must validate participant before requesting delivery."
+      "Game receipt proves consenting Social account but not game-seat membership; Life must validate participant before requesting delivery.",
+      "Tavi-issued game grants prove an account identity only; a game must never treat them as authorization to join or act in a match.",
+      "Screenshot production server timeout remains unverified on the device; client source changes improve resilience and diagnosis but cannot repair an unreachable remote backend."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -977,11 +1099,21 @@
       "id": "TAVI-AGENT-003-OP",
       "description": "Provision a separate Tavi account, configure TAVI_SERVER and TAVI_TOKEN, explicit TAVI_ALLOWED_PEERS and OpenClaw Gateway; launch tavi-openclaw-service.mjs; verify real DM roundtrip and restarts.",
       "status": "required"
+    },
+    {
+      "id": "TAVI-GAME-002-STAGING",
+      "description": "Back up Social database; stage schema 8 and approved Life service credential, then test invitation acceptance, audience-bound grant redemption and duplicate/revoked sessions.",
+      "status": "required"
+    },
+    {
+      "id": "TAVI-ANDROID-042-OP",
+      "description": "Verify v0.3.42 on Android with real server URL, empty-origin report guidance, real submission when server reachable, Wi-Fi/cellular and status-bar inset; inspect server diagnostics if timeout persists.",
+      "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Game-event service is opt-in and disabled without operator allowlist/issuer/credential; not a claim of end-to-end Life/Atrium play."
+    "notes": "Client resilience and Android layout fix; Social backend schema 8 unchanged. Production root cause requires device and deployed server checks."
   }
 }

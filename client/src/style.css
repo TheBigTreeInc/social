@@ -308,3 +308,13 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .report-login label{display:block;margin:10px 0 6px}
 .report-login textarea{box-sizing:border-box;display:block;width:100%;min-height:58px;max-height:145px;resize:vertical;font:inherit;margin-top:5px}
 .report-login button{padding:7px 12px;cursor:pointer}
+
+/* TAVI-ANDROID-042: prevent native edge-to-edge Android system status bar overlay.
+   Keep desktop/web unchanged; verify varying OEM system-bar heights on devices. */
+.android-shell{--tavi-status-inset:max(env(safe-area-inset-top,0px),24px);}
+.android-shell #app{height:100dvh;padding-top:var(--tavi-status-inset);}
+@media(max-width:620px){
+  .android-shell .login-desktop,.android-shell .desktop-workspace{height:calc(100dvh - 29px - var(--tavi-status-inset));}
+  .android-shell .login-desktop{align-items:flex-start;justify-content:center;padding:12px 0 0;}
+  .android-shell .welcome{max-height:100%;}
+}

@@ -46,7 +46,9 @@ class GameEventTests(TestCase):
         metadata.create_all(self.engine)
         # Tests must enforce the SQL uniqueness expected from migrations.
         with self.engine.begin() as db:
-            for index in self.spec['database']['migrations'][-1]['statements'][2:]:db.execute(sa.text(index))
+            for migration in self.spec['database']['migrations']:
+                for statement in migration['statements']:
+                    if statement.startswith('CREATE ') and ' INDEX ' in statement:db.execute(sa.text(statement))
         self.sessions=sessionmaker(self.engine)
         self.calls=[]
         self.sender=SimpleNamespace(kind='service',subject='the-life-loop')
@@ -124,8 +126,8 @@ class GameEventTests(TestCase):
             self.assertEqual(self.command(self.alice,'game_event_feed',after=0)['events'][-1]['actions'][0]['type'],'reply')
 
     def test_migration_additive_and_new_service_contract(self):
-        self.assertEqual(self.spec['database']['schemaVersion'],7)
-        self.assertEqual([m['version'] for m in self.spec['database']['migrations']],[2,3,4,5,6,7])
+        self.assertEqual(self.spec['database']['schemaVersion'],8)
+        self.assertEqual([m['version'] for m in self.spec['database']['migrations']],[2,3,4,5,6,7,8])
         handlers=[x for x in self.spec['handlers'] if x['path']=='/ecosystem/game-event']
         self.assertEqual(handlers[0]['contract']['name'],'tavi-game-event')
         self.assertEqual(handlers[0]['contract']['version'],1)

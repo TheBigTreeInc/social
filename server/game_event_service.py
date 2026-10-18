@@ -19,7 +19,7 @@ MATCH_ID = re.compile(r'^[A-Za-z0-9_-]{12,128}$')
 EVENT_ID = re.compile(r'^[A-Za-z0-9_-]{8,96}$')
 COMPONENT_ID = re.compile(r'^[a-z][a-z0-9-]{1,47}$')
 SUBJECT = re.compile(r'^acct_[1-9][0-9]{0,18}$')
-ALLOWED_KINDS = {'turn.ready', 'turn.reminder', 'match.completed'}
+ALLOWED_KINDS = {'turn.ready', 'turn.reminder', 'match.completed', 'invite.created'}
 
 
 def configured_publishers():
@@ -77,10 +77,12 @@ def game_interaction(kind, game_id, match_id, caller, event_id=None, turn_index=
              'match.completed': 'Game completed', 'invite.created': 'Game invitation'}[kind]
     title += ' · ' + approved_game_label(game_id)
     link = approved_atrium_url(game_id, match_id)
-    actions = ([{'id': 'open-atrium', 'type': 'open-url', 'label': 'Open in Atrium',
+    actions = ([{'id':'accept-game','type':'reply','label':'Accept invitation','fields':[]},
+                {'id':'decline-game','type':'reply','label':'Decline','fields':[]}] if kind=='invite.created' else
+               [{'id': 'open-atrium', 'type': 'open-url', 'label': 'Open in Atrium',
                  'url': link, 'presentation': 'external-browser'}] if link else
                [{'id': 'acknowledge', 'type': 'reply', 'label': 'Acknowledge', 'fields': []}])
-    return {'title': title, 'topic': 'game.' + kind, 'body': ('Open Atrium to continue.' if link else
+    return {'title': title, 'topic': 'game.' + kind, 'body': (('A friend invited you to play. Accept to receive game updates.' if kind=='invite.created' else 'Open Atrium to continue.') if link else
             'Atrium is not configured on this Social server yet.'), 'actions': actions,
             'game': {'schema': 'tavi.game-event/v1', 'kind': kind, 'gameId': game_id,
                      'matchId': match_id, 'publisher': caller, 'eventId': event_id,
@@ -88,7 +90,8 @@ def game_interaction(kind, game_id, match_id, caller, event_id=None, turn_index=
 
 
 def validate_event(body, caller):
-    if not isinstance(body, dict) or set(body) != {'schema', 'eventId', 'kind', 'gameId', 'matchId', 'turnIndex', 'recipient'}:
+    expected={'schema','eventId','kind','gameId','matchId','turnIndex','recipient'}
+    if not isinstance(body, dict) or set(body) != (expected | {'inviter'} if body.get('kind')=='invite.created' else expected):
         return None
     recipient = body.get('recipient')
     issuer = os.environ.get('LOOPRD_TAVI_SOCIAL_ISSUER', '')
@@ -100,7 +103,12 @@ def validate_event(body, caller):
             or not isinstance(recipient, dict) or set(recipient) != {'issuer', 'subject'}
             or not isinstance(recipient.get('subject'), str) or not SUBJECT.fullmatch(recipient['subject'])
             or not issuer or len(issuer) > 128 or recipient.get('issuer') != issuer
-            or body['gameId'] not in configured_publishers().get(caller, ())):
+            or body['gameId'] not in configured_publishers().get(caller, ())
+            or (body['kind']=='invite.created' and (not isinstance(body.get('inviter'),dict)
+                or set(body['inviter'])!={'issuer','subject'}
+                or body['inviter'].get('issuer') != issuer
+                or not isinstance(body['inviter'].get('subject'),str)
+                or not SUBJECT.fullmatch(body['inviter']['subject'])))):
         return None
     return body
 
@@ -127,21 +135,34 @@ def deliver(ctx):
             if prior != fingerprint:
                 return {'accepted': False, 'delivery': 'rejected', 'reason': 'event_id_conflict'}
             return {'accepted': True, 'delivery': 'duplicate'}
+        # An invitation is explicitly initiated by an approved game service on behalf
+        # of an existing accepted contact. It never enrolls a recipient automatically.
+        if body['kind']=='invite.created':
+            inviter=body['inviter']['subject']
+            if inviter==recipient:
+                return {'accepted':False,'delivery':'rejected','reason':'not_accepted_contacts'}
+            left,right=sorted((inviter,recipient))
+            contact=session.execute(sa.text('''SELECT id FROM "SocialContact" WHERE leftId=:left
+                AND rightId=:right AND status='accepted' '''),{'left':left,'right':right}).first()
+            if not contact:
+                return {'accepted':False,'delivery':'rejected','reason':'not_accepted_contacts'}
         # Proof of consent is an authenticated Social subscription, NOT knowledge of an account ID.
         eligible = session.execute(sa.text('''SELECT id FROM "SocialGameSubscription"
             WHERE subjectId=:subject AND publisher=:publisher AND gameId=:gameId
               AND matchId=:matchId AND enabled=1'''),
             {'subject': recipient, 'publisher': caller, 'gameId': body['gameId'], 'matchId': body['matchId']}).first()
-        if not eligible:
+        if not eligible and body['kind']!='invite.created':
             return {'accepted': False, 'delivery': 'rejected', 'reason': 'recipient_not_subscribed'}
         data = game_interaction(body['kind'], body['gameId'], body['matchId'], caller,
                                 body['eventId'], body['turnIndex'])
+        if body['kind']=='invite.created':
+            data['game']['inviter']=body['inviter']['subject']
         stored = session.execute(sa.text('''INSERT INTO "SocialInteraction"
             (recipient,publisher,topic,title,data,status,response,created,expires)
             VALUES (:recipient,:publisher,:topic,:title,:data,'open',NULL,:created,:expires)
             RETURNING id'''), {'recipient': recipient, 'publisher': 'game:' + caller,
                                'topic': data['topic'], 'title': data['title'], 'data': json.dumps(data),
-                               'created': now, 'expires': now + 366 * 86400}).scalar_one()
+                               'created': now, 'expires': now + (7 if body['kind']=='invite.created' else 366) * 86400}).scalar_one()
         session.execute(sa.text('''INSERT INTO "SocialGameDelivery" (publisher,eventId,recipient,digest,interactionId,created)
             VALUES (:publisher,:eventId,:recipient,:digest,:interactionId,:created)'''),
             {'publisher': caller, 'eventId': body['eventId'], 'recipient': recipient,

@@ -40,25 +40,40 @@ async function responseJson(response) {
   return body;
 }
 
-/** Probe one LoopRD origin. Missing Social means no local account or chat store. */
+/** Each discovery request gets its own deadline; a slow /info must not consume /social's allowance. */
+async function discoveryRequest(fetcher, url, options, stage) {
+  const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),15000);
+  try {return await fetcher(url,{...options,signal:controller.signal});}
+  catch(error){
+    if(error?.name==='AbortError'){
+      const failure=new ProtocolError(`Server discovery timed out during ${stage}. Check your connection and retry.`);
+      failure.code='DISCOVERY_TIMEOUT';throw failure;
+    }
+    if(error?.name==='TypeError' || error?.name==='NetworkError'){
+      const failure=new ProtocolError('Could not reach the LoopRD server. Check your internet connection, HTTPS certificate and server availability.');
+      failure.code='DISCOVERY_NETWORK';throw failure;
+    }
+    throw error;
+  }finally{clearTimeout(timer);}
+}
+
+/** Probe a LoopRD origin without requiring user credentials or a stored session. */
 export async function discoverSocial(origin, fetcher = browserFetch) {
-  const url = componentPath(origin, SOCIAL_COMPONENT, 'info');
-  const controller = new AbortController(), timer = setTimeout(()=>controller.abort(),12000);
-  try {
-    const response = await fetcher(url,{method:'GET',headers:guestHeaders,cache:'no-store',signal:controller.signal});
-    if (response.status===404 || response.status===503) return {available:false,reason:'The selected LoopRD server has no active Social component.'};
-    const data = await responseJson(response);
-    if (data?.protocol!=='looprd.social/1') return {available:false,reason:'This server does not provide a compatible Social component.'};
-    if(data.auth!=='social-accounts') return {available:true,registration:false,accounts:false,release:data.release||''};
-    const caps=await fetcher(componentPath(origin,SOCIAL_COMPONENT,'social'),{
-      method:'POST',headers:{'Content-Type':'application/json',...guestHeaders},cache:'no-store',signal:controller.signal,
-      body:JSON.stringify({op:'capabilities'})});
-    const check=await responseJson(caps);
-    if(check?.ok!==true||check.schema!=='looprd.social.capabilities/v1'||check.accounts!==true)
-      return {available:true,registration:false,accounts:false,release:data.release||''};
-    return {available:true,registration:check.registration===true,accounts:true,release:data.release||''};
-  } catch(error){if(error?.name==='AbortError') throw new ProtocolError('Server discovery timed out.');throw error;}
-  finally {clearTimeout(timer);}
+  const base=normalizeServer(origin);
+  const response=await discoveryRequest(fetcher,componentPath(base,SOCIAL_COMPONENT,'info'),
+    {method:'GET',headers:guestHeaders,cache:'no-store'},'server information');
+  if(response.status===404)return {available:false,reason:'This LoopRD server does not have the Social component installed.'};
+  if(response.status===503)return {available:false,reason:'The Social service is temporarily unavailable (HTTP 503). Retry shortly.'};
+  const data=await responseJson(response);
+  if(data?.protocol!=='looprd.social/1')return {available:false,reason:'This server does not provide a compatible Social component.'};
+  if(data.auth!=='social-accounts')return {available:true,registration:false,accounts:false,release:data.release||''};
+  const caps=await discoveryRequest(fetcher,componentPath(base,SOCIAL_COMPONENT,'social'),
+    {method:'POST',headers:{'Content-Type':'application/json',...guestHeaders},cache:'no-store',body:JSON.stringify({op:'capabilities'})},
+    'account capabilities');
+  const check=await responseJson(caps);
+  if(check?.ok!==true||check.schema!=='looprd.social.capabilities/v1'||check.accounts!==true)
+    return {available:true,registration:false,accounts:false,release:data.release||''};
+  return {available:true,registration:check.registration===true,accounts:true,release:data.release||''};
 }
 
 async function accountCommand(origin, op, username, password, fetcher = browserFetch) {
@@ -142,6 +157,17 @@ export class LooprdSocial {
       throw new ProtocolError('Invalid game notification selection');
     return this.command('game_subscription_set', {publisher, gameId, matchId, enabled});
   }
+
+  /** Account-bound one-use proof for an approved game backend, never a seat authorization. */
+  issueGameGrant(publisher, gameId, matchId) {
+    if (!/^[a-z][a-z0-9-]{1,47}$/.test(publisher || '') ||
+        !/^[a-z][a-z0-9.]{1,95}$/.test(gameId || '') ||
+        !/^[A-Za-z0-9_-]{12,128}$/.test(matchId || ''))
+      throw new ProtocolError('Invalid game grant audience');
+    return this.command('game_grant_issue', {publisher, gameId, matchId});
+  }
+  acceptGameInvitation(id) { return this.replyInteraction(id, 'accept-game', {}); }
+  declineGameInvitation(id) { return this.replyInteraction(id, 'decline-game', {}); }
 
   replyInteraction(id, action, values) { return this.command('interaction_reply', {id,action,values}); }
   dismissInteraction(id) { return this.command('interaction_dismiss', {id}); }

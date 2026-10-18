@@ -74,3 +74,14 @@ Windows chat-window peer validation previously required at least eight character
 
 ### TAVI-AGENT-004 — Sender identity for OpenClaw (v0.3.39)
 Authenticated contacts now include chosen displayName alongside verified username. The watcher forwards both to the OpenClaw prompt while keeping acct_N as the internal routing key.
+
+
+## TAVI-ANDROID-042 — Android discovery timeout, invalid pre-login bug report, status bar overlay (high, 2026-10-18)
+
+* **Reported:** User screenshots show Tavi disconnected with `Server discovery timed out.` using `https://api.thebigtree.life`. With an empty/default server field, **Report a login problem** failed with `Failed to construct 'URL': Invalid URL`. System status/time/battery glyphs overlap the header.
+* **Reproduction:** On Android open Tavi sign-in, enter `https://api.thebigtree.life`, tap Connect and wait for discovery; separately leave server field empty, expand login problem, send a report. Check status icons above the top bar.
+* **Initial source finding:** Discovery used one 12-second AbortController for both GET `/looprd/looprd-social/v1/info` and POST `/looprd/looprd-social/v1/social` capability requests; error lacked stage/network classification. Reporter called `new URL(origin)` without validating the empty form field. Android lacked a reserved minimum top inset for edge-to-edge display.
+* **v0.3.42 source fix:** Independent 15-second per-request deadlines with stage-specific timeout messages, safe network-error guidance and distinct 404/503 behavior. Reporter validates the origin before dispatch and shows a useful explanation rather than a raw JavaScript URL error. Android reserves an appropriate top safe-area inset and moves the login form toward the top. Source regression tests in `client/tests/protocol.test.mjs` and `client/tests/bug-report.test.mjs`.
+* **Status: SOURCE FIXED; DEVICE ACCEPTANCE OPEN.** A source test does not prove why the actual endpoint timed out on the phone. No device network telemetry, production API uptime, APK or Android-rendered visual acceptance was available. The reporter cannot send a report if there is no configured reachable LoopRD server, by design.
+* **Operator acceptance:** Update Android APK; test real valid-host sign-in on Wi-Fi and cellular; check `/info` and `/social` reachability and TLS/cert from phone; verify stage-specific error for a controlled timeout and 503; verify bug report via an otherwise reachable server with a failed login; verify no raw `Invalid URL`; visually verify Android status bar and top header across different insets and after keyboard open. Collect only non-sensitive status/error timings (no tokens or credentials).
+* **Follow-up:** If `https://api.thebigtree.life` still times out in v0.3.42, inspect deployed DAPI component status, reverse proxy routes, mobile DNS/TLS and server logs; do not claim a backend fix from this client-only pass.

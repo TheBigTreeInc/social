@@ -1,8 +1,8 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.40",
-  "summary": "First Tavi game-event transport: consented match subscriptions, service-only transactional game turn notifications, idempotent delivery and safe Atrium navigation. Cross-project match/game validation is pending.",
+  "version": "0.3.42",
+  "summary": "TAVI-ANDROID-042: Android login discovery diagnostic and pre-login report reliability; status-bar safe-area source repair. Live phone/network validation remains open.",
   "implemented": [
     {
       "id": "SOC-GAME-02A",
@@ -359,6 +359,27 @@
         "Confirm no Android Bluetooth transport, pairing or real game advertised as implemented.",
         "Keep existing LoopRD Social schema and APIs unchanged."
       ]
+    },
+    {
+      "id": "TAVI-GAME-002",
+      "title": "Trusted game invitations and one-use account proof",
+      "summary": "Game service submits invite for accepted contacts. Tavi inbox acceptance enables notifications; a short-lived grant is one-time redeemed by matching game service. Source tests passed; live admission and hostless gameplay await Life.",
+      "priority": "high",
+      "operator_checks": [
+        "Back up production Social DB before schema 8 migration.",
+        "Stage Life and Social together with operator-provisioned credentials; confirm only matched service can redeem proof.",
+        "Verify the game still refuses wrong-seat actions after successfully redeeming an identity proof.",
+        "Verify OS/native push independently; not established by unit tests."
+      ]
+    },
+    {
+      "id": "TAVI-ANDROID-042-FIX",
+      "title": "Android login network diagnostics and safe reporting (source)",
+      "summary": "Independent bounded 15-second /info and /social probes, explicit timeouts/network/503 wording, validated reporting origin, guarded Android status bar inset. Regression-tested source behavior; not real device connectivity.",
+      "operator_checks": [
+        "Inspect TAVI-ANDROID-042 screenshot bug and confirm source tests passing",
+        "Deploy test APK and verify insets and real Social discovery on Android before clearing TAVI-ANDROID-042"
+      ]
     }
   ],
   "remaining": [
@@ -478,6 +499,12 @@
       "id": "TAVI-NEARBY-003",
       "title": "Atrium offline game adapter and online sync",
       "summary": "Obtain game rules/state reducer and server-authorized transactional sync contract; reject divergent heads; restart and train-mode device testing."
+    },
+    {
+      "id": "TAVI-ANDROID-042",
+      "title": "Android sign-in discovery timeout and failed login-problem reporter",
+      "summary": "Screenshots: api.thebigtree.life discovery timed out, bug report threw raw invalid URL when origin absent, and status bar overlaid header. Source fixes shipped in 0.3.42; underlying phone/server reachability and Android UI still require on-device verification.",
+      "priority": "high"
     }
   ]
 }

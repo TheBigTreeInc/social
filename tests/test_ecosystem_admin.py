@@ -80,7 +80,7 @@ class EcosystemAdminTests(unittest.TestCase):
     def test_declaration_is_private_and_password_hash_not_managed(self):
         spec=self.spec
         self.assertIn('management.data',spec['requires'])
-        self.assertEqual(spec['database']['schemaVersion'],7)
+        self.assertEqual(spec['database']['schemaVersion'],8)
         self.assertEqual(spec['resources']['accounts']['permissions']['list'],['social:operator'])
         self.assertEqual(spec['resources']['accounts']['permissions']['get'],['social:operator'])
         self.assertNotIn('passwordHash',spec['resources']['accounts']['projection'])
@@ -182,7 +182,7 @@ class EcosystemAdminTests(unittest.TestCase):
             with previous.begin() as db:
                 db.execute(sa.text('CREATE TABLE "SocialAccount" (id INTEGER PRIMARY KEY, "handle" VARCHAR(32) NOT NULL, "developerEnabled" BOOLEAN NOT NULL)'))
                 db.execute(sa.text("INSERT INTO \"SocialAccount\" VALUES (1,'alice',1)"))
-                db.execute(sa.text(self.spec['database']['migrations'][-2]['statements'][0]))
+                db.execute(sa.text(next(m for m in self.spec['database']['migrations'] if m['version']==6)['statements'][0]))
                 self.assertEqual(db.execute(sa.text('SELECT "ecosystemAdmin" FROM "SocialAccount"')).scalar(),0)
                 self.assertEqual(db.execute(sa.text('SELECT "developerEnabled" FROM "SocialAccount"')).scalar(),1)
         finally:

@@ -20,3 +20,13 @@ test('consented report returns a LoopRD issue ID without user credentials',async
 test('report rejection is a visible failure, not recursive reporting',async()=>{
  await assert.rejects(sendBugReport({origin:'https://api.thebigtree.life/',version:'0.3.39',platform:'Android',fetcher:async()=>({status:404})}),/does not support/);
 });
+
+test('empty or malformed sign-in address shows actionable report guidance, not raw URL internals',async()=>{
+ for(const origin of ['',undefined,'not a url','https://user:pass@api.thebigtree.life/']){
+  assert.throws(()=>reportEndpoint(origin),/Enter a valid LoopRD server address/);
+  await assert.rejects(sendBugReport({origin,version:'0.3.42',platform:'android',fetcher:async()=>{throw Error('must not call network')}}),/Enter a valid LoopRD server address/);
+ }
+});
+test('report network failures are safe, helpful messages',async()=>{
+ await assert.rejects(sendBugReport({origin:'https://api.thebigtree.life',version:'0.3.42',platform:'android',fetcher:async()=>{throw new TypeError('private implementation detail')}}),/Cannot reach LoopRD/);
+});
