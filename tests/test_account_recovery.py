@@ -127,7 +127,7 @@ class RecoveryFlow(unittest.TestCase):
                 db.execute(sa.text("INSERT INTO \"SocialAccount\" VALUES (1,'alice','oldhash',123,0,0,0,0)"))
                 db.execute(sa.text('CREATE TABLE "SocialSession" ("id" INTEGER PRIMARY KEY,"subjectId" VARCHAR(72) NOT NULL,"tokenHash" VARCHAR(64) NOT NULL UNIQUE,"created" INTEGER NOT NULL,"expires" INTEGER NOT NULL,"lastSeen" INTEGER NOT NULL,"revoked" BOOLEAN NOT NULL)'))
                 db.execute(sa.text("INSERT INTO \"SocialSession\" VALUES (1,'acct_1','session-hash',123,900000,456,0)"))
-                for stmt in self.spec['database']['migrations'][-1]['statements']:
+                for stmt in next(m for m in self.spec['database']['migrations'] if m['version']==9)['statements']:
                     db.execute(sa.text(stmt))
                 row=db.execute(sa.text('SELECT "handle","passwordHash","recoveryFailures","recoveryLockedUntil" FROM "SocialAccount" WHERE id=1')).one()
                 self.assertEqual(tuple(row),('alice','oldhash',0,0))
@@ -135,8 +135,8 @@ class RecoveryFlow(unittest.TestCase):
                 self.assertEqual(db.execute(sa.text('SELECT COUNT(*) FROM "SocialRecoveryCode"')).scalar_one(),0)
         finally:engine.dispose()
     def test_additive_schema(self):
-        self.assertEqual(self.spec['database']['schemaVersion'],9)
-        self.assertEqual(self.spec['database']['migrations'][-1]['version'],9)
+        self.assertEqual(self.spec['database']['schemaVersion'],10)
+        self.assertIn(9,[m['version'] for m in self.spec['database']['migrations']])
         with self.engine.begin() as db:
             code=db.execute(sa.text('SELECT name FROM sqlite_master WHERE name=\'SocialRecoveryCode\'')).scalar()
             self.assertEqual(code,'SocialRecoveryCode')

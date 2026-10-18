@@ -761,6 +761,68 @@ def game_event_feed(db,subject,body):
     return {'ok':True,'schema':'tavi.game-events/v1','events':entries,'next':entries[-1]['id'] if entries else after,
             'hasMore':len(rows)>100}
 
+# Game-owned seat rosters are synchronized through the separate service-only
+# tavi-game-room-roster/v1 contract. A subscription is consent, not proof of a seat.
+ROOM_KEY = re.compile(r'^[a-f0-9]{64}$')
+
+
+def accessible_game_room(db, subject, room_id):
+    if not isinstance(room_id,str) or not ROOM_KEY.fullmatch(room_id):return None
+    return db.execute(sa.text('''SELECT r.roomKey,r.publisher,r.gameId,r.matchId,r.revision
+      FROM "SocialGameRoom" r
+      JOIN "SocialGameRoomMember" m ON m.roomKey=r.roomKey AND m.subjectId=:subject
+      JOIN "SocialGameSubscription" s ON s.subjectId=:subject AND s.publisher=r.publisher
+        AND s.gameId=r.gameId AND s.matchId=r.matchId AND s.enabled=1
+      WHERE r.roomKey=:room AND r.status=:active'''),{'subject':subject,'room':room_id,'active':'active'}).mappings().first()
+
+
+def game_room_list(db,subject):
+    rows=db.execute(sa.text('''SELECT r.roomKey,r.publisher,r.gameId,r.matchId,r.revision,
+        (SELECT COUNT(*) FROM "SocialGameRoomMember" c WHERE c.roomKey=r.roomKey) AS participants
+      FROM "SocialGameRoom" r
+      JOIN "SocialGameRoomMember" m ON m.roomKey=r.roomKey AND m.subjectId=:subject
+      JOIN "SocialGameSubscription" s ON s.subjectId=:subject AND s.publisher=r.publisher
+        AND s.gameId=r.gameId AND s.matchId=r.matchId AND s.enabled=1
+      WHERE r.status='active' ORDER BY r.updated DESC,r.roomKey LIMIT 100'''),{'subject':subject,'active':'active'}).mappings().all()
+    return {'ok':True,'schema':'tavi.game-rooms/v1','rooms':[
+        {'roomId':r['roomKey'],'publisher':r['publisher'],'gameId':r['gameId'],
+         'matchId':r['matchId'],'revision':r['revision'],'participants':r['participants']} for r in rows]}
+
+
+def game_room_feed(db,subject,body):
+    row=accessible_game_room(db,subject,body.get('roomId'))
+    if not row:return error('Game room unavailable')
+    after=body.get('after',0)
+    if type(after) is not int or not 0<=after<=9223372036854775807:return error('Invalid message cursor')
+    direction='DESC' if after==0 else 'ASC'
+    rows=db.execute(sa.text(f'''SELECT m.id,m.senderId,m.content,m.created,a.handle
+      FROM "SocialGameRoomMessage" m
+      LEFT JOIN "SocialAccount" a ON m.senderId='acct_' || a.id
+      WHERE m.roomKey=:room AND m.id>:after ORDER BY m.id {direction} LIMIT 80'''),
+      {'room':row['roomKey'],'after':after}).mappings().all()
+    if after==0:rows=list(reversed(rows))
+    return {'ok':True,'schema':'tavi.game-room-messages/v1','roomId':row['roomKey'],
+            'messages':[{'id':r['id'],'authorId':r['senderId'],'displayName':r['handle'] or 'Player',
+                         'text':r['content'],'at':r['created']} for r in rows],
+            'next':rows[-1]['id'] if rows else after,'hasMore':len(rows)==80}
+
+
+def game_room_send(db,subject,body,now):
+    room=accessible_game_room(db,subject,body.get('roomId'))
+    if not room:return error('Game room unavailable')
+    content=body.get('text')
+    if (not isinstance(content,str) or not 1<=len(content.strip())<=1000 or
+        re.search(r'[\x00-\x08\x0e-\x1f\x7f]',content)):
+        return error('Invalid room message')
+    last=db.execute(sa.text('''SELECT created FROM "SocialGameRoomMessage" WHERE roomKey=:room
+        AND senderId=:sender ORDER BY id DESC LIMIT 1'''),{'room':room['roomKey'],'sender':subject}).scalar_one_or_none()
+    if last is not None and now-last<1:return error('Room message cooldown: retry shortly')
+    ident=db.execute(sa.text('''INSERT INTO "SocialGameRoomMessage"
+      (roomKey,senderId,content,created) VALUES (:room,:sender,:text,:now) RETURNING id'''),
+      {'room':room['roomKey'],'sender':subject,'text':content.strip(),'now':now}).scalar_one()
+    return {'ok':True,'messageId':ident}
+
+
 def atrium_app_url():
     base=os.getenv('LOOPRD_TAVI_ATRIUM_BASE_URL','')
     if not base or len(base)>512 or not base.endswith('/') or any(ord(c)<33 or c=='\\' for c in base):return None
@@ -800,7 +862,7 @@ def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
             if op=='capabilities':
                 return {'ok':True,'schema':'looprd.social.capabilities/v1',
                     'accounts':True,'registration':os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower() in ('true','1','yes'),
-                    'recoveryCodes':True,'contacts':True,'directMessages':True,'conversationSummaries':True,'readSync':True,'sessionSeconds':SESSION_AGE,
+                    'recoveryCodes':True,'gameRooms':True,'contacts':True,'directMessages':True,'conversationSummaries':True,'readSync':True,'sessionSeconds':SESSION_AGE,
                     'push':{'schema':'looprd-push/v1','transport':'unifiedpush','deviceRegistration':True,
                             'requiresVerifiedSession':True},
                     'atriumUrl':atrium_app_url()},None
@@ -825,6 +887,13 @@ def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
                 return set_game_subscription(db,subject,body,now),None
             if op=='game_grant_issue':
                 return issue_game_grant(db,subject,body,now),None
+            if op=='game_room_list':
+                return game_room_list(db,subject),None
+            if op=='game_room_feed':
+                return game_room_feed(db,subject,body),None
+            if op=='game_room_send':
+                result=game_room_send(db,subject,body,now)
+                return result,event_signal(db) if result['ok'] else None
             if op=='game_event_feed':
                 return game_event_feed(db,subject,body),None
             if op=='interaction_reply':
@@ -953,6 +1022,18 @@ def process_event(ctx):
                 recipient=body.get('peer')
             elif op=='interaction_publish':
                 recipient=account_subject(db,username(body.get('recipient')))
+            if op=='game_room_send':
+                # Send a content-free wake only to current, consenting game seats.
+                # A roomId in a client request does not authorize any account.
+                room=accessible_game_room(db,principal,body.get('roomId'))
+                if room:
+                    peers=db.execute(sa.text('''SELECT m.subjectId FROM "SocialGameRoomMember" m
+                        JOIN "SocialGameSubscription" s ON s.subjectId=m.subjectId
+                          AND s.publisher=:publisher AND s.gameId=:game AND s.matchId=:match AND s.enabled=1
+                        WHERE m.roomKey=:room AND m.subjectId!=:sender'''),
+                        {'publisher':room['publisher'],'game':room['gameId'],'match':room['matchId'],
+                         'room':room['roomKey'],'sender':principal}).scalars().all()
+                    for peer in peers: ctx.notify(db,principal_id(peer))
             if recipient and recipient != principal and re.fullmatch(r'acct_[0-9]{1,19}',recipient):
                 ctx.notify(db,principal_id(recipient))
     return result
@@ -962,7 +1043,7 @@ async def handle(ctx):
     op=ctx.body.get('op') if isinstance(ctx.body,dict) else None
     changing=op in {'interaction_reply','interaction_dismiss','interaction_publish',
                     'contact_request','contact_accept','contact_remove','dm_mark_read',
-                    'dm_send','save_profile','chat_send','recover_account'}
+                    'dm_send','game_room_send','save_profile','chat_send','recover_account'}
     if changing:
         return await run_in_threadpool(process_event,ctx)
     result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory,principal_subject=ctx.principal.subject)

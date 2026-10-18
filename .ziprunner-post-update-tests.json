@@ -1,6 +1,6 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.43",
+  "version": "0.3.44",
   "tests": [
     {
       "kind": "command",
@@ -62,6 +62,24 @@
       "definition_revision": "1",
       "rerun_policy": "every_update",
       "command": "python -m unittest discover -s tests -p test_account_recovery.py -v",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "tavi-multiplayer-match-chat",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "python -m unittest discover -s tests -p test_game_rooms.py -v",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "tavi-match-chat-js-sdk",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "node --test client/tests/game-rooms-sdk.test.mjs",
       "attention_on_failure": true,
       "gating": false
     }

@@ -164,6 +164,19 @@ export class LooprdSocial {
     return this.command('game_subscription_set', {publisher, gameId, matchId, enabled});
   }
 
+  /** Game-owned match roster grants chat access only after account opt-in. */
+  gameRooms() {return this.command('game_room_list');}
+  gameRoomFeed(roomId,after=0) {
+    if(!/^[a-f0-9]{64}$/.test(roomId||'') || !Number.isSafeInteger(after) || after<0)
+      throw new ProtocolError('Invalid game room cursor');
+    return this.command('game_room_feed',{roomId,after});
+  }
+  gameRoomSend(roomId,text) {
+    if(!/^[a-f0-9]{64}$/.test(roomId||'') || typeof text!=='string' ||
+       !text.trim() || text.length>1000) throw new ProtocolError('Invalid game room message');
+    return this.command('game_room_send',{roomId,text});
+  }
+
   /** Account-bound one-use proof for an approved game backend, never a seat authorization. */
   issueGameGrant(publisher, gameId, matchId) {
     if (!/^[a-z][a-z0-9-]{1,47}$/.test(publisher || '') ||

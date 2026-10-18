@@ -94,3 +94,14 @@ Authenticated contacts now include chosen displayName alongside verified usernam
 * **Status: REVIEW / OPERATOR ACCEPTANCE OPEN.** Live migration, persistent DB/restart, native Android/Windows screens, codes copied/stored safely, concurrent recovery race and multi-device revoked-session behavior require staging and device verification. The global hourly cap is an additional backstop and does not replace edge-level abuse controls or pre-auth per-origin limits. No email, SMS or external recovery identity is claimed.
 * **Operator acceptance:** Confirm old accounts/chats and invitations survive schema 8→9; issue codes on device A after password prompt, store them offline, sign into device B, recover from a signed-out device C, confirm A/B revocation and one fresh C session, verify one-use/rotation/expiry/lockout and a wrong-account code cannot recover another user; verify registration cap without affecting login. Restore from backup on migration failure.
 * **Next:** Independent production DAPI migration and real-device acceptance; additional rate-limit/abuse telemetry and operator recovery support if required. Do not mark Done until independently reviewed.
+
+
+## Multiplayer priority override — Tavi 0.3.44
+
+Operator requested prioritizing shared multiplayer until Life/Atrium/Tavi interoperability is proven. This supersedes the suggested order of LRS-004 and other non-multiplayer work for *new source passes*, but does not mark those tickets Done or alter their acceptance criteria.
+
+- `TAVI-MULTI-044`: reviewed-source candidate for private, game-seat-scoped match conversation and revision-safe roster sync. Requires schema 10, Life backend service, cross-device and role/revocation acceptance.
+- `SCL-007`, `TAVI-032`, `SOC-GAME-02B`, `TAVI-031`, `TAVI-AGENT-002`: still open until actual shared multiplayer gameplay and OpenClaw turn API integration are proven.
+- `LRS-004` stays Review; recovery/reporting/Android networking operator acceptance not silently closed.
+
+See `TAVI_MULTIPLAYER_MATCH_CHAT.adoc`.

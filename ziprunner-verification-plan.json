@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.43",
+  "version": "0.3.44",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -361,7 +361,7 @@
         },
         {
           "id": "LRS-004-AC-3",
-          "description": "Social SQL schema 8\u21929 and Android/Windows actual recovery flow independently verified by operator.",
+          "description": "Social SQL schema 8→9 and Android/Windows actual recovery flow independently verified by operator.",
           "mode": "manual",
           "checks": [
             "LRS-004-DEVICE"
@@ -547,7 +547,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"
@@ -711,6 +711,32 @@
         "Code generated while signed in and used while signed out",
         "Other sessions revoked",
         "No secret telemetry/logging"
+      ]
+    },
+    {
+      "id": "TAVI-MULTI-044-PY",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Schema 10 additive migration, game-owned room ACL and push wake on send",
+      "runner_ref": "python-multiplayer-room",
+      "assertions": [
+        "Only approved game service creates room rosters",
+        "Consent plus seat needed",
+        "Revoked players lose read/write",
+        "Stable revision/idempotency and rollback"
+      ]
+    },
+    {
+      "id": "TAVI-MULTI-044-DEVICE",
+      "kind": "manual",
+      "stage": "operator",
+      "description": "Real Life match roster + Tavi Android/Windows/web match chat and revocation",
+      "runner_ref": "operator-game-room-staging",
+      "assertions": [
+        "Deployed migration keeps all old accounts and chat",
+        "Life backend verifies seat independently",
+        "Native client chat cross-seat and restart",
+        "Atrium join/resume checked separately"
       ]
     }
   ]

@@ -318,3 +318,13 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
   .android-shell .login-desktop{align-items:flex-start;justify-content:center;padding:12px 0 0;}
   .android-shell .welcome{max-height:100%;}
 }
+
+/* Consented, game-seat-scoped match conversations inside Games. */
+.game-room-panel{border-top:1px solid #b8cec4;margin-top:1.1rem;padding-top:0.8rem}
+.game-room-list{display:flex;gap:0.35rem;flex-wrap:wrap}
+.game-room-list button{max-width:100%;overflow-wrap:anywhere;min-height:40px}
+.game-room-list button.picked{outline:2px solid #286b56}
+.game-room-thread{margin-top:0.65rem;border:1px solid #b8cec4;padding:0.65rem;border-radius:6px}
+.game-room-messages{min-height:90px;max-height:250px;overflow:auto;overflow-wrap:anywhere}
+.game-room-messages p{margin:0.35rem 0}
+.game-room-compose textarea{width:100%;box-sizing:border-box;resize:vertical}

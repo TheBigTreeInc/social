@@ -1,3 +1,7 @@
+# Tavi 0.3.44 — Multiplayer match conversations (source candidate)
+
+Approved game backends may synchronize verified match seats into consenting-player-only private Tavi chat rooms via `tavi-game-room-roster/v1`. Revision-safe roster replacement and termination, private message feeds, shared SDK and Games-pane conversation UI. Adds Social schema 10. Life remains game authority, Atrium owns launch, Tavi owns only chat; no real match integration or operator approval yet. See `docs/TAVI_MULTIPLAYER_MATCH_CHAT.adoc`.
+
 # Tavi 0.3.43 — LRS-004 account recovery candidate
 
 Opt-in one-use recovery codes (180 days), safe password reset, all-old-session revocation, and a configurable global hourly registration limit. Additive Social SQL schema 9. Operator database backup/migration and physical-device tests are required before approval. See `docs/LRS_004_ACCOUNT_RECOVERY.adoc`.

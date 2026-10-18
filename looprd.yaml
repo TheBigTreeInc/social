@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.43
+release: 0.3.44
 api:
   version: v1
 cors:
@@ -74,7 +74,7 @@ limits:
   maxInFlight: 30
 database:
   backend: sqlite
-  schemaVersion: 9
+  schemaVersion: 10
   migrations:
   - version: 2
     statements:
@@ -133,6 +133,18 @@ database:
     - CREATE TABLE "SocialRecoveryCode" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "codeHash"
       VARCHAR(64) NOT NULL UNIQUE, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL)
     - CREATE INDEX "SocialRecoveryCode_subject" ON "SocialRecoveryCode" ("subjectId","expires")
+  - version: 10
+    statements:
+    - CREATE TABLE "SocialGameRoom" ("id" INTEGER PRIMARY KEY, "roomKey" VARCHAR(64) NOT NULL UNIQUE, "publisher"
+      VARCHAR(48) NOT NULL, "gameId" VARCHAR(96) NOT NULL, "matchId" VARCHAR(128) NOT NULL, "revision" INTEGER NOT
+      NULL, "status" VARCHAR(12) NOT NULL, "updated" INTEGER NOT NULL)
+    - CREATE TABLE "SocialGameRoomMember" ("id" INTEGER PRIMARY KEY, "roomKey" VARCHAR(64) NOT NULL, "subjectId"
+      VARCHAR(72) NOT NULL, "updated" INTEGER NOT NULL)
+    - CREATE UNIQUE INDEX "SocialGameRoomMember_unique" ON "SocialGameRoomMember" ("roomKey","subjectId")
+    - CREATE INDEX "SocialGameRoomMember_subject" ON "SocialGameRoomMember" ("subjectId","roomKey")
+    - CREATE TABLE "SocialGameRoomMessage" ("id" INTEGER PRIMARY KEY, "roomKey" VARCHAR(64) NOT NULL, "senderId"
+      VARCHAR(72) NOT NULL, "content" VARCHAR(1000) NOT NULL, "created" INTEGER NOT NULL)
+    - CREATE INDEX "SocialGameRoomMessage_room" ON "SocialGameRoomMessage" ("roomKey","id")
 models:
   SocialProfile:
     fields:
@@ -395,6 +407,92 @@ models:
       fields:
       - subjectId
       - expires
+  SocialGameRoom:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      roomKey:
+        type: string
+        maxLength: 64
+        required: true
+        unique: true
+      publisher:
+        type: string
+        maxLength: 48
+        required: true
+      gameId:
+        type: string
+        maxLength: 96
+        required: true
+      matchId:
+        type: string
+        maxLength: 128
+        required: true
+      revision:
+        type: integer
+        required: true
+      status:
+        type: string
+        maxLength: 12
+        required: true
+      updated:
+        type: integer
+        required: true
+  SocialGameRoomMember:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      roomKey:
+        type: string
+        maxLength: 64
+        required: true
+      subjectId:
+        type: string
+        maxLength: 72
+        required: true
+      updated:
+        type: integer
+        required: true
+    indexes:
+    - name: SocialGameRoomMember_unique
+      fields:
+      - roomKey
+      - subjectId
+      unique: true
+    - name: SocialGameRoomMember_subject
+      fields:
+      - subjectId
+      - roomKey
+  SocialGameRoomMessage:
+    fields:
+      id:
+        type: integer
+        primaryKey: true
+        generated: true
+      roomKey:
+        type: string
+        maxLength: 64
+        required: true
+      senderId:
+        type: string
+        maxLength: 72
+        required: true
+      content:
+        type: string
+        maxLength: 1000
+        required: true
+      created:
+        type: integer
+        required: true
+    indexes:
+    - name: SocialGameRoomMessage_room
+      fields:
+      - roomKey
+      - id
   SocialGameSubscription:
     fields:
       id:
@@ -963,7 +1061,38 @@ handlers:
     \        entries.append({'id':item['id'],'publisher':item['publisher'],'topic':item['topic'],\n            \
     \           **item['data'],'status':item['status'],'created':item['created'],'expires':item['expires']})\n \
     \   return {'ok':True,'schema':'tavi.game-events/v1','events':entries,'next':entries[-1]['id'] if entries else\
-    \ after,\n            'hasMore':len(rows)>100}\n\ndef atrium_app_url():\n    base=os.getenv('LOOPRD_TAVI_ATRIUM_BASE_URL','')\n\
+    \ after,\n            'hasMore':len(rows)>100}\n\n# Game-owned seat rosters are synchronized through the separate\
+    \ service-only\n# tavi-game-room-roster/v1 contract. A subscription is consent, not proof of a seat.\nROOM_KEY\
+    \ = re.compile(r'^[a-f0-9]{64}$')\n\n\ndef accessible_game_room(db, subject, room_id):\n    if not isinstance(room_id,str)\
+    \ or not ROOM_KEY.fullmatch(room_id):return None\n    return db.execute(sa.text('''SELECT r.roomKey,r.publisher,r.gameId,r.matchId,r.revision\n\
+    \      FROM \"SocialGameRoom\" r\n      JOIN \"SocialGameRoomMember\" m ON m.roomKey=r.roomKey AND m.subjectId=:subject\n\
+    \      JOIN \"SocialGameSubscription\" s ON s.subjectId=:subject AND s.publisher=r.publisher\n        AND s.gameId=r.gameId\
+    \ AND s.matchId=r.matchId AND s.enabled=1\n      WHERE r.roomKey=:room AND r.status=:active'''),{'subject':subject,'room':room_id,'active':'active'}).mappings().first()\n\
+    \n\ndef game_room_list(db,subject):\n    rows=db.execute(sa.text('''SELECT r.roomKey,r.publisher,r.gameId,r.matchId,r.revision,\n\
+    \        (SELECT COUNT(*) FROM \"SocialGameRoomMember\" c WHERE c.roomKey=r.roomKey) AS participants\n     \
+    \ FROM \"SocialGameRoom\" r\n      JOIN \"SocialGameRoomMember\" m ON m.roomKey=r.roomKey AND m.subjectId=:subject\n\
+    \      JOIN \"SocialGameSubscription\" s ON s.subjectId=:subject AND s.publisher=r.publisher\n        AND s.gameId=r.gameId\
+    \ AND s.matchId=r.matchId AND s.enabled=1\n      WHERE r.status='active' ORDER BY r.updated DESC,r.roomKey LIMIT\
+    \ 100'''),{'subject':subject,'active':'active'}).mappings().all()\n    return {'ok':True,'schema':'tavi.game-rooms/v1','rooms':[\n\
+    \        {'roomId':r['roomKey'],'publisher':r['publisher'],'gameId':r['gameId'],\n         'matchId':r['matchId'],'revision':r['revision'],'participants':r['participants']}\
+    \ for r in rows]}\n\n\ndef game_room_feed(db,subject,body):\n    row=accessible_game_room(db,subject,body.get('roomId'))\n\
+    \    if not row:return error('Game room unavailable')\n    after=body.get('after',0)\n    if type(after) is\
+    \ not int or not 0<=after<=9223372036854775807:return error('Invalid message cursor')\n    direction='DESC'\
+    \ if after==0 else 'ASC'\n    rows=db.execute(sa.text(f'''SELECT m.id,m.senderId,m.content,m.created,a.handle\n\
+    \      FROM \"SocialGameRoomMessage\" m\n      LEFT JOIN \"SocialAccount\" a ON m.senderId='acct_' || a.id\n\
+    \      WHERE m.roomKey=:room AND m.id>:after ORDER BY m.id {direction} LIMIT 80'''),\n      {'room':row['roomKey'],'after':after}).mappings().all()\n\
+    \    if after==0:rows=list(reversed(rows))\n    return {'ok':True,'schema':'tavi.game-room-messages/v1','roomId':row['roomKey'],\n\
+    \            'messages':[{'id':r['id'],'authorId':r['senderId'],'displayName':r['handle'] or 'Player',\n   \
+    \                      'text':r['content'],'at':r['created']} for r in rows],\n            'next':rows[-1]['id']\
+    \ if rows else after,'hasMore':len(rows)==80}\n\n\ndef game_room_send(db,subject,body,now):\n    room=accessible_game_room(db,subject,body.get('roomId'))\n\
+    \    if not room:return error('Game room unavailable')\n    content=body.get('text')\n    if (not isinstance(content,str)\
+    \ or not 1<=len(content.strip())<=1000 or\n        re.search(r'[\\x00-\\x08\\x0e-\\x1f\\x7f]',content)):\n \
+    \       return error('Invalid room message')\n    last=db.execute(sa.text('''SELECT created FROM \"SocialGameRoomMessage\"\
+    \ WHERE roomKey=:room\n        AND senderId=:sender ORDER BY id DESC LIMIT 1'''),{'room':room['roomKey'],'sender':subject}).scalar_one_or_none()\n\
+    \    if last is not None and now-last<1:return error('Room message cooldown: retry shortly')\n    ident=db.execute(sa.text('''INSERT\
+    \ INTO \"SocialGameRoomMessage\"\n      (roomKey,senderId,content,created) VALUES (:room,:sender,:text,:now)\
+    \ RETURNING id'''),\n      {'room':room['roomKey'],'sender':subject,'text':content.strip(),'now':now}).scalar_one()\n\
+    \    return {'ok':True,'messageId':ident}\n\n\ndef atrium_app_url():\n    base=os.getenv('LOOPRD_TAVI_ATRIUM_BASE_URL','')\n\
     \    if not base or len(base)>512 or not base.endswith('/') or any(ord(c)<33 or c=='\\\\' for c in base):return\
     \ None\n    from urllib.parse import urlsplit\n    import ipaddress\n    try:\n        u=urlsplit(base)\n  \
     \      if u.scheme!='https' or not u.hostname or u.username or u.password or u.query or u.fragment or u.port\
@@ -983,7 +1112,7 @@ handlers:
     \            if op=='game_catalog':\n                return {'ok':True,'schema':'tavi.game-catalog/v1','games':published_games()},None\n\
     \            if op=='capabilities':\n                return {'ok':True,'schema':'looprd.social.capabilities/v1',\n\
     \                    'accounts':True,'registration':os.getenv('LOOPRD_SOCIAL_ALLOW_REGISTRATION','true').lower()\
-    \ in ('true','1','yes'),\n                    'recoveryCodes':True,'contacts':True,'directMessages':True,'conversationSummaries':True,'readSync':True,'sessionSeconds':SESSION_AGE,\n\
+    \ in ('true','1','yes'),\n                    'recoveryCodes':True,'gameRooms':True,'contacts':True,'directMessages':True,'conversationSummaries':True,'readSync':True,'sessionSeconds':SESSION_AGE,\n\
     \                    'push':{'schema':'looprd-push/v1','transport':'unifiedpush','deviceRegistration':True,\n\
     \                            'requiresVerifiedSession':True},\n                    'atriumUrl':atrium_app_url()},None\n\
     \            if op=='register':\n                return register(db,body,now),None\n            if op=='login':\n\
@@ -995,7 +1124,10 @@ handlers:
     \                return recovery_codes_revoke(db,subject,body),None\n            if op=='interaction_feed':\n\
     \                return interaction_feed(db,subject,now),None\n            if op=='game_subscription_set':\n\
     \                return set_game_subscription(db,subject,body,now),None\n            if op=='game_grant_issue':\n\
-    \                return issue_game_grant(db,subject,body,now),None\n            if op=='game_event_feed':\n\
+    \                return issue_game_grant(db,subject,body,now),None\n            if op=='game_room_list':\n \
+    \               return game_room_list(db,subject),None\n            if op=='game_room_feed':\n             \
+    \   return game_room_feed(db,subject,body),None\n            if op=='game_room_send':\n                result=game_room_send(db,subject,body,now)\n\
+    \                return result,event_signal(db) if result['ok'] else None\n            if op=='game_event_feed':\n\
     \                return game_event_feed(db,subject,body),None\n            if op=='interaction_reply':\n   \
     \             result=interaction_reply(db,subject,body,now)\n                return result,event_signal(db)\
     \ if result['ok'] else None\n            if op=='interaction_dismiss':\n                result=interaction_dismiss(db,subject,body,now)\n\
@@ -1067,12 +1199,20 @@ handlers:
     \            elif op=='contact_request':\n                recipient=account_subject(db,username(body.get('username')))\n\
     \            elif op in ('contact_accept','contact_remove'):\n                recipient=body.get('peer')\n \
     \           elif op=='interaction_publish':\n                recipient=account_subject(db,username(body.get('recipient')))\n\
-    \            if recipient and recipient != principal and re.fullmatch(r'acct_[0-9]{1,19}',recipient):\n    \
-    \            ctx.notify(db,principal_id(recipient))\n    return result\n\n\nasync def handle(ctx):\n    op=ctx.body.get('op')\
-    \ if isinstance(ctx.body,dict) else None\n    changing=op in {'interaction_reply','interaction_dismiss','interaction_publish',\n\
-    \                    'contact_request','contact_accept','contact_remove','dm_mark_read',\n                 \
-    \   'dm_send','save_profile','chat_send','recover_account'}\n    if changing:\n        return await run_in_threadpool(process_event,ctx)\n\
-    \    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory,principal_subject=ctx.principal.subject)\n\
+    \            if op=='game_room_send':\n                # Send a content-free wake only to current, consenting\
+    \ game seats.\n                # A roomId in a client request does not authorize any account.\n            \
+    \    room=accessible_game_room(db,principal,body.get('roomId'))\n                if room:\n                \
+    \    peers=db.execute(sa.text('''SELECT m.subjectId FROM \"SocialGameRoomMember\" m\n                      \
+    \  JOIN \"SocialGameSubscription\" s ON s.subjectId=m.subjectId\n                          AND s.publisher=:publisher\
+    \ AND s.gameId=:game AND s.matchId=:match AND s.enabled=1\n                        WHERE m.roomKey=:room AND\
+    \ m.subjectId!=:sender'''),\n                        {'publisher':room['publisher'],'game':room['gameId'],'match':room['matchId'],\n\
+    \                         'room':room['roomKey'],'sender':principal}).scalars().all()\n                    for\
+    \ peer in peers: ctx.notify(db,principal_id(peer))\n            if recipient and recipient != principal and\
+    \ re.fullmatch(r'acct_[0-9]{1,19}',recipient):\n                ctx.notify(db,principal_id(recipient))\n   \
+    \ return result\n\n\nasync def handle(ctx):\n    op=ctx.body.get('op') if isinstance(ctx.body,dict) else None\n\
+    \    changing=op in {'interaction_reply','interaction_dismiss','interaction_publish',\n                    'contact_request','contact_accept','contact_remove','dm_mark_read',\n\
+    \                    'dm_send','game_room_send','save_profile','chat_send','recover_account'}\n    if changing:\n\
+    \        return await run_in_threadpool(process_event,ctx)\n    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory,principal_subject=ctx.principal.subject)\n\
     \    # login/register create an account-specific session; the identity is checked on\n    # the *next* request.\
     \ No push is sent for guest operations or regular reads.\n    return result\n"
 - path: /ecosystem/admin-notify
@@ -1352,6 +1492,138 @@ handlers:
         reason:
           type: string
           maxLength: 80
+- path: /ecosystem/game-room-roster
+  method: POST
+  kind: python
+  scopes:
+  - social:service
+  source: "\"\"\"Private game-session room roster synchronization from an approved LoopRD game service.\n\nTavi\
+    \ never decides who has a game seat. The game service supplies an authoritative\nfull roster with monotonically\
+    \ increasing revision. Social only provides optional\nprivate chat for those seats after separate per-account\
+    \ consent to that match.\n\"\"\"\nimport hashlib\nimport json\nimport os\nimport re\nimport time\nimport sqlalchemy\
+    \ as sa\nfrom starlette.concurrency import run_in_threadpool\n\nCOMPONENT_ID = re.compile(r'^[a-z][a-z0-9-]{1,47}$')\n\
+    GAME_ID = re.compile(r'^[a-z][a-z0-9.]{1,95}$')\nMATCH_ID = re.compile(r'^[A-Za-z0-9_-]{12,128}$')\nSUBJECT_ID\
+    \ = re.compile(r'^acct_[1-9][0-9]{0,18}$')\n\n\ndef configured_publishers():\n    try: data = json.loads(os.environ.get('LOOPRD_TAVI_GAME_CALLERS_JSON','{}'))\n\
+    \    except (ValueError,TypeError): return {}\n    if not isinstance(data,dict) or len(data)>32: return {}\n\
+    \    return {k:set(v) for k,v in data.items()\n            if isinstance(k,str) and COMPONENT_ID.fullmatch(k)\
+    \ and isinstance(v,list) and 0<len(v)<=32\n            and all(isinstance(g,str) and GAME_ID.fullmatch(g) for\
+    \ g in v)}\n\n\ndef room_key(publisher,game_id,match_id):\n    return hashlib.sha256(json.dumps([publisher,game_id,match_id],separators=(',',':')).encode()).hexdigest()\n\
+    \n\ndef validate_snapshot(body,caller):\n    if not isinstance(body,dict) or set(body) != {'schema','gameId','matchId','revision','status','members'}:\n\
+    \        return None\n    game=body.get('gameId');match=body.get('matchId');members=body.get('members');rev=body.get('revision')\n\
+    \    issuer=os.environ.get('LOOPRD_TAVI_SOCIAL_ISSUER','')\n    if (body.get('schema')!='tavi.game-room-roster/v1'\
+    \ or not isinstance(game,str) or not GAME_ID.fullmatch(game)\n        or not isinstance(match,str) or not MATCH_ID.fullmatch(match)\
+    \ or game not in configured_publishers().get(caller,set())\n        or type(rev) is not int or rev<1 or rev>1000000000\
+    \ or body.get('status') not in ('active','closed')\n        or not issuer or len(issuer)>128 or not isinstance(members,list)\
+    \ or len(members)>12):return None\n    if body['status']=='active' and not 1<=len(members)<=12:return None\n\
+    \    subjects=[]\n    for member in members:\n        if (not isinstance(member,dict) or set(member) != {'issuer','subject'}\
+    \ or member.get('issuer')!=issuer\n            or not isinstance(member.get('subject'),str) or not SUBJECT_ID.fullmatch(member['subject'])):return\
+    \ None\n        subjects.append(member['subject'])\n    if len(set(subjects))!=len(subjects):return None\n \
+    \   if body['status']=='closed' and subjects:return None\n    return game,match,rev,body['status'],sorted(subjects)\n\
+    \n\ndef synchronize(ctx):\n    caller=getattr(ctx.principal,'subject',None)\n    if getattr(ctx.principal,'kind',None)!='service'\
+    \ or not isinstance(caller,str) or not COMPONENT_ID.fullmatch(caller):\n        return {'accepted':False,'delivery':'rejected','reason':'service_identity_required'}\n\
+    \    snapshot=validate_snapshot(ctx.body,caller)\n    if snapshot is None:return {'accepted':False,'delivery':'rejected','reason':'invalid_or_unapproved_roster'}\n\
+    \    game,match,revision,status,members=snapshot\n    key=room_key(caller,game,match);now=int(time.time())\n\
+    \    with ctx.transaction() as db:\n        old=db.execute(sa.text('''SELECT revision,status FROM \"SocialGameRoom\"\
+    \ WHERE roomKey=:key'''),{'key':key}).mappings().first()\n        if old:\n            if revision<old['revision']:return\
+    \ {'accepted':False,'delivery':'rejected','reason':'stale_revision'}\n            if revision==old['revision']:\n\
+    \                current=db.execute(sa.text('SELECT subjectId FROM \"SocialGameRoomMember\" WHERE roomKey=:key\
+    \ ORDER BY subjectId'),{'key':key}).scalars().all()\n                if old['status']==status and current==members:\n\
+    \                    return {'accepted':True,'delivery':'duplicate','roomId':key,'revision':revision}\n    \
+    \            return {'accepted':False,'delivery':'rejected','reason':'revision_conflict'}\n            if old['status']=='closed':return\
+    \ {'accepted':False,'delivery':'rejected','reason':'room_already_closed'}\n            db.execute(sa.text('UPDATE\
+    \ \"SocialGameRoom\" SET revision=:revision,status=:status,updated=:now WHERE roomKey=:key'),\n            \
+    \           {'key':key,'revision':revision,'status':status,'now':now})\n            db.execute(sa.text('DELETE\
+    \ FROM \"SocialGameRoomMember\" WHERE roomKey=:key'),{'key':key})\n        else:\n            db.execute(sa.text('''INSERT\
+    \ INTO \"SocialGameRoom\"\n                (roomKey,publisher,gameId,matchId,revision,status,updated)\n    \
+    \            VALUES (:key,:caller,:game,:match,:revision,:status,:now)'''),\n                {'key':key,'caller':caller,'game':game,'match':match,'revision':revision,'status':status,'now':now})\n\
+    \        for subject in members:\n            db.execute(sa.text('''INSERT INTO \"SocialGameRoomMember\" (roomKey,subjectId,updated)\n\
+    \                VALUES (:key,:subject,:now)'''),{'key':key,'subject':subject,'now':now})\n        # Closed\
+    \ rooms are terminal. Existing chat is inaccessible, but retained for\n        # normal operator data-retention\
+    \ policy rather than deleted on closure.\n        row=db.execute(sa.text('SELECT signal FROM \"SocialPulse\"\
+    \ WHERE id=1')).first()\n        if row:\n            signal=row[0]+1\n            db.execute(sa.text('UPDATE\
+    \ \"SocialPulse\" SET signal=:signal WHERE id=1'),{'signal':signal})\n        else:\n            signal=1\n\
+    \            db.execute(sa.text('INSERT INTO \"SocialPulse\" (id,signal) VALUES (1,1)'))\n        # Replay and\
+    \ notifications belong to the same transaction as membership changes.\n        ctx.emit(db, {'resource':'pulses','action':'updated','id':1,'data':{'id':1,'signal':signal}})\n\
+    \    return {'accepted':True,'delivery':'created','roomId':key,'revision':revision}\n\n\nasync def handle(ctx):\n\
+    \    return await run_in_threadpool(synchronize,ctx)\n"
+  contract:
+    name: tavi-game-room-roster
+    version: 1
+    serviceOnly: true
+    request:
+      type: object
+      required:
+      - schema
+      - gameId
+      - matchId
+      - revision
+      - status
+      - members
+      additionalProperties: false
+      properties:
+        schema:
+          type: string
+          enum:
+          - tavi.game-room-roster/v1
+        gameId:
+          type: string
+          minLength: 2
+          maxLength: 96
+        matchId:
+          type: string
+          minLength: 12
+          maxLength: 128
+        revision:
+          type: integer
+          minimum: 1
+          maximum: 1000000000
+        status:
+          type: string
+          enum:
+          - active
+          - closed
+        members:
+          type: array
+          maxItems: 12
+          items:
+            type: object
+            required:
+            - issuer
+            - subject
+            additionalProperties: false
+            properties:
+              issuer:
+                type: string
+                minLength: 1
+                maxLength: 128
+              subject:
+                type: string
+                minLength: 6
+                maxLength: 72
+    response:
+      type: object
+      required:
+      - accepted
+      - delivery
+      additionalProperties: false
+      properties:
+        accepted:
+          type: boolean
+        delivery:
+          type: string
+          enum:
+          - created
+          - duplicate
+          - rejected
+        reason:
+          type: string
+          maxLength: 80
+        roomId:
+          type: string
+          maxLength: 64
+        revision:
+          type: integer
+          minimum: 1
 - path: /ecosystem/game-grant-redeem
   method: POST
   kind: python
@@ -1493,4 +1765,5 @@ handlers:
     - game-invites-v1
     - game-grants-v1
     - recovery-codes-v1
-    release: 0.3.43
+    - game-session-rooms-v1
+    release: 0.3.44

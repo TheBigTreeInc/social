@@ -13,6 +13,7 @@ admin_events=(root/'server/admin_event_service.py').read_text(encoding='utf8')
 admin_role=(root/'server/admin_role_service.py').read_text(encoding='utf8')
 game_events=(root/'server/game_event_service.py').read_text(encoding='utf8')
 game_grants=(root/'server/game_grant_service.py').read_text(encoding='utf8')
+game_rooms=(root/'server/game_room_service.py').read_text(encoding='utf8')
 def string(max_len,required=False,unique=False):
     return dict(type='string',maxLength=max_len,**({'required':True} if required else {}),**({'unique':True} if unique else {}))
 def integer(required=False,primary=False,generated=False):
@@ -28,7 +29,7 @@ spec={
  'push':{'transport':'unifiedpush','scopes':['push:manage'],
          'deviceLifetimeSeconds':86400,'maxDevicesPerPrincipal':8},
  'limits':{'requestsPerMinute':180,'authAttemptsPerMinute':90,'burstPerSecond':15,'maxInFlight':30},
-  'database':{'backend':'sqlite','schemaVersion':9,'migrations':[{'version':2,'statements':[
+  'database':{'backend':'sqlite','schemaVersion':10,'migrations':[{'version':2,'statements':[
   'CREATE TABLE "SocialAccount" ("id" INTEGER PRIMARY KEY, "handle" VARCHAR(32) NOT NULL UNIQUE, "passwordHash" VARCHAR(255) NOT NULL, "created" INTEGER NOT NULL, "failedAttempts" INTEGER NOT NULL, "lockedUntil" INTEGER NOT NULL)',
   'CREATE TABLE "SocialSession" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "tokenHash" VARCHAR(64) NOT NULL UNIQUE, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL, "lastSeen" INTEGER NOT NULL, "revoked" BOOLEAN NOT NULL)',
   'CREATE TABLE "SocialContact" ("id" INTEGER PRIMARY KEY, "leftId" VARCHAR(72) NOT NULL, "rightId" VARCHAR(72) NOT NULL, "requestedBy" VARCHAR(72) NOT NULL, "status" VARCHAR(16) NOT NULL, "created" INTEGER NOT NULL)',
@@ -60,6 +61,13 @@ spec={
   'CREATE INDEX "SocialAccount_created" ON "SocialAccount" ("created")',
   'CREATE TABLE "SocialRecoveryCode" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "codeHash" VARCHAR(64) NOT NULL UNIQUE, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL)',
   'CREATE INDEX "SocialRecoveryCode_subject" ON "SocialRecoveryCode" ("subjectId","expires")'
+  ]},{'version':10,'statements':[
+  'CREATE TABLE "SocialGameRoom" ("id" INTEGER PRIMARY KEY, "roomKey" VARCHAR(64) NOT NULL UNIQUE, "publisher" VARCHAR(48) NOT NULL, "gameId" VARCHAR(96) NOT NULL, "matchId" VARCHAR(128) NOT NULL, "revision" INTEGER NOT NULL, "status" VARCHAR(12) NOT NULL, "updated" INTEGER NOT NULL)',
+  'CREATE TABLE "SocialGameRoomMember" ("id" INTEGER PRIMARY KEY, "roomKey" VARCHAR(64) NOT NULL, "subjectId" VARCHAR(72) NOT NULL, "updated" INTEGER NOT NULL)',
+  'CREATE UNIQUE INDEX "SocialGameRoomMember_unique" ON "SocialGameRoomMember" ("roomKey","subjectId")',
+  'CREATE INDEX "SocialGameRoomMember_subject" ON "SocialGameRoomMember" ("subjectId","roomKey")',
+  'CREATE TABLE "SocialGameRoomMessage" ("id" INTEGER PRIMARY KEY, "roomKey" VARCHAR(64) NOT NULL, "senderId" VARCHAR(72) NOT NULL, "content" VARCHAR(1000) NOT NULL, "created" INTEGER NOT NULL)',
+  'CREATE INDEX "SocialGameRoomMessage_room" ON "SocialGameRoomMessage" ("roomKey","id")'
   ]}]},
  'models':{
     'SocialProfile':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True,True),'data':{'type':'json','required':True},'revision':integer(True),'updated':integer(True)}},
@@ -74,6 +82,15 @@ spec={
          'sessionHash':string(64,True),'subjectId':string(72,True),'publisher':string(48,True),
          'gameId':string(96,True),'matchId':string(128,True),'created':integer(True),'expires':integer(True),
          'consumed':{'type':'boolean','required':True}},'indexes':[{'name':'SocialGameGrant_subject','fields':['subjectId','expires']}]},
+    'SocialGameRoom':{'fields':{'id':integer(primary=True,generated=True),'roomKey':string(64,True,True),'publisher':string(48,True),
+         'gameId':string(96,True),'matchId':string(128,True),'revision':integer(True),
+         'status':string(12,True),'updated':integer(True)}},
+    'SocialGameRoomMember':{'fields':{'id':integer(primary=True,generated=True),'roomKey':string(64,True),
+         'subjectId':string(72,True),'updated':integer(True)},'indexes':[{'name':'SocialGameRoomMember_unique',
+         'fields':['roomKey','subjectId'],'unique':True},{'name':'SocialGameRoomMember_subject','fields':['subjectId','roomKey']}]},
+    'SocialGameRoomMessage':{'fields':{'id':integer(primary=True,generated=True),'roomKey':string(64,True),
+         'senderId':string(72,True),'content':string(1000,True),'created':integer(True)},
+         'indexes':[{'name':'SocialGameRoomMessage_room','fields':['roomKey','id']}]},
     'SocialGameSubscription':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'publisher':string(48,True),'gameId':string(96,True),'matchId':string(128,True),'enabled':{'type':'boolean','required':True},'updated':integer(True)},'indexes':[{'name':'SocialGameSubscription_subject','fields':['subjectId','enabled']},{'name':'SocialGameSubscription_unique','fields':['subjectId','publisher','gameId','matchId'],'unique':True}]},
     'SocialGameDelivery':{'fields':{'id':integer(primary=True,generated=True),'publisher':string(48,True),'eventId':string(96,True),'recipient':string(72,True),'digest':string(64,True),'interactionId':integer(True),'created':integer(True)},'indexes':[{'name':'SocialGameDelivery_unique','fields':['publisher','eventId','recipient'],'unique':True}]},
     'SocialConversationRead':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'peerId':string(72,True),'readId':integer(True),'updated':integer(True)},'indexes':[{'name':'SocialConversationRead_subject_peer','fields':['subjectId','peerId'],'unique':True}]},
@@ -133,6 +150,24 @@ spec={
            'properties':{'accepted':{'type':'boolean'},
                'delivery':{'type':'string','enum':['created','duplicate','rejected']},
                'reason':{'type':'string','maxLength':80}}}}},
+    {'path':'/ecosystem/game-room-roster','method':'POST','kind':'python','scopes':['social:service'],
+     'source':game_rooms,'contract':{
+       'name':'tavi-game-room-roster','version':1,'serviceOnly':True,
+       'request':{'type':'object','required':['schema','gameId','matchId','revision','status','members'],
+          'additionalProperties':False,'properties':{
+            'schema':{'type':'string','enum':['tavi.game-room-roster/v1']},
+            'gameId':{'type':'string','minLength':2,'maxLength':96},
+            'matchId':{'type':'string','minLength':12,'maxLength':128},
+            'revision':{'type':'integer','minimum':1,'maximum':1000000000},
+            'status':{'type':'string','enum':['active','closed']},
+            'members':{'type':'array','maxItems':12,'items':{'type':'object',
+              'required':['issuer','subject'],'additionalProperties':False,
+              'properties':{'issuer':{'type':'string','minLength':1,'maxLength':128},
+                            'subject':{'type':'string','minLength':6,'maxLength':72}}}}}},
+       'response':{'type':'object','required':['accepted','delivery'],'additionalProperties':False,
+         'properties':{'accepted':{'type':'boolean'},'delivery':{'type':'string',
+           'enum':['created','duplicate','rejected']},'reason':{'type':'string','maxLength':80},
+           'roomId':{'type':'string','maxLength':64},'revision':{'type':'integer','minimum':1}}}}},
     {'path':'/ecosystem/game-grant-redeem','method':'POST','kind':'python','scopes':['social:service'],
      'source':game_grants,'contract':{
        'name':'tavi-game-grant-redeem','version':1,'serviceOnly':True,
@@ -152,7 +187,7 @@ spec={
            'properties':{'subject':{'type':'string','minLength':6,'maxLength':72}}},
        'response':{'type':'object','required':['admin'],'additionalProperties':False,
            'properties':{'admin':{'type':'boolean'}}}}},
-    {'path':'/info','kind':'response','scopes':['social:api'],'response':{'protocol':'looprd.social/1','auth':'social-accounts','registration':'see-capabilities','features':['contacts','direct-messages','lobby','portraits','server-gated-developer-tools','game-event-inbox-v1','game-invites-v1','game-grants-v1','recovery-codes-v1'],'release':version}},
+    {'path':'/info','kind':'response','scopes':['social:api'],'response':{'protocol':'looprd.social/1','auth':'social-accounts','registration':'see-capabilities','features':['contacts','direct-messages','lobby','portraits','server-gated-developer-tools','game-event-inbox-v1','game-invites-v1','game-grants-v1','recovery-codes-v1','game-session-rooms-v1'],'release':version}},
  ]}
 output='# Generated from server/looprd_handler.py. Do not edit by hand.\n'+yaml.safe_dump(spec,sort_keys=False,allow_unicode=True,width=110)
 if '--check' in sys.argv:

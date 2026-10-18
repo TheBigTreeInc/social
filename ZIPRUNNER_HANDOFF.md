@@ -1,3 +1,9 @@
+## Tavi 0.3.44 — Game-seat-scoped match chat source candidate
+
+Import as `looprd-social` from the full source ZIP; back up the Social SQLite database before migration 9→10. An approved Life backend must send versioned complete seat rosters via `tavi-game-room-roster/v1`. Accounts still explicitly opt into each match. Test cross-client room authorization and revocation before operator acceptance. No repository push, tag or release.
+
+ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.44|file=looprd-social-0.3.44-multiplayer-match-chat-ziprunner.zip
+
 ## Tavi 0.3.43 — LRS-004 account recovery source candidate
 
 CI gate checked for previous 0.3.42 Git commit `781a610a88461496ab687ece882a728b245d62ab`: all eight push workflows passed. New 0.3.43 source requires independent checks. Import into project `looprd-social`, back up and validate Social schema 9 migration, then test recovery and registration on staged instance. Do not push/tag/release automatically.

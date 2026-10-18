@@ -1,0 +1,64 @@
+= Tavi Multiplayer Match Conversations — v0.3.44
+:toc:
+
+== Purpose and boundaries
+
+Tavi remains a private messenger and notification client. Life (or the actual game backend) owns match creation, invitations, authenticating seats, game state, turns, deadlines, and authorization to play. Atrium owns game discovery and game launch. A game may already host its own chat; this Social contract is optional.
+
+The `tavi-game-room-roster/v1` LoopRD service contract lets an operator-approved game synchronize a *complete, revisioned* set of verified player identities into a private, Tavi-owned text conversation. Tavi never promotes a client-provided game/match name into a room. There is no static deployment URL in the portable descriptor. The service uses the previously configured `LOOPRD_TAVI_GAME_CALLERS_JSON` and `LOOPRD_TAVI_SOCIAL_ISSUER` values; private machine credentials use `LOOPRD_SOCIAL_SERVICE_SECRETS_JSON`.
+
+== Game service contract
+
+Endpoint in this Social component: `/ecosystem/game-room-roster`, serviceOnly contract `tavi-game-room-roster` version `1`, scope `social:service`. This is for trusted `ctx.call` in the same LoopRD runtime, not an unauthenticated browser API. For cross-runtime hosts a separately authenticated transport/bridge is needed.
+
+.Example service payload (no deployment URL)
+[source,json]
+----
+{
+  "schema": "tavi.game-room-roster/v1",
+  "gameId": "life.loop",
+  "matchId": "match_test_012345",
+  "revision": 1,
+  "status": "active",
+  "members": [
+    { "issuer": "social-local-issuer", "subject": "acct_1" },
+    { "issuer": "social-local-issuer", "subject": "acct_2" }
+  ]
+}
+----
+
+The game backend MUST independently confirm that every supplied identity currently owns an authorized player seat. The existing Tavi game-grant redemption proves identity, *not seat ownership*. Tavi cannot verify that a trusted game service checked the seat. Operator approval of the game service and its allowlist are therefore security-critical.
+
+A full snapshot replaces the previous seat roster. Revisions must rise strictly for each change. Exact retries with the same revision and roster are idempotent; old revisions and conflicting same revisions are rejected. To remove a player, send a higher-revision roster without that player. To permanently close the room, send status `closed` with zero members and a higher revision. Closed rooms cannot be reopened with a new revision. The server derives `roomId` as an opaque stable hash of publisher, game and match IDs and returns `accepted`, `delivery`, `roomId`, and `revision`.
+
+Only 1–12 verified identities may be in an active room. Participants must all use the configured Social issuer. No room can be provisioned by a normal user session, and no caller may register a game ID that the operator has not approved.
+
+== Client and consent
+
+Even an authoritative game roster is not sufficient to display or use a room in Social. Each account must also have an enabled `SocialGameSubscription` for the exact `(publisher,gameId,matchId)`. This can be enabled by the account itself or by accepting an approved game invitation. Inviting another player or acquiring an opaque match ID is insufficient.
+
+Authenticated Tavi account operations:
+
+* `game_room_list`: current active rooms for this account (max 100), including game/match and player count.
+* `game_room_feed`: bounded recipient-only history (80 recent messages on initial fetch; optional `after` cursor).
+* `game_room_send`: authenticated text message, max 1,000 characters and 1-second per-sender cooldown. All current consenting game seats receive a content-free push wake hint.
+
+The same account APIs work on browser and native clients. Tavi v0.3.44 shows the private match conversation under *Games & turn alerts*. For this source pass the Windows interface uses the existing auxiliary Games view rather than creating a new native chat window. The SDK methods are `gameRooms()`, `gameRoomFeed(roomId,after)`, and `gameRoomSend(roomId,text)`.
+
+The room feed checks both the latest game-owned roster and separate account consent **on every read and write**. A removed player, a disabled subscription, or a closed room cannot retrieve earlier chat or send new messages. Existing messages are not automatically erased; retention policy is a separate operator decision. Tavi does not include game actions or playable state in room messages, and never shares its Social session token with Atrium or Life.
+
+== Lifecycle and operator acceptance
+
+This release introduces *additive SQLite schema 10*: `SocialGameRoom`, `SocialGameRoomMember`, and `SocialGameRoomMessage`. Back up Social storage first, rehearse schema 9→10 against the deployed LoopRD/DAPI version, and verify prior accounts/messages survive.
+
+. Stage the approved Life component and its private Social service credential on compatible LoopRD, with explicit publisher and Social issuer configuration.
+. Create two real Tavi accounts. Accept a game invitation for the exact match or enable that exact match subscription from each account.
+. Create a real Life match and have Life sync only its verified seats. Confirm neither participant sees the room before both *game seat* and *consent* exist.
+. In Android/web/Windows, send cross-client messages; verify only authorized seats can read and send and that no Social bearer reaches Life, Atrium, or the public room list.
+. Remove one Life seat and send the new roster revision; verify immediate loss of chat access on that account, including guessed room IDs and old messages.
+. Disable subscription; verify this also revokes chat access. Close the game room and confirm it cannot be reopened, even with a higher revision.
+. Check server restarts, event pulse, optional private wake hints and message persistence. Validate native Android/Windows UX separately.
+
+== Not yet completed
+
+This is a Tavi *source implementation candidate*, **not shared multiplayer acceptance**. A real Life match roster publisher, independent game-seat validation, Atrium join/resume, remote-LoopRD authenticated delivery when needed, native separate chat windows, completed-match UX and end-to-end OpenClaw gameplay remain to be implemented and accepted. SCL-007, TAVI-032 and SOC-GAME-02B are not Done.

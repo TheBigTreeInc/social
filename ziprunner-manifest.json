@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.43",
-    "base_version": "0.3.42"
+    "version": "0.3.44",
+    "base_version": "0.3.43"
   },
   "update": {
-    "id": "TAVI-20261018-LRS-004",
+    "id": "TAVI-20261018-MULTIPLAYER-ROOMS",
     "kind": "source_update",
     "created_at": "2026-10-18T09:45:00+02:00",
-    "summary": "First LRS-004 implementation: offline one-use recovery codes, password reset session revocation and public registration cap. Schema 9 migration."
+    "summary": "Tavi multiplayer match chat source: game-owned verified seats, per-account opt-in ACL, schema 10."
   },
   "planned_work": [
     {
@@ -1050,11 +1050,27 @@
         "description": "Android network timeout reproduction, pre-login reports, status-bar inset",
         "status": "not_run",
         "reason": "Requires signed APK on Android with actual network/server and visual inspection."
+      },
+      {
+        "id": "TAVI-MULTI-044-PY",
+        "description": "Game room seat roster, revocation, migration 9→10, private messages and push content-free wake",
+        "status": "passed_source_only",
+        "command": "python -m unittest discover -s tests -p test_*.py -q",
+        "environment": "Linux Python 3.13",
+        "evidence_ref": "evidence/tavi-0.3.44-python.log"
+      },
+      {
+        "id": "TAVI-MULTI-044-NODE",
+        "description": "Multiplayer room SDK and client menu regressions",
+        "status": "passed_source_only",
+        "command": "npm run verify",
+        "environment": "Linux Node.js",
+        "evidence_ref": "evidence/tavi-0.3.44-node.log"
       }
     ]
   },
   "handover": {
-    "next_pass": "After 0.3.43 source import, independently test schema 8\u21929 migration, recovery across devices, registration abuse cap and Android 0.3.42 network issue. Preserve LRS-004 and TAVI-ANDROID-042 as Review until operator acceptance.",
+    "next_pass": "Confirm v0.3.44 schema 9→10 operator backup/migration, approved Life roster sync, cross-client private chat and revocation. Continue real Life/Atrium multiplayer integration; no release approval.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -1065,13 +1081,15 @@
       "Bridge is an external supervised OpenClaw CLI service, not a native OpenClaw channel. Native Gateway acceptance and exactly-once downstream delivery are unverified.",
       "Game receipt proves consenting Social account but not game-seat membership; Life must validate participant before requesting delivery.",
       "Tavi-issued game grants prove an account identity only; a game must never treat them as authorization to join or act in a match.",
-      "Screenshot production server timeout remains unverified on the device; client source changes improve resilience and diagnosis but cannot repair an unreachable remote backend."
+      "Screenshot production server timeout remains unverified on the device; client source changes improve resilience and diagnosis but cannot repair an unreachable remote backend.",
+      "Room membership is authoritative only insofar as the operator-approved game service verifies Life seats; Social validates caller identity, publisher/game allowlist, issuer, roster revision and per-account consent but not Life game state."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
       "Android UnifiedPush distributor and device testing not delivered in this pass.",
       "No device BLE implementation or Atrium server sync contract in v0.3.39.",
-      "Atrium does not yet resolve game/match deep links; Life has not shipped game-turn outbox and caller integration."
+      "Atrium does not yet resolve game/match deep links; Life has not shipped game-turn outbox and caller integration.",
+      "No real Life backend calls tavi-game-room-roster/v1 in deployed DAPI; staging proof and end-to-end multiplayer match acceptance remain."
     ],
     "notes": [
       "Client-side resume logic and minimal login UI only; Social database schema 6 unchanged.",
@@ -1109,11 +1127,16 @@
       "id": "TAVI-ANDROID-042-OP",
       "description": "Verify v0.3.42 on Android with real server URL, empty-origin report guidance, real submission when server reachable, Wi-Fi/cellular and status-bar inset; inspect server diagnostics if timeout persists.",
       "status": "required"
+    },
+    {
+      "id": "TAVI-MULTI-044-OP",
+      "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
+      "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Backend changes require Social SQL schema 9 migration. Recovery, registration and Android sign-in need staging/native validation. Not a release approval."
+    "notes": "Backend changes add Social SQL schema 10. Back up/migrate staging first; approved Life roster service and real Android/Windows/web chat are not operator-accepted. No automatic Git push, tag or release."
   }
 }
