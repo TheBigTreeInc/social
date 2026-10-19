@@ -3,16 +3,23 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.70",
-    "base_version": "0.3.67"
+    "version": "0.3.71",
+    "base_version": "0.3.70"
   },
   "update": {
-    "id": "TAVI-20261020-ACTIONABLE-DIAGNOSTICS-0370",
+    "id": "TAVI-20261020-EXTENSION-WORKSPACE-0371",
     "kind": "source_update",
     "created_at": "2026-10-20T00:00:00+02:00",
-    "summary": "Client-only sanitized actionable Tavi diagnostics for Atrium and extension repository failures; preserve existing messenger Home and workboard."
+    "summary": "Host-controlled extension installation confirmation and responsive extension workspace, client only."
   },
   "planned_work": [
+    {
+      "id": "TAVI-UX-071",
+      "title": "Host-owned extension install dialog and immersive panel",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Source tests and real Windows/Android/Web resized workspace and install cancellation tests, maintain isolated iframe sandbox."
+    },
     {
       "id": "TAVI-DEBUG-070",
       "title": "Actionable repository and extension diagnostics",
@@ -1370,6 +1377,10 @@
       "blockers": [
         "Source unit verification is not native/device acceptance."
       ]
+    },
+    {
+      "id": "TAVI-UX-071",
+      "reason": "Client change awaiting operator native and web acceptance"
     }
   ],
   "validation": {

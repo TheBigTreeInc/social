@@ -18,7 +18,7 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
   try{
    let result=null;
    switch(request.method){
-    case 'host.info': result={api:'1.0.0',extensionId:current.id,features:current.id===ATRIUM_EXTENSION_ID&&current.source===ATRIUM_REPOSITORY_URL?['atrium.tavi-launch/v1']:[]};break;
+    case 'host.info': result={api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:current.id===ATRIUM_EXTENSION_ID&&current.source===ATRIUM_REPOSITORY_URL?['atrium.tavi-launch/v1']:[]};break;
     case 'host.capabilities': result=current.permissions.filter(p=>['ui.panel','ui.toast','storage.private'].includes(p));break;
     case 'storage.get':{
      if(!permissions.has('storage.private'))throw Error('Permission denied');

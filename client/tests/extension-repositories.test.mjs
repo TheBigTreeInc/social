@@ -60,7 +60,8 @@ test('Tavi client binds remote entrypoints into opaque iframe without revealing 
  assert.match(code,/frame\.src=entry\.remote \? entry\.remote\.entrypoint/);
  assert.match(code,/sandbox','allow-scripts'/);
  assert.doesNotMatch(code,/sandbox','allow-scripts allow-same-origin'/);
- assert.match(code,/Extension website/);
+ assert.match(code,/Hosted origin/);
+ assert.match(code,/role="dialog" aria-modal="true"/);
 });
 
 test('Atrium is first-party discoverable without user subscription or automatic installation',()=>{

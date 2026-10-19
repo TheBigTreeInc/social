@@ -1,9 +1,22 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.70",
-  "summary": "Privacy-safe actionable diagnostics for Atrium repository HTTP failures and extension state; source-only, no service changes. Preserve operator workboard decisions.",
+  "version": "0.3.71",
+  "summary": "Tavi native-style extension permission confirmation, full-height sandbox workspace and host navigation; no Social server changes.",
   "implemented": [
+    {
+      "id": "TAVI-UX-071",
+      "title": "Reviewable extension install dialog and immersive extension panel",
+      "summary": "Host-owned user approval dialog replaces intrusive browser-native confirm, shows permissions and reviewed origin; responsive full-height iframe uses existing sandbox and nav.",
+      "priority": "high",
+      "status": "review",
+      "operator_checks": [
+        "Install Atrium from reviewed repository in Windows; Tavi styled dialog appears, Cancel does not install, Install requires explicit click.",
+        "Open Atrium in compact 355px and resized Windows, Web and Android views; content occupies available viewport without double-scroll; Home and App Store remain available.",
+        "Validate foreign iframe cannot install extension or navigate host, previous Life launch broker sandbox restrictions retained.",
+        "After upstream Atrium embedded return-button adjustment is published, verify there is a single host navigation bar."
+      ]
+    },
     {
       "id": "TAVI-DEBUG-070",
       "title": "Actionable repository and extension diagnostics",
