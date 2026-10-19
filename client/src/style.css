@@ -563,7 +563,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .tavi-games-browser h2{margin:2px 0 12px;font-size:17px;}
 .tavi-games-group{border-bottom:1px solid #d2e2d1;padding:7px 0 9px;}
 .tavi-games-group h3{font-size:13px;color:#315c3f;margin:0 0 7px;}
-.tavi-game-title-row{display:flex;justify-content:space-between;align-items:center;}
+.tavi-game-title-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+.tavi-game-title-row h3{margin-right:auto;}
 .tavi-game-title-row button{font-size:10px;}
 .tavi-game-list-row{display:flex;align-items:center;gap:8px;width:100%;border:1px solid #d3e4d2;background:#fcfefa;border-radius:7px;padding:7px;margin:4px 0;min-width:0;text-align:left;color:#284b37;}
 .tavi-game-list-icon{font-size:19px;flex-shrink:0;width:28px;text-align:center;}

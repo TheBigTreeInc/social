@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.62",
-    "base_version": "0.3.61"
+    "version": "0.3.63",
+    "base_version": "0.3.62"
   },
   "update": {
-    "id": "TAVI-20261019-UI-QA-0362",
+    "id": "TAVI-20261019-ATRIUM-056-0363",
     "kind": "source_update",
     "created_at": "2026-10-19T21:41:54+02:00",
-    "summary": "v0.3.62 adds automated browser UI/UX smoke checks to ZipRunner and blocking CI with disposable local Social fixtures, desktop/phone viewports, install/open extension navigation, screenshots on failure and blocked-preflight reporting. Shared-service SDK unchanged; Social backend remains 0.3.58."
+    "summary": "Tavi 0.3.63 adds Life discovery/withdrawal browser QA, explicit Games discovery refresh, honest empty state, and privacy-safe read-only operator test of the real authenticated Social/Atrium discovery boundary. Does not deploy the Atrium source, service credential or server (0.3.58/schema 10 unchanged)."
   },
   "planned_work": [
     {
@@ -364,7 +364,7 @@
     {
       "id": "TAVI-ATRIUM-056",
       "title": "Read-only Atrium trusted discovery catalog in Tavi Home and Games",
-      "acceptance_criteria": "Signed-in Tavi user sees operator-trusted Atrium metadata after Social 0.3.58 deployment; client never learns service token or internal routes; discovery never becomes playable without separate hosted publication and game authorization; strict schema/token/negative tests and live Windows/Android verification",
+      "acceptance_criteria": "Source QA and read-only live probe added, real apps:read binding and actual Life v2 trusted observation remain operator-dependent; native Windows/Android/web and CI verification required before Done.",
       "priority": "high"
     },
     {
@@ -1454,7 +1454,7 @@
       },
       {
         "id": "TAVI-MULTI-044-PY",
-        "description": "Game room seat roster, revocation, migration 9\u219210, private messages and push content-free wake",
+        "description": "Game room seat roster, revocation, migration 9→10, private messages and push content-free wake",
         "status": "passed_source_only",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Linux Python 3.13",
@@ -1483,11 +1483,19 @@
         "command": "node --test client/tests/atrium-launch.test.mjs",
         "environment": "Node.js with project dependencies",
         "evidence_ref": "client/tests/atrium-launch.test.mjs"
+      },
+      {
+        "id": "TAVI-ATRIUM-056-SOURCE-0363",
+        "description": "Node contract tests, Tavi source regression, Python Social and catalog authorization, and descriptor identity checks. Live Atrium and browser/native acceptance remain outstanding.",
+        "status": "passed_source_only",
+        "command": "npm run verify && python -m unittest discover -s tests -p test_*.py -q && python tools/generate-looprd.py --check",
+        "environment": "Author Linux environment; browser npm dependencies unavailable",
+        "evidence_ref": "ZIPRUNNER_HANDOFF_ATRIUM_0363.md"
       }
     ]
   },
   "handover": {
-    "next_pass": "Import v0.3.58 over v0.3.57, verify native Windows and Android roster layout, enabled/disabled pet header and Home-only dock. After operator-reviewed Social deployment configure LOOPRD_TAVI_ATRIUM_BACKEND_ORIGIN to the shared HTTPS API origin plus private apps:read token; verify Atrium Life trusted metadata only, not playability. Native match API remains separately gated.",
+    "next_pass": "TAVI-ATRIUM-056 operator live integration: verify active Atrium trusted v2 observation for Life and Social 0.3.58 deployment, provision private apps:read key and approved LoopRD backend origin, then run tools/verify-atrium-live.mjs with disposable Social account, verify withdrawal/restoration and Windows/Android/Web UI. Preserve 99 ticket statuses. TAVI-ATRIUM-056 remains Review; do not authorize play or release.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -1557,7 +1565,7 @@
     },
     {
       "id": "TAVI-MULTI-044-OP",
-      "description": "Backup and test schema 9\u219210 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
+      "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
       "status": "required"
     },
     {
@@ -1579,6 +1587,6 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Tavi/Social v0.3.58 source; schema 10 unchanged. New optional shared LoopRD backend-origin configuration still requires a private Atrium apps:read credential and operator deployment. No client/game authorization bypass or automatic publication."
+    "notes": "Client 0.3.63, Social server 0.3.58/schema 10; no server descriptor changes. TAVI-ATRIUM-056 source QA updated but actual Atrium v2 observation, apps:read credential, Social deployment, live user/Windows/Android UI, and operator approval outstanding."
   }
 }

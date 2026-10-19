@@ -30,7 +30,7 @@ import {petById} from './companions/catalog.js';
 import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
 import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
-const CLIENT_VERSION='0.3.62';
+const CLIENT_VERSION='0.3.63';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
@@ -241,8 +241,8 @@ function gameSettings(){
  const rooms=state.gameRooms.length?state.gameRooms.map(r=>`<button class="tavi-game-list-row" type="button" data-select-game-room="${esc(r.roomId)}"><span class="tavi-game-list-icon" aria-hidden="true">▤</span><span class="tavi-game-list-info"><strong>${esc(r.gameId)}</strong><small>Match · ${esc(r.matchId.slice(0,20))}</small></span><span class="tavi-game-status">Open chat ›</span></button>`).join(''):'';
  const turns=state.turns.filter(t=>t.status==='your-turn').slice(0,6).map(t=>`<button class="tavi-game-list-row" type="button" data-route="${esc(t.path||'')}" ${t.path?'':'disabled'}><span class="tavi-game-list-icon">⏱</span><span class="tavi-game-list-info"><strong>${esc(t.title)}</strong><small>Your turn</small></span><span>›</span></button>`).join('');
  const atrium=atriumLauncher(state.atriumUrl);
- const status=state.atriumDiscoveryStatus==='connected'?'':state.atriumDiscoveryStatus==='unavailable'?'Game discovery is temporarily unavailable.':'Games from Atrium will appear when connected.';
- return `<section class="utility tavi-games-browser" aria-label="Games"><h2>Games</h2><div class="tavi-games-group"><h3>Your games</h3>${turns||rooms||'<p class="tavi-game-empty">No active games yet.</p>'}${turns&&rooms?rooms:''}${state.selectedRoomId?gameRoomPanel():''}</div><div class="tavi-games-group"><h3>Play with friends</h3>${games||'<p class="tavi-game-empty">No playable games published yet.</p>'}</div><div class="tavi-games-group"><div class="tavi-game-title-row"><h3>Discover games</h3>${atrium.available?'<button type="button" data-action="atrium">Browse Atrium ↗</button>':''}</div>${discovered||`<p class="tavi-game-empty">${esc(status||'No games discovered yet.')}</p>`}</div><div class="tavi-games-group"><h3>Invitations</h3><p class="tavi-game-empty">Game invitations and replies appear in your Inbox.</p><button type="button" data-action="inbox">Open invitations</button></div></section>`;
+ const status=state.atriumDiscoveryStatus==='connected'?'No reviewed games are currently available from Atrium.':state.atriumDiscoveryStatus==='unavailable'?'Game discovery is temporarily unavailable.': 'Connect this server to Atrium to discover games.';
+ return `<section class="utility tavi-games-browser" aria-label="Games"><h2>Games</h2><div class="tavi-games-group"><h3>Your games</h3>${turns||rooms||'<p class="tavi-game-empty">No active games yet.</p>'}${turns&&rooms?rooms:''}${state.selectedRoomId?gameRoomPanel():''}</div><div class="tavi-games-group"><h3>Play with friends</h3>${games||'<p class="tavi-game-empty">No playable games published yet.</p>'}</div><div class="tavi-games-group"><div class="tavi-game-title-row"><h3>Discover games</h3><button type="button" data-action="refresh" title="Refresh this server’s game discovery">Refresh ↻</button>${atrium.available?'<button type="button" data-action="atrium">Browse Atrium ↗</button>':''}</div>${discovered||`<p class="tavi-game-empty">${esc(status||'No games discovered yet.')}</p>`}</div><div class="tavi-games-group"><h3>Invitations</h3><p class="tavi-game-empty">Game invitations and replies appear in your Inbox.</p><button type="button" data-action="inbox">Open invitations</button></div></section>`;
 }
 
 function companion(){return companionPanel(tickCompanion(state.companion),{desktopFloatingAvailable:nativeWindowsPet});}

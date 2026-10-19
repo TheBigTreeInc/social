@@ -13,6 +13,8 @@ const reportDir=resolve(process.env.TAVI_QA_ARTIFACTS||join(root,'qa-artifacts')
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.ico':'image/x-icon','.woff2':'font/woff2'};
 const reply=(res,value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(JSON.stringify(value));};
 const disposableToken='tavi_qa_disposable_token_only_000000000000';
+const fixture={lifeVisible:true};
+const life={gameId:'life.loop',publisher:'thebigtreeinc',title:'The Life Loop',status:'discovered',instances:1,hostingConfigured:false,playable:false};
 const responseFor=op=>{
  switch(op){
   case 'capabilities':return {ok:true,schema:'looprd.social.capabilities/v1',accounts:true,registration:true,recoveryCodes:false};
@@ -24,7 +26,7 @@ const responseFor=op=>{
   case 'interaction_feed':return {ok:true,events:[]};
   case 'game_room_list':return {ok:true,rooms:[]};
   case 'pulse_ticket':return {ok:false,error:'No websocket in disposable QA fixture'};
-  case 'atrium_discovery':return {ok:false,error:'Not configured in disposable QA fixture'};
+  case 'atrium_discovery':return {ok:true,schema:'tavi.atrium-discovery/v1',status:'connected',games:fixture.lifeVisible?[life]:[]};
   default:return {ok:true};
  }
 };
@@ -32,6 +34,7 @@ function fixtureServer(){
  return createServer(async(req,res)=>{
   try{
    const pathname=new URL(req.url,'http://127.0.0.1').pathname;
+   if(pathname==='/__qa/withdraw-life'&&req.method==='POST'){fixture.lifeVisible=false;return reply(res,{ok:true});}
    if(pathname==='/looprd/looprd-social/v1/info')return reply(res,{protocol:'looprd.social/1',auth:'social-accounts',release:'0.3.58'});
    if(pathname==='/looprd/looprd-social/v1/social'&&req.method==='POST'){
     let body='';for await(const chunk of req){body+=chunk;if(body.length>10000){reply(res,{ok:false,error:'Input too large'},413);return;}}
@@ -79,6 +82,17 @@ async function testViewport(browser,base,device){
   await noOverflow(page,`${device.name} login`);
   stage='sign-in';await signIn(page,base);
   await noOverflow(page,`${device.name} home`);
+  stage='Life discovered Home';await visible(page,'.tavi-discovered-mini');
+  assert.match(await page.locator('.tavi-discovered-mini').first().innerText(),/The Life Loop/);
+  stage='Life discovered Games';await page.locator('[data-action="games"]').first().click();
+  await visible(page,'[data-discovered-game="life.loop"]');
+  assert.match(await page.locator('[data-discovered-game="life.loop"]').innerText(),/Not playable yet/);
+  assert.equal(await page.locator('[data-discovered-game="life.loop"] [data-launch-game], [data-discovered-game="life.loop"] [data-challenge-game]').count(),0);
+  stage='Life withdrawn';await fetch(new URL('__qa/withdraw-life',base),{method:'POST'});
+  await page.locator('.tavi-game-title-row [data-action="refresh"]').click();
+  await page.locator('[data-discovered-game="life.loop"]').waitFor({state:'detached',timeout:7000});
+  assert.match(await page.locator('.tavi-games-browser').innerText(),/No reviewed games are currently available/);
+  stage='return from Games';await page.locator('.tavi-focus-toolbar [data-action="minimize-view"]').click();
   stage='main-menu';await page.locator('[data-action="main-menu"]').click();
   await visible(page,'.tavi-menu-grid [data-action="app-store"]');
   stage='app-store';await page.locator('.tavi-menu-grid [data-action="app-store"]').click();
@@ -96,8 +110,8 @@ async function testViewport(browser,base,device){
   await noOverflow(page,`${device.name} returned home`);
   assert.equal(errors.length,0,`${device.name} JavaScript errors: ${errors.join('; ')}`);
   if(process.env.TAVI_QA_CAPTURE==='1')await screenshot(page,`${device.name}-success`);
-  checks.push({device:device.name,result:'passed',stages:['login','home','main-menu','app-store','extension-install','extension-launch','return-home','viewport-overflow','javascript-errors']});
-  console.log(`PASS ${device.name}: sign-in, home, App Store, install/open extension, return home, viewport, script errors`);
+  checks.push({device:device.name,result:'passed',stages:['login','home','life-discovered','life-nonplayable','life-withdrawn','main-menu','app-store','extension-install','extension-launch','return-home','viewport-overflow','javascript-errors']});
+  console.log(`PASS ${device.name}: sign-in, Life discover/withdraw, home, App Store, install/open extension, return home, viewport, script errors`);
  }catch(error){
   const picture=await screenshot(page,`${device.name}-failure`);
   checks.push({device:device.name,result:'failed',stage,error:String(error?.message||error),screenshot:picture,scriptErrors:errors});
@@ -119,7 +133,7 @@ async function main(){
  try{
   await new Promise((accept,reject)=>server.once('error',reject).listen(0,'127.0.0.1',accept));
   const base=`http://127.0.0.1:${server.address().port}/`;
-  for(const device of [{name:'desktop',width:1366,height:768,mobile:false},{name:'mobile-390',width:390,height:844,mobile:true},{name:'mobile-320',width:320,height:720,mobile:true}])await testViewport(browser,base,device);
+  for(const device of [{name:'desktop',width:1366,height:768,mobile:false},{name:'mobile-390',width:390,height:844,mobile:true},{name:'mobile-320',width:320,height:720,mobile:true}]){fixture.lifeVisible=true;await testViewport(browser,base,device);}
  }finally{await browser.close();await new Promise(r=>server.close(r));}
 }
 let failure;

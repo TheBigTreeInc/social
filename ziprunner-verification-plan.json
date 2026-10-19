@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.62",
+  "version": "0.3.63",
   "tasks": [
     {
       "id": "TAVI-UI-QA-062",
@@ -461,7 +461,7 @@
         },
         {
           "id": "LRS-004-AC-3",
-          "description": "Social SQL schema 8\u21929 and Android/Windows actual recovery flow independently verified by operator.",
+          "description": "Social SQL schema 8→9 and Android/Windows actual recovery flow independently verified by operator.",
           "mode": "manual",
           "checks": [
             "LRS-004-DEVICE"
@@ -934,6 +934,25 @@
           "checks": [
             "TAVI-ATRIUM-056-LIVE"
           ]
+        },
+        {
+          "id": "TAVI-ATRIUM-056-AC-4",
+          "description": "Execute and test disposable Life discover/withdraw UI fixture and a privacy-safe Social SDK live acceptance probe. These source checks do not replace real Atrium observation and device tests.",
+          "mode": "automated",
+          "checks": [
+            "node --test tests/atrium-live.test.mjs client/tests/atrium-discovery.test.mjs",
+            "npm --prefix client run ui:ci"
+          ]
+        },
+        {
+          "id": "TAVI-ATRIUM-056-AC-5",
+          "description": "Operator sets separate private apps:read Atrium key and approved LoopRD backend origin, confirms real life.loop v2 observation and signed-in discovery, verifies withdrawal/restoration and Windows/Android/Web UI, exact CI SHA, and operator acceptance.",
+          "mode": "manual",
+          "checks": [
+            "node tools/verify-atrium-live.mjs --origin <approved-looprd-origin>",
+            "node tools/verify-atrium-live.mjs --origin <approved-looprd-origin> --expect-absent",
+            "TAVI-ATRIUM-056-NATIVE-LIVE"
+          ]
         }
       ]
     },
@@ -1172,7 +1191,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"

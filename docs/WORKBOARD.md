@@ -1,3 +1,7 @@
+== TAVI-ATRIUM-056 — v0.3.63 Tavi source QA and operator deployment still outstanding
+
+The authoritative 99-ticket local workboard snapshot from 2026-10-19 is preserved verbatim as `docs/ZIPRUNNER_LOCAL_WORKBOARD_99_20261019.json`. The existing `TAVI-ATRIUM-056` ticket remains Review, not Done. Added a read-only live Social discovery probe and Life discover/withdraw simulated browser QA; see `docs/TAVI_ATRIUM_DISCOVERY_EXECUTION_0363.adoc`. Social remains 0.3.58/schema 10 and real server/Windows/Android/Web acceptance is still required. No repository push, operator migration, token provisioning, or Life game launch performed.
+
 == v0.3.49 TAVI-PET-049 source candidate
 
 Consent-first pet companion with authored 16x16 sprites, personal mode preferences and optional in-app badge on Windows/Android/Web. New original operator tickets are not closed; mobile/desktop **system-wide** overlays are follow-up work. Social backend stays v0.3.48/schema 10. See `docs/TAVI_COMPANIONS_0349.adoc`.

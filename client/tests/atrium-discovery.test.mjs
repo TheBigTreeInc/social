@@ -29,3 +29,13 @@ test('home and Games show discovered titles, not an unapproved play or challenge
  assert.match(main,/state\.atriumGames=\[\]/);
  assert.doesNotMatch(main,/data-launch-game="\$\{esc\(g\.gameId\)\}"/);
 });
+
+test('Games has explicit trusted-catalog refresh, and browser QA proves discovered Life can disappear',async()=>{
+ const main=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
+ const qa=await readFile(new URL('../tools/ui-qa.mjs',import.meta.url),'utf8');
+ assert.match(main,/Refresh ↻/);
+ assert.match(main,/No reviewed games are currently available from Atrium/);
+ assert.match(qa,/The Life Loop/);
+ assert.match(qa,/__qa\/withdraw-life/);
+ assert.match(qa,/Not playable yet/);
+});

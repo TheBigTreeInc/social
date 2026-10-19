@@ -1,0 +1,50 @@
+= TAVI-ATRIUM-056 — Tavi-side discovery verification and live acceptance
+:revnumber: 0.3.63
+:revdate: 2026-10-19
+:toc:
+
+== Owner, boundary and result
+
+Owner: Tavi / looprd-social. This source pass builds on the existing authenticated Social-to-Atrium discovery implementation (source present since Tavi 0.3.56–0.3.58). It does not change the authoritative Atrium catalog, Life registration or the server-side operator configuration. Social server remains release 0.3.58, schema 10, and `looprd.yaml` remains byte-for-byte unchanged. Tavi client release is 0.3.63.
+
+Verified upstream declaration from TheBigTreeInc/atrium main (release 0.5.21): `GET /looprd/atrium/v1/registry/discovery/v2/catalog` requires `apps:read`, returning `atrium.trusted-game-catalog/v1`. This is a trusted metadata projection, not the public catalog and not game publication authorization. The operator-bound DAPI trusted observation sender and Atrium receiver are cross-project prerequisites. No source in Tavi can manufacture their live records.
+
+== Source verification added in 0.3.63
+
+* The Tavi Home compact roster and focused Games panel render only sanitized discovered titles; a reviewed Life fixture shows `The Life Loop` with `Not playable yet`. No Play, Invite, browser URL, service token, or game seat is inferred.
+* Games offers an explicit Refresh action and distinguishes connected-with-zero-games from disconnected and unavailable catalog states.
+* Browser UI QA now injects a disposable reviewed Life catalog into a loopback-only Social fixture and checks visible title at desktop, 390px phone and 320px narrow phone widths, a non-playable Games row, a simulated withdrawal followed by Refresh, and disappearance of that row. The existing extension navigation and overflow checks remain.
+* A new read-only `tools/verify-atrium-live.mjs` checks the deployed authenticated Social `atrium_discovery` response via the same LoopRD Social JS SDK that Tavi uses; it supports expected presence and expected absence following an operator-controlled withdrawal. The tool reads only `TAVI_SOCIAL_QA_TOKEN` from its environment, never accepts or displays a token on the command line, and emits no URLs or raw catalog in output. The program is **not** run against production automatically.
+* Node contract tests assert header/payload authentication, sandboxed results, absence checks, fail-closed on outage, and rejection of fake `playable=true` metadata.
+
+== Operator deployment prerequisites
+
+. Confirm Atrium 0.5.21-compatible trusted v2 discovery receiver is deployed with schema 6 and has a trusted active observation for `gameId=life.loop`, `component=the-life-loop`, published under the expected publisher. An empty catalog means Life is not yet observed; fix this in DAPI/Atrium rather than faking a Tavi entry.
+. Deploy approved Social source release 0.3.58 or later with schema 10. Back up its SQLite data and keep sessions/messages intact. Merely importing the 0.3.63 ZipRunner client does not deploy Social.
+. In private LoopRD runtime configuration (not Git, Tavi settings, documentation or this source archive) set `LOOPRD_TAVI_ATRIUM_BACKEND_ORIGIN` to the exact trusted public HTTPS LoopRD API origin that serves Atrium and `LOOPRD_TAVI_ATRIUM_READ_TOKEN` to a server-side Atrium `apps:read` service credential. If Atrium is deployed on a separate approved HTTPS origin, `LOOPRD_TAVI_ATRIUM_DISCOVERY_URL` remains an alternative exact catalog route when shared origin is unset. Never give Tavi a management, `apps:approve`, or `apps:discover` key.
+. Optionally configure `LOOPRD_TAVI_ATRIUM_BASE_URL` to enable the separate Browse Atrium website launcher. It is not the discovery API address.
+. Use an isolated, signed-in Social test account with a revocable test session; do not use a production user's credential and do not paste bearer tokens into reports or command history.
+
+== Live read-only acceptance
+
+With `TAVI_SOCIAL_QA_TOKEN` supplied securely in the operator's process environment, execute:
+
+[source,shell]
+----
+node tools/verify-atrium-live.mjs --origin https://YOUR-APPROVED-LOOPRD-API-HOST
+----
+
+Use the actual approved origin in place of this placeholder. The probe checks that Life is present and non-playable in authenticated Social discovery. Without the account token it fails closed. For the withdrawal test, have the DAPI/Atrium operator deliberately disable or withdraw **only the test trusted Life instance**, refresh the Social projection, and run:
+
+[source,shell]
+----
+node tools/verify-atrium-live.mjs --origin https://YOUR-APPROVED-LOOPRD-API-HOST --expect-absent
+----
+
+Restore the test instance and repeat the presence check. Also verify guest and mismatched identity denial and 401/403/malformed upstream responses; these negative paths have source tests, but production authorization requires operator tests.
+
+On Windows NSIS, Android and browser, sign in and inspect My Games and Games. Confirm no stale item after withdrawal, no game launch, and easy return to Tavi Home. Compare the install's active source digest with the exact 0.3.63 ZIP and check the exact pushed SHA's UI QA workflow before operator acceptance. These cross-service/device checks are unperformed by source packaging.
+
+== Workboard decision
+
+Keep `TAVI-ATRIUM-056` in Review until the operator records: actual Atrium Life observation, live Social discovery proof, authorized empty-after-withdrawal proof, actual Windows/Android/Web UI, exact installed ZIP post-update QA, and operator approval. Preserve all older workboard ticket IDs/statuses from the 99-ticket snapshot, including planned Life play/join work. This pass does **not** complete `TAVI-031`, `TAVI-MULTI-047`, or `TAVI-MULTI-048`.

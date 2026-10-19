@@ -1,3 +1,5 @@
+> **Tavi 0.3.63 Atrium discovery:** TAVI-ATRIUM-056 source QA now exercises Life discovery/withdrawal and includes a read-only authenticated Social operator probe. Social release remains 0.3.58/schema 10; live Atrium observation/private apps:read binding and native acceptance still required. See `ZIPRUNNER_HANDOFF_ATRIUM_0363.md`.
+
 > **Tavi 0.3.62 UI QA:** `npm --prefix client run ui:ci` runs a real Chromium smoke suite at desktop and phone sizes against a disposable local Social fixture. ZipRunner runs it on post-update; CI requires it. Missing browser/build is BLOCKED, never a pass. This is not Windows/Android native or pixel-baseline acceptance. See `ZIPRUNNER_HANDOFF_UI_QA_0362.md`.
 
 > **v0.3.49 Companion MVP:** Optional 16-bit-style pet panel, 8 species, local account-scoped state, 5 actions, manually selected Companion/Gentle/Classic modes and voluntary engagement-based invitations. Works in Windows/Android/Web Tavi views. OS-wide overlays are **not** implemented; Social server stays 0.3.48/schema 10. See `docs/TAVI_COMPANIONS_0349.adoc`.
