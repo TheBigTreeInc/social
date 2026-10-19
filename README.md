@@ -1,3 +1,5 @@
+> **Tavi 0.3.65 first-party Atrium repository:** built-in optional Atrium catalog source. Publication and device acceptance pending. See `docs/TAVI_FIRST_PARTY_ATRIUM_REPOSITORY_0365.adoc`.
+
 > **Tavi 0.3.64 exact-commit CI repair:** Windows LF integrity for bundled extensions, fixed visible Games navigation in browser QA, preserved 100-ticket operator board, and triaged Android in-app updater report (no unproven native change). See `ZIPRUNNER_HANDOFF_CI_0364.md`.
 
 > **Tavi 0.3.63 Atrium discovery:** TAVI-ATRIUM-056 source QA now exercises Life discovery/withdrawal and includes a read-only authenticated Social operator probe. Social release remains 0.3.58/schema 10; live Atrium observation/private apps:read binding and native acceptance still required. See `ZIPRUNNER_HANDOFF_ATRIUM_0363.md`.

@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.64",
-    "base_version": "0.3.63"
+    "version": "0.3.65",
+    "base_version": "0.3.64"
   },
   "update": {
-    "id": "TAVI-20261019-CI-REPAIR-0364",
+    "id": "TAVI-20261019-FIRST-PARTY-ATRIUM-0365",
     "kind": "source_update",
     "created_at": "2026-10-19T21:41:54+02:00",
-    "summary": "Tavi v0.3.64 CI repair for exact push 4f4578c: Windows Git autocrlf corrupted checksum-pinned bundled HTML; browser QA targeted hidden menu rather than visible Home Games button. Preserve latest 100-ticket local workboard, triage Android updater bug ZRB-9297228324E24D42 under TAVI-UPDATES-003. No server/Android behavior or production configuration changes."
+    "summary": "Ship Atrium as an opt-in first-party software repository in the Tavi client. No automatic extension install. Atrium publication URL requires live operator verification; no LoopRD changes."
   },
   "planned_work": [
     {
@@ -1454,7 +1454,7 @@
       },
       {
         "id": "TAVI-MULTI-044-PY",
-        "description": "Game room seat roster, revocation, migration 9→10, private messages and push content-free wake",
+        "description": "Game room seat roster, revocation, migration 9\u219210, private messages and push content-free wake",
         "status": "passed_source_only",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Linux Python 3.13",
@@ -1568,7 +1568,7 @@
     },
     {
       "id": "TAVI-MULTI-044-OP",
-      "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
+      "description": "Backup and test schema 9\u219210 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
       "status": "required"
     },
     {

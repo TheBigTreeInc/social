@@ -1,0 +1,23 @@
+= Tavi 0.3.65 — First-party Atrium extension repository
+:revdate: 2026-10-19
+
+== Scope
+
+Tavi ships the Atrium repository index address as a built-in discovery source. It is not an automatic extension installation, an offline package, or a hardcoded Atrium frontend. The client merges first-party, user-added, and LoopRD-recommended repository entries; the existing bundled extension catalog keeps ID precedence. Existing install/update permission checks and the sandbox remain unchanged.
+
+== Publication dependency
+
+The Atrium source repository contains `extensions/tavi/manifest.json`, `tools/build_tavi_extension.mjs` and `tools/build_tavi_repository.mjs`. Its Pages workflow currently publishes the Tavi assets only when dispatched with `extension_base_url` set. To publish to the assumed default GitHub Pages site, use `https://thebigtreeinc.github.io/atrium/tavi/` as `extension_base_url`, and ensure the deployed page path is correct. Tavi expects the index at `https://thebigtreeinc.github.io/atrium/tavi/tavi.repository.json` and the hosted iframe at `https://thebigtreeinc.github.io/atrium/tavi/ui/index.html`. This location is a configured convention, NOT a live-verified deployed endpoint. Do not promote the release until HTTPS GET, CORS, iframe sandbox and Windows/Android/browser installation are verified.
+
+== Acceptance
+
+. Publish Atrium Pages with approved `extension_base_url` and confirm public index returns HTTP 200 and valid `tavi.repository/v1` JSON.
+. Verify index manifest ID `inc.thebigtree.tavi.atrium` and version `1.0.0`; verify entrypoint is reachable and frameable.
+. Launch Tavi, connect to LoopRD, open App Store and verify Atrium appears without manual repository subscription.
+. Verify no automatic install, install with permission approval, open, Return to Tavi, disable/remove and reinstall.
+. Test failure behavior if the Atrium catalog is unavailable; messaging and Home must remain usable.
+. Confirm existing Games discovery and Life are unaffected. Run real Windows, Android and browser acceptance before release.
+
+== Non-goals
+
+Automatic background updates, binary caching, immutable content integrity and offline rollback are not implemented in this pass. No server or Atrium repository was modified or deployed.

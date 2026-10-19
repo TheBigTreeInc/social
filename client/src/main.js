@@ -2,7 +2,7 @@ import {sendBugReport} from './bug-report.js';
 import {loadBundledCatalog,verifyBundledExtension,createExtensionStore,extensionStorageScope} from './extensions/store.js';
 import {extensionAssetUrl,validateExtensionManifest} from './extensions/contract.js';
 import {createExtensionHost} from './extensions/host.js';
-import {createRepositorySubscriptions,fetchRepository,fetchServerRepositories,mergeRepositoryEntries,extensionSource,remoteOrigin} from './extensions/repositories.js';
+import {FIRST_PARTY_REPOSITORIES,createRepositorySubscriptions,fetchRepository,fetchServerRepositories,mergeRepositoryEntries,extensionSource,remoteOrigin} from './extensions/repositories.js';
 import {atriumLauncher,reviewedAtriumBase} from './atrium-launch.js';
 import './style.css';
 import {checkTaviRelease,RELEASES_URL} from './release-updates.js';
@@ -30,7 +30,7 @@ import {petById} from './companions/catalog.js';
 import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
 import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
-const CLIENT_VERSION='0.3.64';
+const CLIENT_VERSION='0.3.65';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
@@ -73,7 +73,7 @@ async function loadExtensionStore(){
  let suggested=[];
  try{suggested=await fetchServerRepositories(origin);}catch(error){extensionRepoStatuses.push('Server recommendations: '+error.message);}
  const subscribed=extensionRepoSubscriptions()?.list()||[];
- const all=[...new Set([...subscribed,...suggested])].slice(0,24);
+ const all=[...new Set([...FIRST_PARTY_REPOSITORIES,...subscribed,...suggested])].slice(0,24);
  const collections=await Promise.all(all.map(async url=>{
   try{return await fetchRepository(url);}
   catch(error){extensionRepoStatuses.push(`${url}: ${error.message}`);return [];}
@@ -99,9 +99,9 @@ function appStorePanel(){
  const sourceMismatch=installed&&store?.source(m.id)!==source;
  const outdated=installed&&store?.version(m.id)!==m.version;
  const compatible=validateExtensionManifest(m).compatible&&(!m.platforms||m.platforms.includes(clientPlatform));
- return `<article class="tavi-store-item"><div class="tavi-store-item-copy"><h3>${esc(m.name)}</h3><p>${esc(m.summary)}</p><small>${esc(m.publisher)} · ${esc(m.version)} · ${esc(m.permissions.join(', '))}</small><p class="fineprint">${entry.remote?`Community repository: ${esc(source)} · ${esc(entry.remote.license)} · <a href="${esc(entry.remote.source)}" target="_blank" rel="noopener noreferrer">Source code ↗</a>`:'Bundled with Tavi'}</p>${sourceMismatch?'<p class="notice">The source repository changed; remove this installation before reinstalling.</p>':''}</div><div class="tavi-store-actions">${!compatible?'<small>Unavailable on this client</small>':sourceMismatch?'':enabled&&!outdated?`<button type="button" data-extension-open="${esc(m.id)}">Open</button><button type="button" data-extension-disable="${esc(m.id)}">Disable</button>`:installed&&!outdated?`<button type="button" data-extension-enable="${esc(m.id)}">Enable</button>`:`<button type="button" data-extension-install="${esc(m.id)}" ${extensionBusy?'disabled':''}>${outdated?'Update':'Install'}</button>`}${installed?`<button type="button" data-extension-remove="${esc(m.id)}">Remove</button>`:''}</div></article>`;
+ return `<article class="tavi-store-item"><div class="tavi-store-item-copy"><h3>${esc(m.name)}</h3><p>${esc(m.summary)}</p><small>${esc(m.publisher)} · ${esc(m.version)} · ${esc(m.permissions.join(', '))}</small><p class="fineprint">${entry.remote?`${FIRST_PARTY_REPOSITORIES.includes(source)?'Official Atrium repository':'Community repository'}: ${esc(source)} · ${esc(entry.remote.license)} · <a href="${esc(entry.remote.source)}" target="_blank" rel="noopener noreferrer">Source code ↗</a>`:'Bundled with Tavi'}</p>${sourceMismatch?'<p class="notice">The source repository changed; remove this installation before reinstalling.</p>':''}</div><div class="tavi-store-actions">${!compatible?'<small>Unavailable on this client</small>':sourceMismatch?'':enabled&&!outdated?`<button type="button" data-extension-open="${esc(m.id)}">Open</button><button type="button" data-extension-disable="${esc(m.id)}">Disable</button>`:installed&&!outdated?`<button type="button" data-extension-enable="${esc(m.id)}">Enable</button>`:`<button type="button" data-extension-install="${esc(m.id)}" ${extensionBusy?'disabled':''}>${outdated?'Update':'Install'}</button>`}${installed?`<button type="button" data-extension-remove="${esc(m.id)}">Remove</button>`:''}</div></article>`;
  }).join(''):'<p class="fineprint">No extensions found in subscribed repositories.</p>'}
- <h3>Extension repositories</h3><p class="fineprint">Repository URLs point to static JSON catalogs. Server recommendations are optional and never install apps by themselves.</p>
+ <h3>Extension repositories</h3><p class="fineprint">Tavi includes the official Atrium repository by default. Extensions are optional and require installation approval. Other repositories can be added by you or suggested by your server.</p><p class="fineprint">Built-in: ${FIRST_PARTY_REPOSITORIES.map(esc).join(', ')}</p>
  ${extensionSuggested.length?`<p class="fineprint">Suggested by this server: ${extensionSuggested.map(esc).join(', ')}</p>`:'<p class="fineprint">No repository suggestions supplied by this server.</p>'}
  ${subscriptions.map(url=>`<div class="row-actions"><code>${esc(url)}</code><button type="button" data-repository-remove="${esc(url)}">Remove</button></div>`).join('')}
  <form id="extension-repository-form" class="auth-form"><label>Custom repository URL<input type="url" name="repository" placeholder="https://example.org/tavi.repository.json" required></label><button type="submit">Add repository</button></form>

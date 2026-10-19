@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.64",
+  "version": "0.3.65",
   "tasks": [
     {
       "id": "TAVI-UI-QA-062",
@@ -461,7 +461,7 @@
         },
         {
           "id": "LRS-004-AC-3",
-          "description": "Social SQL schema 8→9 and Android/Windows actual recovery flow independently verified by operator.",
+          "description": "Social SQL schema 8\u21929 and Android/Windows actual recovery flow independently verified by operator.",
           "mode": "manual",
           "checks": [
             "LRS-004-DEVICE"
@@ -1204,7 +1204,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"

@@ -2,6 +2,11 @@ import {validateExtensionManifest} from './contract.js';
 
 // Tavi subscriptions are URLs to independent, static, open-source indexes.
 // No central publisher account, upload API or registry is involved.
+// First-party discovery source, shipped with Tavi; installation remains opt-in.
+// The remote catalog must be published by Atrium before entries can appear.
+export const FIRST_PARTY_REPOSITORIES = Object.freeze([
+  'https://thebigtreeinc.github.io/atrium/tavi/tavi.repository.json'
+]);
 const MAX_BYTES = 160_000;
 const STORAGE_PREFIX = 'tavi.extensions.repositories/v1:';
 const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);

@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {createRepositorySubscriptions,repositoryStorageKey,validateRepository,validateRepositoryList,fetchRepository,fetchServerRepositories,mergeRepositoryEntries,extensionSource,remoteOrigin} from '../src/extensions/repositories.js';
+import fs from 'node:fs';
+import {FIRST_PARTY_REPOSITORIES,createRepositorySubscriptions,repositoryStorageKey,validateRepository,validateRepositoryList,fetchRepository,fetchServerRepositories,mergeRepositoryEntries,extensionSource,remoteOrigin} from '../src/extensions/repositories.js';
 import {createExtensionStore,extensionStorageScope} from '../src/extensions/store.js';
 const memory=()=>{const m=new Map();return {getItem:k=>m.get(k)??null,setItem:(k,v)=>m.set(k,v)};};
 const bundled=JSON.parse(await readFile(new URL('../public/tavi-extensions/catalog.v1.json',import.meta.url),'utf8')).extensions;
@@ -60,4 +61,12 @@ test('Tavi client binds remote entrypoints into opaque iframe without revealing 
  assert.match(code,/sandbox','allow-scripts'/);
  assert.doesNotMatch(code,/sandbox','allow-scripts allow-same-origin'/);
  assert.match(code,/Extension website/);
+});
+
+test('Atrium is first-party discoverable without user subscription or automatic installation',()=>{
+ assert.deepEqual(FIRST_PARTY_REPOSITORIES,['https://thebigtreeinc.github.io/atrium/tavi/tavi.repository.json']);
+ const main=fs.readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ assert.match(main,/\.\.\.FIRST_PARTY_REPOSITORIES,\.\.\.subscribed,\.\.\.suggested/);
+ assert.match(main,/Official Atrium repository/);
+ assert.match(main,/data-extension-install/);
 });
