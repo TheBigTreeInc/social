@@ -1,0 +1,44 @@
+= Tavi 0.3.64 — exact-commit CI repair and Android updater report triage
+:revnumber: 0.3.64
+:revdate: 2026-10-19
+:toc: left
+
+== Scope and evidence
+
+This bounded source fix follows the operator's 0.3.63 push, commit `4f4578c22f98b2cac90f40878d28ade8f88c5385`. The latest *local* durable workboard has 100 tickets; its exported snapshot is preserved at `docs/ZIPRUNNER_LOCAL_WORKBOARD_100_20261019.json`. No ticket is automatically marked Done, no code is pushed, no production server is modified, and no release is authorized.
+
+The GitHub REST Actions endpoint `/repos/TheBigTreeInc/social/actions/runs?head_sha=4f4578c22f98b2cac90f40878d28ade8f88c5385&event=push` returned **nine exact-SHA push workflow runs**, contradicting ZipRunner's `Watch: not_github`/missing CI claim. The collector must correlate by project/repo/SHA/event and ingest completed results and pending status, not substitute PR-filtered workflow queries or Git combined-status `statuses[]` for Actions.
+
+=== Source-level repair 1: native Windows verification
+
+Failed workflow: https://github.com/TheBigTreeInc/social/actions/runs/39318552767 , job 118286294325, step `Verify Social server and client protocols`, one failure out of 155 Node tests. Exception: `Extension asset size changed: ui/index.html`. The published bundled Notepad `index.html` is LF text (2226 bytes) and the catalog uses that size plus its SHA-256. `.gitattributes` previously enforced LF only for YAML/AsciiDoc, not HTML. Windows checkout can expand line endings by 10 bytes. Remedy: enforce LF for all SHA-pinned bundled extension text formats; preserve exact catalog size and SHA (never relax verification). Add a regression test for hashes, sizes and declared Git attributes.
+
+=== Source-level repair 2: browser UI QA
+
+Failed workflow: https://github.com/TheBigTreeInc/social/actions/runs/39318552582 , job 118286293271, stage `Life discovered Games` at desktop/390px/320px. Playwright used `locator('[data-action="games"]').first().click()`, which selected hidden `Games & alerts` inside an unopened classic menu. Remedy: click visible Home Games dock explicitly and wait for visibility. Tests now guard against accidental reintroduction of the broad selector. No application navigation behavior changes.
+
+== Android bug triage (NO CODE CHANGE)
+
+Operator source report: `ZRB-9297228324E24D42`, reported 2026-10-18 15:01:45 UTC.
+
+Reported text: "when trying to update the android app via the internal system i had to specify the system that has to do the update installation and after it failed."
+
+Mapping: existing ticket **TAVI-UPDATES-003**, status **Review**. Do not create a duplicate issue. Suggested severity **high** for Android update reliability because the user cannot finish an intended update; not established as an account/data loss incident. The exact failure mode, OS revision, APK signing identity, file provider grant, Package Installer selection, and reproduction sequence are **not known** because this report contains no screenshot or log transfer. The source currently uses a native Kotlin `DownloadManager` + `FileProvider` with an `ACTION_VIEW` APK handoff. Android's chooser/handler behavior may be relevant but is a hypothesis, not a confirmed root cause.
+
+Required TAVI-UPDATES-003 acceptance additions (proposal, preserve original operator criteria):
+
+. Export QA + bug screenshots if available and capture sanitized Android Logcat filtered to `TaviUpdaterPlugin`, `PackageInstaller`, `FileProvider`, `ActivityTaskManager`; redact account/token identifiers and URLs.
+. Record Android OS version, existing installed APK type (debug/release), target APK version, whether Tavi holds unknown-source installation permission, and whether a chooser or installer actually opens.
+. On a release-signed test device, attempt vA→vB using the **same signing key**; confirm explicit Android confirmation, successful upgrade, and preserved messages/settings/account.
+. Verify cancelled installation and denied permission fail visibly and can be retried; avoid an arbitrary app chooser where a qualified native package-installer intent can be used, but do not change the code without reproducing.
+. Keep status Review until hardware evidence and operator approval.
+
+== Verification and deployment gates
+
+. Run `npm run verify` and `python -m unittest discover -s tests -p 'test_*.py' -q` on 0.3.64.
+. Reapply source ZIP through ZipRunner, inspect the new artifact SHA and freshly executed post-update tests.
+. Push reviewed source **only after approval**; require exact new-SHA browser and Windows CI success plus Android, Linux/macOS and other release-gated checks.
+. Confirm `TAVI-QA-047` now has authoritative Actions run links in ZipRunner. The workboard ingestion bug is **not fixed by these Tavi source edits**.
+. Run real Windows/Android UI acceptance separately. `TAVI-ATRIUM-056` still requires deployed Atrium v2 Life observation, private server-side `apps:read` and authorized client acceptance.
+
+No production LoopRD descriptor or database schema change; deployed Social remains release 0.3.58/schema 10 according to source.

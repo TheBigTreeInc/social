@@ -1,3 +1,5 @@
+> **Tavi 0.3.64 exact-commit CI repair:** Windows LF integrity for bundled extensions, fixed visible Games navigation in browser QA, preserved 100-ticket operator board, and triaged Android in-app updater report (no unproven native change). See `ZIPRUNNER_HANDOFF_CI_0364.md`.
+
 > **Tavi 0.3.63 Atrium discovery:** TAVI-ATRIUM-056 source QA now exercises Life discovery/withdrawal and includes a read-only authenticated Social operator probe. Social release remains 0.3.58/schema 10; live Atrium observation/private apps:read binding and native acceptance still required. See `ZIPRUNNER_HANDOFF_ATRIUM_0363.md`.
 
 > **Tavi 0.3.62 UI QA:** `npm --prefix client run ui:ci` runs a real Chromium smoke suite at desktop and phone sizes against a disposable local Social fixture. ZipRunner runs it on post-update; CI requires it. Missing browser/build is BLOCKED, never a pass. This is not Windows/Android native or pixel-baseline acceptance. See `ZIPRUNNER_HANDOFF_UI_QA_0362.md`.

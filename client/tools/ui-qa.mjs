@@ -84,7 +84,7 @@ async function testViewport(browser,base,device){
   await noOverflow(page,`${device.name} home`);
   stage='Life discovered Home';await visible(page,'.tavi-discovered-mini');
   assert.match(await page.locator('.tavi-discovered-mini').first().innerText(),/The Life Loop/);
-  stage='Life discovered Games';await page.locator('[data-action="games"]').first().click();
+  stage='Life discovered Games';await visible(page,'.tavi-home-dock [data-action="games"]');await page.locator('.tavi-home-dock [data-action="games"]').click();
   await visible(page,'[data-discovered-game="life.loop"]');
   assert.match(await page.locator('[data-discovered-game="life.loop"]').innerText(),/Not playable yet/);
   assert.equal(await page.locator('[data-discovered-game="life.loop"] [data-launch-game], [data-discovered-game="life.loop"] [data-challenge-game]').count(),0);

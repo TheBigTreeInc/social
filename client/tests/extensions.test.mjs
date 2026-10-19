@@ -85,3 +85,16 @@ test('messenger exposes a persistent Home return from extension panel and curate
  assert.match(code,/sandbox','allow-scripts'/);
  assert.doesNotMatch(code,/sandbox','allow-scripts allow-same-origin'/);
 });
+
+// A Windows autocrlf checkout must not corrupt authenticated bundled asset bytes.
+test('bundled extension source keeps SHA-256 bytes on Windows Git checkouts',async()=>{
+ const attrs=await readFile(new URL('../../.gitattributes',import.meta.url),'utf8');
+ for(const ext of ['html','css','js','json','svg'])assert(attrs.includes(`client/public/tavi-extensions/**/*.${ext} text eol=lf`));
+ for(const asset of entry.files){
+  const path=new URL(`../public/tavi-extensions/${entry.manifest.id}/${asset.path}`,import.meta.url);
+  const bytes=await readFile(path);
+  assert(!bytes.includes(Buffer.from('\r\n')),'SHA-pinned text files must retain LF line endings');
+  assert.equal(bytes.length,asset.size,`size differs for ${asset.path}`);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),asset.sha256,`digest differs for ${asset.path}`);
+ }
+});

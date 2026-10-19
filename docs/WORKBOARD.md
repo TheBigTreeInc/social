@@ -1,3 +1,7 @@
+== v0.3.64 source CI repair + 100-ticket local operator snapshot
+
+The latest operator workboard export has 100 tickets and is preserved at `docs/ZIPRUNNER_LOCAL_WORKBOARD_100_20261019.json`. Existing status/priority/criteria remain as exported; 0.3.64 is not operator acceptance. GitHub exact SHA 4f4578c has 9 Actions push runs, including failed Windows and UI QA. Repair bundle enforces byte-identical LF for SHA-pinned bundled assets and selects the visible Games dock in UI QA. ZipRunner `not_github` ingestion remains separately pending under TAVI-QA-047. Android issue ZRB-9297228324E24D42 maps to TAVI-UPDATES-003 and needs device evidence. See `docs/TAVI_CI_REPAIR_ANDROID_TRIAGE_0364.adoc`.
+
 == TAVI-ATRIUM-056 — v0.3.63 Tavi source QA and operator deployment still outstanding
 
 The authoritative 99-ticket local workboard snapshot from 2026-10-19 is preserved verbatim as `docs/ZIPRUNNER_LOCAL_WORKBOARD_99_20261019.json`. The existing `TAVI-ATRIUM-056` ticket remains Review, not Done. Added a read-only live Social discovery probe and Life discover/withdraw simulated browser QA; see `docs/TAVI_ATRIUM_DISCOVERY_EXECUTION_0363.adoc`. Social remains 0.3.58/schema 10 and real server/Windows/Android/Web acceptance is still required. No repository push, operator migration, token provisioning, or Life game launch performed.

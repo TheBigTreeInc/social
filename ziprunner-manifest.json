@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.63",
-    "base_version": "0.3.62"
+    "version": "0.3.64",
+    "base_version": "0.3.63"
   },
   "update": {
-    "id": "TAVI-20261019-ATRIUM-056-0363",
+    "id": "TAVI-20261019-CI-REPAIR-0364",
     "kind": "source_update",
     "created_at": "2026-10-19T21:41:54+02:00",
-    "summary": "Tavi 0.3.63 adds Life discovery/withdrawal browser QA, explicit Games discovery refresh, honest empty state, and privacy-safe read-only operator test of the real authenticated Social/Atrium discovery boundary. Does not deploy the Atrium source, service credential or server (0.3.58/schema 10 unchanged)."
+    "summary": "Tavi v0.3.64 CI repair for exact push 4f4578c: Windows Git autocrlf corrupted checksum-pinned bundled HTML; browser QA targeted hidden menu rather than visible Home Games button. Preserve latest 100-ticket local workboard, triage Android updater bug ZRB-9297228324E24D42 under TAVI-UPDATES-003. No server/Android behavior or production configuration changes."
   },
   "planned_work": [
     {
@@ -1495,7 +1495,7 @@
     ]
   },
   "handover": {
-    "next_pass": "TAVI-ATRIUM-056 operator live integration: verify active Atrium trusted v2 observation for Life and Social 0.3.58 deployment, provision private apps:read key and approved LoopRD backend origin, then run tools/verify-atrium-live.mjs with disposable Social account, verify withdrawal/restoration and Windows/Android/Web UI. Preserve 99 ticket statuses. TAVI-ATRIUM-056 remains Review; do not authorize play or release.",
+    "next_pass": "Push reviewed 0.3.64 source only after approval; require exact SHA Windows and browser UI QA green, check Android and other CI jobs; separately fix ZipRunner not_github Actions ingestion under TAVI-QA-047. Triage existing Android update TAVI-UPDATES-003 with sanitized device evidence. TAVI-ATRIUM-056 real discovery remains Review. Preserve 100-ticket workboard.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -1515,7 +1515,10 @@
       "Tavi companion is client-local and does not sync across devices; a reinstall/browser storage clear can lose state.",
       "Only the in-app badge exists. Windows OS-wide transparent always-on-top window and Android OS overlay permission/service are future work.",
       "Original 82 ticket operator snapshot is archived; source workboard updates must not override local statuses.",
-      "Floating Windows pet tested by source fixtures but physical Windows, multi-monitor, fullscreen and Tauri transparent behavior not established; keep operator acceptance open."
+      "Floating Windows pet tested by source fixtures but physical Windows, multi-monitor, fullscreen and Tauri transparent behavior not established; keep operator acceptance open.",
+      "Tavi 0.3.63 Windows source test failed because Git CRLF changed SHA-pinned Notepad HTML size; 0.3.64 adds exact LF attributes but must be proven on Windows runner.",
+      "Tavi 0.3.63 Playwright UI QA targeted hidden Games menu button; 0.3.64 selects visible dock; fresh GitHub browser test required.",
+      "Android updater chooser/install failure is operator-reported (ZRB-9297228324E24D42) without screenshot/log; no fix is claimed."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -1582,11 +1585,21 @@
       "id": "TAVI-PET-050-DEVICE",
       "description": "Build/install Windows 0.3.52 and perform actual 186x226 transparent companion, drag/position, care, account-isolation, signout, focus and monitor acceptance.",
       "status": "required"
+    },
+    {
+      "id": "TAVI-CI-064-PUSH",
+      "description": "Confirm 0.3.64 source regression pass, review diff, then push through existing ZipRunner flow. Inspect exact new GitHub SHA Windows/UI/Android workflow results, and rerun post-update checks on matching ZIP SHA; do not release on partial CI.",
+      "status": "required"
+    },
+    {
+      "id": "TAVI-UPDATES-003-TRIAGE",
+      "description": "Review ZRB-9297228324E24D42 using Export QA + bug screenshots and sanitized Android installer Logcat; confirm Android update reproduction before code change. Preserve existing Review status.",
+      "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Client 0.3.63, Social server 0.3.58/schema 10; no server descriptor changes. TAVI-ATRIUM-056 source QA updated but actual Atrium v2 observation, apps:read credential, Social deployment, live user/Windows/Android UI, and operator approval outstanding."
+    "notes": "Client 0.3.64, Social server remains 0.3.58/schema 10. Pure client QA/checkout repair; all CI and device tests require new exact-SHA rerun and operator acceptance. No auto publish."
   }
 }

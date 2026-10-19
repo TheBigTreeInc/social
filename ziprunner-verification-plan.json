@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.63",
+  "version": "0.3.64",
   "tasks": [
     {
       "id": "TAVI-UI-QA-062",
@@ -984,6 +984,19 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-QA-047",
+      "criteria": [
+        {
+          "id": "TAVI-QA-047-AC-064",
+          "description": "Ensure exact push-SHA Actions are observed in ZipRunner; independently verify Windows/UI QA succeed after this source repair. Missing run ingestion remains ZipRunner-owned.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-QA-047-GITHUB-PUSH"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -1600,6 +1613,13 @@
       "stage": "acceptance",
       "description": "Operator review of production limitations",
       "instructions": "No independent .tavix downloads, verified publisher signatures, remote registry, Atrium/Companions migration or native overlay permissions in current source."
+    },
+    {
+      "id": "TAVI-QA-047-GITHUB-PUSH",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Verify exact-SHA push workflow runs and ZipRunner data ingestion",
+      "instructions": "After operator-reviewed push, check GitHub Actions for new SHA, especially Windows and Browser UI QA; also repair TAVI-QA-047 not_github mapping in ZipRunner without changing historical results."
     }
   ]
 }

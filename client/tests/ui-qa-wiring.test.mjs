@@ -16,3 +16,9 @@ test('browser smoke checks use a disposable self-contained Social fixture and pr
  for(const fragment of ['disposableToken','127.0.0.1','pageerror','screenshot','qa-artifacts','mobile-390','mobile-320','desktop','app-store','tavi-extension-surface','UI QA BLOCKED'])assert(source.includes(fragment),fragment);
  assert(!source.includes('api.thebigtree.life'),'browser smoke must never target a real LoopRD installation');
 });
+
+test('browser game smoke clicks visible Home dock, not a hidden menu duplicate',async()=>{
+ const source=await read('client/tools/ui-qa.mjs');
+ assert(source.includes(".tavi-home-dock [data-action=\"games\"]"));
+ assert(!source.includes("locator('[data-action=\"games\"]').first().click()"));
+});

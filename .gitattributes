@@ -3,3 +3,10 @@
 *.yaml text eol=lf
 *.yml text eol=lf
 *.adoc text eol=lf
+
+# Bundled, SHA-256-verified extension text assets must be byte-identical on Windows.
+client/public/tavi-extensions/**/*.html text eol=lf
+client/public/tavi-extensions/**/*.css text eol=lf
+client/public/tavi-extensions/**/*.js text eol=lf
+client/public/tavi-extensions/**/*.json text eol=lf
+client/public/tavi-extensions/**/*.svg text eol=lf
