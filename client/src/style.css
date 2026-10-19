@@ -593,3 +593,10 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .tavi-extension-frame{flex:1;min-height:220px}
 .tavi-extension-frame iframe{height:100%;width:100%;display:block;border:0;background:#e9f5ee}
 @media(max-width:540px){.tavi-store-item{display:block}.tavi-store-actions{justify-content:flex-start;margin-top:9px}.tavi-extension-panel{height:calc(100dvh - 110px)}}
+
+/* User-driven, credential-free hosted Life launch from the first-party Atrium extension. */
+.tavi-life-launch-confirmation{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;padding:.75rem;background:#e2f4e8;color:#14382b;border:2px solid #267c69;border-radius:.6rem;margin:.45rem 0;}
+.tavi-life-launch-confirmation span{flex:1 1 185px;overflow-wrap:anywhere;}
+.tavi-life-launch-confirmation a,.tavi-life-launch-confirmation button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:.45rem .8rem;border-radius:.45rem;background:#267c69;color:#fff;text-decoration:none;border:1px solid #1b594a;cursor:pointer;}
+.tavi-life-launch-confirmation button{background:#e8f7ed;color:#14382b;}
+.tavi-life-launch-confirmation a:focus-visible,.tavi-life-launch-confirmation button:focus-visible{outline:3px solid #182d74;outline-offset:2px;}

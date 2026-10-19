@@ -1,0 +1,49 @@
+= Tavi 0.3.66 — User-mediated Atrium hosted Life launch
+:revdate: 2026-10-19
+:toc: left
+
+== Status and trust boundary
+
+This is a Tavi *source candidate*. The Atrium 0.5.24 hosted-launch candidate described in the operator handoff has not been attached in source form or published on the currently readable Atrium main branch (which identifies itself as 0.5.22). No Atrium/Life/LoopRD repository or deployment has been modified in this pass. Tavi cannot fabricate a published Life catalog record, authenticate a seat, or redeem Social proofs.
+
+== Implemented in Tavi
+
+* `client/src/extensions/game-launch.js` independently validates the exact `atrium.tavi-launch/v1` object with `{gameId:'life.loop',target,matchContext:{matchId}}`. Only canonical public HTTPS Life targets without a query, fragment, userinfo, or port are accepted. Only the opaque match selector becomes the URL `?match=...`; it is *not authorization*.
+* The existing opaque `allow-scripts` iframe is unchanged: **no `allow-popups`, no `allow-top-navigation`, no same-origin permission**.
+* `ui.requestGameLaunch` is an additive v1 host RPC, available **only** to the installed official `inc.thebigtree.tavi.atrium` extension from the built-in Atrium repository URL. Foreign frames, unexpected origins, unknown fields, request floods, foreign publishers and unmatched account scope fail closed. No generic website-open privilege is granted to other extensions.
+* Tavi displays its own **Open Life / Cancel** controls, showing the external target origin and match ID. The browser link is an actual user click; native Tauri uses `plugin-opener` on that click. A request by itself **never opens a browser**. Home and messaging remain independent. Pending confirmations are cleared on navigation, iframe removal, logout and account switches.
+* The Tavi v1 SDK gains `ui.requestGameLaunch(handoff)`. Host `host.info.features` lists `atrium.tavi-launch/v1` for the official Atrium extension only. The host response `{awaitingApproval:true}` means **the request was queued, not that Life opened**.
+
+== Required upstream Atrium 0.5.24 adapter
+
+Atrium's review-gated hosted Life card must recheck the currently approved publication *before* requesting launch. Its extension adapter calls the Tavi host using the exact operation and payload below; it may use its own existing bridge request helper, but must NOT issue `window.open` or attempt iframe top navigation. Standalone Atrium keeps using its independently reviewed browser launch.
+
+[source,javascript]
+----
+const handoff = {
+  schema: 'atrium.tavi-launch/v1',
+  gameId: 'life.loop',
+  target: approvedLaunchTargetWithoutQueryOrHash,
+  matchContext: {matchId: opaqueLifeMatchId}
+};
+// Only inside Atrium's Tavi iframe adapter, after its own publication review:
+const info = await taviSdk.info();
+if (!info.features?.includes('atrium.tavi-launch/v1')) throw Error('Tavi host does not support reviewed Life launch');
+const result = await taviSdk.ui.requestGameLaunch(handoff);
+if (!result.awaitingApproval) throw Error('Life launch request was not queued');
+// Tell player to approve Open Life in the Tavi toolbar.
+----
+
+Do not encode a Social token, Life bearer, one-use seat proof, or invite token into `target`, `matchId`, postMessage or the final URL. The hosted Life frontend must authenticate the player through a separate trusted Life-audience exchange, enforcing seat membership on every resume/act. No challenge response automatically creates a match.
+
+== Deployment / acceptance, not yet proven
+
+. Obtain the actual Atrium 0.5.24 source candidate and adapt `extensions/tavi/extension-bridge.mjs` / its reviewed-hosted-game UI to invoke the new RPC. Version/update its hosted repository index after independent review.
+. Approve Life Pages exact commit and origin; map `game-web` in operator-owned deployment configuration; publicly publish Atrium's reviewed hosted catalog and confirm the index and iframe assets load under real HTTPS/CORS.
+. Sign in to Tavi 0.3.66 on browser, Windows WebView2, and Android; install/update Atrium with consent; see Life card; click Open, then Tavi Open Life; verify no popup blocking, Cancel, Home, and chat continuity.
+. Complete Social-to-Life **audience-scoped** login and Life `/play/info`, `/play`, seat match enforcement; test the same match after client and server restarts, wrong-seat rejection, and withdrawal of a previously approved release.
+. Keep `TAVI-031`, `TAVI-MULTI-048` and related operator gates open until actual multiplayer acceptance.
+
+== Compatibility
+
+This pass requires no LoopRD API or Social database migration. It does not modify the Atrium extension manifest or permission model. Before Atrium calls the new broker, its current hosted-game button remains unable to open through the Tavi iframe. No native credential material is added.

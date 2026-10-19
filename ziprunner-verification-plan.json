@@ -1,8 +1,29 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.65",
+  "version": "0.3.66",
   "tasks": [
+    {
+      "id": "TAVI-LIFE-066",
+      "criteria": [
+        {
+          "id": "TAVI-LIFE-066-AC-1",
+          "description": "Parse reviewed Atrium Life handoff, strict source and sender checks, deny token/proof URL, require native Tavi confirmation with browser click, return Home, no sandbox popup relaxation.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/extension-life-launch.test.mjs"
+          ]
+        },
+        {
+          "id": "TAVI-LIFE-066-AC-2",
+          "description": "Atrium 0.5.24 must call requestGameLaunch from reviewed active hosted Life, live approved Pages and authenticated Life seat resume must be operator tested; no live gameplay claim.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-LIFE-066-PRODUCTION"
+          ]
+        }
+      ]
+    },
     {
       "id": "TAVI-UI-QA-062",
       "criteria": [

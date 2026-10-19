@@ -1,9 +1,10 @@
 // Requests are served by Tavi, not by the iframe. No account, message, auth,
 // network, native, navigation or contact APIs are exposed to extensions.
+import {ATRIUM_EXTENSION_ID,ATRIUM_REPOSITORY_URL,parseReviewedLifeHandoff} from './game-launch.js';
 const CHANNEL='tavi.extension/v1';
 const KEY=/^[a-zA-Z0-9._-]{1,80}$/;
 const throttle=()=>({started:Date.now(),count:0});
-export function createExtensionHost({windowRef=window,storage,notify,close}){
+export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');}}){
  let session=null;
  function send(message){session?.frame?.contentWindow?.postMessage({channel:CHANNEL,direction:'response',...message},'*');}
  function onMessage(e){
@@ -17,7 +18,7 @@ export function createExtensionHost({windowRef=window,storage,notify,close}){
   try{
    let result=null;
    switch(request.method){
-    case 'host.info': result={api:'1.0.0',extensionId:current.id};break;
+    case 'host.info': result={api:'1.0.0',extensionId:current.id,features:current.id===ATRIUM_EXTENSION_ID&&current.source===ATRIUM_REPOSITORY_URL?['atrium.tavi-launch/v1']:[]};break;
     case 'host.capabilities': result=current.permissions.filter(p=>['ui.panel','ui.toast','storage.private'].includes(p));break;
     case 'storage.get':{
      if(!permissions.has('storage.private'))throw Error('Permission denied');
@@ -34,6 +35,12 @@ export function createExtensionHost({windowRef=window,storage,notify,close}){
      if(typeof request.message!=='string'||request.message.length>140)throw Error('Invalid toast');
      notify(request.message);break;
     }
+    case 'ui.requestGameLaunch':{
+     if(!permissions.has('ui.panel')||current.id!==ATRIUM_EXTENSION_ID||current.source!==ATRIUM_REPOSITORY_URL)throw Error('Game launch requires the official Atrium extension');
+     const handoff=parseReviewedLifeHandoff(request.handoff);
+     result=onGameLaunch(handoff,{extensionId:current.id,scope:current.scope,source:current.source});
+     break;
+    }
     case 'ui.close': close();break;
     default:throw Error('Unsupported extension method');
    }
@@ -42,9 +49,9 @@ export function createExtensionHost({windowRef=window,storage,notify,close}){
  }
  windowRef.addEventListener('message',onMessage);
  return {
-  mount(frame,{id,permissions,scope}){
+  mount(frame,{id,permissions,scope,source='tavi:bundled'}){
    if(!frame||!scope||typeof id!=='string'||!Array.isArray(permissions))throw Error('Invalid session');
-   session={frame,id,permissions,scope,rate:throttle()};
+   session={frame,id,permissions,scope,source,rate:throttle()};
   },
   unmount(){session=null;},
   dispose(){session=null;windowRef.removeEventListener('message',onMessage);}

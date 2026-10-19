@@ -1,9 +1,28 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.65",
-  "summary": "0.3.64 bounded exact-SHA CI repair: force Git LF for bundled SHA-pinned extension HTML/assets; UI QA selects visible Home Games dock rather than hidden dropdown; triage Android operator bug ZRB-9297228324E24D42 under existing TAVI-UPDATES-003 with no speculative Android code changes. Preserve latest 100-ticket local operator workboard. Social server remains 0.3.58/schema 10.",
+  "version": "0.3.66",
+  "summary": "Tavi v0.3.66 source candidate adds a user-mediated first-party Atrium hosted-Life external launch broker. 0.3.65 operator workboard history/status preserved; no Life production acceptance, no server deployment or credential exchange.",
   "implemented": [
+    {
+      "id": "TAVI-LIFE-066",
+      "title": "User-mediated first-party Atrium hosted Life launch handoff",
+      "summary": "Tavi handles atrium.tavi-launch/v1 from the officially pinned Atrium extension and displays an explicit Open Life confirmation; no bearer/proof in URL or iframe, no sandbox navigation privilege. Atrium 0.5.24 adapter and live Life seat/match acceptance remain separate.",
+      "priority": "high",
+      "status": "review",
+      "operator_checks": [
+        "Import v0.3.66 ZIP with ZipRunner, run new Node launch broker tests and existing Tavi regression suite.",
+        "Use approved published Atrium 0.5.24 extension to submit valid handoff; Windows, Android and browser show Tavi-controlled confirmation and user click opens Life externally, cancel is no-op.",
+        "Validate iframe and foreign publisher cannot trigger launch, credential or proof URL is rejected; Home and chats remain unaffected.",
+        "Verify actual Life Pages exact revision and approved catalog; create/resume one seat-authorized persistent match, reject other seat, and test restart. Not achievable from source unit tests alone."
+      ],
+      "acceptance_criteria": [
+        "Only official Atrium repository extension can request Life launches; strict field and HTTPS validation; user-facing URL confirmation required.",
+        "No bearer, one-time proof, secret, token or authorization sent as URL or postMessage; opaque match selector is never treated as authorization.",
+        "On Windows, Android and web the Tavi action opens a real reviewed Life URL and leaves Home and messages working.",
+        "Atrium adapter calls host method, real Life match resume verifies seat via trusted credential flow; operator acceptance before Done."
+      ]
+    },
     {
       "id": "TAVI-UI-QA-062",
       "title": "Automated desktop/mobile browser UI smoke and ZipRunner QA integration",

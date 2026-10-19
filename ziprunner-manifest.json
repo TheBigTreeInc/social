@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.65",
-    "base_version": "0.3.64"
+    "version": "0.3.66",
+    "base_version": "0.3.65"
   },
   "update": {
-    "id": "TAVI-20261019-FIRST-PARTY-ATRIUM-0365",
+    "id": "TAVI-20261019-LIFE-LAUNCH-BROKER-0366",
     "kind": "source_update",
     "created_at": "2026-10-19T21:41:54+02:00",
-    "summary": "Ship Atrium as an opt-in first-party software repository in the Tavi client. No automatic extension install. Atrium publication URL requires live operator verification; no LoopRD changes."
+    "summary": "Tavi-only user-confirmed Atrium hosted-Life launch broker. No new iframe navigation permission; strict first-party origin, credential-free handoff, fresh user click, Home preserved. No LoopRD or Atrium changes."
   },
   "planned_work": [
     {
@@ -372,6 +372,12 @@
       "title": "Classic roster action toolbar, optional profile pet and shared-backend Atrium browser",
       "acceptance_criteria": "At 320/355/390px Windows/web/mobile Home keeps classic roster and circular dock; top toolbar only Add/Portrait/Sync/Options; pet appears in top-right only when explicitly enabled; compact game rows show discovered Life without Play; shared backend HTTPS catalog requires server-only apps:read; native NSIS, Android, server integration and safe developer diagnostics need operator acceptance.",
       "priority": "high"
+    },
+    {
+      "id": "TAVI-LIFE-066",
+      "title": "Tavi first-party Atrium hosted Life user-confirmed external launch",
+      "priority": "high",
+      "acceptance_criteria": "Strict schema/identity/source checks and Tavi-owned user launch, passing source tests and preserving Home; Atrium 0.5.24 UI adapter, HTTPS catalog and Life seat/resume must pass operator native acceptance."
     }
   ],
   "done_work": [
@@ -1281,6 +1287,47 @@
       "blockers": [
         "Production Atrium discovery requires operator-provisioned read-only key and active Atrium v2 receiver.",
         "Native Windows, Android and live Social server checks are not executable in this author environment."
+      ]
+    },
+    {
+      "id": "TAVI-LIFE-066",
+      "status": "review",
+      "next_action": "Verify Atrium 0.5.24 calls Tavi ui.requestGameLaunch, publish reviewed Life Pages/catalog; test authorized resume on native Windows/Android and browser. Keep Life matchmaking tickets open.",
+      "blockers": [
+        "Atrium 0.5.24 source candidate unavailable from current public main; existing public main still reports 0.5.22.",
+        "Live Life release, reviewed launch origin, game audience proof and native acceptance not observed."
+      ]
+    },
+    {
+      "id": "TAVI-EXT-059",
+      "status": "review",
+      "next_action": "Preserve existing workboard review and obtain operator native/browser acceptance; CI/source evidence alone does not close this ticket.",
+      "blockers": [
+        "Existing v0.3.65 supplementary manifest omitted this already-planned work item; status and acceptance criteria have not been changed."
+      ]
+    },
+    {
+      "id": "TAVI-EXT-060",
+      "status": "review",
+      "next_action": "Preserve existing workboard review and obtain operator native/browser acceptance; CI/source evidence alone does not close this ticket.",
+      "blockers": [
+        "Existing v0.3.65 supplementary manifest omitted this already-planned work item; status and acceptance criteria have not been changed."
+      ]
+    },
+    {
+      "id": "TAVI-SHARED-061",
+      "status": "review",
+      "next_action": "Preserve existing workboard review and obtain operator native/browser acceptance; CI/source evidence alone does not close this ticket.",
+      "blockers": [
+        "Existing v0.3.65 supplementary manifest omitted this already-planned work item; status and acceptance criteria have not been changed."
+      ]
+    },
+    {
+      "id": "TAVI-UI-QA-062",
+      "status": "review",
+      "next_action": "Preserve existing workboard review and obtain operator native/browser acceptance; CI/source evidence alone does not close this ticket.",
+      "blockers": [
+        "Existing v0.3.65 supplementary manifest omitted this already-planned work item; status and acceptance criteria have not been changed."
       ]
     }
   ],

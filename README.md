@@ -1,3 +1,5 @@
+> **Tavi 0.3.66 hosted Life launch broker:** safe first-party Atrium handoff requires explicit Tavi Open Life click; no credentials or proofs in URL. Atrium 0.5.24 live publication/adapter and authenticated Life resume remain pending. See `docs/TAVI_ATRIUM_HOSTED_LIFE_LAUNCH_0366.adoc`.
+
 > **Tavi 0.3.65 first-party Atrium repository:** built-in optional Atrium catalog source. Publication and device acceptance pending. See `docs/TAVI_FIRST_PARTY_ATRIUM_REPOSITORY_0365.adoc`.
 
 > **Tavi 0.3.64 exact-commit CI repair:** Windows LF integrity for bundled extensions, fixed visible Games navigation in browser QA, preserved 100-ticket operator board, and triaged Android in-app updater report (no unproven native change). See `ZIPRUNNER_HANDOFF_CI_0364.md`.

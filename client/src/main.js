@@ -2,6 +2,7 @@ import {sendBugReport} from './bug-report.js';
 import {loadBundledCatalog,verifyBundledExtension,createExtensionStore,extensionStorageScope} from './extensions/store.js';
 import {extensionAssetUrl,validateExtensionManifest} from './extensions/contract.js';
 import {createExtensionHost} from './extensions/host.js';
+import {ATRIUM_EXTENSION_ID,ATRIUM_REPOSITORY_URL} from './extensions/game-launch.js';
 import {FIRST_PARTY_REPOSITORIES,createRepositorySubscriptions,fetchRepository,fetchServerRepositories,mergeRepositoryEntries,extensionSource,remoteOrigin} from './extensions/repositories.js';
 import {atriumLauncher,reviewedAtriumBase} from './atrium-launch.js';
 import './style.css';
@@ -30,7 +31,7 @@ import {petById} from './companions/catalog.js';
 import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
 import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
-const CLIENT_VERSION='0.3.65';
+const CLIENT_VERSION='0.3.66';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
@@ -50,7 +51,37 @@ let poll=null,pulse=null,connecting=false,polling=false,toastTimer=null;
 let extensionCatalog=[],extensionCatalogError='',extensionStore=null,extensionStoreScope='',extensionSelected='',extensionBusy=false;
 let extensionVerified=new Set();
 let extensionSuggested=[],extensionRepoStatuses=[],extensionRepoLoad=0;
-const extensionHost=createExtensionHost({storage:localStorage,notify:message=>toast(message),close:()=>{state.panel='app-store';render();}});
+// A sandboxed Atrium iframe can only *request* a Life launch. Tavi owns the
+// final browser click; a postMessage never inherits a gesture or game credential.
+let pendingLifeLaunch=null;
+function clearPendingLifeLaunch(){pendingLifeLaunch=null;document.querySelector('#tavi-life-launch-confirmation')?.remove();}
+function offerLifeLaunch(launch,caller){
+ if(state.panel!=='extension'||!state.api||!state.profile||extensionSelected!==ATRIUM_EXTENSION_ID||!extensionAccountStore()?.enabled(ATRIUM_EXTENSION_ID)||extensionAccountStore()?.source(ATRIUM_EXTENSION_ID)!==ATRIUM_REPOSITORY_URL||caller.scope!==extensionStoreScope||caller.extensionId!==ATRIUM_EXTENSION_ID||caller.source!==ATRIUM_REPOSITORY_URL)throw Error('Atrium session no longer active');
+ if(pendingLifeLaunch)throw Error('A Life launch is already awaiting your approval');
+ pendingLifeLaunch={launch,caller,server:state.api.origin,account:state.profile.profileId};
+ presentPendingLifeLaunch();
+ return {awaitingApproval:true};
+}
+function presentPendingLifeLaunch(){
+ document.querySelector('#tavi-life-launch-confirmation')?.remove();
+ if(!pendingLifeLaunch||state.panel!=='extension')return;
+ const toolbar=document.querySelector('.tavi-extension-toolbar');if(!toolbar){pendingLifeLaunch=null;return;}
+ const {launch}=pendingLifeLaunch;
+ const panel=document.createElement('div');panel.id='tavi-life-launch-confirmation';panel.className='tavi-life-launch-confirmation';panel.setAttribute('role','group');panel.setAttribute('aria-label','Confirm external Life launch');
+ const detail=document.createElement('span');detail.textContent=`Atrium requests opening Life at ${launch.origin} (match ${launch.matchId}). No sign-in token is shared.`;
+ const link=document.createElement('a');link.textContent='Open Life ↗';link.href=launch.url;link.target='_blank';link.rel='noopener noreferrer';link.setAttribute('data-life-launch-approve','');
+ link.addEventListener('click',event=>{
+  const p=pendingLifeLaunch;
+  if(!p||p.launch!==launch||state.panel!=='extension'||extensionSelected!==p.caller.extensionId||state.api?.origin!==p.server||state.profile?.profileId!==p.account||!extensionAccountStore()?.enabled(ATRIUM_EXTENSION_ID)||extensionAccountStore()?.source(ATRIUM_EXTENSION_ID)!==ATRIUM_REPOSITORY_URL){event.preventDefault();clearPendingLifeLaunch();toast('Life launch expired. Reopen it from Atrium.');return;}
+  // The user clicked Tavi's own control, so browsers can open without popups
+  // and Tauri invokes its approved external opener instead of iframe navigation.
+  if(isTauri()){event.preventDefault();void openUrl(launch.url).catch(e=>toast('Unable to open Life: '+String(e)));}
+  clearPendingLifeLaunch();
+ });
+ const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel';cancel.setAttribute('data-life-launch-cancel','');cancel.addEventListener('click',clearPendingLifeLaunch);
+ panel.append(detail,link,cancel);toolbar.after(panel);
+}
+const extensionHost=createExtensionHost({storage:localStorage,notify:message=>toast(message),close:()=>{clearPendingLifeLaunch();state.panel='app-store';render();},onGameLaunch:offerLifeLaunch});
 const extensionBase=()=>new URL('./',document.baseURI);
 function extensionAccountStore(){
  const scope=state.api&&state.profile?extensionStorageScope(state.api.origin,state.profile.profileId):null;
@@ -115,11 +146,11 @@ function extensionPanel(){
 }
 function attachExtensionFrame(previous){
  const slot=document.getElementById('tavi-extension-surface');
- if(!slot){extensionHost.unmount();return;}
+ if(!slot){clearPendingLifeLaunch();extensionHost.unmount();return;}
  const entry=extensionCatalog.find(e=>e.manifest.id===extensionSelected),store=extensionAccountStore();
- if(!entry||!store?.enabled(entry.manifest.id)){extensionHost.unmount();return;}
- if(previous?.dataset?.extensionId===extensionSelected){slot.append(previous);return;}
- extensionHost.unmount();
+ if(!entry||!store?.enabled(entry.manifest.id)){clearPendingLifeLaunch();extensionHost.unmount();return;}
+ if(previous?.dataset?.extensionId===extensionSelected){slot.append(previous);presentPendingLifeLaunch();return;}
+ clearPendingLifeLaunch();extensionHost.unmount();
  if(!extensionVerified.has(extensionSelected))return;
  const frame=document.createElement('iframe');
  frame.setAttribute('sandbox','allow-scripts');
@@ -127,7 +158,7 @@ function attachExtensionFrame(previous){
  frame.dataset.extensionId=extensionSelected;
  frame.src=entry.remote ? entry.remote.entrypoint : extensionAssetUrl(entry.manifest.id,entry.manifest.entrypoints.panel,extensionBase());
  slot.append(frame);
- extensionHost.mount(frame,{id:entry.manifest.id,permissions:store.permissions(entry.manifest.id),scope:extensionStoreScope});
+ extensionHost.mount(frame,{id:entry.manifest.id,permissions:store.permissions(entry.manifest.id),scope:extensionStoreScope,source:extensionSource(entry)});
 }
 async function openInstalledExtension(id){
  const entry=extensionCatalog.find(e=>e.manifest.id===id);
@@ -136,7 +167,7 @@ async function openInstalledExtension(id){
  if(extensionAccountStore()?.version(id)!==entry.manifest.version)return toast('Extension has an update. Review and approve it before opening.');
  try{
   if(!extensionVerified.has(id)){if(!entry.remote)await verifyBundledExtension(entry,{baseUrl:extensionBase()});extensionVerified.add(id);}
-  extensionSelected=id;state.panel='extension';state.mobileRoster=false;render();
+  clearPendingLifeLaunch();extensionSelected=id;state.panel='extension';state.mobileRoster=false;render();
  }catch(error){toast('Extension verification failed: '+error.message);}
 }
 async function installExtension(id){
@@ -393,6 +424,7 @@ async function reconcilePetWindow(){
 }
 function changePet(change){if(!state.connected||!state.companionKey)return;try{state.companion=change(state.companion);saveCompanion(localStorage,state.companionKey,state.companion);render();void reconcilePetWindow();}catch(error){toast('Companion change unavailable: '+error.message);}}
 function render(){
+ if(state.panel!=='extension'&&pendingLifeLaunch)clearPendingLifeLaunch();
  // Keep an active sandbox frame mounted across chat/notification polling.
  // Moving an iframe through a detached DOM tree reloads it in some WebViews.
  const existingSlot=document.getElementById('tavi-extension-surface');
@@ -405,7 +437,7 @@ function render(){
  }
  document.querySelector('body > .toast')?.remove();if(state.panel!=='settings')state.recoveryCodes=null;const entry=document.getElementById('message');if(entry&&document.activeElement===entry)state.draft=entry.value;const oldFrame=document.getElementById('portrait-frame');const oldExtensionFrame=document.querySelector('#tavi-extension-surface iframe');if(oldExtensionFrame)oldExtensionFrame.remove();const filter=document.getElementById('roster-filter');const search=filter?.value||'';const focused=document.activeElement===entry?{start:entry.selectionStart,end:entry.selectionEnd}:null;const settingsScroll=document.querySelector('.aux-content')?.scrollTop||0;const oldScroll=document.getElementById('chat-scroll');const nearBottom=!oldScroll||oldScroll.scrollHeight-oldScroll.scrollTop-oldScroll.clientHeight<90;const oldTop=oldScroll?.scrollTop;document.title=unreadTotal()?`(${unreadTotal()}) Tavi`:'Tavi';app.innerHTML=(!state.connected&&!nativeDesktop?header():'')+(state.connected?dashboard():signIn())+(state.toast?`<div class="toast" role="status">${esc(state.toast)}</div>`:'')+(state.connected?companionBadge(state.companion):'');if(oldFrame&&state.panel==='portrait')document.getElementById('portrait-frame')?.replaceWith(oldFrame);attachExtensionFrame(oldExtensionFrame);wire();const newSettings=document.querySelector('.aux-content');if(newSettings&&state.panel==='settings')newSettings.scrollTop=settingsScroll;const newFilter=document.getElementById('roster-filter');if(newFilter){newFilter.value=search;applyContactFilter(search);}if(focused){const field=document.getElementById('message');if(field){field.focus();field.setSelectionRange(focused.start,focused.end);}}if(state.panel==='messenger'){const scroll=document.getElementById('chat-scroll');if(scroll){scroll.scrollTop=nearBottom?scroll.scrollHeight:oldTop;}}}
 function applyContactFilter(query){const term=query.trim().toLowerCase();document.querySelectorAll('[data-contact-name]').forEach(node=>{node.hidden=!!term&&!node.dataset.contactName.includes(term);});}
-function stop(){++extensionRepoLoad;extensionSuggested=[];extensionRepoStatuses=[];extensionHost.unmount();extensionSelected='';extensionCatalog=[];extensionCatalogError='';extensionStore=null;extensionStoreScope='';extensionVerified=new Set();void closePetWindow();for(const label of nativeChildLabels){void WebviewWindow.getByLabel(label).then(w=>w?.close()).catch(()=>{});}nativeChildLabels.clear();mailboxWake?.close();mailboxWake=null;sessionRetry.disable();state.retryAvailable=false;state.retryOrigin='';if(pulse){pulse.onclose=null;pulse.close();pulse=null;}clearInterval(poll);poll=null;state.api=null;state.connected=false;state.companion=newCompanion();state.companionKey=null;state.profile=null;state.lobby=[];state.direct=[];state.contacts=[];state.avatarCode='';state.gameTokens.clear();state.turns=[];state.gameRooms=[];state.selectedRoomId=null;state.roomMessages=[];state.roomError='';state.interactions=[];state.selectedInteraction=null;state.interactionError='';state.catalog=[];state.catalogError='';state.atriumGames=[];state.atriumDiscoveryStatus='not_connected';state.lastCatalogAt=0;state.draft='';state.developerAllowed=false;state.developerVisible=false;state.developerInfo=null;state.developerError='';state.lastSyncAt=null;state.pulseState='disconnected';state.chatRead={};state.unread={};state.peerFeeds.clear();state.chatOffset=0;state.conversationSummaries=[];state.summarySupported=null;state.pendingAcks.clear();state.pendingRequestIds=null;state.notifyPrefs={messages:true,preview:false,requests:true};state.pushPrefs={backgroundEnabled:false};state.pushCapability=null;state.atriumUrl=null;state.pushPermission='unknown';state.step='server';state.panel='home';state.mobileRoster=true;surfaces.clear();closeEmbeddedGame();render();}
+function stop(){clearPendingLifeLaunch();++extensionRepoLoad;extensionSuggested=[];extensionRepoStatuses=[];extensionHost.unmount();extensionSelected='';extensionCatalog=[];extensionCatalogError='';extensionStore=null;extensionStoreScope='';extensionVerified=new Set();void closePetWindow();for(const label of nativeChildLabels){void WebviewWindow.getByLabel(label).then(w=>w?.close()).catch(()=>{});}nativeChildLabels.clear();mailboxWake?.close();mailboxWake=null;sessionRetry.disable();state.retryAvailable=false;state.retryOrigin='';if(pulse){pulse.onclose=null;pulse.close();pulse=null;}clearInterval(poll);poll=null;state.api=null;state.connected=false;state.companion=newCompanion();state.companionKey=null;state.profile=null;state.lobby=[];state.direct=[];state.contacts=[];state.avatarCode='';state.gameTokens.clear();state.turns=[];state.gameRooms=[];state.selectedRoomId=null;state.roomMessages=[];state.roomError='';state.interactions=[];state.selectedInteraction=null;state.interactionError='';state.catalog=[];state.catalogError='';state.atriumGames=[];state.atriumDiscoveryStatus='not_connected';state.lastCatalogAt=0;state.draft='';state.developerAllowed=false;state.developerVisible=false;state.developerInfo=null;state.developerError='';state.lastSyncAt=null;state.pulseState='disconnected';state.chatRead={};state.unread={};state.peerFeeds.clear();state.chatOffset=0;state.conversationSummaries=[];state.summarySupported=null;state.pendingAcks.clear();state.pendingRequestIds=null;state.notifyPrefs={messages:true,preview:false,requests:true};state.pushPrefs={backgroundEnabled:false};state.pushCapability=null;state.atriumUrl=null;state.pushPermission='unknown';state.step='server';state.panel='home';state.mobileRoster=true;surfaces.clear();closeEmbeddedGame();render();}
 async function activate(api){const me=await api.me();if(!me?.profile?.profileId)throw Error('Social did not return your profile');stop();await closePetWindow();state.api=api;state.connected=true;state.profile=me.profile;try{state.companionKey=storageKey(api.origin,me.profile.profileId);state.companion=loadCompanion(localStorage,state.companionKey);}catch{state.companionKey=null;state.companion=newCompanion();}state.revision=me.revision;void reconcilePetWindow();updateDeveloperPermission(me);state.avatarCode=me.profile.portraitCode||'';selectServerGames(config,api.origin);writeConfig(config);state.peer='lobby';state.panel='home';state.mobileRoster=true;try{state.chatRead=loadChatReadState(localStorage,readKey());state.notifyPrefs=loadNotificationPrefs(localStorage,notificationPrefsKey(api.origin,me.profile.profileId));state.pushPrefs=readPushPreferences(localStorage,pushKey());}catch{}render();void loadExtensionStore();void refreshPushReadiness();await loadCatalog();await refresh();mailboxWake=createWakeCoordinator(()=>refresh({mailboxOnly:true}),{isBusy:()=>polling});startPulse();poll=setInterval(()=>{void refresh();if(Date.now()-state.lastCatalogAt>=60000)void loadCatalog();},25000);}
 async function refresh({mailboxOnly=false}={}){if(!state.api||polling)return;polling=true;try{const api=state.api;
  if(!mailboxOnly){const me=await api.me();if(api!==state.api)return;updateDeveloperPermission(me);}

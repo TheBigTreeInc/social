@@ -6,11 +6,11 @@ export interface ResourceCursor { cursor?:string; limit?:number }
 export interface Balance { currencyId: CurrencyId; postedMinor: MinorUnitAmount; availableMinor: MinorUnitAmount; revision:number; cursor:string }
 export interface LedgerReceipt { schema:'tavi.ledger-receipt/v1'; transactionId:string; idempotencyKey:string; currencyId:CurrencyId; amountMinor:MinorUnitAmount; status:'posted'|'rejected'|'pending'; journalRevision:number; eventCursor:string }
 export interface TaviExtensionSDK {
-  info(): Promise<{api:string;extensionId:string}>;
+  info(): Promise<{api:string;extensionId:string;features?:string[]}>;
   /** Only implemented, currently granted host capabilities are returned. */
   capabilities():Promise<string[]>;
   storage: {get(key:string):Promise<string|null>;set(key:string,value:string):Promise<void>};
-  ui: {toast(message:string):Promise<void>;close():Promise<void>};
+  ui: {toast(message:string):Promise<void>;close():Promise<void>;/** First-party Atrium only: asks Tavi to display a Life Open/Cancel gate. */requestGameLaunch(handoff:{schema:'atrium.tavi-launch/v1';gameId:'life.loop';target:string;matchContext:{matchId:string}}):Promise<{awaitingApproval:boolean}>};
   /** Planned: requires authoritative LoopRD ledger + wallet.read grant. */
   wallet: {
     balance(params:{currencyId:CurrencyId}):Promise<Balance>;
