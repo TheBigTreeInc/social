@@ -1,11 +1,11 @@
 {
   "schema": "looprd.portrait.upstream/v1",
   "repository": "TheBigTreeInc/assets",
-  "ref": "038355cba53ff57313d23c0dfb300d80ad018e0c",
-  "verifiedAt": "2026-10-16T16:51:35.824Z",
+  "ref": "1bcd5e22acf974fdb4fee6ef1d558093481e38a4",
+  "verifiedAt": "2026-10-19T15:50:53.846Z",
   "files": {
     "portrait-kit.js": "046774cf28fd3903a40e267edd74a5c2c84a9f03cc9eff75d4e6dc6e26afaf7f",
     "portraits.js": "9ed61753884ff6d2a63288638a310aa5c9b9abef8312f107bec8237d6fec2e8f",
-    "portrait-wizard.js": "f6b547149f4176fe53b3ed83e931f5d3c31f566a72566027345479b950528613"
+    "portrait-wizard.js": "ae23e3bb4ad3e78a5c3134049603527be84b8b34ccc4ad1b569524cd03111506"
   }
 }
