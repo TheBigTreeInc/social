@@ -1,0 +1,24 @@
+= Tavi v0.3.54 — Sketch-based Home navigation
+
+== Scope
+
+The operator sketch uses three *separate* navigation affordances. Games sits on the bottom left; Messages on the bottom right. A round, slightly elevated Main menu control anchors the center. The former 0.3.53 broad, filled center pill did not follow this structure and consumed unnecessary width.
+
+== Implementation
+
+* `client/src/main.js`: Home-only nav gets SVG gamepad, elevated circular chat-dots menu symbol, and envelope; accessible labels preserved; unread Messages badge remains.
+* `client/src/style.css`: centre 70px round orb protrudes above a short pale dock. Small side controls are independently clickable and don't share pill background. Focus-visible and phone safe-area styles; small Windows 355px geometry maintained.
+* Focused conversations and the full-viewport game stage have *no* bottom nav; minimize/resume behavior from v0.3.53 is unchanged.
+* No Social server, DB schema, LoopRD descriptor, credentials, deployment or game rules changes.
+
+== Operator acceptance (open)
+
+. Import source ZIP 0.3.54 on Windows. Build an NSIS executable and inspect actual Home at 355×630 with Games left, round raised Main menu center, Messages right; centre must NOT be a wide pill.
+. Repeat at phone 320–430px and tablet/browser sizes. Ensure footer remains anchored, menu is circular and labels are legible; Android gesture/navigation safe area is respected.
+. Test all three controls with mouse, touch and keyboard and verify accessible focus, messages unread badge and no horizontal overflow.
+. Open a DM, then a supported embedded game: bottom bar must disappear; minimize and restore the same activity from Home without discarding drafts or gameplay iframe.
+. Record screenshots/logs and operator decision; source tests alone do not close `TAVI-UX-054`.
+
+== Constraints
+
+Every new ZipRunner ZIP strictly increments the client/project version; do not reuse v0.3.53, mutate the installed private config, or push/deploy without operator approval. Pending Life game API, native pet and Android updater tasks remain separate.

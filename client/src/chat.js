@@ -21,13 +21,14 @@ function redraw(){
  const previousTop=prevHistory?.scrollTop||0;
  const title=current?.title||'Conversation';
  const pendingInvite=current?.pending;
- $('chat-app').innerHTML=`<div class="pop-chat"><nav class="menubar"><span class="pop-menu">File &nbsp; Edit &nbsp; Actions &nbsp; Help</span></nav>
+ $('chat-app').innerHTML=`<div class="pop-chat"><div class="tavi-native-chat-head"><strong>✉ ${esc(title)} · Tavi</strong><button type="button" id="minimize-chat" title="Minimize to Tavi Home">− Minimize</button></div><nav class="menubar"><span class="pop-menu">File &nbsp; Edit &nbsp; Actions &nbsp; Help</span></nav>
  <div class="pop-tools"><span class="pop-contact">☻</span><strong>${esc(title)}</strong><small>${esc(current?.online?'● Online':current?.server||'Social Messenger')}</small></div>
  <div class="pop-transcript" id="history" role="log" aria-label="Conversation history">${(current?.messages||[]).map(m=>`<div class="transcript-message"><span class="transcript-heading"><strong class="${m.authorId===current?.myId?'mine':''}">${esc(m.authorId===current?.myId?'You':m.displayName)}</strong><time>${esc(stamp(m.at))}</time></span><div class="transcript-text">${esc(m.text)}</div></div>`).join('')||'<div class="empty-chat">No messages yet.</div>'}</div>
  ${pendingInvite?`<div class="pop-request">${pendingInvite==='incoming'?'This person would like to add you.':'Friend request awaiting acceptance.'}${pendingInvite==='incoming'?'<button data-accept>Accept</button>':''}</div>`:`<div class="pop-format">A &nbsp; ☺ &nbsp; ♡ <span>Enter sends · Shift+Enter new line</span></div><form id="chat-form" class="pop-composer"><textarea id="message" required maxlength="${peer==='lobby'?320:1000}" aria-label="Your message" placeholder="Type a message…">${esc(draft)}</textarea><button type="submit" class="solid">Send</button></form>`}
  <div class="window-status" id="chat-status">${esc(current?.server||'Connecting to Social…')}</div></div>`;
  if($('message')){$('message').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();e.target.form?.requestSubmit();}});}
  $('chat-form')?.addEventListener('submit',async e=>{e.preventDefault();const field=$('message');const text=field.value.trim();if(!text)return;field.disabled=true;try{current=await request('send',text);field.value='';redraw();}catch(err){field.disabled=false;$('chat-status').textContent=err.message;}});
+ $('minimize-chat')?.addEventListener('click',()=>emitTo('main','tavi-surface-minimize',{kind:'chat',id:peer}).catch(()=>{}));
  document.querySelector('[data-accept]')?.addEventListener('click',async()=>{try{current=await request('accept');redraw();}catch(err){$('chat-status').textContent=err.message;}});
  const history=$('history');if(history)history.scrollTop=nearBottom?history.scrollHeight:previousTop;
  if(hadFocus&&$('message')){$('message').focus();$('message').setSelectionRange(selection.start,selection.end);}

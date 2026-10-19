@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const read=async p=>readFile(new URL(p,import.meta.url),'utf8');
+test('Home dock is sketch-like: compact side controls and circular raised Main menu, no giant pill',async()=>{
+ const main=await read('../src/main.js');
+ const css=await read('../src/style.css');
+ const home=main.match(/function homeScreen\(\)\{[\s\S]*?\n\}/)?.[0]||'';
+ assert.match(home,/<nav class="tavi-home-dock"/);
+ assert.match(home,/class="tavi-dock-side" data-action="games"/);
+ assert.match(home,/class="tavi-home-menu" data-action="main-menu"/);
+ assert.match(home,/class="tavi-dock-orb"/);
+ assert.match(home,/class="tavi-dock-side" data-action="contacts"/);
+ assert.match(home,/class="tavi-dock-label">Messages/);
+ assert.match(css,/\.tavi-home-dock \.tavi-dock-orb\s*\{/);
+ assert.match(css,/border-radius:50%/);
+ assert.match(css,/width:70px;height:70px/);
+ assert.match(css,/\.tavi-home-dock::before\s*\{/);
+ assert.match(css,/margin-top:-28px/);
+ assert.doesNotMatch(css,/\.tavi-home-dock \.tavi-home-menu\{background:#58966e/);
+ assert.match(main,/if\(state.panel==='home'\)return/);
+});
+test('Home-only dock keeps chat/game focused and no extra nav inside game stage',async()=>{
+ const main=await read('../src/main.js');
+ const game=await read('../src/game.js');
+ assert.equal((main.match(/<nav class="tavi-home-dock"/g)||[]).length,1);
+ assert.match(main,/function focusedConversation\(/);
+ assert.match(main,/tavi-chat-focus/);
+ assert.match(game,/tavi-surface-minimize/);
+ assert.doesNotMatch(game,/tavi-home-dock/);
+});

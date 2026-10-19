@@ -2,4 +2,4 @@ import {defineConfig} from 'vite';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=dirname(fileURLToPath(import.meta.url));
-export default defineConfig({build:{rollupOptions:{input:{main:resolve(root,'index.html'),chat:resolve(root,'chat.html'),match:resolve(root,'match.html'),game:resolve(root,'game.html')}}}});
+export default defineConfig({build:{rollupOptions:{input:{main:resolve(root,'index.html'),chat:resolve(root,'chat.html'),match:resolve(root,'match.html'),game:resolve(root,'game.html'),companion:resolve(root,'companion.html')}}}});

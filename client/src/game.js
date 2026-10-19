@@ -7,7 +7,7 @@ if(!/^[a-z][a-z0-9-]{1,47}$/.test(gameId||''))throw Error('Invalid game ID');
 const label='game-'+gameId;
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let current=null,sequence=0,pending=new Map(),chatOpen=true,chatDraft='';
+let current=null,sequence=0,pending=new Map(),chatOpen=false,chatDraft='';
 function request(kind='snapshot',text=''){
  return new Promise((resolve,reject)=>{
   const requestId=++sequence;
@@ -25,13 +25,14 @@ const host=$('game-app');
 function draw(snapshot){
  const prev=$('game-frame');const same=prev?.dataset.url===snapshot.game.url;
  const messages=(snapshot.messages||[]).slice(-40);
- host.innerHTML=`<div class="tavi-player"><header><strong>✦ Tavi · ${esc(snapshot.game.name)}</strong><span>${esc(snapshot.server)}</span><button id="toggle-chat">${chatOpen?'Hide chat':'Show chat'}</button></header><section class="player-body"><div class="game-stage" id="game-stage"></div>${chatOpen?`<aside class="game-chat"><strong>Community chat</strong><div class="game-messages">${messages.map(m=>`<p><b>${esc(m.displayName)}</b>: ${esc(m.text)}</p>`).join('')||'<p>No messages yet.</p>'}</div><form id="game-chat-form"><textarea id="game-message" maxlength="320" rows="2" placeholder="Message the lobby…">${esc(chatDraft)}</textarea><button>Send</button></form></aside>`:''}</section><footer>Game identity and Social identity are separate. Game framing depends on the game's embedding policy.</footer></div>`;
+ host.innerHTML=`<div class="tavi-player"><header><strong>${esc(snapshot.game.name)}</strong><button id="minimize-game" type="button" aria-label="Minimize game to Tavi Home">− Minimize</button></header><section class="player-body"><div class="game-stage" id="game-stage"></div></section></div>`;
+ $('minimize-game').onclick=()=>emitTo('main','tavi-surface-minimize',{kind:'game',id:gameId}).catch(()=>{});
  const stage=$('game-stage');
  if(snapshot.game.embedded){
   if(same)stage.append(prev);
   else{const frame=document.createElement('iframe');frame.id='game-frame';frame.title=snapshot.game.name;frame.dataset.url=snapshot.game.url;frame.referrerPolicy='no-referrer';frame.setAttribute('sandbox','allow-scripts allow-forms allow-same-origin allow-popups');frame.src=snapshot.game.url;stage.append(frame);}
  }else stage.innerHTML='<p>This server does not allow embedding this game. Open it in your regular browser from Tavi.</p>';
- $('toggle-chat').onclick=()=>{chatOpen=!chatOpen;draw(current)};
+
  const form=$('game-chat-form');if(form){form.onsubmit=async e=>{e.preventDefault();const field=$('game-message');const msg=field.value.trim();if(!msg)return;field.disabled=true;try{current=await request('send',msg);chatDraft='';draw(current)}catch(e){field.disabled=false;field.title=e.message}};}
  $('game-message')?.addEventListener('input',e=>chatDraft=e.target.value);
  const history=document.querySelector('.game-messages');if(history)history.scrollTop=history.scrollHeight;

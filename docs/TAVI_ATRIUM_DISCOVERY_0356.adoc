@@ -1,0 +1,45 @@
+= Tavi v0.3.56 — Trusted Atrium game discovery (Social + client)
+:toc:
+
+== What this enables
+
+The v0.3.55 classic messenger roster, profile/group/search layout and raised circular Home-only dock stay intact.
+The compact My Games and full Games view now show metadata discovered by Atrium v2, including `life.loop` as `The Life Loop` when a trusted LoopRD observation is active and the Social server is configured. A discovered title **is not an automatically approved playable release**. No Life session, seat or iframe is created by catalog discovery.
+
+== Upstream contract (verified against Atrium 0.5.21 source)
+
+Use `GET /looprd/atrium/v1/registry/discovery/v2/catalog` with an Atrium `apps:read` machine service credential from the Social **server** only. Atrium schema `atrium.trusted-game-catalog/v1` returns `games[]` with `gameId`, `publisher`, `title`, `status=reviewed`, and `instances[]` with `deploymentId`, `component`, `apiBaseUrl`, `launchAvailable`, `launchUrl`, `reason`. This is separate from anonymous `atrium.catalog-snapshot/v1` (`AppRelease`) public listings. `launchAvailable` only means an operator configured a launch origin; it does *not* authorize client launch or prove real Life seat verification.
+
+Tavi's new signed-in `atrium_discovery` Social command returns `tavi.atrium-discovery/v1` with `status=connected|not_connected|unavailable` and only `gameId`, `publisher`, `title`, `status=discovered`, `instances` (count), `hostingConfigured` (boolean), `playable=false`. It never returns Atrium `apiBaseUrl`, launch URL, credential or raw JSON. Empty `games` after fail-closed errors is not a fabricated success; status remains `unavailable`.
+
+== Operator runtime config — never add secrets to ZIP or Git
+
+* `LOOPRD_TAVI_ATRIUM_DISCOVERY_URL`: exact trusted HTTPS `/looprd/atrium/v1/registry/discovery/v2/catalog` URL, bound to the approved Atrium instance. Configure this **once per Social server**, not once per game. No query, redirect, credentials or user-supplied URL.
+* `LOOPRD_TAVI_ATRIUM_READ_TOKEN`: a narrowly scoped `apps:read` service token, private to Social server runtime, never in Tavi client, logs or source. Do not use `apps:approve` or `apps:discover` for a read request.
+* `LOOPRD_TAVI_ATRIUM_BASE_URL`: existing separately reviewed public Atrium HTTPS web base ending in `/` to enable the *Browse Atrium* button. It is a browser destination, not the v2 authenticated catalog URL. Game metadata need no absolute deployment URL.
+
+Missing read URL or token returns `not_connected`; network/auth/schema failures return `unavailable`. No legacy fallback is silently promoted. The existing operator-curated `TAVI_GAME_CATALOG_JSON` still supplies previous reviewed web links only, and is rendered separately.
+
+== Trust, security and limitations
+
+* User must be signed in to Social. Guests and mismatched principals cannot call `atrium_discovery`.
+* Social reads the catalog with TLS verification, no HTTP redirects, a 3-second upstream timeout and 256 KiB response cap, with bounded game/instance sizes and strict value validation.
+* The signed-in Social client uses its own scoped Social session; Tavi never requests Atrium directly or receives `apps:read`.
+* Discovered games are **display-only** until Atrium separately publishes the hosted release and Life implements/verifies game-scoped identity and seats. No Play or Invite is enabled by mere discovery. No mock-to-live switch.
+* Home/Games refresh at login, on explicit Sync and periodically during an active session. Sign-out clears discovered state.
+* Server code changes require a separate approved deployment of Social component release `0.3.56`. DB schema stays 10. A Windows ZipRunner source import alone does not deploy the server or configure Atrium credentials.
+* No OpenClaw Life turns, native multiplayer match creation or completed end-to-end game acceptance is claimed.
+
+== Cross-service acceptance
+
+. Import exact v0.3.56 ZIP. Check 92-ticket workboard update preserves all 91 earlier records and statuses.
+. Confirm `looprd.yaml` release 0.3.56 and schema 10; deploy with approved backup and private runtime service credential. Do not delete private data.
+. Check signed-in Social `atrium_discovery` returns `life.loop` only after actual v2 observation of Life; raw Atrium authorization and API locations absent.
+. Verify an unknown/guest/disabled account cannot read; Atrium HTTP 401/403/503 or malformed JSON fail closed and leave legacy promoted games intact.
+. Withdraw or disable trusted Life observation; expect it removed on subsequent refresh, not falsely kept as a playable entry.
+. On Windows compact roster, Android and browser, verify My Games and Games show the correct states and no premature Play/Invite action. Atrium public browser launch remains an independent operator-reviewed destination.
+. Run full native NSIS and Android tests plus live cross-project verification before marking operator workboard ticket Done.
+
+== Next integration
+
+When Atrium publishes a versioned **public approved hosted-game projection** and Life confirms its public `/play` identity/seat/act contract, add a separate explicit playable target reconciliation step. Do not overload v2 `launchAvailable` as publication permission.

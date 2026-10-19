@@ -738,6 +738,115 @@ def published_games():
     return games
 
 
+# Atrium trusted-owner/v1 discovery catalog is a separate, authenticated
+# metadata surface. Social exposes a *sanitized* projection to signed-in Tavi
+# users; it never forwards Atrium service credentials, internal API routes,
+# origin bindings, or game authorization to browsers/native webviews.
+ATRIUM_GAME_ID = re.compile(r'^[a-z][a-z0-9.-]{2,119}$')
+ATRIUM_PUBLISHER = re.compile(r'^[a-z][a-z0-9-]{0,63}$')
+ATRIUM_COMPONENT = re.compile(r'^[a-z][a-z0-9-]{0,47}$')
+
+
+def project_atrium_discovery(payload):
+    """Consume Atrium's exact atrium.trusted-game-catalog/v1 projection.
+
+    A configured launch origin is NOT public publication approval; every
+    discovered entry is deliberately non-playable until Atrium supplies a
+    separate approved hosted-release and Life verifies the player's seat.
+    """
+    if (not isinstance(payload,dict) or payload.get('schema')!='atrium.trusted-game-catalog/v1'
+            or not isinstance(payload.get('games'),list) or len(payload['games'])>100):
+        raise ValueError('Invalid Atrium catalog schema')
+    result=[];seen=set()
+    for game in payload['games']:
+        if not isinstance(game,dict) or game.get('status')!='reviewed':
+            raise ValueError('Unreviewed Atrium game')
+        key=game.get('gameId');publisher=game.get('publisher');title=game.get('title')
+        instances=game.get('instances')
+        if (not isinstance(key,str) or not ATRIUM_GAME_ID.fullmatch(key)
+                or not isinstance(publisher,str) or not ATRIUM_PUBLISHER.fullmatch(publisher)
+                or not isinstance(title,str) or not 1<=len(title.strip())<=120
+                or any(ord(ch)<32 or ord(ch)==127 for ch in title)
+                or not isinstance(instances,list) or not 1<=len(instances)<=30
+                or (publisher,key) in seen):
+            raise ValueError('Invalid Atrium game metadata')
+        seen.add((publisher,key))
+        launch_configured=False
+        for instance in instances:
+            if (not isinstance(instance,dict) or not isinstance(instance.get('deploymentId'),str)
+                    or not isinstance(instance.get('component'),str)
+                    or not ATRIUM_COMPONENT.fullmatch(instance['component'])
+                    or type(instance.get('launchAvailable')) is not bool):
+                raise ValueError('Invalid Atrium instance')
+            launch_configured |= instance['launchAvailable']
+        result.append({'gameId':key,'publisher':publisher,'title':title.strip(),
+                       'status':'discovered','instances':len(instances),
+                       'hostingConfigured':launch_configured,'playable':False})
+    return result
+
+
+class _NoAtriumRedirect:
+    """Compatibility wrapper to avoid a global urllib import at module load."""
+    @staticmethod
+    def opener():
+        from urllib.request import HTTPRedirectHandler, build_opener
+        class NoRedirect(HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                return None
+        return build_opener(NoRedirect())
+
+
+def fetch_atrium_discovery():
+    """Server-only read of authenticated Atrium metadata with fail-closed states.
+
+    One operator-owned Atrium URL/credential per Social deployment, never per
+    game and never from the request. HTTP errors/invalid data cannot expose
+    secrets or synthesize a game. Strict timeout & response cap keep it bounded.
+    """
+    from urllib.parse import urlsplit
+    # Social and Atrium may share one LoopRD origin. Derive the catalog route
+    # only from operator-controlled backend configuration, never the browser's
+    # Host header, arbitrary request URL or an atriumd.yaml payload.
+    backend_origin=os.environ.get('LOOPRD_TAVI_ATRIUM_BACKEND_ORIGIN','').strip()
+    legacy_url=os.environ.get('LOOPRD_TAVI_ATRIUM_DISCOVERY_URL','').strip()
+    url=(backend_origin.rstrip('/')+'/looprd/atrium/v1/registry/discovery/v2/catalog') if backend_origin else legacy_url
+    secret=os.environ.get('LOOPRD_TAVI_ATRIUM_READ_TOKEN','')
+    if not url or not secret:
+        return {'ok':True,'schema':'tavi.atrium-discovery/v1','status':'not_connected','games':[]}
+    try:
+        import ipaddress
+        parsed=urlsplit(url)
+        hostname=(parsed.hostname or '').lower()
+        if (backend_origin and (backend_origin.rstrip('/') != f'{parsed.scheme}://{parsed.netloc}'
+                                or '/' in backend_origin.split('://',1)[-1].rstrip('/'))):
+            raise ValueError('Invalid shared-backend origin')
+        if (len(url)>512 or parsed.scheme!='https' or not hostname or parsed.username or parsed.password
+                or parsed.query or parsed.fragment or parsed.port not in (None,443)
+                or parsed.path!='/looprd/atrium/v1/registry/discovery/v2/catalog'
+                or hostname in ('localhost','localhost.localdomain')
+                or hostname.endswith(('.local','.internal','.localhost'))
+                or not 24<=len(secret)<=1024
+                or any(ord(ch)<33 or ord(ch)>126 for ch in secret)):
+            raise ValueError('Invalid private Atrium configuration')
+        try:
+            if not ipaddress.ip_address(hostname).is_global:raise ValueError('Private Atrium origin')
+        except ValueError as e:
+            if str(e)=='Private Atrium origin':raise
+        from urllib.request import Request
+        req=Request(url,headers={'Authorization':'Bearer '+secret,'Accept':'application/json',
+                                 'User-Agent':'Tavi-Discovery/1'},method='GET')
+        with _NoAtriumRedirect.opener().open(req,timeout=3.0) as response:
+            if response.status!=200:raise ValueError('Atrium catalog HTTP failure')
+            raw=response.read(262145)
+            if len(raw)>262144:raise ValueError('Oversize Atrium catalog')
+        games=project_atrium_discovery(json.loads(raw.decode('utf-8')))
+        return {'ok':True,'schema':'tavi.atrium-discovery/v1','status':'connected','games':games}
+    except (Exception):
+        # Do not expose configured URLs, service keys, private routes, response
+        # bodies or Atrium exceptions to a Social account or diagnostic log.
+        return {'ok':True,'schema':'tavi.atrium-discovery/v1','status':'unavailable','games':[]}
+
+
 # Account-consented game notifications: only the account can opt in to a match.
 GAME_ID = re.compile(r'^[a-z][a-z0-9.]{1,95}$')
 MATCH_ID = re.compile(r'^[A-Za-z0-9_-]{12,128}$')
@@ -902,6 +1011,17 @@ def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
     tokens=configured_tokens() if tokens is None else tokens
     op=body.get('op')
     now=int(time.time()) if now is None else int(now)
+    # The cross-service GET must not hold a Social database transaction open.
+    # Authenticate the actor first, then close the read transaction before
+    # retrieving Atrium metadata. Guest and mismatched principals fail closed.
+    if op == 'atrium_discovery':
+        with (nullcontext(db) if db is not None else sessions.begin()) as auth_db:
+            if principal_subject == 'guest':
+                return error('Sign in to Social first'),None
+            subject=session_identity(auth_db,body.get('token'),now) or authorize(body.get('token'),tokens)
+            if not subject or (principal_subject is not None and principal_subject!=subject):
+                return error('Sign in to Social first'),None
+        return fetch_atrium_discovery(),None
     try:
         with (nullcontext(db) if db is not None else sessions.begin()) as db:
             if principal_subject is not None:

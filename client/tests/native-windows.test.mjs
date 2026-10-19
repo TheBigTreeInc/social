@@ -27,7 +27,7 @@ test('native windows are real separate webviews, not a wide two-column dashboard
  const caps=JSON.parse(await read('../src-tauri/capabilities/default.json'));
  const chatCaps=JSON.parse(await read('../src-tauri/capabilities/conversations.json'));
  assert.match(code,/new WebviewWindow\(label,/);
- assert.match(code,/if\(nativeDesktop\)return/);
+ assert.match(code,/if\(nativeDesktop&&chatting\)return/);
  assert.match(code,/if\(nativeDesktop\)\{await openChatWindow\(peer\)/);
  assert.match(code,/if\(name==='messenger'&&nativeDesktop\)/);
  assert.match(chat,/emitTo\('main','social-chat-request'/);

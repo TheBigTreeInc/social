@@ -1,0 +1,30 @@
+= Tavi 0.3.55 — Classic roster Home restoration
+:toc:
+
+== Design decision
+
+The operator approved the v0.3.54 raised circular bottom Games / Main menu / Messages dock, but prefers the earlier MSN/Yahoo Messenger/Xfire-style information density above it. Keep the old proven contact roster component instead of replacing it with modern oversized summary cards. Client-side only.
+
+== Home
+
+* Classic File, Contacts, Actions, Tools, Help menu bar (native titlebar is provided by Windows).
+* Own portrait, username, presence, account reference and connected server identity.
+* Existing compact actions: Add, Chat, Picture, Games, Pet, Inbox and Sync.
+* Contact search; Community Lobby and recent conversations; collapsible Online, Offline, Requests, and Pending groups; unread badges.
+* Minimized game/chat activity chips with explicit resume actions, inside the roster.
+* My Games with monitored turn alerts and quick actions; bottom connection status.
+* Forest green / mint / cream palette, without changing source data or underlying authorization rules.
+* Preserve v0.3.54 raised round Main menu between small Games and Messages controls, **only on Home**.
+
+== Focused content
+
+Conversation and embedded game surfaces are separate; the global three-icon Home footer does not render there. Windows secondary native chat/game windows remain brokered through the authenticated main window. Only supported embedded games are minimizable; an external browser remains external.
+
+== Operator acceptance (source tests do not suffice)
+
+. Install via ZipRunner on Windows. Inspect actual 355px Home after signing in, compare group counts and toolbar to the legacy screenshot.
+. At 320px phone and larger tablet widths, verify overflow, native safe areas, the toolbar, scroll and minimize actions.
+. Verify account/server switching and signout clear minimized surfaces and keep private data isolated.
+. Verify search, group state, lobby, messaging, monitoring and UI focus behavior across restarts.
+. Verify native Windows NSIS and Android builds. No API, SQL schema or LoopRD descriptor change is required.
+

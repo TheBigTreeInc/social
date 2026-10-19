@@ -2,7 +2,7 @@ import {sendBugReport} from './bug-report.js';
 import {atriumLauncher,reviewedAtriumBase} from './atrium-launch.js';
 import './style.css';
 import {checkTaviRelease,RELEASES_URL} from './release-updates.js';
-import {LooprdSocial,discoverGames,discoverSocial,loginSocial,registerSocial,recoverSocial,componentPath,gameActivity,newTurnKeys} from './protocol.js';
+import {LooprdSocial,discoverGames,discoverAtriumGames,discoverSocial,loginSocial,registerSocial,recoverSocial,componentPath,gameActivity,newTurnKeys} from './protocol.js';
 import {readConfig,writeConfig,selectServerGames,seenStorageKey,previousTurnKeys} from './persistence.js';
 import {createDeviceSessionStore} from './device-session.js';
 import {classifySessionFailure,createSessionRetry} from './session-recovery.js';
@@ -14,22 +14,33 @@ import {createWakeCoordinator} from './sync-coordinator.js';
 import {readStateKey,loadChatReadState,saveChatReadState,reconcileDirectFeed,acknowledgeDirectFeed,chatPollPeers,reconcileConversationSummary,notificationPrefsKey,loadNotificationPrefs,saveNotificationPrefs} from './message-state.js';
 import {isTauri,invoke} from '@tauri-apps/api/core';
 import {WebviewWindow} from '@tauri-apps/api/webviewWindow';
+import {getCurrentWindow} from '@tauri-apps/api/window';
+import {PhysicalPosition} from '@tauri-apps/api/dpi';
 import {listen, emitTo} from '@tauri-apps/api/event';
 import {isValidChatPeer,chatWindowLabel} from './native-windows.js';
 import {isValidMatchRoom,matchWindowLabel} from './match-windows.js';
 import {openUrl} from '@tauri-apps/plugin-opener';
+import {newCompanion,loadCompanion,saveCompanion,storageKey,tickCompanion,performCare,changeMode,selectCompanion,updatePreferences,dismissSuggestion} from './companions/engine.js';
+import {companionPanel,companionBadge,petSprite} from './companions/view.js';
+import {petById} from './companions/catalog.js';
+import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
+import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
-const CLIENT_VERSION='0.3.48';
+const CLIENT_VERSION='0.3.57';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
+// Desktop includes Linux/macOS; the floating native window is Windows-only in this pass.
+const nativeWindowsPet=nativeDesktop && /Windows/i.test(navigator.userAgent);
 const sessionStore=createDeviceSessionStore({windows:nativeDesktop&&/Windows/i.test(navigator.userAgent),invoke,local:localStorage,session:sessionStorage});
 if(nativeDesktop)document.documentElement.classList.add('native-shell');
 if(isTauri() && /Android/i.test(navigator.userAgent))document.documentElement.classList.add('android-shell');
 const config=readConfig();
-const state={recoverySupported:false,recoveryCodes:null,recoveryMessage:'',authError:'',reportStatus:'',reportStage:'login',reportCode:'LOGIN_FAILED',reportSending:false,friendError:'',api:null,profile:null,revision:0,connected:false,serverStatus:'',serverSupportsAccounts:false,
-  step:'server',authTab:'register',panel:'messenger',peer:'lobby',contacts:[],lobby:[],direct:[],
-  interactions:[],interactionError:'',selectedInteraction:null,inboxFilter:'open',turns:[],gameErrors:{},catalog:[],catalogError:'',gameTokens:new Map(),toast:'',mute:false,draft:'',selectedGame:'',avatarCode:'',busy:false,
+const surfaces=createSurfaceRegistry();
+const nativeChildLabels=new Set();
+const state={companion:newCompanion(),companionKey:null,recoverySupported:false,recoveryCodes:null,recoveryMessage:'',authError:'',reportStatus:'',reportStage:'login',reportCode:'LOGIN_FAILED',reportSending:false,friendError:'',api:null,profile:null,revision:0,connected:false,serverStatus:'',serverSupportsAccounts:false,
+  step:'server',authTab:'register',panel:'home',peer:'lobby',contacts:[],lobby:[],direct:[],
+  interactions:[],interactionError:'',selectedInteraction:null,inboxFilter:'open',turns:[],gameErrors:{},catalog:[],catalogError:'',atriumGames:[],atriumDiscoveryStatus:'not_connected',lastCatalogAt:0,gameTokens:new Map(),toast:'',mute:false,draft:'',selectedGame:'',avatarCode:'',busy:false,
   sessionRemembered:false,retryAvailable:false,retryOrigin:'',developerAllowed:false,developerVisible:false,developerInfo:null,developerError:'',lastSyncAt:null,pulseState:'disconnected',mobileRoster:true,restoring:false,chatRead:{},unread:{},peerFeeds:new Map(),chatOffset:0,conversationSummaries:[],summarySupported:null,pendingAcks:new Map(),pendingRequestIds:null,notifyPrefs:{messages:true,preview:false,requests:true},pushPrefs:{backgroundEnabled:false},pushCapability:null,pushPermission:'unknown',atriumUrl:null,gameRooms:[],selectedRoomId:null,roomMessages:[],roomError:'',roomDraft:'',settingsExpanded:{chat:false,push:false},rosterGroups:{online:true,offline:true,requests:true,pending:true,conversations:true}};
 let poll=null,pulse=null,connecting=false,polling=false,toastTimer=null;
 let mailboxWake=null;
@@ -82,23 +93,28 @@ const peerVisible=peer=>!nativeDesktop && state.panel==='messenger' && state.pee
 const toast=(msg)=>{state.toast=String(msg);render();clearTimeout(toastTimer);toastTimer=setTimeout(()=>{state.toast='';render();},5000)};
 function avatar(name,online=false){return `<span class="avatar ${online?'active':''}">${initial(name)}</span>`;}
 function header(){return `<header class="top"><span class="brand-icon" aria-hidden="true"></span><strong>Tavi</strong><span class="top-version">Games &amp; friends</span><span class="server-chip"><span class="presence ${state.connected?'online':''}"></span>${state.connected?esc(new URL(state.api.origin).host):'Disconnected'}</span><button type="button" class="chrome-button" data-action="settings" title="Options" aria-label="Options">⚙</button></header>`;}
-function menuBar(compact=false){return `<nav class="menubar" aria-label="Messenger menu"><details class="menu-drop"><summary>File</summary><div class="menu-options"><button data-action="settings">Options…</button><button data-action="signout">Sign out</button></div></details><details class="menu-drop"><summary>Contacts</summary><div class="menu-options"><button data-action="contacts">Contact list</button><button data-action="add-friend">Add a contact…</button></div></details><details class="menu-drop"><summary>Actions</summary><div class="menu-options"><button data-action="messenger">Conversations</button><button data-action="games">Games &amp; alerts</button><button data-action="atrium">Open Atrium ↗</button><button data-action="inbox">Interactive inbox</button><button data-action="notifications">Enable alerts</button></div></details><details class="menu-drop"><summary>Tools</summary><div class="menu-options"><button data-action="portrait">Change portrait…</button><button data-action="settings">Settings…</button>${state.developerAllowed&&state.developerVisible?'<button data-action="developer">Admin / Debug</button>':''}</div></details><details class="menu-drop"><summary>Help</summary><div class="menu-options"><button data-action="about">About Tavi</button><button data-action="check-updates">Check for updates…</button>${updateInfo?'<button data-action="download-update">Download Tavi '+esc(updateInfo.version)+'</button>':''}</div></details></nav>`;}
+function menuBar(compact=false){return `<nav class="menubar" aria-label="Messenger menu"><details class="menu-drop"><summary>File</summary><div class="menu-options"><button data-action="settings">Options…</button><button data-action="signout">Sign out</button></div></details><details class="menu-drop"><summary>Contacts</summary><div class="menu-options"><button data-action="contacts">Contact list</button><button data-action="add-friend">Add a contact…</button></div></details><details class="menu-drop"><summary>Actions</summary><div class="menu-options"><button data-action="messenger">Conversations</button><button data-action="games">Games &amp; alerts</button><button data-action="atrium">Open Atrium ↗</button><button data-action="inbox">Interactive inbox</button><button data-action="notifications">Enable alerts</button></div></details><details class="menu-drop"><summary>Tools</summary><div class="menu-options"><button data-action="portrait">Change portrait…</button><button data-action="companion">Companions…</button><button data-action="settings">Settings…</button>${state.developerAllowed&&state.developerVisible?'<button data-action="developer">Admin / Debug</button>':''}</div></details><details class="menu-drop"><summary>Help</summary><div class="menu-options"><button data-action="about">About Tavi</button><button data-action="check-updates">Check for updates…</button>${updateInfo?'<button data-action="download-update">Download Tavi '+esc(updateInfo.version)+'</button>':''}</div></details></nav>`;}
 function windowCaption(title,actions=''){return `<div class="window-titlebar"><span class="caption-mark" aria-hidden="true"></span><strong>${esc(title)}</strong><span class="window-actions">${actions}</span></div>`;}
 function signIn(){return `<div class="login-desktop"><section class="welcome classic-window" aria-label="Sign in to Tavi">${windowCaption('Tavi · Sign in')}<nav class="menubar" aria-label="Sign in menu"><button class="auth-menu-action" type="button" data-action="about">Help</button></nav><div class="welcome-body"><div class="welcome-icon" aria-hidden="true"><span class="welcome-mark"></span></div><div class="welcome-brand">Tavi</div><p class="welcome-caption">Games. Friends. Together.</p><form id="server-form" class="auth-form"><label>LoopRD server address<input name="server" type="url" placeholder="https://your-server.example" required value="${esc(config.server)}" autocomplete="url"></label><div class="right-actions"><button class="solid" ${connecting?'disabled':''}>Connect…</button></div></form>${state.serverStatus?`<div class="notice" role="status">${esc(state.serverStatus)}</div>`:''}${state.retryAvailable?`<div class="session-retry" role="group" aria-label="Saved device sign-in"><span>Remembered account on ${esc(new URL(state.retryOrigin).host)}</span><button type="button" data-action="retry-session" ${state.restoring?'disabled':''}>${state.restoring?'Connecting…':'Retry saved sign-in'}</button><button type="button" data-action="switch-account">Use another account</button></div>`:''}${state.step==='account'?`<div class="loginbox"><div class="switch"><button type="button" data-auth="login" class="${state.authTab==='login'?'picked':''}">Sign in</button><button type="button" data-auth="register" class="${state.authTab==='register'?'picked':''}">Create account</button>${state.recoverySupported?`<button type="button" data-auth="recover" class="${state.authTab==='recover'?'picked':''}">Recover account</button>`:''}</div><form id="auth-form" class="auth-form"><label>Username<input name="username" minlength="3" maxlength="24" required autocomplete="username" placeholder="Username"></label>${state.authTab==='recover'?`<label>Recovery code<input name="recoveryCode" required maxlength="44" spellcheck="false" autocomplete="off" placeholder="TAVI-XXXX-..."></label>`:''}<label>${state.authTab==='recover'?'New password':'Password'}<input name="password" type="password" minlength="12" maxlength="128" required autocomplete="${state.authTab==='login'?'current-password':'new-password'}"></label><label class="remember-device"><input name="remember" type="checkbox" value="yes"> Keep me signed in on this device</label><p class="small-help">Use 3–24 lowercase letters, digits or underscores; start with a letter. Password: 12–128 characters.</p>${state.authError?`<p class="notice" role="alert">${esc(state.authError)}</p>`:''}<div class="right-actions"><button class="solid" ${connecting?'disabled':''}>${state.authTab==='register'?'Create account':state.authTab==='recover'?'Recover account':'Sign in'}</button></div></form><p class="small-help">Windows encrypts the remembered session in a file protected by your Windows account. Only enable remembering on a trusted device.</p>${state.recoverySupported?'<p class="small-help">Lost your password? Use a recovery code saved earlier under Settings &amp; account. Recovery signs out your other devices.</p>':''}<p class="small-help">Accounts and chats belong to the Social component on this server. No developer token or external identity provider needed.</p></div>`:''}</div><div class="report-login"><details ${state.reportStatus?'open':''}><summary>Report a login problem to LoopRD</summary><p class="small-help">Sends Tavi version, platform and a generic failure code to your LoopRD server. Do not include passwords, usernames, tokens or personal details.</p><label>Optional description<textarea id="bug-report-note" maxlength="400" placeholder="What happened? (no personal information)"></textarea></label><button type="button" data-action="send-bug-report" ${state.reportSending?'disabled':''}>${state.reportSending?'Sending…':'Send report to LoopRD'}</button>${state.reportStatus?`<p class="small-help" role="status">${esc(state.reportStatus)}</p>`:''}</details></div><div class="window-status">${state.step==='account'?'Server found — sign in or create an account':'Enter your community server to continue'}</div></section></div>`;}
 function buddyRow(peer){const isCurrent=state.peer===peer.id&&state.panel==='messenger';const badge=peer.status==='pending'?peer.direction==='incoming'?'Wants to add you':'Invitation sent':peer.online?'Online':'Offline';const unread=peer.status==='accepted'?(state.unread[peer.id]||0):0;const summary=state.conversationSummaries.find(x=>x.peer===peer.id);const preview=summary?.latest?(state.notifyPrefs.preview?String(summary.latest.text).slice(0,65):'Recent message · '+stamp(summary.latest.at)):'';return `<button class="buddy ${isCurrent?'chosen':''}" data-peer="${esc(peer.id)}" data-contact-name="${esc(peer.username.toLowerCase())}">${avatar(peer.username,peer.online&&peer.status==='accepted')}<span class="buddy-copy"><strong>${esc(peer.username)}</strong><small>${esc(preview||badge)}</small></span>${unread?`<span class="unread-badge" aria-label="${unread} unread messages">${unread===99?'99+':unread}</span>`:''}${peer.status==='pending'&&peer.direction==='incoming'?'<span class="req-badge">!</span>':''}</button>`;}
 function rosterGroup(id,title,peers,empty=''){return `<div class="roster-group"><button type="button" class="group-title" data-group="${id}" aria-expanded="${state.rosterGroups[id]!==false?'true':'false'}"><span class="arrow">${state.rosterGroups[id]!==false?'▾':'▸'}</span>${esc(title)} (${peers.length})</button><div class="group-entries" ${state.rosterGroups[id]===false?'hidden':''}>${peers.map(buddyRow).join('')||`<span class="empty-buddies">${esc(empty)}</span>`}</div></div>`;}
-function compactGames(){const turns=state.turns.filter(t=>t.status==='your-turn');return `<div class="games-strip"><div class="roster-label"><strong>My Games</strong><button data-action="add-game" title="Add game component" aria-label="Add game component">＋</button></div>${config.games.length?config.games.map(game=>`<button type="button" class="mini-game" data-game="${esc(game)}"><span aria-hidden="true">♟</span><span>${esc(game)}</span><small>${state.turns.filter(t=>t.game===game&&t.status==='your-turn').length||''}</small></button>`).join(''):'<p class="roster-note">Add a game to watch your turns.</p>'}${turns.slice(0,3).map(t=>`<button class="mini-alert" data-route="${esc(t.path||'')}" ${!t.path?'disabled':''}><span class="alert-dot">!</span>${esc(t.title)}</button>`).join('')}<div class="roster-quick"><button data-action="games">Games</button><button data-action="notifications">Turn alerts</button></div></div>`;}
-function contactPane(){const accepted=state.contacts.filter(x=>x.status==='accepted');const recent=state.conversationSummaries.filter(x=>x.latest).map(x=>state.contacts.find(c=>c.id===x.peer)).filter(Boolean);const recentIds=new Set(recent.map(c=>c.id));const online=accepted.filter(x=>x.online&&!recentIds.has(x.id)),offline=accepted.filter(x=>!x.online&&!recentIds.has(x.id));const incoming=state.contacts.filter(x=>x.status==='pending'&&x.direction==='incoming');const pending=state.contacts.filter(x=>x.status==='pending'&&x.direction==='outgoing');return `<aside class="classic-window roster-window ${state.mobileRoster?'mobile-active':''}" aria-label="Contact list">${windowCaption('Tavi', '<button class="chrome-button" data-action="settings" title="Settings">⚙</button>')}${menuBar()}<div class="roster-profile">${avatar(state.profile?.displayName||'Me',true)}<div><strong>${esc(state.profile?.displayName||'Me')}</strong><small><span class="presence online"></span>Available</small><span class="personal-message">${esc(state.profile?.profileId||'')} · ${esc(new URL(state.api.origin).host)}</span></div><button title="Edit profile" data-action="settings" class="chrome-button">▾</button></div><div class="roster-toolbar"><button data-action="add-friend" title="Add a contact"><span>♧</span> Add</button><button data-action="messenger" title="Open lobby"><span>✉</span> Chat${unreadTotal()?` (${unreadTotal()})`:``}</button><button data-action="portrait" title="Your portrait"><span>☺</span> Picture</button><button data-action="games" title="Open game library"><span>♟</span> Games</button><button data-action="inbox" title="Interactive notifications"><span>✉</span> Inbox${state.interactions.filter(e=>e.status==='open').length?` (${state.interactions.filter(e=>e.status==='open').length})`:``}</button><button data-action="refresh" title="Refresh"><span>⟳</span> Sync</button></div><div class="roster-search"><span aria-hidden="true">⌕</span><input type="search" id="roster-filter" aria-label="Find a contact" placeholder="Search for a contact…" autocomplete="off"></div><div class="roster-scroll"><div class="roster-group"><button type="button" class="group-title" data-group="conversations" aria-expanded="${state.rosterGroups.conversations!==false}"><span class="arrow">${state.rosterGroups.conversations!==false?'▾':'▸'}</span>Conversations</button><div class="group-entries" ${state.rosterGroups.conversations===false?'hidden':''}><button data-peer="lobby" data-contact-name="community lobby" class="buddy ${state.peer==='lobby'&&state.panel==='messenger'?'chosen':''}"><span class="avatar lobby-icon">✉</span><span class="buddy-copy"><strong>Community Lobby</strong><small>Public server chat</small></span></button>${recent.map(buddyRow).join('')}</div></div>${rosterGroup('online','Online',online,'No friends online')}${rosterGroup('offline','Offline',offline,'No offline contacts')}${incoming.length?rosterGroup('requests','Friend requests',incoming):''}${pending.length?rosterGroup('pending','Pending',pending):''}</div>${compactGames()}${updateInfo?`<div class="tavi-update-notice" role="status"><strong>Tavi ${esc(updateInfo.version)} available</strong><button data-action="download-update">Update ↗</button><button data-action="dismiss-update" title="Hide this update">Not now</button></div>`:''}<div class="window-status"><span class="presence online"></span>${online.length} online · ${accepted.length} contacts · ${unreadTotal()} unread<span class="status-right">Social connected</span></div></aside>`;}
+function compactGames(){const turns=state.turns.filter(t=>t.status==='your-turn');return `<div class="games-strip"><div class="roster-label"><strong>My Games</strong><button data-action="add-game" title="Add game component" aria-label="Add game component">＋</button></div>${config.games.length?config.games.map(game=>`<button type="button" class="mini-game" data-game="${esc(game)}"><span aria-hidden="true">♟</span><span>${esc(game)}</span><small>${state.turns.filter(t=>t.game===game&&t.status==='your-turn').length||''}</small></button>`).join(''):'<p class="roster-note">Add a game to watch your turns.</p>'}${state.atriumGames.slice(0,3).map(g=>`<button type="button" class="mini-game tavi-discovered-mini" data-action="games" title="Discovered by Atrium; match launch is not yet approved"><span aria-hidden="true">♟</span><span>${esc(g.title)}</span><small>Discovered</small></button>`).join('')}${turns.slice(0,3).map(t=>`<button class="mini-alert" data-route="${esc(t.path||'')}" ${!t.path?'disabled':''}><span class="alert-dot">!</span>${esc(t.title)}</button>`).join('')}<div class="roster-quick"><button data-action="games">Games</button><button data-action="notifications">Turn alerts</button></div></div>`;}
+function contactPane(homeMode=false){const accepted=state.contacts.filter(x=>x.status==='accepted');const recent=state.conversationSummaries.filter(x=>x.latest).map(x=>state.contacts.find(c=>c.id===x.peer)).filter(Boolean);const recentIds=new Set(recent.map(c=>c.id));const online=accepted.filter(x=>x.online&&!recentIds.has(x.id)),offline=accepted.filter(x=>!x.online&&!recentIds.has(x.id));const incoming=state.contacts.filter(x=>x.status==='pending'&&x.direction==='incoming');const pending=state.contacts.filter(x=>x.status==='pending'&&x.direction==='outgoing');return `<aside class="classic-window roster-window ${homeMode?'tavi-home-roster':''} ${state.mobileRoster?'mobile-active':''}" aria-label="Contact list">${windowCaption('Tavi', '<button class="chrome-button" data-action="home" title="Home">⌂</button>')}${menuBar()}<div class="roster-profile tavi-identity-strip">${avatar(state.profile?.displayName||'Me',true)}<div class="tavi-identity-text"><strong>${esc(state.profile?.displayName||'Me')}</strong><small><span class="presence online"></span>Available</small><span class="personal-message">${esc(state.profile?.profileId||'')} · ${esc(new URL(state.api.origin).host)}</span></div><div class="tavi-identity-actions"><button type="button" data-action="inbox" class="tavi-profile-activity" title="Activity and notifications" aria-label="Activity and notifications"><span aria-hidden="true">✦</span>${state.interactions.filter(e=>e.status==='open').length?`<b>${state.interactions.filter(e=>e.status==='open').length}</b>`:''}</button><button type="button" title="Profile and status settings" aria-label="Profile and status settings" data-action="settings" class="chrome-button">▾</button>${state.companion?.enabled?`<button type="button" data-action="companion" class="tavi-profile-pet" title="Care for ${esc(state.companion.name)}" aria-label="Your pet ${esc(state.companion.name)}">${petSprite(petById(state.companion.petId),{small:true})}<small>${esc(state.companion.name)}</small></button>`:''}</div></div><div class="roster-toolbar tavi-action-toolbar" aria-label="Quick actions"><button data-action="add-friend" title="Add contact"><span>♧</span>Add</button><button data-action="portrait" title="Change portrait"><span>☺</span>Portrait</button><button data-action="refresh" title="Refresh contacts and games"><span>⟳</span>Sync</button><button data-action="settings" title="Preferences and tools"><span>⚙</span>Options</button></div><div class="roster-search"><span aria-hidden="true">⌕</span><input type="search" id="roster-filter" aria-label="Find a contact" placeholder="Search for a contact…" autocomplete="off"></div><div class="roster-scroll"><div class="roster-group"><button type="button" class="group-title" data-group="conversations" aria-expanded="${state.rosterGroups.conversations!==false}"><span class="arrow">${state.rosterGroups.conversations!==false?'▾':'▸'}</span>Conversations</button><div class="group-entries" ${state.rosterGroups.conversations===false?'hidden':''}><button data-peer="lobby" data-contact-name="community lobby" class="buddy ${state.peer==='lobby'&&state.panel==='messenger'?'chosen':''}"><span class="avatar lobby-icon">✉</span><span class="buddy-copy"><strong>Community Lobby</strong><small>Public server chat</small></span></button>${recent.map(buddyRow).join('')}</div></div>${rosterGroup('online','Online',online,'No friends online')}${rosterGroup('offline','Offline',offline,'No offline contacts')}${homeMode?homeMinimized(true):''}${incoming.length?rosterGroup('requests','Friend requests',incoming):''}${pending.length?rosterGroup('pending','Pending',pending):''}</div>${compactGames()}${updateInfo?`<div class="tavi-update-notice" role="status"><strong>Tavi ${esc(updateInfo.version)} available</strong><button data-action="download-update">Update ↗</button><button data-action="dismiss-update" title="Hide this update">Not now</button></div>`:''}<div class="window-status"><span class="presence online"></span>${online.length} online · ${accepted.length} contacts · ${unreadTotal()} unread<span class="status-right">Social connected</span></div></aside>`;}
 function activePeer(){return state.contacts.find(x=>x.id===state.peer);}
+function focusedConversation(){
+ const peer=activePeer(),lobby=state.peer==='lobby',title=lobby?'Community Lobby':peer?.displayName||peer?.username||'Conversation';
+ const messages=lobby?state.lobby:state.direct,pending=!lobby&&peer?.status!=='accepted';
+ return `<section class="tavi-modern-chat" aria-label="Conversation with ${esc(title)}"><header class="tavi-chat-top"><button type="button" data-action="minimize-view" aria-label="Minimize conversation to Home">←</button>${avatar(title,peer?.online)}<div><strong>${esc(title)}</strong><small>${lobby?'Community':pending?'Friend request pending':peer?.online?'● Online':'Offline'}</small></div><button type="button" data-action="minimize-view" class="tavi-chat-minimize" aria-label="Minimize to Home">−</button></header><div class="tavi-chat-history" id="chat-scroll" role="log" aria-label="Messages">${messages.length?messages.map(m=>{const mine=m.authorId===state.profile?.profileId;return `<div class="tavi-chat-line ${mine?'mine':'theirs'}"><div class="tavi-chat-bubble">${esc(m.text)}</div><time>${stamp(m.at)}</time></div>`;}).join(''):'<div class="tavi-chat-empty">Say hello!</div>'}</div>${pending?`<div class="tavi-chat-pending"><p>${peer?.direction==='incoming'?'Accept this contact to start chatting.':'Waiting for your contact to accept.'}</p>${peer?.direction==='incoming'?'<button type="button" data-action="accept-friend">Accept friend</button>':''}</div>`:`<form id="message-form" class="tavi-chat-compose"><textarea name="message" id="message" rows="2" maxlength="${lobby?'320':'1000'}" placeholder="Write a message…" required>${esc(state.draft)}</textarea><button type="submit" class="solid" ${state.busy?'disabled':''} aria-label="Send message">➤</button></form>`}</section>`;
+}
 function conversation(){const peer=activePeer();const lobby=state.peer==='lobby';const pending=!lobby&&peer?.status!=='accepted';const messages=lobby?state.lobby:state.direct;const title=lobby?'Community Lobby':(peer?.username||'Conversation');return `<section class="conversation classic-window" aria-label="Conversation with ${esc(title)}">${windowCaption(title+' – Conversation', '<button data-action="contacts" class="chrome-button mobile-back" title="Contacts">←</button>')}${menuBar(true)}<div class="conversation-tools"><button data-action="add-friend"><span>♧</span> Invite</button><button data-action="games"><span>♟</span> Games</button><button data-action="notifications"><span>♬</span> Alerts</button><button data-action="portrait"><span>☺</span> Picture</button>${!lobby&&peer?'<button data-action="remove-friend"><span>×</span> Remove</button>':''}</div><div class="chat-heading"><div class="chat-heading-left">${avatar(lobby?'#':title,peer?.online)}<div><h2>${esc(title)}</h2><small>${lobby?'Shared conversation on this server':pending?'Contact invitation pending':peer?.online?'Online':'Offline'}</small></div></div></div>${pending?`<div class="request-panel"><h3>${peer?.direction==='incoming'?'Friend request received':'Friend request sent'}</h3><p>${peer?.direction==='incoming'?'Accept to start a private conversation.':'Waiting for your friend to accept.'}</p>${peer?.direction==='incoming'?'<button class="solid" data-action="accept-friend">Accept request</button>':''}</div>`:`<div class="chat-content"><div class="chat-scroll" id="chat-scroll" role="log" aria-label="Messages" aria-live="off">${messages.length?messages.map(m=>{const mine=m.authorId===state.profile?.profileId;return `<div class="transcript-message"><div class="transcript-heading"><strong class="${mine?'mine':''}">${mine?'You':esc(m.displayName||title)}</strong><time>${stamp(m.at)}</time></div><div class="transcript-text">${esc(m.text)}</div></div>`;}).join(''):'<div class="empty-chat"><strong>Welcome to this conversation</strong><p>Messages will appear here.</p></div>'}</div><div class="participant-pane"><div class="participant-avatar">${avatar(lobby?'#':title,peer?.online)}</div><span>${esc(lobby?'Lobby':title)}</span><small>${lobby?'Community':peer?.online?'Online':'Contact'}</small></div></div><div class="compose-toolbar"><button title="Message formatting" type="button" data-action="format-help"><b style="font-family:Georgia,serif;font-size:17px">A</b> ▾</button><button type="button" data-action="portrait" title="Character portrait">☺ ▾</button><span>Enter to send · Shift+Enter for a new line</span></div><form id="message-form" class="composer"><textarea name="message" id="message" rows="3" maxlength="${lobby?'320':'1000'}" placeholder="Type your message here…" required>${esc(state.draft)}</textarea><div class="send-controls"><button class="solid" ${state.busy?'disabled':''}>Send</button></div></form>`}<div class="window-status"><span class="presence ${lobby||peer?.online?'online':''}"></span>${esc(lobby?'Public server lobby':'Private message')}${state.lastSyncAt?`<span class="status-right">Last update ${new Date(state.lastSyncAt).toLocaleTimeString()}</span>`:''}</div></section>`;}
 function addFriend(){return `<section class="utility"><h2>Add a friend</h2><p>Find someone on this Tavi server by username. Federation between servers is planned, but not enabled yet.</p><form id="friend-form" class="auth-form"><label>Friend's username<input name="username" required minlength="3" maxlength="24" pattern="[a-z][a-z0-9_]{2,23}" placeholder="e.g. alex_42" autocomplete="off"></label>${state.friendError?`<p class="notice" role="alert">${esc(state.friendError)}</p>`:''}<div class="row-actions"><button class="solid">Send friend request</button><button type="button" data-action="contacts">Cancel</button></div></form><p class="fineprint">Friends must accept before private messages become available. A username on a different server cannot be added yet.</p></section>`;}
 function gameRoomPanel(){
  const room=state.gameRooms.find(r=>r.roomId===state.selectedRoomId);
  const available=state.gameRooms.length?state.gameRooms.map(r=>
   `<button type="button" data-select-game-room="${esc(r.roomId)}" class="${state.selectedRoomId===r.roomId?'picked':''}">♟ ${esc(r.gameId)} · ${esc(r.matchId.slice(0,24))} (${Number(r.participants)||0} players)</button>`).join(''):
-  '<p class="fineprint">No verified match chats yet. Accept a game invitation and wait for the game backend to register your seat.</p>';
- return `<section class="game-room-panel" aria-label="Private match conversations"><h3>Match conversations</h3>
- <p class="fineprint">Private to consenting players confirmed by the game. Match rules and player seats remain with the game.</p>
+  '<p class="fineprint">No active matches yet. When a game confirms your place, it will appear here.</p>';
+ return `<section class="game-room-panel" aria-label="Private match conversations"><h3>Your matches</h3>
+ <p class="fineprint">Chats appear alongside matches you have joined.</p>
  ${state.roomError?`<p class="notice" role="alert">${esc(state.roomError)}</p>`:''}
  <div class="row-actions game-room-list">${available}</div>
  ${room?`<div class="game-room-thread"><h4>${esc(room.gameId)} · Match chat</h4>${nativeDesktop?`<button type="button" data-open-match-window="${esc(room.roomId)}">Open separate chat window ↗</button>`:''}
@@ -109,27 +125,17 @@ function gameRoomPanel(){
 }
 function gameSettings(){
  const friends=state.contacts.filter(c=>c.status==='accepted');
- const options=`<option value="">Choose a friend or your OpenClaw account…</option>`+friends.map(c=>
-   `<option value="${esc(c.id)}">${esc(c.displayName||c.username)} (${esc(c.username)})</option>`).join('');
+ const options=`<option value="">Choose a friend…</option>`+friends.map(c=>`<option value="${esc(c.id)}">${esc(c.displayName||c.username)}</option>`).join('');
+ const discovered=state.atriumGames.map(g=>`<div class="tavi-game-list-row" data-discovered-game="${esc(g.gameId)}"><span class="tavi-game-list-icon" aria-hidden="true">♟</span><span class="tavi-game-list-info"><strong>${esc(g.title)}</strong><small>Discovered · ${esc(g.publisher)}</small></span><span class="tavi-game-status">Not playable yet</span></div>`).join('');
+ const games=state.catalog.map(g=>`<div class="tavi-game-list-row"><span class="tavi-game-list-icon" aria-hidden="true">🎮</span><span class="tavi-game-list-info"><strong>${esc(g.name)}</strong><small>${g.embedded?'Game available':'Opens in browser'}</small></span><button type="button" class="tavi-game-action" ${g.embedded?`data-launch-game="${esc(g.id)}"`:`data-open-promoted="${esc(g.id)}"`}>Play</button></div><form class="tavi-game-invite" data-challenge-game="${esc(g.id)}"><select name="peer" aria-label="Friend to invite to ${esc(g.name)}" required>${options}</select><button type="submit" ${friends.length?'':'disabled'}>Invite friend</button></form>`).join('');
+ const rooms=state.gameRooms.length?state.gameRooms.map(r=>`<button class="tavi-game-list-row" type="button" data-select-game-room="${esc(r.roomId)}"><span class="tavi-game-list-icon" aria-hidden="true">▤</span><span class="tavi-game-list-info"><strong>${esc(r.gameId)}</strong><small>Match · ${esc(r.matchId.slice(0,20))}</small></span><span class="tavi-game-status">Open chat ›</span></button>`).join(''):'';
+ const turns=state.turns.filter(t=>t.status==='your-turn').slice(0,6).map(t=>`<button class="tavi-game-list-row" type="button" data-route="${esc(t.path||'')}" ${t.path?'':'disabled'}><span class="tavi-game-list-icon">⏱</span><span class="tavi-game-list-info"><strong>${esc(t.title)}</strong><small>Your turn</small></span><span>›</span></button>`).join('');
  const atrium=atriumLauncher(state.atriumUrl);
- const cards=state.catalog.map(g=>`<article class="game-library-card">
-   <div class="game-library-heading"><span class="game-library-icon">♟</span><div><strong>${esc(g.name)}</strong><small>${g.embedded?'Playable browser game':'Opens in browser'}</small></div></div>
-   <div class="row-actions">${g.embedded?`<button type="button" class="solid" data-launch-game="${esc(g.id)}">▶ Play</button>`:''}<button type="button" data-open-promoted="${esc(g.id)}">Open browser ↗</button></div>
-   <form class="challenge-form" data-challenge-game="${esc(g.id)}"><label>Challenge a Tavi contact
-   <select name="peer" aria-label="Challenge a contact to ${esc(g.name)}" required>${options}</select></label>
-   <button type="submit" ${friends.length?'':'disabled'}>Send challenge</button></form>
-   <p class="fineprint">OpenClaw can accept through its Tavi account. Playing together requires the game's match API; a challenge is not yet a game seat.</p>
-   </article>`).join('');
- return `<section class="utility game-library"><h2>Games &amp; invitations</h2>
- <section class="atrium-feature" aria-label="Atrium games and apps"><div class="atrium-feature-heading"><span aria-hidden="true">♟</span><div><h3>Atrium — games &amp; apps</h3><p>${esc(atrium.detail)}</p></div></div><button class="solid atrium-open" type="button" data-action="atrium" ${atrium.available?'':'disabled'}>Open Atrium ↗</button></section>
- <h3>Game library (server-promoted links)</h3><p>Games listed below are promoted by this Tavi server, not automatically registered in Atrium. You can launch a game or challenge an accepted Tavi contact, including OpenClaw.</p>
- ${state.catalogError?`<p class="notice" role="alert">${esc(state.catalogError)}</p>`:''}
- ${cards||'<p>No games are currently promoted by this server. An operator must publish a verified HTTPS game URL before you can play or challenge someone.</p>'}
- <p class="fineprint">Challenges appear under Inbox → Needs action, and responses appear in the sender’s Inbox. A real Life match will require Life’s authenticated create/join API.</p>
- ${gameRoomPanel()}<h3>Turn monitoring</h3><div class="row-actions"><button data-action="add-game">+ Watch a component</button><button data-action="notifications">Enable notifications</button></div>
- ${config.games.map(g=>`<div class="utility-row"><span>${esc(g)}</span><span>${esc(state.gameErrors[g]||'Monitoring')}</span><button data-game-token="${esc(g)}">Credential</button><button data-remove-game="${esc(g)}">Remove</button></div>`).join('')}
- <p class="fineprint">Turn monitoring is separate from launching games. No Social bearer is forwarded to game websites.</p></section>`;
+ const status=state.atriumDiscoveryStatus==='connected'?'':state.atriumDiscoveryStatus==='unavailable'?'Game discovery is temporarily unavailable.':'Games from Atrium will appear when connected.';
+ return `<section class="utility tavi-games-browser" aria-label="Games"><h2>Games</h2><div class="tavi-games-group"><h3>Your games</h3>${turns||rooms||'<p class="tavi-game-empty">No active games yet.</p>'}${turns&&rooms?rooms:''}${state.selectedRoomId?gameRoomPanel():''}</div><div class="tavi-games-group"><h3>Play with friends</h3>${games||'<p class="tavi-game-empty">No playable games published yet.</p>'}</div><div class="tavi-games-group"><div class="tavi-game-title-row"><h3>Discover games</h3>${atrium.available?'<button type="button" data-action="atrium">Browse Atrium ↗</button>':''}</div>${discovered||`<p class="tavi-game-empty">${esc(status||'No games discovered yet.')}</p>`}</div><div class="tavi-games-group"><h3>Invitations</h3><p class="tavi-game-empty">Game invitations and replies appear in your Inbox.</p><button type="button" data-action="inbox">Open invitations</button></div></section>`;
 }
+
+function companion(){return companionPanel(tickCompanion(state.companion),{desktopFloatingAvailable:nativeWindowsPet});}
 function portrait(){return `<section class="utility portrait"><h2>Your character</h2><p>Portraits use the latest metadata from the official Portrait Library; the generator's executable source is reviewed and pinned to an upstream revision.</p><iframe title="Character portrait workshop" id="portrait-frame" src="./portrait/index.html" loading="lazy"></iframe><p>Portrait code saved in your Social profile: <code>${esc(state.avatarCode||'Not set')}</code></p></section>`;}
 function inbox(){
  const filter=state.inboxFilter;
@@ -156,9 +162,12 @@ function developerPanel(){
  ${count('WebSocket',state.pulseState)}
  ${count('Last client sync',state.lastSyncAt?new Date(state.lastSyncAt).toLocaleString():'Not yet')}
  ${count('Configured games',config.games.length)}
+ ${count('Atrium discovery',state.atriumDiscoveryStatus)}
+ ${count('Atrium titles',state.atriumGames.length)}
+ ${count('Atrium launcher',state.atriumUrl?'configured':'not configured')}
  ${count('Game API failures',Object.keys(state.gameErrors).length)}
  </div>
- <h3>Server diagnostics</h3>${status}
+ <h3>Integrations</h3><p class="fineprint">Atrium discovery displays reviewed metadata only. Game launch requires separate approval and player authorization. Service credentials and private API URLs are never exposed to Tavi.</p><h3>Server diagnostics</h3>${status}
  ${info?`<div class="dev-stats">
  ${count('Component',info.component)}${count('Release',info.release)}${count('Platform API',info.apiVersion)}
  ${count('Social schema',info.databaseSchemaVersion)}${count('Server time',new Date(info.serverTime*1000).toLocaleString())}
@@ -179,18 +188,100 @@ async function updateDeveloperInfo(){
  catch(e){if(state.api!==api)return;state.developerInfo=null;state.developerError=e.message;
    if(e.status===403||/DEVELOPER_ACCESS_DENIED/.test(e.message)) {state.developerAllowed=false;state.developerVisible=false;state.developerError='';if(state.panel==='developer')state.panel='settings';}}
 }
-function dashboard(){
- const chatting=state.panel==='messenger';
- const body=chatting?conversation():`<section class="classic-window auxiliary-window">${windowCaption(({games:'Games & turn alerts',inbox:'Interactive inbox',portrait:'Your character',settings:'Options',developer:'Admin / Debug'})[state.panel]||'Social')} ${menuBar()}<div class="aux-content">${state.panel==='add-friend'?addFriend():state.panel==='inbox'?inbox():state.panel==='games'?gameSettings():state.panel==='portrait'?portrait():state.panel==='settings'?settings():developerPanel()}</div><div class="window-status">Tavi · ${esc(state.api?.origin||'')}</div></section>`;
- // A real Windows messenger is a narrow, independent buddy list, NOT a fixed 1060px dashboard.
- // Conversations are separate OS webview windows. Browser/mobile retain the shared responsive UI.
- if(nativeDesktop)return `<div class="desktop-workspace native-workspace">${chatting?contactPane():`<section class="classic-window auxiliary-window">${windowCaption('Tavi · '+state.panel, '<button data-action="contacts" class="chrome-button">← Contacts</button>')}${menuBar()}<div class="aux-content">${state.panel==='add-friend'?addFriend():state.panel==='inbox'?inbox():state.panel==='games'?gameSettings():state.panel==='portrait'?portrait():state.panel==='settings'?settings():developerPanel()}</div></section>`}</div>`;
- return `<div class="desktop-workspace"><div class="messenger ${state.mobileRoster?'show-roster':'show-conversation'}">${contactPane()}<main class="center">${body}</main></div><nav class="bottom-nav" aria-label="Mobile navigation"><button data-action="contacts" class="${state.mobileRoster?'on':''}">Contacts</button><button data-action="messenger" class="${!state.mobileRoster&&chatting?'on':''}">Chat${unreadTotal()?` · ${unreadTotal()}`:``}</button><button data-action="games" class="${state.panel==='games'?'on':''}">Games</button><button data-action="settings" class="${state.panel==='settings'?'on':''}">Options</button></nav></div>`;
+function homeProfile(){
+ const display=state.profile?.displayName||state.profile?.username||'You';
+ const p=state.companion,pet=p?.enabled?petById(p.petId):null;
+ return `<section class="tavi-home-profile"><button type="button" class="tavi-home-avatar" data-action="portrait" aria-label="Edit your portrait">${avatar(display,true)}</button><div class="tavi-home-identity"><strong>${esc(display)}</strong><span><span class="presence online"></span>Online</span><small>Your friends and games, together</small></div><button type="button" class="tavi-home-badges" data-action="inbox" aria-label="View your notifications"><span aria-hidden="true">✦ ❀</span><small>Activity</small></button><button type="button" class="tavi-home-pet" data-action="companion" aria-label="Open your companion">${pet?petSprite(pet,{small:true}):'<span aria-hidden="true">♡</span>'}<small>${esc(pet?p.name:'My pet')}</small></button></section>`;
 }
-function render(){if(state.panel!=='settings')state.recoveryCodes=null;const entry=document.getElementById('message');if(entry&&document.activeElement===entry)state.draft=entry.value;const oldFrame=document.getElementById('portrait-frame');const filter=document.getElementById('roster-filter');const search=filter?.value||'';const focused=document.activeElement===entry?{start:entry.selectionStart,end:entry.selectionEnd}:null;const settingsScroll=document.querySelector('.aux-content')?.scrollTop||0;const oldScroll=document.getElementById('chat-scroll');const nearBottom=!oldScroll||oldScroll.scrollHeight-oldScroll.scrollTop-oldScroll.clientHeight<90;const oldTop=oldScroll?.scrollTop;document.title=unreadTotal()?`(${unreadTotal()}) Tavi`:'Tavi';app.innerHTML=(nativeDesktop?'':header())+(state.connected?dashboard():signIn())+(state.toast?`<div class="toast" role="status">${esc(state.toast)}</div>`:'');if(oldFrame&&state.panel==='portrait')document.getElementById('portrait-frame')?.replaceWith(oldFrame);wire();const newSettings=document.querySelector('.aux-content');if(newSettings&&state.panel==='settings')newSettings.scrollTop=settingsScroll;const newFilter=document.getElementById('roster-filter');if(newFilter){newFilter.value=search;applyContactFilter(search);}if(focused){const field=document.getElementById('message');if(field){field.focus();field.setSelectionRange(focused.start,focused.end);}}if(state.panel==='messenger'){const scroll=document.getElementById('chat-scroll');if(scroll){scroll.scrollTop=nearBottom?scroll.scrollHeight:oldTop;}}}
+function homeConversations(){
+ const accepted=state.contacts.filter(c=>c.status==='accepted');
+ const recent=state.conversationSummaries.filter(x=>x.latest).map(x=>accepted.find(c=>c.id===x.peer)).filter(Boolean);
+ const combined=[...recent,...accepted.filter(c=>!recent.includes(c))].slice(0,6);
+ return `<section class="tavi-home-section"><div class="tavi-section-title"><h2>Recent conversations</h2><button type="button" data-action="contacts">All contacts →</button></div><div class="tavi-home-threads">${combined.length?combined.map(peer=>{
+   const summary=state.conversationSummaries.find(x=>x.peer===peer.id),unread=state.unread[peer.id]||0;
+   const preview=summary?.latest?(state.notifyPrefs.preview?String(summary.latest.text).slice(0,90):'New message · open to read'):(peer.online?'Online now':'Offline');
+   return `<button type="button" class="tavi-home-thread" data-peer="${esc(peer.id)}" data-contact-name="${esc(peer.username.toLowerCase())}">${avatar(peer.username,peer.online)}<span class="tavi-home-thread-copy"><strong>${esc(peer.displayName||peer.username)}</strong><small>${esc(preview)}</small></span>${unread?`<span class="unread-badge">${unread>99?'99+':unread}</span>`:''}</button>`;
+ }).join(''):'<p class="tavi-home-empty">Add a friend to begin chatting and playing together.</p>'}</div></section>`;
+}
+function homeMinimized(compact=false){
+  const entries=surfaces.list();
+  if(compact&&entries.length)return `<section class="tavi-roster-activities" aria-label="Minimized activities"><div class="roster-label"><strong>Open chats &amp; games</strong></div><div class="tavi-roster-activity-list">${entries.map(item=>`<button type="button" data-resume-surface="${esc(item.id)}" title="Resume ${esc(item.title)}"><span aria-hidden="true">${item.kind==='game'?'🎮':'✉'}</span><span>${esc(item.title)}</span></button>`).join('')}</div></section>`;
+
+ return entries.length?`<section class="tavi-home-section tavi-resume-section" aria-label="Minimized activities"><div class="tavi-section-title"><h2>Open activities</h2></div><div class="tavi-resume-icons">${entries.map(item=>`<button type="button" data-resume-surface="${esc(item.id)}" aria-label="Resume ${esc(item.title)}"><span aria-hidden="true">${item.kind==='game'?'🎮':'✉'}</span><span>${esc(item.title)}</span>${item.unread?`<b>${item.unread}</b>`:''}</button>`).join('')}</div></section>`:'';
+}
+function mainMenu(){return `<section class="utility tavi-menu-panel"><h2>What would you like to do?</h2><div class="tavi-menu-grid">${[['contacts','Messages'],['games','Games'],['inbox','Notifications'],...(state.companion?.enabled?[['companion','My pet']]:[]),['portrait','My portrait'],['add-friend','Add a friend'],['settings','Settings']].map(([action,title])=>`<button type="button" data-action="${action}">${title}</button>`).join('')}</div><p>Return Home to resume minimized games and conversations.</p></section>`;}
+function homeScreen(){
+  // Preserve the proven classic MSN/Yahoo-style roster hierarchy on Home.
+  // The new sketch-style raised round dock is the only new navigation chrome.
+  // Game and chat views remain focused; they never inherit this Home dock.
+  return `<main class="tavi-home tavi-classic-home" aria-label="Tavi Home">${contactPane(true)}<nav class="tavi-home-dock" aria-label="Home navigation"><button type="button" class="tavi-dock-side" data-action="games" aria-label="Games"><svg class="tavi-dock-icon" aria-hidden="true" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11h12c4 0 5 3 6 8l1 5c.4 3-2.5 4.3-4.4 2.4l-4.8-4.4H12.2l-4.8 4.4C5.5 28.3 2.6 27 3 24l1-5c1-5 2-8 6-8Z"/><path d="M9 16v7m-3.5-3.5h7"/><path d="M22 16h.01M25 19h.01"/></svg><span class="tavi-dock-label">Games</span></button><button type="button" class="tavi-home-menu" data-action="main-menu" aria-label="Main menu"><span class="tavi-dock-orb"><svg aria-hidden="true" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M26 16c0 6-4.4 10.5-10 10.5a11.5 11.5 0 0 1-5-1.1L5.1 27l1.5-5.3A10.5 10.5 0 0 1 5 16C5 10 9.7 5.5 15.7 5.5 21.9 5.5 26 10 26 16Z"/><path d="M11.5 16h.01M16 16h.01M20.5 16h.01" stroke-width="3.5"/></svg></span><span class="tavi-dock-label">Main menu</span></button><button type="button" class="tavi-dock-side" data-action="contacts" aria-label="Messages"><svg class="tavi-dock-icon" aria-hidden="true" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="24" height="17" rx="2"/><path d="m4.5 9 11.5 9L27.5 9"/></svg><span class="tavi-dock-label">Messages</span>${unreadTotal()?`<b aria-label="${unreadTotal()} unread messages">${unreadTotal()}</b>`:''}</button></nav></main>`;
+}
+function dashboard(){
+ // Home is the only surface with the three-icon navigation bar. Focused conversations
+ // and games deliberately surrender the remaining viewport to their content.
+ if(state.panel==='home')return `<div class="tavi-single-workspace">${homeScreen()}</div>`;
+ const chatting=state.panel==='messenger';
+ if(nativeDesktop&&chatting)return `<div class="desktop-workspace native-workspace">${contactPane()}</div>`;
+ if(!nativeDesktop&&chatting&&state.mobileRoster)return `<div class="tavi-single-workspace tavi-contact-focus"><div class="tavi-focus-toolbar"><button type="button" data-action="minimize-view">← Home</button><strong>Messages</strong></div>${contactPane()}</div>`;
+ if(!nativeDesktop&&chatting)return `<div class="tavi-single-workspace tavi-chat-focus">${focusedConversation()}</div>`;
+ const content=state.panel==='menu'?mainMenu():state.panel==='add-friend'?addFriend():state.panel==='inbox'?inbox():state.panel==='games'?gameSettings():state.panel==='companion'?companion():state.panel==='portrait'?portrait():state.panel==='settings'?settings():developerPanel();
+ return `<div class="tavi-single-workspace tavi-utility-focus"><section class="classic-window auxiliary-window"><div class="tavi-focus-toolbar"><button type="button" data-action="minimize-view">← Home</button><strong>${esc(({games:'Games',inbox:'Notifications',portrait:'Your portrait',settings:'Settings',companion:'My pet',developer:'Developer tools',menu:'Main menu'})[state.panel]||'Tavi')}</strong></div><div class="aux-content">${content}</div></section></div>`;
+}
+// Native floating pet has no Social token or access to application APIs. The
+// authenticated main window mediates all care actions and account persistence.
+let petBridgeReady=false,petWindowPending=false;
+const petWindowPositionKey=()=>state.companionKey?state.companionKey+'.floatingPosition':null;
+async function sendPetSnapshot(){const snapshot=petWindowSnapshot(state.companion);if(snapshot)await emitTo(PET_WINDOW_LABEL,'tavi-companion-state',snapshot).catch(()=>{});}
+async function initializePetBridge(){
+ if(!nativeWindowsPet||petBridgeReady)return;
+ petBridgeReady=true;
+ await listen('tavi-companion-request',async ({payload})=>{
+   const cmd=parsePetWindowCommand(payload);
+   if(!cmd||!canShowFloating(state.companion,{windows:true,authenticated:!!state.api}))return;
+   if(cmd==='ready'){await sendPetSnapshot();return;}
+   if(cmd==='hide'){changePet(p=>updatePreferences(p,{overlay:'off'}));return;}
+   if(cmd==='open'){state.panel='companion';state.mobileRoster=false;render();await getCurrentWindow().setFocus().catch(()=>{});return;}
+   if(cmd==='reset-position'){try{localStorage.removeItem(petWindowPositionKey());const w=await WebviewWindow.getByLabel(PET_WINDOW_LABEL);await w?.center();}catch{}return;}
+   if(['feed','clean','play','rest','pet'].includes(cmd))changePet(p=>performCare(p,cmd));
+ });
+ await listen('tavi-companion-moved',({payload})=>{
+   const point=normalizePetPosition(payload),key=petWindowPositionKey();
+   if(key&&point&&canShowFloating(state.companion,{windows:true,authenticated:!!state.api})){
+     try{localStorage.setItem(key,JSON.stringify(point));}catch{}
+   }
+ });
+}
+async function closePetWindow(){if(!nativeWindowsPet)return;
+ try{const w=await WebviewWindow.getByLabel(PET_WINDOW_LABEL);if(w)await w.close();}catch{}
+}
+async function reconcilePetWindow(){
+ if(!nativeWindowsPet)return;
+ if(!canShowFloating(state.companion,{windows:true,authenticated:!!state.api}))return closePetWindow();
+ await initializePetBridge();
+ try{
+   const existing=await WebviewWindow.getByLabel(PET_WINDOW_LABEL);
+   if(existing){await sendPetSnapshot();return;}
+   if(petWindowPending)return;
+   petWindowPending=true;
+   const windowHandle=new WebviewWindow(PET_WINDOW_LABEL,{url:'companion.html',title:'Tavi Companion',
+     width:PET_SIZE.width,height:PET_SIZE.height,minWidth:PET_SIZE.width,minHeight:PET_SIZE.height,
+     resizable:false,decorations:false,transparent:true,alwaysOnTop:true,skipTaskbar:true,center:true,focus:false});
+   windowHandle.once('tauri://created',async()=>{
+     petWindowPending=false;
+     if(!canShowFloating(state.companion,{windows:true,authenticated:!!state.api}))return closePetWindow();
+     try{const saved=JSON.parse(localStorage.getItem(petWindowPositionKey())||'null');
+       const point=normalizePetPosition(saved);
+       if(point)await windowHandle.setPosition(new PhysicalPosition(point.x,point.y));}catch{}
+     await sendPetSnapshot();
+   });
+   windowHandle.once('tauri://error',e=>{petWindowPending=false;toast('Could not create desktop companion: '+String(e.payload));});
+ }catch(error){petWindowPending=false;toast('Could not create desktop companion: '+error.message);}
+}
+function changePet(change){if(!state.connected||!state.companionKey)return;try{state.companion=change(state.companion);saveCompanion(localStorage,state.companionKey,state.companion);render();void reconcilePetWindow();}catch(error){toast('Companion change unavailable: '+error.message);}}
+function render(){if(state.panel!=='settings')state.recoveryCodes=null;const entry=document.getElementById('message');if(entry&&document.activeElement===entry)state.draft=entry.value;const oldFrame=document.getElementById('portrait-frame');const filter=document.getElementById('roster-filter');const search=filter?.value||'';const focused=document.activeElement===entry?{start:entry.selectionStart,end:entry.selectionEnd}:null;const settingsScroll=document.querySelector('.aux-content')?.scrollTop||0;const oldScroll=document.getElementById('chat-scroll');const nearBottom=!oldScroll||oldScroll.scrollHeight-oldScroll.scrollTop-oldScroll.clientHeight<90;const oldTop=oldScroll?.scrollTop;document.title=unreadTotal()?`(${unreadTotal()}) Tavi`:'Tavi';app.innerHTML=(!state.connected&&!nativeDesktop?header():'')+(state.connected?dashboard():signIn())+(state.toast?`<div class="toast" role="status">${esc(state.toast)}</div>`:'')+(state.connected?companionBadge(state.companion):'');if(oldFrame&&state.panel==='portrait')document.getElementById('portrait-frame')?.replaceWith(oldFrame);wire();const newSettings=document.querySelector('.aux-content');if(newSettings&&state.panel==='settings')newSettings.scrollTop=settingsScroll;const newFilter=document.getElementById('roster-filter');if(newFilter){newFilter.value=search;applyContactFilter(search);}if(focused){const field=document.getElementById('message');if(field){field.focus();field.setSelectionRange(focused.start,focused.end);}}if(state.panel==='messenger'){const scroll=document.getElementById('chat-scroll');if(scroll){scroll.scrollTop=nearBottom?scroll.scrollHeight:oldTop;}}}
 function applyContactFilter(query){const term=query.trim().toLowerCase();document.querySelectorAll('[data-contact-name]').forEach(node=>{node.hidden=!!term&&!node.dataset.contactName.includes(term);});}
-function stop(){mailboxWake?.close();mailboxWake=null;sessionRetry.disable();state.retryAvailable=false;state.retryOrigin='';if(pulse){pulse.onclose=null;pulse.close();pulse=null;}clearInterval(poll);poll=null;state.api=null;state.connected=false;state.profile=null;state.lobby=[];state.direct=[];state.contacts=[];state.avatarCode='';state.gameTokens.clear();state.turns=[];state.gameRooms=[];state.selectedRoomId=null;state.roomMessages=[];state.roomError='';state.interactions=[];state.selectedInteraction=null;state.interactionError='';state.catalog=[];state.catalogError='';state.draft='';state.developerAllowed=false;state.developerVisible=false;state.developerInfo=null;state.developerError='';state.lastSyncAt=null;state.pulseState='disconnected';state.chatRead={};state.unread={};state.peerFeeds.clear();state.chatOffset=0;state.conversationSummaries=[];state.summarySupported=null;state.pendingAcks.clear();state.pendingRequestIds=null;state.notifyPrefs={messages:true,preview:false,requests:true};state.pushPrefs={backgroundEnabled:false};state.pushCapability=null;state.atriumUrl=null;state.pushPermission='unknown';state.step='server';state.panel='messenger';state.mobileRoster=true;render();}
-async function activate(api){const me=await api.me();if(!me?.profile?.profileId)throw Error('Social did not return your profile');stop();state.api=api;state.connected=true;state.profile=me.profile;state.revision=me.revision;updateDeveloperPermission(me);state.avatarCode=me.profile.portraitCode||'';selectServerGames(config,api.origin);writeConfig(config);state.peer='lobby';state.mobileRoster=true;try{state.chatRead=loadChatReadState(localStorage,readKey());state.notifyPrefs=loadNotificationPrefs(localStorage,notificationPrefsKey(api.origin,me.profile.profileId));state.pushPrefs=readPushPreferences(localStorage,pushKey());}catch{}render();void refreshPushReadiness();await loadCatalog();await refresh();mailboxWake=createWakeCoordinator(()=>refresh({mailboxOnly:true}),{isBusy:()=>polling});startPulse();poll=setInterval(refresh,25000);}
+function stop(){void closePetWindow();for(const label of nativeChildLabels){void WebviewWindow.getByLabel(label).then(w=>w?.close()).catch(()=>{});}nativeChildLabels.clear();mailboxWake?.close();mailboxWake=null;sessionRetry.disable();state.retryAvailable=false;state.retryOrigin='';if(pulse){pulse.onclose=null;pulse.close();pulse=null;}clearInterval(poll);poll=null;state.api=null;state.connected=false;state.companion=newCompanion();state.companionKey=null;state.profile=null;state.lobby=[];state.direct=[];state.contacts=[];state.avatarCode='';state.gameTokens.clear();state.turns=[];state.gameRooms=[];state.selectedRoomId=null;state.roomMessages=[];state.roomError='';state.interactions=[];state.selectedInteraction=null;state.interactionError='';state.catalog=[];state.catalogError='';state.atriumGames=[];state.atriumDiscoveryStatus='not_connected';state.lastCatalogAt=0;state.draft='';state.developerAllowed=false;state.developerVisible=false;state.developerInfo=null;state.developerError='';state.lastSyncAt=null;state.pulseState='disconnected';state.chatRead={};state.unread={};state.peerFeeds.clear();state.chatOffset=0;state.conversationSummaries=[];state.summarySupported=null;state.pendingAcks.clear();state.pendingRequestIds=null;state.notifyPrefs={messages:true,preview:false,requests:true};state.pushPrefs={backgroundEnabled:false};state.pushCapability=null;state.atriumUrl=null;state.pushPermission='unknown';state.step='server';state.panel='home';state.mobileRoster=true;surfaces.clear();closeEmbeddedGame();render();}
+async function activate(api){const me=await api.me();if(!me?.profile?.profileId)throw Error('Social did not return your profile');stop();await closePetWindow();state.api=api;state.connected=true;state.profile=me.profile;try{state.companionKey=storageKey(api.origin,me.profile.profileId);state.companion=loadCompanion(localStorage,state.companionKey);}catch{state.companionKey=null;state.companion=newCompanion();}state.revision=me.revision;void reconcilePetWindow();updateDeveloperPermission(me);state.avatarCode=me.profile.portraitCode||'';selectServerGames(config,api.origin);writeConfig(config);state.peer='lobby';state.panel='home';state.mobileRoster=true;try{state.chatRead=loadChatReadState(localStorage,readKey());state.notifyPrefs=loadNotificationPrefs(localStorage,notificationPrefsKey(api.origin,me.profile.profileId));state.pushPrefs=readPushPreferences(localStorage,pushKey());}catch{}render();void refreshPushReadiness();await loadCatalog();await refresh();mailboxWake=createWakeCoordinator(()=>refresh({mailboxOnly:true}),{isBusy:()=>polling});startPulse();poll=setInterval(()=>{void refresh();if(Date.now()-state.lastCatalogAt>=60000)void loadCatalog();},25000);}
 async function refresh({mailboxOnly=false}={}){if(!state.api||polling)return;polling=true;try{const api=state.api;
  if(!mailboxOnly){const me=await api.me();if(api!==state.api)return;updateDeveloperPermission(me);}
  const needLobby=!mailboxOnly||state.peer==='lobby'&&!nativeDesktop;
@@ -306,7 +397,23 @@ globalThis.addEventListener?.('focus',()=>resumeForeground({signedIn:!!state.api
 const pushWakeup=createPushWakeupBridge(()=>mailboxWake?.wake());
 if(clientPlatform==='android')void listen('tavi-push-wakeup',e=>pushWakeup(e.payload,{signedIn:!!state.api})).catch(()=>{});
 function startPulse(){const api=state.api;let delay=1000;const open=async()=>{if(state.api!==api)return;let ws;try{const ticket=await api.pulseTicket();if(state.api!==api)return;ws=new WebSocket(api.pulseUrl()+'?ticket='+encodeURIComponent(ticket));}catch{state.pulseState='reconnecting';if(state.api===api)setTimeout(open,delay);delay=Math.min(delay*2,30000);return;}pulse=ws;state.pulseState='connecting';ws.onopen=()=>{state.pulseState='connected';delay=1000;ws.send(JSON.stringify({subscribe:'pulses'}));};ws.onmessage=e=>{try{if(JSON.parse(e.data).resource==='pulses')mailboxWake?.wake();}catch{}};ws.onclose=()=>{state.pulseState='reconnecting';if(state.api===api){setTimeout(open,delay);delay=Math.min(delay*2,30000);}};};open();}
-async function loadCatalog(){if(!state.api)return;const api=state.api;try{const games=await discoverGames(api.origin);if(state.api!==api)return;state.catalog=games;state.catalogError='';}catch(e){if(state.api!==api)return;state.catalog=[];state.catalogError='Game catalog unavailable: '+e.message;}render();}
+async function loadCatalog(){
+ if(!state.api)return;
+ const api=state.api;
+ const [legacy,atrium]=await Promise.allSettled([discoverGames(api.origin),discoverAtriumGames(api)]);
+ if(state.api!==api)return;
+ state.lastCatalogAt=Date.now();
+ if(legacy.status==='fulfilled'){state.catalog=legacy.value;state.catalogError='';}
+ else{state.catalog=[];state.catalogError='Game library unavailable: '+(legacy.reason?.message||'Connection failed');}
+ if(atrium.status==='fulfilled'){
+  state.atriumGames=atrium.value.games;
+  state.atriumDiscoveryStatus=atrium.value.status;
+ }else{
+  state.atriumGames=[];
+  state.atriumDiscoveryStatus='unavailable';
+ }
+ render();
+}
 let nativeGameBridgeReady=false;
 async function initializeGameBridge(){
  if(!nativeDesktop||nativeGameBridgeReady)return;
@@ -326,23 +433,82 @@ async function initializeGameBridge(){
   }catch(err){await emitTo(label,'tavi-game-response',{requestId,ok:false,error:err.message||'Game error'}).catch(()=>{});}
  });
 }
+let embeddedGame=null;
+function closeEmbeddedGame(){if(embeddedGame?.root)embeddedGame.root.remove();embeddedGame=null;}
+function showEmbeddedGame(game){
+ if(!game?.embedded)return;
+ if(embeddedGame&&embeddedGame.id!==game.id)closeEmbeddedGame();
+ if(!embeddedGame){
+  const root=document.createElement('section');root.className='tavi-embedded-game';root.setAttribute('aria-label',game.name+' game');
+  root.innerHTML=`<header class="tavi-game-controls"><strong>${esc(game.name)}</strong><button type="button" class="tavi-game-minimize" aria-label="Minimize game to Home">− Minimize</button></header><div class="tavi-game-stage"></div>`;
+  const frame=document.createElement('iframe');frame.title=game.name;frame.referrerPolicy='no-referrer';frame.setAttribute('sandbox','allow-scripts allow-forms allow-same-origin allow-popups');frame.src=game.url;
+  root.querySelector('.tavi-game-stage').append(frame);
+  root.querySelector('.tavi-game-minimize').addEventListener('click',()=>{
+   root.hidden=true;surfaces.minimizeGame(game.id,game.name);state.panel='home';state.mobileRoster=true;render();
+  });
+  document.body.append(root);embeddedGame={id:game.id,root};
+ }
+ embeddedGame.root.hidden=false;surfaces.activate('game:'+game.id);
+}
+let surfaceBridgeReady=false;
+async function initializeSurfaceBridge(){
+ if(!nativeDesktop||surfaceBridgeReady)return;
+ surfaceBridgeReady=true;
+ await listen('tavi-surface-minimize',async e=>{
+  const {kind,id}=e.payload||{};
+  if(!safeSurfaceId(kind,id))return;
+  const label=kind==='game'?'game-'+id:chatWindowLabel(id);
+  try{
+   const target=await WebviewWindow.getByLabel(label);
+   if(!target)return;
+   await target.hide();
+   const title=kind==='game'?state.catalog.find(g=>g.id===id)?.name:id==='lobby'?'Community Lobby':nameOf(id);
+   surfaces.minimize(kind,id,title||id);
+   state.panel='home';state.mobileRoster=true;render();await getCurrentWindow().setFocus().catch(()=>{});
+  }catch(err){toast('Could not minimize window: '+err.message);}
+ });
+}
+async function resumeSurface(surfaceId){
+ const item=surfaces.get(surfaceId);if(!item)return;
+ if(!nativeDesktop&&item.kind==='game'){
+  const game=state.catalog.find(g=>g.id===item.value&&g.embedded);
+  if(game&&embeddedGame?.id===game.id){showEmbeddedGame(game);return;}
+  surfaces.remove(surfaceId);render();return toast('This game is no longer open.');
+ }
+ if(nativeDesktop){
+  const label=item.kind==='game'?'game-'+item.value:chatWindowLabel(item.value);
+  const win=await WebviewWindow.getByLabel(label).catch(()=>null);
+  if(!win){surfaces.remove(surfaceId);render();return toast('That window has closed.');}
+  try{await win.show();await win.setFocus();surfaces.activate(surfaceId);}catch(err){toast('Could not restore window: '+err.message);}
+  render();return;
+ }
+ if(item.kind==='chat'){
+  state.panel='messenger';state.peer=item.value;state.mobileRoster=false;surfaces.activate(surfaceId);
+  state.direct=item.value==='lobby'?[]:state.peerFeeds.get(item.value)||[];render();void refresh();
+ }
+}
 async function launchPromoted(id,embedded){
  const game=state.catalog.find(g=>g.id===id);if(!game)return toast('Game no longer published by server.');
  if(!embedded||!game.embedded){return openExternalGame(game.url);}
- if(!nativeDesktop){return openExternalGame(game.url);}
+ if(!nativeDesktop){showEmbeddedGame(game);return;}
  try{
   await initializeGameBridge();
   const label='game-'+id;
   const prior=await WebviewWindow.getByLabel(label);
-  if(prior){await prior.setFocus();return;}
+  if(prior){await prior.show();await prior.setFocus();surfaces.activate('game:'+id);return;}
+  nativeChildLabels.add(label);
   const windowHandle=new WebviewWindow(label,{url:'game.html?game='+encodeURIComponent(id),title:game.name+' — Tavi',width:1100,height:730,minWidth:650,minHeight:480,resizable:true,center:true});
   windowHandle.once('tauri://error',e=>toast('Game window failed: '+String(e.payload)));
  }catch(e){toast('Unable to open game: '+e.message);}
 }
 async function openExternalGame(url){try{if(isTauri())await openUrl(url);else window.open(url,'_blank','noopener,noreferrer');}catch(e){toast('Could not open game: '+e.message);}}
 async function openGame(path){if(!state.api||!path)return;const url=state.api.origin+path;try{if(isTauri())await openUrl(url);else window.open(url,'_blank','noopener,noreferrer');}catch{toast('Could not open game.');}}
-async function action(name){if(name==='atrium'){const url=reviewedAtriumBase(state.atriumUrl);if(!url)return toast('Atrium is not configured for this server.');await openExternalGame(url);return;}if(name==='developer'){if(!state.developerAllowed||!state.developerVisible)return;state.panel=name;await updateDeveloperInfo();render();return;}
+async function action(name){
+ if(name==='minimize-view'||name==='home'){if(state.panel==='messenger'&&!state.mobileRoster)surfaces.minimizeChat(state.peer,nameOf(state.peer));state.panel='home';state.mobileRoster=true;render();return;}
+ if(name==='main-menu'){state.panel='menu';state.mobileRoster=false;render();return;}
+ if(name==='atrium'){const url=reviewedAtriumBase(state.atriumUrl);if(!url)return toast('Atrium is not configured for this server.');await openExternalGame(url);return;}if(name==='developer'){if(!state.developerAllowed||!state.developerVisible)return;state.panel=name;await updateDeveloperInfo();render();return;}
  if(name==='developer-refresh'){await updateDeveloperInfo();render();return;}
+ if(name==='companion'){state.panel='companion';state.mobileRoster=false;render();return;}
  if(name==='inbox'){state.panel='inbox';state.mobileRoster=false;render();return;}
  if(name==='contacts'){state.panel='messenger';state.mobileRoster=true;render();return;}
  if(name==='check-updates'){await checkForUpdates(true);return;}
@@ -401,7 +567,19 @@ function wire(){
  document.querySelectorAll('[data-interaction-link]').forEach(el=>el.addEventListener('click',()=>openInteractionLink(Number(el.dataset.interactionLink),el.dataset.linkAction)));
  document.querySelectorAll('[data-interaction-reply]').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();if(!state.api)return;const id=Number(form.dataset.interactionReply),actionId=form.dataset.replyAction;const values=Object.fromEntries(new FormData(form).entries());try{await state.api.replyInteraction(id,actionId,values);await refresh();toast('Response recorded.');}catch(err){state.interactionError=err.message||'Response failed';render();}}));document.querySelectorAll('[data-group]').forEach(el=>el.addEventListener('click',()=>{const id=el.dataset.group;state.rosterGroups[id]=state.rosterGroups[id]===false;render();}));
  const rosterFilter=document.getElementById('roster-filter');if(rosterFilter)rosterFilter.addEventListener('input',e=>applyContactFilter(e.target.value));
+ document.querySelectorAll('[data-resume-surface]').forEach(el=>el.addEventListener('click',()=>void resumeSurface(el.dataset.resumeSurface)));
+ document.querySelectorAll('[data-home-game]').forEach(el=>el.addEventListener('click',()=>void launchPromoted(el.dataset.homeGame,true)));
  document.querySelectorAll('[data-action]').forEach(el=>el.addEventListener('click',()=>action(el.dataset.action)));
+ document.querySelectorAll('[data-pet-care]').forEach(el=>el.addEventListener('click',()=>{changePet(p=>performCare(p,el.dataset.petCare));}));
+ document.querySelectorAll('[data-pet-select]').forEach(el=>el.addEventListener('click',()=>{changePet(p=>selectCompanion(p,el.dataset.petSelect));}));
+ document.querySelectorAll('[data-pet-mode]').forEach(el=>el.addEventListener('click',()=>{changePet(p=>changeMode(p,el.dataset.petMode));}));
+ document.querySelectorAll('[data-pet-dismiss]').forEach(el=>el.addEventListener('click',()=>{changePet(p=>dismissSuggestion(p,el.dataset.petDismiss));}));
+ const enabledEl=document.getElementById('companion-enabled');if(enabledEl)enabledEl.addEventListener('change',()=>changePet(p=>updatePreferences(p,{enabled:enabledEl.checked})));
+ const floatingEl=document.getElementById('companion-floating');if(floatingEl)floatingEl.addEventListener('change',()=>changePet(p=>updatePreferences(p,{overlay:floatingEl.checked?'floating':'off'})));
+ const inappEl=document.getElementById('companion-inapp');if(inappEl)inappEl.addEventListener('change',()=>changePet(p=>updatePreferences(p,{overlay:inappEl.checked?'in-app':'off'})));
+ const modeEl=document.getElementById('companion-mode');if(modeEl)modeEl.addEventListener('change',()=>changePet(p=>changeMode(p,modeEl.value)));
+ const nameEl=document.getElementById('companion-name');if(nameEl)nameEl.addEventListener('change',()=>changePet(p=>updatePreferences(p,{name:nameEl.value})));
+
  document.querySelectorAll('[data-auth]').forEach(el=>el.addEventListener('click',()=>{state.authTab=el.dataset.auth;state.authError='';render();}));
  document.querySelectorAll('[data-settings-section]').forEach(el=>el.addEventListener('toggle',()=>{state.settingsExpanded[el.dataset.settingsSection]=el.open;}));
  document.querySelectorAll('[data-peer]').forEach(el=>el.addEventListener('click',async()=>{const peer=el.dataset.peer;if(nativeDesktop){await openChatWindow(peer);return;}state.peer=peer;state.panel='messenger';state.mobileRoster=false;state.draft='';markRead(peer,state.peerFeeds.get(peer)||[]);render();await refresh();}));
@@ -526,7 +704,7 @@ async function openMatchWindow(roomId){
   await initializeNativeMatchBridge();
   const label=matchWindowLabel(roomId);
   const existing=await WebviewWindow.getByLabel(label);
-  if(existing){await existing.setFocus();return;}
+  if(existing){await existing.show();await existing.setFocus();surfaces.activate('chat:'+peer);return;}
   const room=state.gameRooms.find(r=>r.roomId===roomId);
   const windowHandle=new WebviewWindow(label,{url:`match.html?room=${roomId}`,
     title:`${room.gameId} · Match chat - Tavi`,width:570,height:520,
@@ -539,11 +717,12 @@ async function openChatWindow(peer){
  if(!state.api||!isValidChatPeer(peer)){toast('Conversation is not available.');return;}
  if(peer!=='lobby'&&!state.contacts.some(c=>c.id===peer)){toast('Contact not found.');return;}
  try{
-   await initializeNativeChatBridge();
+   await initializeNativeChatBridge();await initializeSurfaceBridge();
    const label=chatWindowLabel(peer);
    const existing=await WebviewWindow.getByLabel(label);
-   if(existing){await existing.setFocus();return;}
+   if(existing){await existing.show();await existing.setFocus();surfaces.activate('chat:'+peer);return;}
    const title=peer==='lobby'?'Community Lobby':(state.contacts.find(c=>c.id===peer)?.username||'Conversation');
+   nativeChildLabels.add(label);
    const windowHandle=new WebviewWindow(label,{url:`chat.html?peer=${encodeURIComponent(peer)}`,title:`${title} - Tavi`,
      width:585,height:525,minWidth:415,minHeight:370,resizable:true,center:true});
    windowHandle.once('tauri://error',e=>toast('Could not open conversation window: '+String(e.payload)));

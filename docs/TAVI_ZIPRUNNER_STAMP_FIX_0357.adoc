@@ -1,0 +1,11 @@
+= Tavi 0.3.57 — ZipRunner post-update test ceiling
+:toc:
+
+== Observed failure
+ZipRunner 1.2.304.129 rejected 0.3.56 during post-update stamp validation because 23 declared checks exceeded the maximum of 20. There is no evidence of a completed overlay or Windows NSIS build for this rejected ZIP.
+
+== Source change
+The v0.3.57 stamp defines 20 separate command checks and preserves coverage through the existing `npm run test` aggregate. A dedicated Python test guards the maximum, uniqueness and included Atrium discovery/server descriptor checks. This is not a feature release and does not change the Social/Atrium authorization boundary.
+
+== Operator acceptance
+Import exact v0.3.57 ZIP and verify that the stamp succeeds at 20, then verify source checks and native Windows installer. Server deployment of the v0.3.57 LoopRD component and operator-installed private Atrium apps:read credential are separately required for live Life listing in Tavi. Neither discovery nor configured origin implies a playable match. Maintain 92 previous operator ticket identities/statuses and the local runtime state.

@@ -24,3 +24,8 @@
 .pop-chat{background:#eef7f2}
 .pop-format{color:#247c69;background:linear-gradient(#fff,#e1f2e9)}
 .pop-transcript,.pop-composer textarea{border-color:#accdbf}
+
+/* Focused native chat: small title line and no global navigation. */
+.tavi-native-chat-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 9px;background:#d9efdf;color:#25533f;min-height:37px;border-bottom:1px solid #a9cbb5;}
+.tavi-native-chat-head strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tavi-native-chat-head button{border:1px solid #9fc7ac;border-radius:7px;background:#f9fef9;color:#336449;padding:5px 8px;}

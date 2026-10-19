@@ -6,3 +6,10 @@ html,body,#game-app {background:#ebf7f1;color:#20483d}
 .tavi-player button {border-color:#8ebbaa;color:#215b50}
 .game-chat {border-left-color:#a6cfbf}
 .tavi-player footer {background:#e0f1e8}
+
+/* The entire game window belongs to the game, aside from one slim minimize strip. */
+.tavi-player>header{height:36px;min-height:36px;padding:3px 8px;background:#214e38!important;color:white;}
+.tavi-player>header strong{color:white;font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tavi-player>header button{border:0;border-radius:7px;background:#e1efdf;color:#245b3e;padding:4px 9px;}
+.tavi-player>.player-body{flex:1;height:calc(100% - 36px);width:100%;}
+.tavi-player .game-stage{height:100%;width:100%;}

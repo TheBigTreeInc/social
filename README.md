@@ -1,3 +1,5 @@
+> **v0.3.49 Companion MVP:** Optional 16-bit-style pet panel, 8 species, local account-scoped state, 5 actions, manually selected Companion/Gentle/Classic modes and voluntary engagement-based invitations. Works in Windows/Android/Web Tavi views. OS-wide overlays are **not** implemented; Social server stays 0.3.48/schema 10. See `docs/TAVI_COMPANIONS_0349.adoc`.
+
 > **v0.3.48 Atrium launcher visibility pass:** The Windows Games view now displays a first-class Atrium launch card based on the existing server-advertised reviewed URL; Tavi remains chat-first and the v0.3.46 legacy challenge flow remains supported. No new Life `/play` or DAPI discovery delivery is implemented. See `docs/TAVI_ATRIUM_LAUNCH_0348.adoc`.
 
 > **v0.3.47 workboard planning pass (no new messaging or gameplay behavior):**
@@ -244,3 +246,12 @@ Persistent Tavi WebSocket pulse consumer with authenticated DM reconciliation an
 ## v0.3.39 — OpenClaw sender identity
 
 Tavi now sends the contact’s verified username and profile-selected display name through the bridge to OpenClaw. `acct_N` remains an internal routing ID, not a name. This requires deploying the updated LoopRD Social component to expose the `displayName` field in `contact_list`; the bridge falls back to `username` with older runtimes. No database migration is needed.
+
+
+### Windows desktop Companions (0.3.53)
+
+After signing in, explicitly enable Companions and select **Show an independent floating Windows desktop companion** to open a small separate pet window. Drag by its handle; × hides, ↺ resets position, and Open in Tavi opens the full care panel. Nothing is enabled by default. This client-only source candidate requires a real Windows NSIS build and device acceptance. See `docs/TAVI_COMPANIONS_DESKTOP_0350.adoc`.
+
+### v0.3.58 — Sketch-matched bottom navigation
+
+On Home only, Games and Messages are compact side icon controls, while Main menu is a raised, circular middle button. The Home dock never appears inside a focused conversation or embedded game. See `docs/TAVI_HOME_DOCK_0354.adoc`.

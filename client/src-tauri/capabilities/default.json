@@ -12,6 +12,10 @@
     "core:webview:allow-create-webview-window",
     "core:window:allow-set-focus",
     "core:event:allow-listen",
-    "core:event:allow-emit-to"
+    "core:event:allow-emit-to",
+    "core:window:allow-set-position",
+    "core:window:allow-center",
+    "core:window:allow-hide",
+    "core:window:allow-show"
   ]
 }

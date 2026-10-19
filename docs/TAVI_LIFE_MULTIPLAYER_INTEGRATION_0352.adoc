@@ -1,0 +1,55 @@
+= Tavi / Social — Life multiplayer integration boundary (0.3.52)
+:toc:
+
+== Status and nonclaims
+
+The v0.3.52 source pass improves the user-facing game library and documents the bounded inter-service integration. It does NOT connect accepted Tavi challenges to Life, create seats or matches, publish an Atrium game catalog, or enable a headless OpenClaw game player. The Life public authenticated match API and its authoritative authorization contract are an external dependency. No live acceptance is claimed.
+
+== Ownership
+
+* Social: friend authorization, challenge delivery and accept/decline, short-lived identity grant, audited recipient-scoped events, private match-chat entitlement from verified game roster.
+* Life: durable authoritative match and seat creation, legal actions, game revision, idempotent turn submission, actual seat membership/revocation and game event publication.
+* Atrium: approved discovery and user-facing launch/resume only. No independent seat grant.
+* OpenClaw: ordinary Tavi account; independently authorized Life seat, legal actions supplied by Life.
+
+== Required cross-service contract (pending Life publication)
+
+Before any production wiring, Life and Social must agree on a versioned, authenticated contract with fixtures:
+
+. Life game-service identity and audience: exact registered publisher/game IDs, trusted caller credential, verified signature or service-to-service assertion; do not trust a user-supplied account ID or a URL.
+. Correlation: opaque challenge ID; unique stable idempotency key bound to challenge ID, game ID, sender and recipient. Duplicate acceptance or delivery returns the same persisted Life match, never a second match.
+. Challenge state: pending, accepted, declined, expired, cancelled; after acceptance, provisioning_pending; only game-confirmed seats transition to match_ready. Failure remains visible and retryable with bounds.
+. Admission: short-lived audience-bound one-use Social proof; Life redeems it server-to-server and separately verifies seat owner. No bearer, recovery code, Social session or private account data in a launch URL.
+. Match result: opaque Life match ID and two independently authorized seats. Social must not fabricate match IDs or mark games ready before confirmation.
+. Room roster: game-signed or authenticated monotonic revision of membership; stale rosters and revoked seats cannot read/send match chat.
+. Events: game-specific game.match.created, game.turn.ready, game.finished with idempotent event IDs and recipient authorization; no sensitive state in push wake hints.
+. Resume: Life reauthenticates seat independently at every join/resume; Atrium and Tavi only convey opaque match references and server-reviewed destinations.
+
+== Contract failure cases to test
+
+* Unaccepted friend, stranger, declined or expired challenge: no match.
+* Revoked friendship or game seat, retired publisher and cross-game grant: denied.
+* Concurrent duplicate accept/retries: exactly one match; old grant cannot redeem again.
+* Wrong audience, tampered grants, stolen or expired proof, wrong seat: denied.
+* Service restart mid-provisioning and network outage: retry with stable idempotency key; no orphaned duplicate match.
+* Stale legal action / revision, already-ended turn: rejected by Life, not patched around in Social.
+* Closing both clients and restarting Life: persisted game resumed by both separately authorized accounts.
+
+== First end-to-end acceptance sequence
+
+. Human and OpenClaw sign in as two ordinary, accepted Social contacts.
+. Human challenges OpenClaw to Life; OpenClaw accepts via Tavi bridge/channel.
+. Trusted workflow provisions exactly one Life match and verifies both seats.
+. Life registers consenting room membership in Social. Only then does Tavi show Resume and private match chat.
+. Human plays; Life publishes `turn.ready` through the approved game-event contract.
+. OpenClaw retrieves Life `legal_actions` and commits a legal move under its own seat.
+. Human receives Social turn event; both clients disconnect, Life restarts, then both resume.
+. Tampered, duplicate and cross-seat requests fail safely and appear in operator diagnostics without secrets.
+
+== UX changes in this pass
+
+The Games view uses Play with friends, Invite friend, Your matches and Turn alerts. Empty states avoid operator vocabulary. The legacy server-promoted game adapter remains available for compatibility. Atrium is used only when explicitly configured and reviewed by the Social server, and a challenge still does not create a match. Operator/developer configuration remains separate.
+
+== Outstanding external dependencies
+
+Life public match API and fixtures (LL-072 and related); Life game caller and verified roster configuration; Atrium approved discovery and launch target; native OpenClaw channel and legal-action adapter; Android closed-app delivery; physical Windows/Android/browser acceptance. Keep all existing local operator ticket statuses unchanged.

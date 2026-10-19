@@ -111,6 +111,34 @@ export async function discoverGames(origin, fetcher=browserFetch) {
       typeof g.name==='string'&&g.name.length<=64&&typeof g.url==='string'&&isSafePublishedGameUrl(g.url))
     .map(g=>({id:g.id,name:g.name,type:'web',url:g.url,embedded:g.embedded===true,external:true}));
 }
+/** Read sanitized discovery metadata from this signed-in Social server.
+ * This command never sees the Atrium apps:read service credential and never
+ * substitutes discovery for an approved playable release.
+ */
+export async function discoverAtriumGames(api) {
+  if (!api || typeof api.command !== 'function') throw new ProtocolError('Sign in to see discovered games.');
+  const data=await api.command('atrium_discovery');
+  if(data?.schema!=='tavi.atrium-discovery/v1'||
+     !['connected','not_connected','unavailable'].includes(data.status)||
+     !Array.isArray(data.games)||data.games.length>100)
+    throw new ProtocolError('Invalid Atrium discovery response.');
+  const ids=new Set();
+  const games=data.games.map(game=>{
+    if(!game || !/^[a-z][a-z0-9.-]{2,119}$/.test(game.gameId||'') ||
+       !/^[a-z][a-z0-9-]{0,63}$/.test(game.publisher||'') ||
+       typeof game.title!=='string' || game.title.length<1||game.title.length>120 ||
+       /[\x00-\x1f\x7f]/.test(game.title) ||
+       game.status!=='discovered'||game.playable!==false||
+       !Number.isInteger(game.instances)||game.instances<1||game.instances>30 ||
+       typeof game.hostingConfigured!=='boolean'||
+       ids.has(game.publisher+':'+game.gameId)) throw new ProtocolError('Invalid Atrium game metadata.');
+    ids.add(game.publisher+':'+game.gameId);
+    return Object.freeze({gameId:game.gameId,publisher:game.publisher,title:game.title,
+      status:'discovered',instances:game.instances,hostingConfigured:game.hostingConfigured,playable:false});
+  });
+  return Object.freeze({status:data.status,games:Object.freeze(games)});
+}
+
 export function isSafePublishedGameUrl(value){
   try{const u=new URL(value);return u.protocol==='https:'&&!!u.hostname&&!u.username&&!u.password&&!u.hash&&
     (!u.port||u.port==='443')&&!['localhost','localhost.localdomain'].includes(u.hostname)&&

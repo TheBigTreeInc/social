@@ -1,0 +1,31 @@
+= Tavi 0.3.53 — sketch-led Home and focused chat/game surfaces
+:toc:
+
+== Product behavior
+
+* Home is the application hub. Its top strip contains the current signed-in user's portrait/identity and status, lightweight activity badges, and the optional pet and name. A notification row, recent contacts, games, and the transient minimized activities follow below.
+* Only Home contains the Games / Main menu / Messages bottom dock. This dock must not consume any space in a conversation or game surface.
+* The focused phone/web conversation occupies the viewport below one compact contact/status header. Its message scroll area expands into all remaining space above the composer. The user can minimize it to Home and resume through the conversation's activity icon without discarding the draft.
+* Windows chat windows remain separate native WebViews. They have a small Minimize button, which asks the authenticated main Tavi window to hide the existing instance; Home gets a resume icon that shows/focuses the same native window rather than opening a duplicate.
+* Embedded games use an isolated framed web surface. On web/mobile the game iframe stays mounted outside the frequently re-rendered Home DOM and is hidden without being destroyed. When active, only the game's title and a tiny Minimize affordance remain; chat, main-menu, and games navigation bars are absent.
+* Windows desktop embedded games retain their own separate, wide native webview and an authenticated main-window mediator for community chat. Its default appearance no longer includes a permanent chat sidebar or status footer. Minimize and resume reuse the same window.
+* External-browser games and Atrium links stay external. Tavi cannot guarantee minimizing those browsers to a Tavi Home icon; that requires a reviewed embeddable/hosted integration.
+
+== Security and platform ownership
+
+* The Social session remains only in the main Tavi client. Auxiliary chat/game webviews receive filtered scoped snapshots through existing event brokers; neither a game URL nor its iframe contains Social tokens.
+* The game iframe is sandboxed with the already approved framing policy and `no-referrer`. If the game refuses framing, it remains launchable externally.
+* A minimized surface record is ephemeral, validated by account ID/game ID, bounded in title length and contains no API token, saved message text or foreign URL. It is cleared at account/session termination.
+* The companion remains opt-in, local-only, with no behavior inferred from other users' chats. The Home shows the local pet sprite and pet name only when explicitly enabled.
+* Server Social v0.3.48, schema 10 and the exact LoopRD descriptor remain unchanged. No Life match or seat registration is invented.
+
+== Native acceptance still required
+
+. Run ZipRunner Windows NSIS build. Confirm `core:window:allow-hide` and `allow-show` compile on the installed Tauri version. Validate clicking Minimize hides only the requested secondary window and its Home icon resumes it.
+. On Windows with two active contact chats and one game, minimize each, resume them in varying order, verify no duplicate webview and sign out. Validate no old account content survives to the next sign-in.
+. On Android and Web, minimize a focused DM and ensure Home shows a resume icon; resume and verify the same peer and draft. Verify the viewport doesn't scroll behind a global navigation dock.
+. Open an operator-approved embeddable game, navigate Home, let a Home refresh run, resume it, and verify its iframe was not recreated. Frame policy, external fallback, and mobile WebView must be tested with a real hosted game.
+. Confirm keyboard focus, safe area, small 355px roster width, high DPI, long status names, a disabled pet, and reduced-motion accessibility.
+. Verify previous social invitations, settings, inbox, companion controls, Windows DPAPI and Android updater behaviors are unchanged. The updater's separately reported installer defect remains unresolved.
+
+No unit/source suite constitutes operator device approval, and version 0.3.53 is a candidate, not a deployed release.

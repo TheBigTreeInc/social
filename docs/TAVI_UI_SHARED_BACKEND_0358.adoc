@@ -1,0 +1,36 @@
+= Tavi 0.3.58 — Classic Messenger Home and Atrium on shared LoopRD
+:toc:
+
+== Approved player experience
+
+* Reuse the information-rich MSN/Yahoo/Xfire-style contact roster rather than card-based Home.
+* Profile/identity/online presence remain visible in the compact top strip. Activity and notifications use a small header action. Only when the player explicitly enables companions does the pet sprite and pet name appear at the upper-right of the profile strip; disabled pets consume no header space or reminders.
+* Top action toolbar is *Add contact, Portrait, Sync, Options*. Messages, Games and Main menu are exclusively in the approved raised-circle Home dock. The pet is not duplicated there or in the action toolbar.
+* Focused chats and embedded games have no global Home dock and keep their existing minimize/resume mechanics; game viewport is not reduced by a persistent social navigation strip.
+* Games is a compact activity view: Your games/turns, Play with friends (only genuinely published games), Discover games (read-only Atrium metadata), and Invitations. A discovered title is NOT playable simply because a launchOrigin is configured.
+* Operator-safe integration statuses are shown only in authorized Developer tools. Never display URLs, private service keys, principal credentials or raw upstream responses.
+
+== Shared LoopRD Atrium data flow
+
+The components reside in one LoopRD backend. Atrium v0.5.21 exposes an authenticated GET `/looprd/atrium/v1/registry/discovery/v2/catalog` requiring `apps:read`. Its returned `atrium.trusted-game-catalog/v1` is trusted game *metadata*, not published assets.
+
+The existing Atrium handler is not declared as a LoopRD `ctx.call` service contract. Calling it with `ctx.call` without that published contract or treating same-host identity as automatic authorization would bypass or break the actual contract. This pass therefore reuses normal Atrium `apps:read` authentication via a single operator-selected shared HTTPS backend origin. It does not require a distinct Atrium public API host.
+
+Server environment (not source/git):
+
+* `LOOPRD_TAVI_ATRIUM_BACKEND_ORIGIN=https://<operator-approved-looprd-api-host>` (exact HTTPS origin, no path/query/port or credentials)
+* `LOOPRD_TAVI_ATRIUM_READ_TOKEN=<private apps:read component key>`
+* Optional `LOOPRD_TAVI_ATRIUM_BASE_URL` for player-facing *Open Atrium* portal; this is independent from the catalog route.
+
+The legacy complete `LOOPRD_TAVI_ATRIUM_DISCOVERY_URL` remains supported when the backend origin is unset. Shared origin wins when both supplied. Loopback, local/private literal-IP endpoints, arbitrary paths, credentials and redirects are rejected. Secret is never returned to clients. A trusted Social account gets only `{gameId,publisher,title,status:'discovered',instances,hostingConfigured,playable:false}`.
+
+== Pending live acceptance
+
+. Operator provisions distinct `apps:read` key to `atrium` via the LoopRD management API; do not use `apps:approve` or management root key.
+. Operator deploys updated Social 0.3.58 component with private backend origin and read token in supported secret injection mechanism; no secrets in ZipRunner ZIP.
+. Verify Atrium v2 catalog includes `life.loop`; then sign in to Tavi and verify read-only Life appears.
+. Disable/revoke Atrium credential and verify fail-closed discovery with no stale playable card, then restore.
+. Check actual Windows, Android and WebView2 appearance with pet enabled/disabled, profile/badges, contacts/groups, top action bar and raised Home dock. Test minimizing and resuming chat/game.
+. Keep Life matchmaking, hosted public publication, OpenClaw legality and cross-device acceptance pending until independently proven.
+
+No database schema change. No approved workboard tickets closed; no Git push, deploy, tag, release, or runtime state modified by this source package.

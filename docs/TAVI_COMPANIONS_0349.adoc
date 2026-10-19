@@ -1,0 +1,76 @@
+= Tavi v0.3.49 — Companion Pets: PC, Mobile and Consent-First Tamagotchi Progression
+:toc:
+
+== Product definition
+Tavi remains a normal chat and gaming messenger. The virtual pet is entirely optional. It is not part of the login flow or a condition for chat, games or achievement eligibility. It can be disabled at any time, including during active care. OpenClaw is just another Tavi account; no agent dependency, game API or Social server migration is introduced by Companions.
+
+This pass provides a first _working_, client-local implementation on Web/Windows/Android Tavi surfaces (not independent OS overlays). The companion UI renders custom-authored 16x16 palette pixel art with discrete color cells and integer-scaling. Full animation sheets, sounds and pet-environment artwork are future art passes. The same data-driven engine runs on PC and phone.
+
+== Eight original companions
+
+[cols="1,1,2,2,1",options="header"]
+|===
+|Name |Species |Personality |Favorite |Availability
+|Mochi |Cat |Affectionate, picky and dramatic |Pet |Starter
+|Pip |Dog |Loyal, lively and eager |Play |Starter
+|Nib |Rabbit |Gentle, shy and tidy |Clean |Starter
+|Pebble |Turtle |Patient, calm and stubborn |Rest |Starter
+|Bloop |Axolotl |Dreamy, quirky and serene |Pet |3 distinct pet-care days
+|Tock |Owl |Observant and thoughtful |Rest |5 distinct pet-care days
+|Fizz |Fox |Clever, mischievous and playful |Play |24 pet-care actions
+|Glint |Crow |Curious, inventive collector |Pet |7 distinct pet-care days
+|===
+
+Unlocks do not spend money, depend on messaging frequency or imply access to other accounts. New pets can add a species descriptor, 16x16 artwork and an unlock rule without changing the common care engine. The starter lineup includes Pebble as a low-demand alternative. Locked pets are represented by question marks until earned; available pets may be selected freely.
+
+== Modes, willingness and consent
+
+[cols="1,3",options="header"]
+|===
+|Mode |Gameplay
+|Disabled (initial state) |No floating pet, no reminders, no decay. All prior local data retained for later re-enable.
+|Companion (initial enabled mode) |Feed, clean, play, pet and rest on demand; no time decay, no obligation. Five visible needs are presentation, not care debt.
+|Gentle Care (explicit choice) |Modest species-specific fullness, cleanliness, happiness and energy change over time, but only when enabled. Offline recovery impact limited to the equivalent of eight hours; no death.
+|Classic Care (explicit choice) |A stronger but still capped pet-care rhythm, borrowing from Tamagotchi. No death, permanent loss, forced notifications or penalties for life responsibilities. Mini-games, aging/evolution and items are future opt-ins.
+|===
+
+Tavi may offer Gentle Care **once** in the Companions panel after at least 10 deliberate care actions, at least 3 distinct pet-care calendar days and at least 3 care-action types. It may offer Classic Care after at least 25 care actions, 5 distinct days and 4 action types while Gentle Care is active. Neither suggestion changes the current mode until the player affirmatively chooses it; one dismissal prevents that prompt from repeating. Manual mode selection remains available at any time independent of inferred activity. The engine never inspects chat text, friends, message frequency, game play, location, contacts or OpenClaw behavior to decide willingness. The measured preference is strictly opt-in pet activity.
+
+== Persistence and privacy
+Current pet record is `tavi.companions/v1` in localStorage, namespaced by signed-in Social server origin and current account profile ID. It stores companion species, user-selected name, enable/overlay/mode settings, needs, pet-care actions, simple care-day dates, and earned species IDs. No message bodies, auth tokens, contacts, server records or global cross-app telemetry are consumed. The server has no companion endpoints, database tables, event subscriptions or service credentials in this pass. Same account on another device does not synchronize pets yet; device replacement/backups require a separately designed consent-based sync contract. Local storage may be cleared by browser data deletion. Future native persistence should use app-specific stores, never mix companion progress with sensitive session vault material.
+
+Current choices use one active companion with shared care progress and cosmetic species swapping; separate per-pet habitats, multiple simultaneous pets, gift exchanges and training inventories are not yet implemented.
+
+== PC and phone experiences
+
+* Windows desktop: Companions is available in the classic roster toolbar and Tools menu. The pet scene and actions open in Tavi's normal auxiliary panel. An optional small 16px sprite badge is visible inside the app when enabled; it hides while a text composer/input has focus.
+* Android: the same companion scene and controls work in the responsive Tavi UI. An opt-in badge is inside the app, not an OS-wide overlay.
+* Web: the same in-app behaviors, no browser permissions needed.
+* Windows independent overlay (planned `TAVI-PET-050`): separate transparent, borderless, user-draggable always-on-top Tauri window backed by the *same* engine; independent enable/position and minimize controls; never intercept keyboard, game controls or passwords. Test multi-monitor DPI, focus, close, fullscreen games and foreground security boundaries. OS overlay is OFF until the user opts in.
+* Android system overlay (planned `TAVI-PET-051`): require explicit user journey to OS overlay permission; use a small movable bubble above other apps with dismiss/temporary hide, pause when the keyboard or fullscreen media is active, and quick actions that avoid leaking data to overlay windows. Ensure Play policies and Android permission/restriction compatibility. No accessibility service, covert overlay or blanket notification access.
+* Mac/Linux: shared engine and Tavi panel work through browser/desktop clients; per-OS overlay acceptance is independent and not falsely claimed by the Windows design.
+
+== Consent-safe Tamagotchi expansion
+Classic Care can later opt into stages such as food types, hygiene cycles, toy affinity, pet growth/aging, rooms, weather and simple minigames. Each layer is offered in-app only after genuine pet participation, and is explicitly accepted before activation. Do not secretly add a harder decay rate after an unlock. Companions can rest while the user is offline and must never die irreversibly or require payments to revive. The system should preserve an optional "strict retro" experience as an explicit standalone setting only after product review.
+
+== v0.3.49 implementation and limitations
+
+Implemented in source:
+
+* `client/src/companions/catalog.js`: 8 personalities, authored 16px pixel art and unlock descriptors.
+* `client/src/companions/engine.js`: opt-in state, 5 actions, 3 explicit modes, capped stat decay, disengagement-safe behavior, achievement unlocks, bounded willingness suggestions and per-account local storage helper.
+* `client/src/companions/view.js`: Tavi panel and in-app badge, accessible buttons and mode opt-in.
+* `client/src/main.js`, `client/src/style.css`: toolbar/menu navigation, action handlers and responsive styling.
+* `client/tests/companions.test.mjs`: consent, mode non-escalation, offline caps, unlocks, account scope, XSS escaping and data pack contracts.
+
+Not implemented: standalone Windows floating native window, Android system alert-window service, cross-device sync, push notifications, server-synchronized state, full sprite animation sheets, unlock/pet ownership API, minigames or time-of-day routines. No server descriptor changes; continue to run Social v0.3.48/schema 10. Do not redeploy LoopRD or push server YAML for this client-only feature.
+
+== Operator acceptance
+
+. Import ZipRunner 0.3.49 source, run `npm run verify`, `npm run check:looprd`, `node --test client/tests/companions.test.mjs`, and the declared exact-ZIP tests. Confirm existing Tavi chat/game/inbox functionality unchanged.
+. Build Web and Windows NSIS; open Tavi on PC. Companions begins disabled. Enable it and select Mochi/Pip/Nib/Pebble. Confirm visible 16px art and care actions; check optional in-app floating badge.
+. Select Companion, Gentle Care and Classic Care manually, verify no time decay in disabled/Companion modes, capped overnight changes in care modes, and no death. Verify completing multiple care sessions only *offers* a different style.
+. Disable and reenable; ensure stored state retained with no notifications or overlay while disabled; test account A and B on same origin and origin B for isolation. Confirm no Social/LoopRD calls are made for pet interaction.
+. On Android or mobile browser validate narrow screen rendering, focus-induced badge hiding and no keyboard obstruction. Test device reload. Do not claim OS-wide overlays before separately approved native builds and permissions.
+. Confirm eight distinct species and four unlocks. Confirm missing assets/invalid stored records fail safely. Verify after a signed-out re-login the current profile restores its own pet, but another account does not.
+. Obtain operator approval before marking the pass Done; there is no automatic publish, release or push.

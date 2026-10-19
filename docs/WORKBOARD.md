@@ -1,3 +1,7 @@
+== v0.3.49 TAVI-PET-049 source candidate
+
+Consent-first pet companion with authored 16x16 sprites, personal mode preferences and optional in-app badge on Windows/Android/Web. New original operator tickets are not closed; mobile/desktop **system-wide** overlays are follow-up work. Social backend stays v0.3.48/schema 10. See `docs/TAVI_COMPANIONS_0349.adoc`.
+
 == v0.3.48 TAVI-ATRIUM-048 source candidate
 
 The Tavi client now presents its pre-existing optional Atrium launcher prominently and clearly distinguishes it from legacy Social-promoted game links. Source verification only; real reviewed Atrium origin, native Windows launch, Life registration, OpenClaw gameplay and operator approval remain pending. See `docs/TAVI_ATRIUM_LAUNCH_0348.adoc`. Preserve all original workboard statuses.
@@ -133,3 +137,8 @@ Operator requested prioritizing shared multiplayer until Life/Atrium/Tavi intero
 - `LRS-004` stays Review; recovery/reporting/Android networking operator acceptance not silently closed.
 
 See `TAVI_MULTIPLAYER_MATCH_CHAT.adoc`.
+
+
+## v0.3.52 optional Windows Companions source candidate
+
+TAVI-PET-050 adds a physically small, user-selected native transparent floating pet webview, with a pet-only main-window event bridge and drag/position controls. Physical Windows/NSIS, DPI, fullscreen and account-isolation acceptance remain required; do not mark Done automatically. Original operator workboard tickets and their statuses are preserved. Social server 0.3.48/schema 10 is unchanged. See `docs/TAVI_COMPANIONS_DESKTOP_0350.adoc`.

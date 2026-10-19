@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.48",
+  "version": "0.3.58",
   "tasks": [
     {
       "id": "TAVI-CHAT-002",
@@ -702,6 +702,169 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-PET-049",
+      "criteria": [
+        {
+          "id": "TAVI-PET-049-AC-1",
+          "description": "Pure care model, eight valid species, explicit modes, opt-in prompts, account scoping and unlocks",
+          "mode": "automated",
+          "checks": [
+            "TAVI-PET-049-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-PET-049-AC-2",
+          "description": "Windows/Web/Android pet panel, keyboard-safe in-app badge, no server schema/descriptor change",
+          "mode": "manual",
+          "checks": [
+            "TAVI-PET-049-DEVICE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-PET-050",
+      "criteria": [
+        {
+          "id": "TAVI-PET-050-AC-1",
+          "description": "Unprivileged token-free floating pet window only after explicit Windows opt-in",
+          "mode": "automated",
+          "checks": [
+            "TAVI-PET-050-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-PET-050-AC-2",
+          "description": "Native Win11 NSIS and actual multi-monitor/HiDPI, z-order and focus acceptance",
+          "mode": "manual",
+          "checks": [
+            "TAVI-PET-050-DEVICE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-UX-053",
+      "criteria": [
+        {
+          "id": "TAVI-UX-053-AC-1",
+          "description": "Home displays safe user identity, consented companion, notifications, and recent contacts; focused chat and game have no global navigation",
+          "mode": "automated",
+          "checks": [
+            "TAVI-UX-053-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-UX-053-AC-2",
+          "description": "Windows NSIS, Android WebView, and browser manual interactive testing for minimize, return, no game iframe loss, account separation and accessibility",
+          "mode": "manual",
+          "checks": [
+            "TAVI-UX-053-DEVICE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-UX-054",
+      "criteria": [
+        {
+          "id": "TAVI-UX-054-AC-1",
+          "description": "Home dock retains exactly three correctly separated controls with compact sides and raised circular central Main Menu; no wide pill or global dock in focused chat/game",
+          "mode": "automated",
+          "checks": [
+            "TAVI-UX-054-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-UX-054-AC-2",
+          "description": "Operator compares compact Windows Home and Android/phone/tablet screenshots with sketch; taps, keyboard focus, safe-area, minimize/resume all pass",
+          "mode": "manual",
+          "checks": [
+            "TAVI-UX-054-DEVICE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-UX-055",
+      "criteria": [
+        {
+          "id": "TAVI-UX-055-AC-1",
+          "description": "Home reuses classic messenger roster in new green colors with intact search, collapsible groups, lobby, game monitoring and status, and preserves v0.3.54 dock and focused views",
+          "mode": "automated",
+          "checks": [
+            "TAVI-UX-055-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-UX-055-AC-2",
+          "description": "Windows 355px and Android/tablet real device visual and interaction acceptance, including minimize/reopen actions and native builds",
+          "mode": "manual",
+          "checks": [
+            "TAVI-UX-055-DEVICE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-ATRIUM-056",
+      "criteria": [
+        {
+          "id": "TAVI-ATRIUM-056-AC-1",
+          "description": "Server safely retrieves and sanitizes actual Atrium v2 catalog with apps:read service credentials, and rejects guest/mismatched sessions, forged metadata, unavailable and unauthorized targets.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-ATRIUM-056-PY"
+          ]
+        },
+        {
+          "id": "TAVI-ATRIUM-056-AC-2",
+          "description": "Shared Tavi SDK and compact Home/Games surface show discovered Life as not playable without an approved hosted-release contract.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-ATRIUM-056-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-ATRIUM-056-AC-3",
+          "description": "Real trusted Atrium v2, reviewed Life deployment and Social 0.3.58 server with apps:read key; verify live availability/withdrawal while running and Windows/Android presentation.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-ATRIUM-056-LIVE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-UX-058",
+      "criteria": [
+        {
+          "id": "TAVI-UX-058-AC-1",
+          "description": "Classic action-only toolbar, opt-in first-class pet and full-size game/chat views",
+          "mode": "automated",
+          "checks": [
+            "TAVI-UX-058-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-UX-058-AC-2",
+          "description": "Single-origin Atrium v2 reader requires private credential and strips URLs/tokens",
+          "mode": "automated",
+          "checks": [
+            "TAVI-UX-058-PY"
+          ]
+        },
+        {
+          "id": "TAVI-UX-058-AC-3",
+          "description": "Windows NSIS, Android/Web layout at narrow sizes, enabled/disabled pet, real Life catalog via operator runtime",
+          "mode": "manual",
+          "checks": [
+            "TAVI-UX-058-OPERATOR"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -1150,6 +1313,126 @@
       "stage": "acceptance",
       "description": "Legacy promoted Play and accepted-contact challenge smoke",
       "instructions": "In staging, configure TAVI_GAME_CATALOG_JSON with reviewed actual Life URL, verify old Play and accepted-contact challenge; confirm OpenClaw receives and accepts via normal Tavi account; verify no Life match created. Do not mark Done without operator acceptance."
+    },
+    {
+      "id": "TAVI-PET-049-NODE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Consent-first pet engine and 8-pet data model",
+      "runner_ref": "tavi-pet-unit",
+      "assertions": [
+        "8 unique hand-authored sprites",
+        "disabled and companion mode no decay",
+        "only explicit mode selection increases care complexity",
+        "pet-only engagement gates",
+        "account-scoped state and escaped UI"
+      ],
+      "test_ref": "client/tests/companions.test.mjs"
+    },
+    {
+      "id": "TAVI-PET-049-DEVICE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Windows and Android/Web companion opt-in and pixels",
+      "instructions": "Install v0.3.49 client; confirm starts off, care mode only changes on explicit selection, no System Alert Window/always-on-top permission is requested, in-app badge hides on focused input, same device account A/B isolation and chat functionality preserved. Independently test platform builds."
+    },
+    {
+      "id": "TAVI-PET-050-NODE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Native Tauri windows pet source contract",
+      "runner_ref": "tavi-windows-pet-unit",
+      "assertions": [
+        "Only explicit Windows opt-in and authenticated main",
+        "Allowed care action contract excludes credentials",
+        "Position bounds and scoped persistence",
+        "Vite separate HTML entry, minimal separate Tauri capability"
+      ],
+      "test_ref": "client/tests/companion-window.test.mjs"
+    },
+    {
+      "id": "TAVI-PET-050-DEVICE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Windows NSIS and Windows desktop companion real device",
+      "instructions": "Install Tavi 0.3.53 NSIS on Windows, explicitly enable floating pet, test transparency, drag/multiple monitors, restart position, reset center, foreground keyboard focus, session switch/quit, no identity leakage; no auto-mode escalation."
+    },
+    {
+      "id": "TAVI-UX-053-NODE",
+      "kind": "command",
+      "stage": "source",
+      "command": "node --test client/tests/surfaces.test.mjs client/tests/classic-layout.test.mjs"
+    },
+    {
+      "id": "TAVI-UX-053-DEVICE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Windows, Android/tablet and web responsive UI acceptance",
+      "instructions": "Install version 0.3.53 on Windows and mobile. Verify only Home has bottom dock, native and in-app chat/game can be minimized to resumable Home icons without leaking Social credentials. Confirm gameplay iframe preserves state on Home refresh; verify native window taskbar, focus, browser framing, and auth/account logout behavior. External browser games cannot be minimized within Tavi. Do not mark Done before operator testing."
+    },
+    {
+      "id": "TAVI-UX-054-NODE",
+      "kind": "command",
+      "command": "node --test client/tests/home-dock.test.mjs",
+      "stage": "source"
+    },
+    {
+      "id": "TAVI-UX-054-DEVICE",
+      "kind": "manual",
+      "instructions": "Compare 355px Windows Home and 320/390px Android, tablet/web: Games left, raised circular Main menu center, Messages right; test unread, keyboard and no dock in chat/game.",
+      "stage": "acceptance",
+      "description": "Windows/Android/mobile and tablet screenshot comparison against sketch"
+    },
+    {
+      "id": "TAVI-UX-055-NODE",
+      "kind": "command",
+      "stage": "source",
+      "command": "node --test client/tests/classic-home-restoration.test.mjs client/tests/classic-layout.test.mjs client/tests/home-dock.test.mjs"
+    },
+    {
+      "id": "TAVI-UX-055-DEVICE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Legacy messenger roster with approved sketch dock, Windows/Android/Web visual acceptance",
+      "instructions": "Verify old dense Windows roster above sage/green circular Home footer: menu, account host/status, toolbar, search, collapsed groups, lobby and My Games, minimized activities, and status. At 320/355/390/768 widths verify overflow and scroll. Verify focused chat/game have no Home dock; NSIS, Android APK and actual Tavi account experience still require operator acceptance."
+    },
+    {
+      "id": "TAVI-ATRIUM-056-PY",
+      "kind": "command",
+      "stage": "source",
+      "command": "python -m unittest discover -s tests -p test_atrium_catalog.py -v"
+    },
+    {
+      "id": "TAVI-ATRIUM-056-NODE",
+      "kind": "command",
+      "stage": "source",
+      "command": "node --test client/tests/atrium-discovery.test.mjs"
+    },
+    {
+      "id": "TAVI-ATRIUM-056-LIVE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Real LoopRD Social 0.3.58 to Atrium v2 discovery and withdrawal plus game-client acceptance",
+      "instructions": "Provision only server-side LOOPRD_TAVI_ATRIUM_DISCOVERY_URL and apps:read credential; deploy Social from operator-approved source; check signed-in Tavi Game/My Games Life discovered, then withdraw; no premature Play or raw Atrium bearer; verify Windows NSIS and Android; preserve all local data."
+    },
+    {
+      "id": "TAVI-UX-058-NODE",
+      "kind": "command",
+      "stage": "source",
+      "command": "node --test client/tests/classic-header-v0358.test.mjs"
+    },
+    {
+      "id": "TAVI-UX-058-PY",
+      "kind": "command",
+      "stage": "source",
+      "command": "python -m unittest discover -s tests -p test_atrium_catalog.py -v"
+    },
+    {
+      "id": "TAVI-UX-058-OPERATOR",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Windows/Android classic roster header+optional pet, shared-backend apps:read and safe play gating",
+      "instructions": "Operator imports exact ZIP, deploys Social with protected origin/read key, verifies no credentials in clients, life.loop remains discovered only, native screens and minimize/restore."
     }
   ]
 }

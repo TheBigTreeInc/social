@@ -349,3 +349,230 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .atrium-open{min-height:38px;white-space:nowrap}
 .game-library>h3{font-size:13px;margin-top:8px;color:#47675d}
 .game-library>h3+p{margin-top:7px;color:#61766b}
+
+/* Tavi Companions 0.3.49: pixel art belongs to the account's optional in-app panel. */
+.companions { --pet-ink:#24352e; color:var(--text,#24352e); }
+.companions h2 {margin:0 0 .15rem}
+.companions h3 {margin:.9rem 0 .5rem}
+.companion-title {display:flex;align-items:start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.companion-title p {margin:.25rem 0 .7rem}
+.companion-toggle {display:flex;gap:.45rem;align-items:center;font-weight:700}
+.companion-soft-note {border:1px dashed #92a794;border-radius:7px;padding:8px;background:#e9f3e6}
+.companion-scene {display:flex;align-items:center;justify-content:center;gap:12px;border:4px solid #344c41;background:repeating-linear-gradient(0deg,#acc6a2 0 12px,#b7d1ab 12px 24px);box-shadow:inset 0 0 0 3px #e7e6ca;min-height:171px;padding:10px}
+.companion-scene.paused {filter:saturate(.65)}
+.companion-art {width:144px;height:144px;flex:0 0 144px;display:grid;place-items:center}
+.companion-pixels {display:block;width:100%;max-height:144px;image-rendering:pixelated;filter:drop-shadow(3px 4px 0 #668670)}
+.companion-pixels.small {width:48px;height:48px;image-rendering:pixelated;filter:drop-shadow(1px 2px 0 #668670)}
+.companion-descriptor {display:flex;flex-flow:column;gap:5px;min-width:0;max-width:200px}
+.companion-descriptor strong {font-family:monospace;font-size:1.22rem}
+.companion-descriptor span {font-size:.84rem}
+.companion-mood {font-weight:bold;color:#375c45}
+.companion-needs {display:grid;gap:6px;margin:12px 0}
+.companion-stat {display:grid;grid-template-columns:84px minmax(30px,1fr) 25px;align-items:center;gap:7px;font-size:.78rem}
+.companion-stat progress {width:100%;height:12px;accent-color:#567e57}
+.companion-stat b {text-align:right;font-family:monospace}
+.companion-actions {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.companion-actions button {padding:8px 2px;font-size:.75rem;min-width:0;border:2px solid #526e56;border-radius:2px;background:#e1eccd;box-shadow:inset -2px -2px #afbd9a;font-weight:700}
+.companion-choices {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.pet-choice {display:flex;flex-direction:column;gap:2px;justify-content:center;align-items:center;padding:6px 2px;min-width:0;background:#e4eedb;border:2px solid #7d9480;border-radius:3px}
+.pet-choice strong {font-size:.75rem}
+.pet-choice small {font-size:.65rem}
+.pet-choice.selected {border-color:#214f39;box-shadow:inset 0 0 0 2px #b0c99b}
+.pet-choice.locked {opacity:.65;background:#d8ded7}
+.pet-locked-art {height:48px;width:48px;display:grid;place-items:center;font:bold 28px monospace;color:#6a756d}
+.companion-settings {margin:.85rem 0;padding:9px;background:#ecf0e9;border:1px solid #b6c8b5;border-radius:3px}
+.companion-settings summary {font-weight:bold;cursor:pointer}
+.companion-settings label {display:flex;flex-direction:column;gap:5px;margin-top:9px;font-size:.85rem}
+.companion-settings label:has([type=checkbox]) {flex-direction:row;align-items:center}
+.companion-settings input:not([type=checkbox]),.companion-settings select {width:100%;max-width:340px;padding:8px}
+.companion-suggestion {margin:11px 0;padding:10px;background:#dcebcf;border:2px solid #92af84}
+.companion-suggestion p {margin:.4rem 0}
+.companion-float {position:fixed;right:12px;bottom:57px;z-index:50;display:flex;align-items:center;gap:3px;padding:3px 6px;max-width:110px;background:#e0ead9;border:2px solid #4c7052;box-shadow:2px 3px 0 #4b624f;border-radius:3px;color:#253e2c}
+.companion-float span {font:bold .7rem monospace;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+@media (min-width:650px){.companion-float {bottom:12px}}
+@media (max-width:390px){.companion-art{width:110px;height:110px;flex-basis:110px}.companion-scene{min-height:138px;padding:5px}.companion-descriptor span{font-size:.73rem}.companion-choices{gap:4px}}
+@media (prefers-reduced-motion:no-preference){.companion-scene.awake .companion-art{animation:tavi-pet-idle 2.8s steps(2,end) infinite}@keyframes tavi-pet-idle {0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}}
+/* Never float over a focused text composer or the virtual keyboard. */
+#app:has(textarea:focus) .companion-float,
+#app:has(input:focus) .companion-float {display:none}
+
+/* 0.3.53: sketch-led Tavi Home, MSN-like focused chat, and full-viewport games.
+   Only Home owns the Games / Main menu / Messages navigation. */
+:root { --tavi-forest:#245d43;--tavi-leaf:#4e9865;--tavi-mint:#dcefdc;--tavi-cream:#fcfdf4; }
+.tavi-single-workspace {height:100%;min-height:0;width:100%;display:flex;flex-direction:column;overflow:hidden;background:#e8f4e5;}
+.tavi-home {width:100%;height:100%;display:flex;flex-direction:column;min-height:0;background:linear-gradient(165deg,#a7ccae,#dceecb 38%,#e8f5de);color:#243f31;font-family:'Segoe UI',Tahoma,Arial,sans-serif;}
+.tavi-home-brand{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;min-height:60px;padding:11px 20px 6px;background:linear-gradient(125deg,#417c61,#699b7b);color:#fff;}
+.tavi-home-brand strong{font-size:27px;letter-spacing:-1px;font-weight:800;text-shadow:0 2px 4px #143e2e55;}
+.tavi-home-brand strong span{color:#bfe5a3;font-size:18px;vertical-align:top;}
+.tavi-home-brand button{background:transparent;color:#fff;border:none;font-size:22px;min-width:36px;min-height:36px;}
+.tavi-home-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px 13px 22px;display:flex;flex-direction:column;gap:12px;}
+.tavi-home-profile,.tavi-home-notification,.tavi-home-section{border:1px solid #c5dac4;background:linear-gradient(150deg,#fffff8,#eef7e8);border-radius:20px;box-shadow:0 3px 10px #1a55301c;}
+.tavi-home-profile{display:flex;align-items:center;gap:9px;padding:12px 10px;min-height:93px;}
+.tavi-home-profile button{border:0;background:transparent;box-shadow:none;}
+.tavi-home-avatar{flex-shrink:0;padding:0;}.tavi-home-avatar .avatar{width:50px;height:50px;border-radius:50%;font-size:22px;background:#bce3cc;color:var(--tavi-forest);border:3px solid #fff;}
+.tavi-home-identity{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;overflow:hidden;}
+.tavi-home-identity strong{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tavi-home-identity span{font-size:11px;color:#367b51;}.tavi-home-identity small{font-size:10px;color:#647967;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tavi-home-badges,.tavi-home-pet{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:45px;max-width:68px;padding:3px!important;}
+.tavi-home-badges>span{font-size:18px;color:#82a84d}.tavi-home-badges small,.tavi-home-pet small{font-size:10px;color:#456950;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;max-width:65px;}
+.tavi-home-pet .companion-pixels{width:39px;height:39px;image-rendering:pixelated}.tavi-home-pet>span{font-size:30px;color:#78b990;}
+.tavi-home-notification{display:flex;align-items:center;gap:11px;padding:12px;min-height:62px;text-align:left;color:var(--tavi-forest);}
+.tavi-home-notification>span:first-child{background:#dcefdc;border-radius:10px;font-size:25px;padding:3px 9px;}.tavi-home-notification>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}.tavi-home-notification strong{font-size:13px}.tavi-home-notification small{font-size:11px;color:#64816f;}
+.tavi-home-section{padding:13px 12px;}.tavi-section-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+.tavi-section-title h2{font-size:15px;line-height:1.2;font-weight:700;color:#28583c;}.tavi-section-title button{background:none;border:0;box-shadow:none;font-size:11px;color:#4e8561;white-space:nowrap;padding:4px;}
+.tavi-home-threads{display:flex;flex-direction:column;gap:5px;}.tavi-home-thread{display:flex;align-items:center;gap:11px;text-align:left;background:#fffcf4;border:1px solid #e9ede0;border-radius:13px;padding:9px 11px;min-height:57px;box-shadow:none;}
+.tavi-home-thread:hover{background:#f4fbed;border-color:#9fcaaa;}.tavi-home-thread .avatar{width:37px;height:37px;border-radius:50%;font-size:16px;}.tavi-home-thread-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px;}
+.tavi-home-thread-copy strong{font-size:12px;color:#284c38;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.tavi-home-thread-copy small{color:#66786e;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tavi-home-empty{padding:13px;color:#6e8676;font-size:12px;}.tavi-home-quick,.tavi-resume-icons{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;}.tavi-home-quick button,.tavi-resume-icons button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:83px;border:1px solid #dae8d5;border-radius:16px;background:#fffdf5;color:#345b44;box-shadow:none;padding:10px 7px;text-align:center;}
+.tavi-home-quick button>span,.tavi-resume-icons button>span:first-child{font-size:23px;}.tavi-home-quick strong,.tavi-resume-icons button>span:nth-child(2){font-size:11px;font-weight:700;overflow-wrap:anywhere;}.tavi-home-quick small{font-size:10px;color:#6e8573;}.tavi-resume-icons button{background:#d8eed9;position:relative;min-height:70px;}.tavi-resume-icons b{position:absolute;top:4px;right:6px;}
+.tavi-turn-quick{display:block;width:100%;background:#e7f5dd;border-color:#a7cda6;border-radius:12px;text-align:left;margin-top:8px;}
+/* 0.3.54: sketch fidelity — an elevated, genuinely round center control.
+   The side actions stay small; the 3-button dock exists only on Home. */
+.tavi-home-scroll{padding-bottom:34px;}
+.tavi-home-dock{
+  flex-shrink:0;position:relative;isolation:isolate;overflow:visible;
+  box-sizing:content-box;height:65px;min-height:65px;
+  display:grid;grid-template-columns:minmax(0,1fr) 102px minmax(0,1fr);
+  align-items:end;gap:2px;padding:7px 12px max(7px,env(safe-area-inset-bottom,0px));
+  border-top:1px solid #c6ddc0;border-radius:21px 21px 0 0;
+  background:#fbfcf3;box-shadow:0 -4px 13px #315d4218;
+}
+.tavi-home-dock::before{
+  content:"";position:absolute;top:-24px;left:50%;transform:translateX(-50%);
+  width:106px;height:60px;z-index:0;pointer-events:none;
+  border:1px solid #c6ddc0;border-bottom:0;border-radius:65px 65px 0 0;
+  background:#fbfcf3;box-shadow:0 -5px 12px #315d4210;
+}
+.tavi-home-dock button{
+  appearance:none;position:relative;z-index:1;box-shadow:none;border:0;background:transparent;
+  display:flex;align-items:center;flex-direction:column;justify-content:center;
+  gap:3px;color:#2b553f;font:600 11px/1.2 'Segoe UI',Tahoma,Arial,sans-serif;
+  min-width:0;padding:3px 0 1px;border-radius:15px;cursor:pointer;
+}
+.tavi-home-dock .tavi-dock-side{min-height:55px;width:100%;}
+.tavi-home-dock .tavi-dock-side:hover{background:#e5f3dd;}
+.tavi-home-dock .tavi-dock-icon{display:block;width:28px;height:28px;flex-shrink:0;}
+.tavi-home-dock .tavi-dock-label{font-size:11px;line-height:1.15;white-space:nowrap;}
+.tavi-home-dock .tavi-home-menu{
+  justify-self:center;align-self:end;width:94px;height:93px;min-height:93px;
+  padding:0 0 1px;gap:3px;margin-top:-28px;
+  color:#2b553f;font-weight:700;
+}
+.tavi-home-dock .tavi-dock-orb{
+  display:grid;place-items:center;flex-shrink:0;
+  box-sizing:border-box;width:70px;height:70px;border-radius:50%;
+  border:5px solid #e9f6dd;background:linear-gradient(150deg,#6da981,#367c56);
+  color:#fff;box-shadow:0 2px 0 #bad5ba,0 4px 10px #1e543044;
+}
+.tavi-home-dock .tavi-dock-orb svg{width:32px;height:32px;}
+.tavi-home-dock .tavi-home-menu:hover .tavi-dock-orb{background:linear-gradient(150deg,#7ab58c,#2c6e4c);}
+.tavi-home-dock button:focus-visible{outline:3px solid #255f44;outline-offset:3px;}
+.tavi-home-dock b{
+  position:absolute;top:1px;left:calc(50% + 12px);right:auto;
+  min-width:14px;line-height:15px;text-align:center;
+  background:#e76f54;color:#fff;border:2px solid #fbfcf3;
+  padding:0 3px;border-radius:14px;font-size:10px;
+}
+@media(max-width:330px){.tavi-home-dock{grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr);padding-left:6px;padding-right:6px}.tavi-home-dock .tavi-home-menu{width:90px;}}
+
+.tavi-utility-focus>.auxiliary-window,.tavi-contact-focus>.roster-window{flex:1;height:100%;border:0!important;box-shadow:none!important;}
+.tavi-focus-toolbar{flex-shrink:0;display:flex;gap:10px;align-items:center;min-height:44px;padding:6px 13px;border-bottom:1px solid #b4d4bd;background:#e5f4e5;color:#295e43;}
+.tavi-focus-toolbar button{background:#f9fdf5;border:1px solid #b6d5b8;border-radius:12px;padding:6px 11px;color:#285f43;}.tavi-focus-toolbar strong{font-size:14px;}.tavi-contact-focus>.roster-window .menubar{display:none;}
+.tavi-menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}.tavi-menu-grid button{min-height:53px;border-radius:12px;background:#eff9ec;border:1px solid #a9cbb2;}
+/* A focused chat is a full screen, not a tab below Home's dock. */
+.tavi-modern-chat{height:100%;width:100%;display:flex;flex-direction:column;min-height:0;background:linear-gradient(#f2f9ed,#fffdf5);}
+.tavi-chat-top{flex-shrink:0;display:flex;gap:10px;align-items:center;padding:10px;border-bottom:1px solid #c3dec8;background:linear-gradient(#e7f5e8,#d2e9d4);min-height:65px;}
+.tavi-chat-top button{background:#f7fff7;color:#2b6646;border-radius:16px;border:1px solid #bcdabf;min-width:35px;min-height:35px;}
+.tavi-chat-top>.avatar{width:41px;height:41px;border-radius:50%;font-size:19px;}.tavi-chat-top>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}.tavi-chat-top strong{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.tavi-chat-top small{color:#6b8b73;font-size:11px;}
+.tavi-chat-history{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:15px 12px;display:flex;flex-direction:column;gap:12px;}
+.tavi-chat-line{display:flex;flex-direction:column;max-width:87%;gap:3px;align-self:flex-start;}.tavi-chat-line.mine{align-self:flex-end;align-items:flex-end;}.tavi-chat-bubble{padding:10px 13px;border:1px solid #dee9d9;border-radius:15px 15px 15px 4px;background:#fff;color:#263e30;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.5;box-shadow:0 2px 5px #255b3112;}
+.tavi-chat-line.mine .tavi-chat-bubble{background:#d9efd9;border-color:#bbdcbc;border-radius:15px 15px 4px 15px;}.tavi-chat-line time{color:#94a59a;font-size:10px;margin:0 3px;}.tavi-chat-empty{align-self:center;color:#809b86;font-size:12px;margin:auto;}
+.tavi-chat-compose{flex-shrink:0;display:flex;align-items:end;gap:8px;padding:9px 10px max(9px,env(safe-area-inset-bottom));border-top:1px solid #c1d9c2;background:#f9fdf5;}.tavi-chat-compose textarea{min-width:0;flex:1;border:1px solid #bdd5c2;border-radius:16px;resize:none;min-height:43px;max-height:120px;padding:11px 13px;color:#254635;background:#fff;}.tavi-chat-compose button{border-radius:22px;background:#4f936a;border:0;color:white;height:44px;min-width:44px;font-size:19px;}
+.tavi-chat-pending{padding:16px;color:#406950;background:#f6fbf3;}
+/* Untrusted game frames are only ever mounted in this isolated, persistent stage;
+   Home re-renders do not destroy the game document while it is minimized. */
+.tavi-embedded-game{position:fixed;z-index:90;inset:0;display:flex;flex-direction:column;background:#101b15;color:#f8fff8;}.tavi-embedded-game[hidden]{display:none!important;}.tavi-game-controls{flex-shrink:0;min-height:39px;display:flex;justify-content:space-between;gap:12px;align-items:center;padding:4px 9px;background:#214e38;}.tavi-game-controls strong{font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.tavi-game-minimize{min-width:32px;min-height:30px;background:#e1f1dc;border:0;border-radius:9px;padding:3px 9px;font-size:11px;color:#28513b;}.tavi-game-stage{flex:1;min-height:0;width:100%;}.tavi-game-stage iframe{width:100%;height:100%;border:0;background:#fff;display:block;}
+@media(min-width:760px){.tavi-home{max-width:680px;margin:auto;border-left:1px solid #abc8b1;border-right:1px solid #abc8b1;}.tavi-chat-focus{max-width:none;}.tavi-home-profile{padding:15px;}.tavi-home-scroll{padding:15px 18px;}.tavi-home-section{padding:17px 16px;}}
+@media(max-width:620px){.tavi-single-workspace{height:100dvh;}.tavi-contact-focus>.roster-window{height:auto;}.tavi-home-brand{min-height:58px;}}
+
+/* v0.3.55: classic buddy-roster Home with the v0.3.54 round sketch dock.
+   Keep information density and all existing roster behavior; palette alone
+   follows the new forest/sage/cream Home direction. Focused views unchanged. */
+.tavi-classic-home{background:#e7f4e5;font-family:Tahoma,'Segoe UI',Verdana,sans-serif;}
+.tavi-classic-home>.tavi-home-roster{
+  flex:1 1 auto;min-height:0;height:auto!important;width:100%;
+  border:0;border-radius:0;box-shadow:none;background:#fbfdf7;
+}
+.tavi-classic-home .menubar{background:#fbfdf7;border-bottom:1px solid #c8dec8;}
+.tavi-classic-home .menu-drop summary{color:#244d35;}
+.tavi-classic-home .menu-drop[open] summary,
+.tavi-classic-home .menu-drop summary:hover{background:#e2f1df;outline-color:#9dc4a6;}
+.tavi-classic-home .roster-profile{
+  background:linear-gradient(145deg,#f1f9f0,#d9eedd);
+  border-bottom:1px solid #b7d7bf;min-height:78px;
+}
+.tavi-classic-home .roster-profile strong{color:#20583c;font-size:15px;}
+.tavi-classic-home .roster-profile .avatar{border-color:#9ac7a8;background:#d6ede0;color:#245c41;}
+.tavi-classic-home .personal-message{color:#5e826b;}
+.tavi-classic-home .roster-toolbar{background:#f7fcf4;border-bottom-color:#ccdfc9;}
+.tavi-classic-home .roster-toolbar button{color:#315d43;}
+.tavi-classic-home .roster-toolbar button span{color:#3b8b60;}
+.tavi-classic-home .roster-toolbar button:hover{background:#e5f3e0;border-color:#a4cba9;}
+.tavi-classic-home .roster-search{background:#fffefa;border-color:#afcdb5;}
+.tavi-classic-home .roster-scroll{background:#fffefa;}
+.tavi-classic-home .group-title{color:#275d40;}
+.tavi-classic-home .group-title .arrow{color:#598b68;}
+.tavi-classic-home .buddy:hover{background:#eaf5e9;border-color:#badcc0;}
+.tavi-classic-home .buddy.chosen{background:#d8ecdb;border-color:#a0cbaa;}
+.tavi-classic-home .buddy-copy strong{color:#244c39;}
+.tavi-classic-home .buddy-copy small,.tavi-classic-home .empty-buddies{color:#658371;}
+.tavi-classic-home .games-strip{background:#f2f9ed;border-color:#b8d4bd;max-height:30%;}
+.tavi-classic-home .roster-label{background:#dcefe0;color:#2d6246;border-bottom-color:#c0d8c4;}
+.tavi-classic-home .window-status{background:#eaf5e8;border-top-color:#c3dac5;color:#547b62;}
+.tavi-classic-home .status-right{color:#648e71;}
+.tavi-roster-activities{padding-top:4px;margin-top:5px;border-top:1px solid #d2e5d2;}
+.tavi-roster-activity-list{display:flex;flex-wrap:wrap;gap:4px;padding:7px 8px;}
+.tavi-roster-activity-list button{
+  max-width:100%;min-height:31px;display:inline-flex;align-items:center;gap:5px;
+  background:#e4f3e2;border:1px solid #bdd8be;border-radius:9px;
+  padding:4px 9px;color:#2d6246;
+}
+.tavi-roster-activity-list button:hover{background:#d6ebd5;}
+.tavi-roster-activity-list button span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media(max-width:380px){
+  .tavi-classic-home .roster-toolbar{justify-content:space-around;}
+  .tavi-classic-home .roster-toolbar button{min-width:0;flex:1;padding:3px 1px;font-size:9px;}
+  .tavi-classic-home .roster-toolbar button span{font-size:17px;}
+}
+
+/* v0.3.58: classic roster, action-only toolbar and first-class optional pet. */
+.tavi-classic-home .tavi-identity-strip{display:flex;gap:8px;align-items:center;padding:8px;min-height:66px;}
+.tavi-identity-text{display:flex;flex-direction:column;flex:1;min-width:0;}
+.tavi-identity-text strong,.tavi-identity-text small,.tavi-identity-text .personal-message{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tavi-identity-actions{display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:0;}
+.tavi-classic-home .tavi-identity-actions button{border:1px solid transparent;background:transparent;min-width:26px;min-height:30px;padding:2px;cursor:pointer;}
+.tavi-classic-home .tavi-identity-actions button:hover{border-color:#a9cfb3;background:#e4f3dd;}
+.tavi-profile-activity{position:relative;font-size:20px;color:#547f42;}
+.tavi-profile-activity b{position:absolute;right:-1px;top:-2px;background:#3e8765;color:white;border-radius:12px;font-size:9px;min-width:13px;line-height:13px;}
+.tavi-profile-pet{display:flex;align-items:center;flex-direction:column;justify-content:center;max-width:62px;min-width:44px!important;}
+.tavi-profile-pet .companion-pixels{width:30px;height:30px;image-rendering:pixelated;}
+.tavi-profile-pet small{font-size:9px;white-space:nowrap;max-width:56px;overflow:hidden;text-overflow:ellipsis;}
+.tavi-classic-home .tavi-action-toolbar{justify-content:space-around;min-height:38px;}
+.tavi-classic-home .tavi-action-toolbar button{min-width:0;flex:1;max-width:96px;min-height:36px;padding:2px 4px;}
+.tavi-games-browser{padding:8px 10px!important;}
+.tavi-games-browser h2{margin:2px 0 12px;font-size:17px;}
+.tavi-games-group{border-bottom:1px solid #d2e2d1;padding:7px 0 9px;}
+.tavi-games-group h3{font-size:13px;color:#315c3f;margin:0 0 7px;}
+.tavi-game-title-row{display:flex;justify-content:space-between;align-items:center;}
+.tavi-game-title-row button{font-size:10px;}
+.tavi-game-list-row{display:flex;align-items:center;gap:8px;width:100%;border:1px solid #d3e4d2;background:#fcfefa;border-radius:7px;padding:7px;margin:4px 0;min-width:0;text-align:left;color:#284b37;}
+.tavi-game-list-icon{font-size:19px;flex-shrink:0;width:28px;text-align:center;}
+.tavi-game-list-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.tavi-game-list-info strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tavi-game-list-info small{font-size:10px;color:#60846b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tavi-game-status{flex-shrink:0;font-size:9px;color:#617967;max-width:100px;text-align:right;}
+.tavi-game-action{min-height:30px;}
+.tavi-game-invite{display:flex;gap:5px;padding:3px 0 6px 36px;}
+.tavi-game-invite select{min-width:0;flex:1;max-width:185px;font-size:11px;}
+.tavi-game-empty{font-size:11px;margin:6px 0;color:#648271;}
+@media(max-width:365px){.tavi-identity-strip>.avatar{flex-shrink:0}.tavi-profile-activity{font-size:17px}.tavi-profile-pet{max-width:48px}.tavi-game-status{max-width:80px;}}

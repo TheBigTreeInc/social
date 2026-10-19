@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.48",
-    "base_version": "0.3.47"
+    "version": "0.3.58",
+    "base_version": "0.3.57"
   },
   "update": {
-    "id": "TAVI-20261018-ATRIUM-LAUNCH-UI-0348",
+    "id": "TAVI-20261019-CLASSIC-TOP-ATRIUM-BACKEND-0358",
     "kind": "source_update",
-    "created_at": "2026-10-18T18:05:00+02:00",
-    "summary": "Visible reviewed Atrium external launcher in Tavi Games; retain existing Play/Challenge and 74-ticket operator snapshot. Client logic and targeted tests, no Life multiplayer backend or native OpenClaw channel."
+    "created_at": "2026-10-19T14:20:00+02:00",
+    "summary": "v0.3.58: action-only classic roster toolbar, optional first-class profile pet, compact player-facing Games library, read-only integrations diagnostics, and one-origin shared LoopRD Atrium catalog access with private apps:read credential. No match creation, launch approval, or database migration."
   },
   "planned_work": [
     {
@@ -269,6 +269,84 @@
       "id": "TAVI-ATRIUM-048",
       "title": "Tavi shows independent reviewed Atrium launch from Games",
       "acceptance_criteria": "Visible configured/disabled Atrium launch in Windows Games with safe HTTPS URL and no Tavi credentials; preserves chat and legacy Play/Challenge; automated and real-device tests; source implemented not operator-accepted.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-PET-049",
+      "title": "Optional cross-platform companion foundation",
+      "priority": "high",
+      "acceptance_criteria": "Eight valid distinct pixel pets, default disabled, 5 working care actions, opt-in Gentle/Classic modes, one-time engagement-based suggestions without auto-escalation, account-scoped storage, in-app badge, Linux source/Windows/Android operator checks."
+    },
+    {
+      "id": "TAVI-PET-050",
+      "title": "Native Windows desktop floating companion",
+      "priority": "medium",
+      "acceptance_criteria": "Provide optional Tauri transparent always-on-top draggable small pet window with separate host capability, focus/privacy restrictions, pause/hide, multi-monitor and native GUI acceptance."
+    },
+    {
+      "id": "TAVI-PET-051",
+      "title": "Android system overlay companion",
+      "priority": "medium",
+      "acceptance_criteria": "User-initiated Android overlay permission and foreground lifecycle, drag/close, keyboard/fullscreen avoidance, independent security/Play-policy and on-device acceptance."
+    },
+    {
+      "id": "TAVI-PET-052",
+      "title": "Tamagotchi care depth and modular progression",
+      "priority": "medium",
+      "acceptance_criteria": "Optional pet growth, food, hygiene items, toys, mood and minigames introduced only by explicit consent after pet activity; no death, paid unlock or irreversible neglect penalty."
+    },
+    {
+      "id": "TAVI-PET-053",
+      "title": "Cross-device companion state and optional backup",
+      "priority": "medium",
+      "acceptance_criteria": "Design explicitly opted-in, conflict-safe per-account sync and secure backup/restore without exposing chats or credentials; no server endpoint before review."
+    },
+    {
+      "id": "TAVI-PET-054",
+      "title": "Companion production sprites, audio and animations",
+      "priority": "medium",
+      "acceptance_criteria": "Review and author proper 16-bit-style 8-pet idle/action/mood pixel art sheets, animation timings, accessibility and optional sound; add future pets via versioned data packs."
+    },
+    {
+      "id": "TAVI-ATRIUM-048-LIVE",
+      "title": "Tavi Atrium 048 Live operator acceptance",
+      "priority": "high",
+      "acceptance_criteria": "Run related operator-managed live acceptance checks and keep workboard status pending until independently verified."
+    },
+    {
+      "id": "TAVI-PET-049-ACCEPT",
+      "title": "Tavi Pet 049 Accept operator acceptance",
+      "priority": "high",
+      "acceptance_criteria": "Run related operator-managed live acceptance checks and keep workboard status pending until independently verified."
+    },
+    {
+      "id": "TAVI-UX-054",
+      "title": "Sketch-matched Tavi Home bottom navigation",
+      "priority": "medium",
+      "acceptance_criteria": "Raised circular central Main menu; compact Games and Messages side icons, correct accessibility and mobile/355px proportions; Home only; operator visual acceptance."
+    },
+    {
+      "id": "TAVI-PET-050-ACCEPT",
+      "title": "Native Windows floating pet operator acceptance",
+      "priority": "medium",
+      "acceptance_criteria": "Operator verifies native NSIS build, transparency/drag/multi-monitor, account-scoped data and signout. Existing todo status remains review."
+    },
+    {
+      "id": "TAVI-UX-055",
+      "title": "Classic messenger roster Home with new green design and Home-only circular dock",
+      "acceptance_criteria": "On Windows 355px and Android/web, verify File/Contacts/Actions/Tools/Help, own profile, compact toolbar, searchable conversations, online/offline groups, My Games and connection status; confirm circular Home dock and minimized activities, with no duplicate chat/game nav; no server changes",
+      "priority": "medium"
+    },
+    {
+      "id": "TAVI-ATRIUM-056",
+      "title": "Read-only Atrium trusted discovery catalog in Tavi Home and Games",
+      "acceptance_criteria": "Signed-in Tavi user sees operator-trusted Atrium metadata after Social 0.3.58 deployment; client never learns service token or internal routes; discovery never becomes playable without separate hosted publication and game authorization; strict schema/token/negative tests and live Windows/Android verification",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-UX-058",
+      "title": "Classic roster action toolbar, optional profile pet and shared-backend Atrium browser",
+      "acceptance_criteria": "At 320/355/390px Windows/web/mobile Home keeps classic roster and circular dock; top toolbar only Add/Portrait/Sync/Options; pet appears in top-right only when explicitly enabled; compact game rows show discovered Life without Play; shared backend HTTPS catalog requires server-only apps:read; native NSIS, Android, server integration and safe developer diagnostics need operator acceptance.",
       "priority": "high"
     }
   ],
@@ -960,6 +1038,68 @@
           "description": "Operator setup and remaining acceptance"
         }
       ]
+    },
+    {
+      "id": "TAVI-PET-049",
+      "summary": "Implemented source-only opt-in Companions engine/pixel content/panel, mode consent, unlocks, mobile/desktop in-app badge and deterministic tests. Device acceptance pending; no actual OS overlay claimed.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/companions/catalog.js",
+          "description": "Eight authored 16px sprite definitions and species behavior"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/companions/engine.js",
+          "description": "Pure care engine, opt-in mode changes and unlocks"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/companions/view.js",
+          "description": "Cross-platform responsive pet panel and optional in-app badge"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/companions.test.mjs",
+          "description": "Consent, safety, privacy and model tests"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/TAVI_COMPANIONS_0349.adoc",
+          "description": "Product spec and platform overlay follow-on acceptance"
+        }
+      ]
+    },
+    {
+      "id": "TAVI-PET-050",
+      "summary": "Windows native floating companion source candidate; operator/device review required, NOT Done.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/companions/native.js",
+          "description": "Strict pure eligibility, position and command contracts"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/companion-window.js",
+          "description": "Token-free separate Tauri window UI"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/main.js",
+          "description": "Scoped main-process event handling and lifecycle"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/companion-window.test.mjs",
+          "description": "Consent, security and packaging regressions"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/TAVI_COMPANIONS_DESKTOP_0350.adoc",
+          "description": "Device acceptance and limitation boundaries"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -1034,6 +1174,90 @@
       "id": "TAVI-ATRIUM-048-LIVE",
       "status": "review",
       "next_action": "Test reviewed Atrium external launch on Windows/Android/Web against actual Social capabilities.atriumUrl; verify chat continuity, denied unsafe URLs, legacy challenges and no cross-service token forwarding."
+    },
+    {
+      "id": "TAVI-PET-051",
+      "status": "planned",
+      "next_action": "Android overlay user-permission native implementation and real on-device QA."
+    },
+    {
+      "id": "TAVI-PET-049-ACCEPT",
+      "status": "review",
+      "next_action": "Run first Windows NSIS and Android/web interactive companion user acceptance against newly packaged v0.3.49."
+    },
+    {
+      "id": "TAVI-AGENT-005",
+      "status": "planned",
+      "next_action": "Use a pinned, inspected official OpenClaw channel plugin SDK revision and a real example plugin; document actual package exports, entrypoints, lifecycle hooks and version compatibility, without inventing an API. | Specify mapping of Tavi server origin, Tavi account ID, peer/group conversation IDs, signed-in session and inbound/outbound OpenClaw message envelopes; distinguish platform identity from display names. | Specify reliable wake/catch-up, cursor/idempotency and authenticated replay behavior, shutdown/restart cleanup and bounded history. Explicitly document any at-least-once limitations. | Produce a testable, installable native channel scaffold and a design that does not change Tavi general messaging semantics or require OpenClaw on the Social server."
+    },
+    {
+      "id": "TAVI-AGENT-006",
+      "status": "planned",
+      "next_action": "Install and enable the native Tavi channel through OpenClaw plugin management; connect one dedicated ordinary Tavi account with private credentials and no privileged Social or LoopRD service token. | Human -> Tavi DM -> OpenClaw agent -> Tavi reply works with independent per-peer session routing and sender display-name metadata; outgoing messages are sent by the authenticated agent account. | Contact invitations and game.challenge.requested/response events reach the right agent account as typed events; manual acceptance and opt-in peer/game allowlisted automatic acceptance use the normal Social APIs, with no game seat grants. | Groups are supported only when Tavi group APIs and ACLs actually exist; unsupported group capabilities are advertised as unavailable rather than simulated. | Channel starts/stops/reconnects with OpenClaw, uses replay-safe bounded reconciliation and does not require tavi-openclaw-service.mjs to run."
+    },
+    {
+      "id": "TAVI-AGENT-007",
+      "status": "planned",
+      "next_action": "Using two human Tavi accounts and one separately authenticated OpenClaw account, demonstrate DM both directions and a challenged game acceptance entirely through native OpenClaw channel (external watcher disabled). | Verify authorization for accepted/unaccepted contacts, per-account isolation, event recipient scoping, allowlist enforcement, malicious inbound message containment and no credential in logs, prompts or outbound game URLs. | Stop/restart OpenClaw and disable network during pending messages/challenges; verify bounded catch-up, no unrecoverable loss within server retention, no runaway duplicate sends and explicit limitation documentation. | Confirm native plugin installation/upgrades and downgrade/rollback; only then propose disabling external watcher, without deleting CLI support or changing ordinary Tavi clients. | Operator reviews actual OpenClaw Gateway runtime traces, Tavi inbox messages, Windows UI and server-side authorization logs before marking Done."
+    },
+    {
+      "id": "TAVI-MULTI-047",
+      "status": "planned",
+      "next_action": "Life provides reviewed authenticated create/join/resume, inspect, legal_actions, act and end_turn endpoints with durable match IDs, validated Tavi subject-to-seat bindings and idempotent command IDs. | An accepted Tavi challenge is correlated to one operator-approved Life match; rejection/expiry/replay creates no seat and no game action, and match admission always requires Life authorization. | OpenClaw uses a game-specific legal-action adapter via independent Tavi identity and Life API; cannot act for another player, invent moves or bypass legal-action validation. | Two participants can disconnect, resume and complete legal Life turns; changes to match seats and closed state trigger accurate Social roster and notification updates. | Game backend changes are tracked and approved in the Life project workboard; this Tavi item records the dependency and integration evidence, not a claim of Life implementation."
+    },
+    {
+      "id": "TAVI-MULTI-048",
+      "status": "planned",
+      "next_action": "Windows Tavi shows Life, user chooses Challenge against OpenClaw, native channel receives and accepts the invitation, and Life creates a verified playable match whose ID can be launched/resumed via Atrium. | Human plays legal turns versus OpenClaw, OpenClaw observes its own authorized seat and plays via Life game API, and the game progresses to a final state without a continuously connected host. | Open same match from another device after app/agent/backend restart; match and turns persist and all clients agree on the authoritative game state. | Verify two human players can also create/join/complete a game and private match conversation ACLs follow actual Life roster removal and closure. | Attempt replay, unauthorized seat access, expired invitations and stale/duplicate actions; all fail safely with no credential leakage. Obtain explicit operator sign-off."
+    },
+    {
+      "id": "TAVI-PET-052",
+      "status": "planned",
+      "next_action": "Optional pet growth, food, hygiene items, toys, mood and minigames introduced only by explicit consent after pet activity; no death, paid unlock or irreversible neglect penalty."
+    },
+    {
+      "id": "TAVI-PET-053",
+      "status": "planned",
+      "next_action": "Design explicitly opted-in, conflict-safe per-account sync and secure backup/restore without exposing chats or credentials; no server endpoint before review."
+    },
+    {
+      "id": "TAVI-PET-054",
+      "status": "planned",
+      "next_action": "Review and author proper 16-bit-style 8-pet idle/action/mood pixel art sheets, animation timings, accessibility and optional sound; add future pets via versioned data packs."
+    },
+    {
+      "id": "TAVI-QA-047",
+      "status": "planned",
+      "next_action": "For commit 5adc8af8ab986fa21349a6973b8236817e6059b4, ingest the eight completed successful event=push GitHub workflow URLs and 28 completed checks; distinguish missing watcher evidence from a failing workflow. | Associate post-update command outcomes with the exact v0.3.46 artifact SHA cb837d71f5d04731ea9c6c5f1ec5c0db0a7d5e71cbafd616944c40c61f141615. Reject evidence from any different ZIP SHA or stale run. | Cross-check canonical project ID be0bf498-ea5a-461e-a84e-d47f5f449e09 with the local board payload canonical_project_id blank; fix reporting without changing existing 74 tickets or their statuses. | Check application release labels for consistency between server/looprd-release.json, handler embedded SOCIAL_RELEASE, descriptor and installed clients; record any mismatches independently. | Operator confirms CI/ZIP evidence and only then approves ticket status; never infer device acceptance or grant permission to push/release."
+    },
+    {
+      "id": "TAVI-PET-050-ACCEPT",
+      "status": "review",
+      "next_action": "Operator Windows NSIS and actual multi-monitor/high-DPI desktop pet acceptance, no automatic Done."
+    },
+    {
+      "id": "TAVI-UX-054",
+      "status": "review",
+      "next_action": "Import 0.3.55 and operator-check Home bottom dock on native Windows 355px, phone portrait/safe-area and web/tablet; verify no persistent nav in focused chats and games."
+    },
+    {
+      "id": "TAVI-ATRIUM-056",
+      "status": "planned",
+      "next_action": "Operator import and deploy Social 0.3.58 with scoped apps:read Atrium credential, verify Life discovery, withdrawal, security and native UI; keep match launch disabled until approval."
+    },
+    {
+      "id": "TAVI-UX-055",
+      "status": "planned",
+      "next_action": "Preserve pending native Windows/Android visual acceptance of v0.3.55 classic roster and Home dock; no operator approval inferred."
+    },
+    {
+      "id": "TAVI-UX-058",
+      "status": "planned",
+      "next_action": "Run installed Windows NSIS and Android visual acceptance of action-only classic roster and opt-in pet; operator-deploy Social with one protected shared LoopRD origin and Atrium apps:read key, confirm Life metadata only; retain all workboard statuses.",
+      "blockers": [
+        "Production Atrium discovery requires operator-provisioned read-only key and active Atrium v2 receiver.",
+        "Native Windows, Android and live Social server checks are not executable in this author environment."
+      ]
     }
   ],
   "validation": {
@@ -1239,7 +1463,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Priority: complete Life DAPI->Atrium reviewed discovery and Life game-authoritative /play, while independently proceeding with TAVI-AGENT-005/006 native messaging channel. Operator test Atrium CTA from Tavi on Windows first. Do not duplicate Atrium catalog inside Tavi.",
+    "next_pass": "Import v0.3.58 over v0.3.57, verify native Windows and Android roster layout, enabled/disabled pet header and Home-only dock. After operator-reviewed Social deployment configure LOOPRD_TAVI_ATRIUM_BACKEND_ORIGIN to the shared HTTPS API origin plus private apps:read token; verify Atrium Life trusted metadata only, not playability. Native match API remains separately gated.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -1255,7 +1479,11 @@
       "A Tavi game challenge response is not proof of Life seat membership or a playable game; Life public match API and OpenClaw action adapter are still unavailable.",
       "Live native OpenClaw channel SDK is not yet inspected/installed; planned, NOT implemented.",
       "Life create/join/legal-actions API and Atrium resumable launch are not deployed.",
-      "ZipRunner reports not_github and mismatched test-evidence state despite independently verified GitHub CI and exact ZIP checks; fix evidence ingestion separately."
+      "ZipRunner reports not_github and mismatched test-evidence state despite independently verified GitHub CI and exact ZIP checks; fix evidence ingestion separately.",
+      "Tavi companion is client-local and does not sync across devices; a reinstall/browser storage clear can lose state.",
+      "Only the in-app badge exists. Windows OS-wide transparent always-on-top window and Android OS overlay permission/service are future work.",
+      "Original 82 ticket operator snapshot is archived; source workboard updates must not override local statuses.",
+      "Floating Windows pet tested by source fixtures but physical Windows, multi-monitor, fullscreen and Tauri transparent behavior not established; keep operator acceptance open."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -1312,11 +1540,21 @@
       "id": "TAVI-MULTI-045-OP",
       "description": "Import 0.3.45, test 2-account Windows native match chat, revoked seat/consent and simultaneous game window; preserve the 71-ticket operator workboard and avoid auto-release.",
       "status": "required"
+    },
+    {
+      "id": "TAVI-PET-049-DEVICE",
+      "description": "Install Windows 0.3.49 and test pet panel, enable/off behavior, care UI and opt-in in-app badge; check Android responsive scene, keyboard hiding and persistence; do not accept native OS overlays as implemented.",
+      "status": "required"
+    },
+    {
+      "id": "TAVI-PET-050-DEVICE",
+      "description": "Build/install Windows 0.3.52 and perform actual 186x226 transparent companion, drag/position, care, account-isolation, signout, focus and monitor acceptance.",
+      "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Client-side Atrium launcher, no schema 10 change and no live Social bearer delegation. Do not push, tag, release, deploy or auto-close operator workboard tasks without explicit approval."
+    "notes": "Tavi/Social v0.3.58 source; schema 10 unchanged. New optional shared LoopRD backend-origin configuration still requires a private Atrium apps:read credential and operator deployment. No client/game authorization bypass or automatic publication."
   }
 }

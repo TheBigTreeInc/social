@@ -1,7 +1,88 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.48",
+  "version": "0.3.58",
   "tests": [
+    {
+      "kind": "command",
+      "semantic_id": "tavi-atrium-discovery-authenticated-0356",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "python -m unittest discover -s tests -p test_atrium_catalog.py -v",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "tavi-atrium-discovery-sdk-0356",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "node --test client/tests/atrium-discovery.test.mjs",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "tavi-looprd-generated-0356",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "python tools/generate-looprd.py --check",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "tavi-classic-roster-home-0355",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "node --test client/tests/classic-home-restoration.test.mjs",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "tavi-home-sketch-dock-0354",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "node --test client/tests/home-dock.test.mjs",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "tavi-surface-navigation-0353",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "node --test client/tests/surfaces.test.mjs",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "tavi-multiplayer-game-ux-0352",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "node --test client/tests/atrium-launch.test.mjs",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "tavi-windows-companion-native",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "node --test client/tests/companion-window.test.mjs",
+      "attention_on_failure": true,
+      "gating": false
+    },
+    {
+      "kind": "command",
+      "semantic_id": "tavi-companion-consent-engine",
+      "definition_revision": "1",
+      "rerun_policy": "every_update",
+      "command": "node --test client/tests/companions.test.mjs",
+      "attention_on_failure": true,
+      "gating": false
+    },
     {
       "kind": "command",
       "semantic_id": "social-regression-suite",
@@ -17,24 +98,6 @@
       "definition_revision": "1",
       "rerun_policy": "every_update",
       "command": "node client/tools/check-package.mjs",
-      "attention_on_failure": true,
-      "gating": false
-    },
-    {
-      "kind": "command",
-      "semantic_id": "social-web-sdk-parity",
-      "definition_revision": "1",
-      "rerun_policy": "every_update",
-      "command": "node --test client/tests/browser-sdk.test.mjs",
-      "attention_on_failure": true,
-      "gating": false
-    },
-    {
-      "kind": "command",
-      "semantic_id": "social-classic-native-window-contract",
-      "definition_revision": "1",
-      "rerun_policy": "every_update",
-      "command": "node --test client/tests/native-windows.test.mjs",
       "attention_on_failure": true,
       "gating": false
     },
@@ -76,10 +139,10 @@
     },
     {
       "kind": "command",
-      "semantic_id": "tavi-match-chat-js-sdk",
+      "semantic_id": "tavi-classic-optional-pet-0358",
       "definition_revision": "1",
       "rerun_policy": "every_update",
-      "command": "node --test client/tests/game-rooms-sdk.test.mjs",
+      "command": "node --test client/tests/classic-header-v0358.test.mjs",
       "attention_on_failure": true,
       "gating": false
     },
@@ -116,15 +179,6 @@
       "definition_revision": "1",
       "rerun_policy": "every_update",
       "command": "node --test integrations/openclaw/tests/challenges.test.mjs",
-      "attention_on_failure": true,
-      "gating": false
-    },
-    {
-      "kind": "command",
-      "semantic_id": "tavi-atrium-standalone-launch-regression",
-      "definition_revision": "1",
-      "rerun_policy": "every_update",
-      "command": "node --test client/tests/atrium-launch.test.mjs",
       "attention_on_failure": true,
       "gating": false
     }

@@ -17,10 +17,10 @@ test('Web, Windows and Android use same account challenge methods',async()=>{
 });
 test('native Games surface exposes play and explicit challenge from accepted contacts',()=>{
  const code=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
- assert.match(code,/Game library/);
+ assert.match(code,/Play with friends/);
  assert.match(code,/data-challenge-game/);
  assert.match(code,/state\.contacts\.filter\(c=>c\.status==='accepted'\)/);
  assert.match(code,/state\.api\.challengeContact\(peer,gameId\)/);
- assert.match(code,/data-action="games" title="Open game library"/);
+ assert.match(code,/class="tavi-dock-side" data-action="games"/);
  assert.match(code,/data-launch-game/);
 });

@@ -1,0 +1,26 @@
+= Tavi 0.3.52 — Optional Windows Desktop Companion
+:toc:
+
+== Delivered source
+
+An explicitly selected `floating` mode creates a small transparent, borderless, always-on-top, taskbar-hidden Windows Tauri webview next to the normal Tavi roster. The pet window has no Social SDK, credentials, message bodies, application storage or ability to create arbitrary webviews. It receives an allowlisted snapshot (species ID, display name, four needs plus bond) from the signed-in main window. Its only outbound requests are `ready`, `hide`, `open`, `reset-position` and the five care actions. Main validates the request and persists care state under the existing account-scoped key; clicking × hides the floating window but keeps the pet enabled. Disabling the pet or signing out closes the window. The small draggable handle uses Tauri `startDragging()`; position updates are persisted by the main client, and the reset control centers the window. Desktop overlays remain opt-in and are never enabled on Android, Web or macOS by this pass.
+
+The existing four starter pets, four unlockables, explicit Companion/Gentle/Classic modes, unlocks and pet-action-only preference suggestion logic are unchanged. This client-only pass changes no LoopRD handler, descriptor, Social DB schema, messaging or game authority. Social runtime remains 0.3.48/schema 10.
+
+== Verification
+
+Automated: `node --test client/tests/companion-window.test.mjs` and all existing Node/Python tests and exact-ZIP post-update tests. The standalone HTML bundler input must be emitted by Vite. A successful static/code test is not physical native Windows acceptance.
+
+== Operator Windows acceptance (TAVI-PET-050)
+
+. Import exact ZIP into the existing `looprd-social` ZipRunner project, confirm 0.3.52 client and unchanged LoopRD descriptor hash; build an NSIS installer on Windows.
+. Before signing in, verify no desktop pet. Sign in with an existing Social account; the pet remains off by default on fresh device storage.
+. Enable pet, explicitly check independent floating Windows companion; verify ~186×226 transparent window, movable without opening the Tavi roster and always-on-top over ordinary windows. Verify no extra taskbar icon or unsolicited foreground focus.
+. Feed, clean, play, rest and pet using the floating window. Confirm the in-app Companions panel updates, persists after restart, and cannot alter any game/message/identity state. Try rapid actions; existing cooldown must apply.
+. Drag on a secondary monitor/HiDPI display; quit/reopen Tavi and verify position persistence or use ↺ to center. Test single-monitor after monitor removal; reset if off-screen. Fullscreen games and accessibility tools must retain user control.
+. Close the floating window with × and verify pet remains enabled and no longer floats; re-enable explicitly, then disable the pet or sign out and confirm the window closes. Switch Tavi accounts and confirm the prior account's name, stats and window coordinates are not exposed.
+. Confirm no change to Gentle or Classic mode without explicit selection, no notifications/attention penalty, and no external server credential in the floating webview. Test window startup failure; Tavi chat must continue to work.
+
+== Deferred
+
+Android `SYSTEM_ALERT_WINDOW` permission/service (`TAVI-PET-051`), richer Tamagotchi loops (`TAVI-PET-052`), cloud state synchronization (`TAVI-PET-053`), authored sprite sheets/animation (`TAVI-PET-054`), and Android APK installation failure `TAVI-UPDATES-003` are separate work. Native Windows overlay needs real operator-device testing; no claim of release acceptance.
