@@ -1,9 +1,47 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.66",
-  "summary": "Tavi v0.3.66 source candidate adds a user-mediated first-party Atrium hosted-Life external launch broker. 0.3.65 operator workboard history/status preserved; no Life production acceptance, no server deployment or credential exchange.",
+  "version": "0.3.70",
+  "summary": "Privacy-safe actionable diagnostics for Atrium repository HTTP failures and extension state; source-only, no service changes. Preserve operator workboard decisions.",
   "implemented": [
+    {
+      "id": "TAVI-DEBUG-070",
+      "title": "Actionable repository and extension diagnostics",
+      "summary": "Show sanitized repository HTTP/CORS/validation results, bounded allowlisted client events and quick/full copy in Help without leaking URLs, session, messages or identity. Atrium publication remains separate.",
+      "priority": "high",
+      "status": "review",
+      "operator_checks": [
+        "Import 0.3.70 and verify Help > Copy diagnostics reports first_party_atrium HTTP 404 when unpublished.",
+        "Publish Atrium from approved Pages pipeline and refresh App Store; report first_party_atrium ok without exposing origin/token.",
+        "Verify copy full and quick summary on Windows/Android/Web and ensure no private content or endpoint URL leaks.",
+        "Confirm preexisting diagnostic state and messenger behavior remain and operator approves before Done."
+      ],
+      "acceptance_criteria": [
+        "Show sanitized repository status and HTTP codes independent from server account capabilities.",
+        "No addresses, tokens, usernames, message contents or arbitrary raw exceptions in copied log.",
+        "Windows/Android/Web acceptance with real failure and recovery; existing local workboard decisions unchanged."
+      ]
+    },
+    {
+      "id": "TAVI-UX-067",
+      "title": "Icon-based messenger-first apps drawer and extension icons",
+      "summary": "Three-column (compact) / four-column (larger) launcher with local authored SVG icons for built-in actions, optional integrity-verified extension icon image and placeholder for legacy manifests, installed/enabled/version-pinned extensions only. Original messenger Home and no automatic Atrium installation.",
+      "priority": "high",
+      "status": "review",
+      "operator_checks": [
+        "Import source ZIP 0.3.67 and confirm previous 101 Work board tickets retain status/priority/acceptance exactly.",
+        "On Windows 355px and Android 320/390px + tablet verify icon-only tile backgrounds, labels, keyboard/touch focus and Home navigation; no horizontal scroll.",
+        "Install Private Notepad through App Store, open from Apps, disable/enable/remove and switch accounts; verify icon, sandbox and data isolation.",
+        "Validate hostile remote manifest icon URLs rejected, missing icon legacy fallback and Atrium 404 shows unavailable rather than fake installed tile.",
+        "Run exact-commit GitHub CI after operator push; distinguish it from local ZIP preflight and device acceptance."
+      ],
+      "acceptance_criteria": [
+        "New Main menu uses labeled app icons with three-column compact layout and four-column wider layout, preserving existing Messenger-first Home and navigation.",
+        "Enabled installed extensions with launcher contribution appear with valid icons or fallback; disabled/uninstalled/incompatible/mismatched-source extension not launchable.",
+        "Optional relative icon manifest field validated; bundled icon pinned to SHA-256 and remote icon limited to repository path; existing manifests remain compatible.",
+        "Pass source and actual Windows/Android/Web GUI tests; operator acceptance needed before Done."
+      ]
+    },
     {
       "id": "TAVI-LIFE-066",
       "title": "User-mediated first-party Atrium hosted Life launch handoff",
@@ -17,10 +55,10 @@
         "Verify actual Life Pages exact revision and approved catalog; create/resume one seat-authorized persistent match, reject other seat, and test restart. Not achievable from source unit tests alone."
       ],
       "acceptance_criteria": [
-        "Only official Atrium repository extension can request Life launches; strict field and HTTPS validation; user-facing URL confirmation required.",
-        "No bearer, one-time proof, secret, token or authorization sent as URL or postMessage; opaque match selector is never treated as authorization.",
-        "On Windows, Android and web the Tavi action opens a real reviewed Life URL and leaves Home and messages working.",
-        "Atrium adapter calls host method, real Life match resume verifies seat via trusted credential flow; operator acceptance before Done."
+        "Import v0.3.66 ZIP with ZipRunner, run new Node launch broker tests and existing Tavi regression suite.",
+        "Use approved published Atrium 0.5.24 extension to submit valid handoff; Windows, Android and browser show Tavi-controlled confirmation and user click opens Life externally, cancel is no-op.",
+        "Validate iframe and foreign publisher cannot trigger launch, credential or proof URL is rejected; Home and chats remain unaffected.",
+        "Verify actual Life Pages exact revision and approved catalog; create/resume one seat-authorized persistent match, reject other seat, and test restart. Not achievable from source unit tests alone."
       ]
     },
     {
@@ -978,6 +1016,23 @@
         "Verify invalid/reused/expired/rotated codes are rejected without account enumeration; verify 5-failure recovery lockout.",
         "Verify production registration rate settings, legitimate registrations, and existing users signing in.",
         "Test recovery UI on Android and Windows; do not copy tokens or codes into logs/reports."
+      ]
+    },
+    {
+      "id": "TAVI-DEBUG-068",
+      "title": "Help menu copyable privacy-safe diagnostic report",
+      "summary": "User-initiated local diagnostic JSON preview and clipboard copy with manual fallback. Includes app/platform, navigation, safe connection state and counts, sanitized extension information. No automatic upload or user/server identifiers; native/Android GUI acceptance still pending. Repair fixes package-version test only.",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": [
+        "Help > Copy diagnostics opens locally even without developer access; only safe metadata, no user identities, tokens, messages, addresses or stored session contents.",
+        "Copy report and manual selection fallback operate in Windows, Android and web; offline and signed-out states do not crash.",
+        "Source regression and ZipRunner import/build pass; operator inspects actual report and grants acceptance before Done."
+      ],
+      "operator_checks": [
+        "Open Help > Copy diagnostics on Windows Tavi; copy and paste report into local editor; inspect for sensitive account or server data.",
+        "Repeat on Android and web including offline and signed-out mode; test clipboard-denied manual fallback.",
+        "Verify earlier Home, extension app drawer and Atrium navigation continue functioning; do not mark Done without operator review."
       ]
     }
   ],

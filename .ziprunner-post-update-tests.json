@@ -1,13 +1,13 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.66",
+  "version": "0.3.70",
   "tests": [
     {
       "kind": "command",
       "semantic_id": "tavi-extension-platform-source-0359",
-      "definition_revision": "5",
+      "definition_revision": "6",
       "rerun_policy": "every_update",
-      "command": "node --test client/tests/extension-life-launch.test.mjs client/tests/extensions.test.mjs client/tests/extension-repositories.test.mjs client/tests/shared-services-sdk.test.mjs client/tests/ui-qa-wiring.test.mjs && npm --prefix client run ui:ci",
+      "command": "node --test client/tests/extension-life-launch.test.mjs client/tests/app-launcher.test.mjs client/tests/extensions.test.mjs client/tests/extension-repositories.test.mjs client/tests/shared-services-sdk.test.mjs client/tests/ui-qa-wiring.test.mjs && npm --prefix client run ui:ci",
       "attention_on_failure": true,
       "gating": false
     },

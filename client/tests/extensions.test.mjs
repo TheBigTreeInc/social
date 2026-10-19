@@ -43,7 +43,7 @@ test('scoped install/grants persist but never move to different account/server',
 });
 test('tampering with locally bundled assets blocks extension launch',async()=>{
  const original=await readFile(new URL('../public/tavi-extensions/org.tavi.examples.notepad/ui/index.html',import.meta.url));
- const okFetch=async()=>({ok:true,arrayBuffer:async()=>original});
+ const okFetch=async(url)=>({ok:true,arrayBuffer:async()=>readFile(new URL(url.replace('https://tavi.test/','../public/'),import.meta.url))});
  assert(await verifyBundledExtension(entry,{baseUrl:'https://tavi.test/',fetcher:okFetch,cryptoRef:webcrypto}));
  const wrong=async()=>({ok:true,arrayBuffer:async()=>Buffer.from('malicious')});
  await assert.rejects(verifyBundledExtension(entry,{baseUrl:'https://tavi.test/',fetcher:wrong,cryptoRef:webcrypto}),/changed/);
@@ -70,10 +70,14 @@ test('publisher importer builds identical validated catalog without touching liv
   const source=join(tmp,'source'),target=join(tmp,'registry');await mkdir(source,{recursive:true});await mkdir(join(source,'ui'));
   await writeFile(join(source,'manifest.json'),JSON.stringify(entry.manifest));
   await writeFile(join(source,'ui/index.html'),'<html>ok</html>');
+  await writeFile(join(source,'ui/icon.svg'),'<svg xmlns="http://www.w3.org/2000/svg"></svg>');
   const registered=await registerExtension(source,{target});
   assert.equal(registered.manifest.id,entry.manifest.id);
   const digest=createHash('sha256').update('<html>ok</html>').digest('hex');
-  assert.equal(registered.files[0].sha256,digest);
+  assert.equal(registered.files.find(f=>f.path==='ui/index.html').sha256,digest);
+  const iconless=structuredClone(entry.manifest);delete iconless.icon;await writeFile(join(source,'manifest.json'),JSON.stringify(iconless));
+  const otherTarget=join(tmp,'fresh-registry');await mkdir(otherTarget);
+  await assert.rejects(registerExtension(source,{target:otherTarget}),/require an icon/);
   const invalid=structuredClone(entry.manifest);invalid.permissions.push('social.messages.read');await writeFile(join(source,'manifest.json'),JSON.stringify(invalid));
   await assert.rejects(registerExtension(source,{target}),/permission/);
  }finally{await rm(tmp,{recursive:true,force:true});}

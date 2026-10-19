@@ -11,11 +11,32 @@
         "summary": "A small optional application with its own isolated user interface.",
         "publisher": "tavi",
         "kind": "app",
-        "hostApi": {"min": "1.0.0", "maxExclusive": "2.0.0"},
-        "entrypoints": {"panel": "ui/index.html"},
-        "contributions": [{"slot":"app.launcher", "id":"notepad", "label":"Private Notepad", "action":"openPanel"}],
-        "permissions": ["ui.panel", "ui.toast", "storage.private"],
-        "platforms": ["web", "windows", "android"]
+        "hostApi": {
+          "min": "1.0.0",
+          "maxExclusive": "2.0.0"
+        },
+        "entrypoints": {
+          "panel": "ui/index.html"
+        },
+        "contributions": [
+          {
+            "slot": "app.launcher",
+            "id": "notepad",
+            "label": "Private Notepad",
+            "action": "openPanel"
+          }
+        ],
+        "permissions": [
+          "ui.panel",
+          "ui.toast",
+          "storage.private"
+        ],
+        "platforms": [
+          "web",
+          "windows",
+          "android"
+        ],
+        "icon": "ui/icon.svg"
       },
       "entrypoint": "https://extensions.example.org/notepad/ui/index.html",
       "source": "https://github.com/example/tavi-notepad",

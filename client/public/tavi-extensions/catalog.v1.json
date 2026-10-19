@@ -34,9 +34,15 @@
           "web",
           "windows",
           "android"
-        ]
+        ],
+        "icon": "ui/icon.svg"
       },
       "files": [
+        {
+          "path": "ui/icon.svg",
+          "sha256": "940750e72f5b7f99d9b41e421f8e966f7ce3e0fa1df7b5135c8e266ee74ad335",
+          "size": 560
+        },
         {
           "path": "ui/index.html",
           "sha256": "58c7d990ca5d1f75912496c1ed4ab1664e3210b6c49bb1ccfbe6facda58db808",

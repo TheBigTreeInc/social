@@ -1,0 +1,31 @@
+= Tavi 0.3.67 — icon-based applications launcher
+:revdate: 2026-10-20
+:toc: left
+
+== Product ownership
+
+Tavi is a messenger first. Home remains the compact buddy roster with search, contact groups, conversations, pet presence and always-accessible three-button bottom dock. *Main menu* is now a mobile-like app drawer, not a replacement Home or a games-first screen. Apps open through existing actions; back/Home returns to the contact list and preserves conversations.
+
+== Implemented
+
+* Replaces the two-column text-only Main menu with a three-column icon tile grid at 320–400px and four columns at larger widths; touch/focus controls remain keyboard accessible. Icons use original local SVG path illustrations and the existing green Tavi visual theme. Color tints distinguish utilities without replacing readable names.
+* Existing built-in actions are unchanged: Messages, Games, Notifications, optional My pet, My portrait, App Store, Add friend and Settings.
+* Enabled, installed, version-matched extensions whose manifest contributes `app.launcher` join this grid automatically; disabled, removed, uninstalled, incompatible and mismatched-source extensions do not launch. The App Store still owns install/update approval and no third-party code executes from the drawer.
+* Extension manifest v1 now accepts optional `icon` with a relative `.png`, `.svg`, or `.webp` package path. New publisher submissions MUST ship an icon; old v1 manifests remain valid and display a built-in fallback. The icon path cannot escape the extension/repository base. Each bundled icon participates in the existing SHA-256 asset verification. The example Private Notepad now ships an authored `ui/icon.svg`.
+* Both the drawer and App Store display available extension icons with fallback. An extension's own icon is never trusted as script and does not grant extra permissions.
+
+== Atrium publication remains independent
+
+The official Atrium repository URL is currently reported HTTP 404 from the Windows UI screenshot. Until it publishes a valid `tavi.repository/v1` catalog and the user explicitly installs Atrium, **do not show Atrium as an installed app**. An Atrium manifest may add `"icon": "ui/icon.svg"` and stage that image next to its published HTML. The Tavi v1 repository validator accepts it without a new install privilege. Only an operator-reviewed Atrium deployment can make it available; the old standalone Games browser shortcut is not proof that the extension was installed.
+
+== Acceptance checklist (all operator-gated)
+
+. Import v0.3.67 as a new ZIP; ensure exact-ZIP integrity, correct client version, clean workboard merge, no active private credentials and no changed LoopRD descriptor.
+. On Windows 355px verify Home retains old MSN-like roster and dock; Main menu shows icon tiles, no unwanted horizontal scroll or clipped labels; icon press invokes the previous action; Home returns reliably.
+. On phone 320/390px and tablet widths verify three/four-column transition, responsive scrolling, touch areas, keyboard focus and OS safe area.
+. Install Private Notepad and verify its icon appears in Main menu; open, return Home, disable, re-enable and remove; verify install state and note storage are still per-account scoped.
+. Test remote publisher manifest with valid `ui/icon.svg`, hostile icon paths and missing legacy icon; verify no token leaks or arbitrary SVG execution via images.
+. After Atrium actually publishes its repository, test real Atrium icon and extension open; external Life launch and seat proof remain separate TAVI-LIFE-066 acceptance gates.
+. Reconcile ZipRunner `not_github` / `waiting_for_verification` identity mapping without promoting operator Review tickets. The attached handoff reported exact 0.3.66 Git SHA `c93b7250e09a2377293c226d9fbd32ebd5225149`; external GitHub investigation confirmed nine push workflows green and release v0.3.66 published. ZipRunner's local collector still needs to import exact-commit evidence.
+
+No Git push, production deployment or operator signoff is performed by this patch.

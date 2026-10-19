@@ -30,5 +30,6 @@
     "web",
     "windows",
     "android"
-  ]
+  ],
+  "icon": "ui/icon.svg"
 }

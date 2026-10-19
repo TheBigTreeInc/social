@@ -478,7 +478,37 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .tavi-utility-focus>.auxiliary-window,.tavi-contact-focus>.roster-window{flex:1;height:100%;border:0!important;box-shadow:none!important;}
 .tavi-focus-toolbar{flex-shrink:0;display:flex;gap:10px;align-items:center;min-height:44px;padding:6px 13px;border-bottom:1px solid #b4d4bd;background:#e5f4e5;color:#295e43;}
 .tavi-focus-toolbar button{background:#f9fdf5;border:1px solid #b6d5b8;border-radius:12px;padding:6px 11px;color:#285f43;}.tavi-focus-toolbar strong{font-size:14px;}.tavi-contact-focus>.roster-window .menubar{display:none;}
-.tavi-menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}.tavi-menu-grid button{min-height:53px;border-radius:12px;background:#eff9ec;border:1px solid #a9cbb2;}
+/* Tavi 0.3.67 — mobile-style app drawer, not a second messenger Home. */
+.tavi-menu-panel{padding:17px 12px 20px!important;max-width:900px;margin:0 auto;min-width:0;}
+.tavi-launcher-header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+.tavi-launcher-header h2{font-size:18px;color:#1d5c3e;letter-spacing:-.3px;}
+.tavi-launcher-count{font-size:11px;color:#688675;white-space:nowrap;}
+.tavi-launcher-hint{color:#5b806b;font-size:11px;margin:6px 0 18px;}
+.tavi-menu-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 5px;justify-items:stretch;align-content:start;}
+.tavi-menu-grid .tavi-app-tile{appearance:none;border:0!important;box-shadow:none!important;background:transparent!important;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:7px;min-height:91px;padding:6px 1px 4px;color:#25513a;min-width:0;}
+.tavi-menu-grid .tavi-app-tile:hover{background:#e5f4e9!important;}
+.tavi-menu-grid .tavi-app-tile:focus-visible{outline:3px solid #2d7854;outline-offset:1px;}
+.tavi-app-icon{display:grid;place-items:center;position:relative;overflow:hidden;width:60px;height:60px;border-radius:17px;flex:none;color:#fff;background:#38845e;box-shadow:0 2px 4px #29523a22,inset 0 1px 0 #ffffff38;}
+.tavi-app-icon.tone-forest{background:linear-gradient(145deg,#68b38a,#32764f);}
+.tavi-app-icon.tone-violet{background:linear-gradient(145deg,#a290d4,#6b57a9);}
+.tavi-app-icon.tone-gold{background:linear-gradient(145deg,#f0c977,#bb8333);}
+.tavi-app-icon.tone-leaf{background:linear-gradient(145deg,#99c66c,#639747);}
+.tavi-app-icon.tone-plum{background:linear-gradient(145deg,#cb9ac2,#98638f);}
+.tavi-app-icon.tone-teal{background:linear-gradient(145deg,#65bfb7,#358d86);}
+.tavi-app-icon.tone-blue{background:linear-gradient(145deg,#8fbad9,#4a7fae);}
+.tavi-app-icon.tone-slate{background:linear-gradient(145deg,#acbdc6,#687e8b);}
+.tavi-app-glyph{display:block;width:35px;height:35px;max-width:70%;max-height:70%;}
+.tavi-app-icon-image{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:inherit;}
+.tavi-app-caption{font-size:11px;font-weight:600;line-height:1.24;text-align:center;max-width:100%;overflow-wrap:break-word;}
+.tavi-launcher-footer{margin:14px 2px 0;color:#668474;font-size:11px;line-height:1.5;}
+.tavi-launcher-footer button{padding:0;border:0;background:transparent!important;box-shadow:none;color:#27714d;text-decoration:underline;font-weight:bold;}
+.tavi-store-icon{position:relative;overflow:hidden;display:grid;place-items:center;width:45px;height:45px;border-radius:12px;flex:none;color:white;background:linear-gradient(145deg,#68b38a,#32764f);}
+.tavi-store-icon .tavi-app-glyph{width:27px;height:27px;}
+.tavi-store-icon img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+@media(min-width:610px){.tavi-menu-grid{grid-template-columns:repeat(4,minmax(0,1fr));column-gap:15px;}}
+@media(max-width:345px){.tavi-app-icon{width:56px;height:56px}.tavi-menu-grid{gap:11px 3px;}.tavi-menu-panel{padding:12px 8px!important;}}
+@media(prefers-reduced-motion:no-preference){.tavi-menu-grid .tavi-app-tile:hover .tavi-app-icon{transform:translateY(-2px);transition:transform 140ms ease;}}
+
 /* A focused chat is a full screen, not a tab below Home's dock. */
 .tavi-modern-chat{height:100%;width:100%;display:flex;flex-direction:column;min-height:0;background:linear-gradient(#f2f9ed,#fffdf5);}
 .tavi-chat-top{flex-shrink:0;display:flex;gap:10px;align-items:center;padding:10px;border-bottom:1px solid #c3dec8;background:linear-gradient(#e7f5e8,#d2e9d4);min-height:65px;}
@@ -600,3 +630,12 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .tavi-life-launch-confirmation a,.tavi-life-launch-confirmation button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:.45rem .8rem;border-radius:.45rem;background:#267c69;color:#fff;text-decoration:none;border:1px solid #1b594a;cursor:pointer;}
 .tavi-life-launch-confirmation button{background:#e8f7ed;color:#14382b;}
 .tavi-life-launch-confirmation a:focus-visible,.tavi-life-launch-confirmation button:focus-visible{outline:3px solid #182d74;outline-offset:2px;}
+
+.tavi-store-item{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}.tavi-store-item-copy{flex:1;min-width:150px}.tavi-store-actions{width:100%}
+
+/* Help > Copy diagnostics: independent of the current messenger panel. */
+.tavi-diagnostic-overlay{position:fixed;inset:0;z-index:99999;background:#0009;display:flex;align-items:center;justify-content:center;padding:12px}
+.tavi-diagnostic-dialog{box-sizing:border-box;width:min(720px,100%);max-height:94vh;overflow:auto;background:var(--surface,#fff);color:var(--text,#172d22);border:2px solid #326448;border-radius:10px;box-shadow:0 12px 40px #0005;padding:16px}
+.tavi-diagnostic-dialog h2{margin:0 0 8px}.tavi-diagnostic-dialog p{font-size:13px}
+.tavi-diagnostic-dialog textarea{box-sizing:border-box;width:100%;height:min(48vh,440px);resize:vertical;white-space:pre;font:12px/1.45 monospace;background:#f8fbf8;color:#14291a;border:1px solid #779581;border-radius:5px;padding:10px}
+.tavi-diagnostic-controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:10px}

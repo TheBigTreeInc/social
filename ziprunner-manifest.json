@@ -3,16 +3,37 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.66",
-    "base_version": "0.3.65"
+    "version": "0.3.70",
+    "base_version": "0.3.67"
   },
   "update": {
-    "id": "TAVI-20261019-LIFE-LAUNCH-BROKER-0366",
+    "id": "TAVI-20261020-ACTIONABLE-DIAGNOSTICS-0370",
     "kind": "source_update",
-    "created_at": "2026-10-19T21:41:54+02:00",
-    "summary": "Tavi-only user-confirmed Atrium hosted-Life launch broker. No new iframe navigation permission; strict first-party origin, credential-free handoff, fresh user click, Home preserved. No LoopRD or Atrium changes."
+    "created_at": "2026-10-20T00:00:00+02:00",
+    "summary": "Client-only sanitized actionable Tavi diagnostics for Atrium and extension repository failures; preserve existing messenger Home and workboard."
   },
   "planned_work": [
+    {
+      "id": "TAVI-DEBUG-070",
+      "title": "Actionable repository and extension diagnostics",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Show sanitized repository status and HTTP codes independent from server account capabilities.; No addresses, tokens, usernames, message contents or arbitrary raw exceptions in copied log.; Windows/Android/Web acceptance with real failure and recovery; existing local workboard decisions unchanged."
+    },
+    {
+      "id": "TAVI-DEBUG-068",
+      "title": "Help menu copyable privacy-safe diagnostic report",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Help > Copy diagnostics opens report even when developer access is disabled; no secrets, message contents, account identifiers or server URLs; copy and manual fallback work on Windows, Android and web."
+    },
+    {
+      "id": "TAVI-UX-067",
+      "title": "Icon-based app drawer with extension icon metadata",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Three-column app drawer at compact width, fourth column at larger width; original Home and accessibility preserved; installer-approved extensions appear with same-origin icons or fallback; Windows/Android/Web acceptance required."
+    },
     {
       "id": "TAVI-UI-QA-062",
       "title": "Actual desktop/mobile browser UI smoke and failure artifacts",
@@ -1134,6 +1155,18 @@
   ],
   "todo_work": [
     {
+      "id": "TAVI-DEBUG-070",
+      "reason": "Source candidate; operator and physical device acceptance required."
+    },
+    {
+      "id": "TAVI-UX-067",
+      "status": "review",
+      "next_action": "Import v0.3.68 into ZipRunner, inspect Windows 355px and Android/browser 320/390px launcher, install/open/disable Private Notepad, verify Atrium appears only after live repository publication and explicit install. Obtain operator acceptance.",
+      "blockers": [
+        "Windows/Android live GUI validation and the Atrium public extension repository publication have not been verified."
+      ]
+    },
+    {
       "id": "SCL-010",
       "status": "review",
       "next_action": "Run Web/Windows/Android GitHub Actions, validate separate Windows chat windows on a real desktop, and confirm no regression to Android/web login and messages.",
@@ -1328,6 +1361,14 @@
       "next_action": "Preserve existing workboard review and obtain operator native/browser acceptance; CI/source evidence alone does not close this ticket.",
       "blockers": [
         "Existing v0.3.65 supplementary manifest omitted this already-planned work item; status and acceptance criteria have not been changed."
+      ]
+    },
+    {
+      "id": "TAVI-DEBUG-068",
+      "status": "review",
+      "next_action": "Operator test Help > Copy diagnostics on Windows, Android and browser; inspect output for sensitive data, clipboard fallback and offline behavior before marking Done.",
+      "blockers": [
+        "Source unit verification is not native/device acceptance."
       ]
     }
   ],
