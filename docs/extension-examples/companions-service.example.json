@@ -1,0 +1,12 @@
+{
+  "schema": "tavi.service/v1",
+  "component": "tavi-companions",
+  "apiVersion": "1.0.0",
+  "mode": "optional",
+  "description": "Companions pet roster and actions on a configured LoopRD service",
+  "capabilities": [
+    "pets.read",
+    "pets.command"
+  ],
+  "requiresDelegation": true
+}

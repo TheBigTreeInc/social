@@ -1,0 +1,50 @@
+= Publish an Open-Source Tavi Extension Repository
+:revdate: 2026-10-19
+:toc:
+
+== No publisher account needed
+
+Tavi is decentralized. Any developer can publish a static `tavi.repository/v1` JSON file and a hosted HTML/JavaScript application, as long as users have its URL. The connected LoopRD server may *recommend* it, but does not have to register it or approve it. There is no mandatory Tavi Inc App Store, global search directory, publisher API, approval ticket, signature issuer or central submission queue.
+
+== Steps for an extension author
+
+. Write an HTML/JS/TypeScript application. Bundle its UI, including any needed extension SDK client, at a stable public HTTPS path. The UI must allow being embedded inside a sandboxed iframe. Never expect access to Tavi DOM, Social session secrets or Tauri APIs.
+. Create its `tavi.extension/v1` manifest. Use only implemented host permissions; no permission exists merely because it is written in the JSON. Keep the manifest's `entrypoints.panel` filename consistent with the hosted entrypoint URL.
+. Publish its source repository and a license and build instructions. Use a stable extension ID and version updates to announce releases.
+. Publish a static `tavi.repository.json` index using `docs/extension-examples/tavi-repository.example.json` and `schemas/tavi.repository.v1.schema.json`. Each entry embeds a manifest and specifies `entrypoint`, `source` and `license`.
+. Make the repository index retrievable by HTTPS GET with CORS for Tavi browser clients; e.g. serve it via GitHub Pages, Forgejo Pages, or your own server. Host the app on an HTTPS origin, without demanding Tavi credentials.
+. Share the JSON catalog URL with users or the LoopRD server owner. Their App Store lists it when subscribed or recommended. Users explicitly install the extension after reviewing permissions and its host/source URL.
+. For updates, publish the new HTML/JS at the hosted URL and increment the version in the catalog. The client prompts before updating, particularly when permissions change. Hosted content is *not* hash-pinned in this implementation; use immutable release URLs if you need repeatability.
+
+== Steps for a LoopRD server owner
+
+Optionally serve `https://YOUR-LOOPRD-ORIGIN/.well-known/tavi-repositories.json` as a public JSON file using `tavi.repository-list/v1` with a list of HTTPS catalog URLs. File example: `docs/extension-examples/server-repositories.example.json`. CORS may be necessary for an externally hosted Tavi web client. Nothing is auto-installed. A 404 means no operator recommendations.
+
+The owner can run a private, access-controlled *community* for its members while advertising only public *repository metadata*. Note that index retrieval currently uses `credentials: omit`; authenticated/private JSON catalogs are not supported by this client pass.
+
+== Steps for a Tavi user
+
+. Connect to the known LoopRD server and sign in.
+. Open Main menu > App Store. Server recommendations appear automatically if configured.
+. To add a custom repository: paste its HTTPS JSON index URL under Extension repositories > Add repository.
+. Choose an extension; inspect the source URL, remote application host, permissions and publisher, then install.
+. Open the extension panel. Home and chat remain accessible independently.
+. To stop receiving catalog entries from a repository, remove the subscription. To revoke permissions, uninstall the extension; local private data is preserved until an explicit clearing feature exists.
+
+== Development and testing
+
+The bundled `examples/extension-notepad/` remains available as a local smoke test and can be registered for reviewed source-bundled builds using `node tools/register-tavi-extension.mjs path/to/extension`. That CLI is *not* an external publication requirement. A repository-hosted extension requires no Tavi rebuild when its hosted UI/manifest changes within the already implemented host API.
+
+Unit tests run via `node --test client/tests/extensions.test.mjs client/tests/extension-repositories.test.mjs` and the full test suite via `npm run verify`. Browser/Windows/Android tests against an actual HTTPS extension repository are outstanding. If the remote server denies framing or CORS, the app may appear in the catalog but fail to open; fix the hosting configuration rather than relaxing the iframe sandbox.
+
+== Security boundaries
+
+Tavi does not approve or certify community code. The catalog may claim a license/source URL that requires independent verification. The iframe cannot receive a Tavi bearer or unrestricted Social API access. It can read its *own* per-account extension storage through a permissioned broker and can send network traffic from its hosted origin; users should avoid entering Tavi passwords in extension frames. A future optional immutable asset checksum scheme is worthwhile, but does not imply a central publisher approval authority.
+
+== Adding authoritative shared services (planned)
+
+An extension can be a UI-only application or can depend on one or more independently deployed LoopRD services. Portable manifests refer to component IDs and capabilities, **never a hardcoded target server address**. A LoopRD operator configures the actual backend endpoint and delegates trust separately. Installing an App Store entry never gives a service permission to spend money, read a message inbox or impersonate an account.
+
+The future descriptor and manifest drafts are `schemas/tavi.service.v1.schema.json`, `schemas/tavi.extension.v2.schema.json`, and `docs/extension-examples/companions.v2.future.json`. Until the v2 runtime exists, publish the current v1 manifest and do not claim those new permissions are available. The service architecture and SDK source are documented in link:TAVI_SHARED_SERVICES_LEDGER_SDK_V2.adoc[Tavi Shared Services, Ledger and SDK].
+
+`client/extension-sdk` contains the distributable SDK package source. Running `npm pack` there creates an independently distributable archive; actual public npm publication requires an owned package scope and an explicit repository license choice.

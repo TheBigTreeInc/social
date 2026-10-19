@@ -1,0 +1,128 @@
+= Tavi Extension Platform v1 — Decentralized Repositories
+:revnumber: 1.1-draft
+:revdate: 2026-10-19
+:toc: left
+:toclevels: 3
+
+== Guiding principles
+
+Tavi is a *messenger first*. Contacts, conversations, sign-in, notifications and returning to Home remain core Tavi responsibilities. Companions, Atrium and other apps are optional extensions, never a prerequisite to use chat.
+
+The platform is an *open-source, self-hosted ecosystem*. A person learns the address of a LoopRD deployment from its operator; they do not need to discover or register in a global network. Every operator can recommend one or more extension repositories, and users can add additional repository URLs themselves. No central Tavi marketplace, publisher registration, moderation service, upload account, Tavi-controlled signing authority, ranking service or mandatory public directory is required.
+
+The App Store is a familiar client-side *repository browser/installer*, not a SaaS marketplace.
+
+== Model: Dalamud-style repositories
+
+The design follows the idea of Dalamud custom plugin repositories: subscribing to a static JSON index exposes applications in the installer. Tavi deliberately uses its *own* versioned schema and sandboxed web app interface, not Dalamud's .NET plugin format.
+
+. The operator optionally exposes a small list of recommended HTTPS repositories on the LoopRD server.
+. Tavi discovers these recommendations from the currently connected server, never from a central discovery API.
+. A user may also paste an HTTPS repository index URL into App Store > Extension repositories. Each server has a separate list of user subscriptions on that device.
+. The App Store combines the bundled catalog, personally subscribed repositories and server recommendations, deduplicating application IDs in deterministic order. Bundled IDs take precedence. The installed application remembers its source repository and cannot silently switch to another repository carrying the same ID.
+. The user reviews the extension's permissions, developer source URL and remote host and explicitly chooses Install. No repository can silently install or enable code.
+. To release an update, the repository maintainer edits the static JSON index and publishes application content at their selected URL. Tavi fetches the current index on refresh and requires consent to update. Extension API versions and new permissions are checked on every install/update.
+. Removing a repository subscription removes it from discovery; it does not silently wipe the extension's private data. Unavailable installed apps do not launch if their catalog source is no longer known.
+
+== Catalog contracts
+
+=== Extension manifest
+
+An extension uses `tavi.extension/v1`, with stable reverse-domain `id`, `version`, `name`, `summary`, `publisher`, `kind`, `hostApi` compatibility range, `entrypoints.panel`, contributions, optional platform selection and explicit permissions. The machine-readable definition is in `schemas/tavi.extension.v1.schema.json`.
+
+The *currently implemented* API offers `ui.panel`, `ui.toast` and `storage.private`. `profile.trailingWidget`, pet overlays, privileged native windows, chat access, game grants and push subscriptions are *not* implemented simply by declaring them in a manifest.
+
+=== Static extension repository (`tavi.repository/v1`)
+
+[source,json]
+----
+{
+  "schema": "tavi.repository/v1",
+  "name": "My Tavi Extensions",
+  "extensions": [{
+    "manifest": {
+      "schema": "tavi.extension/v1",
+      "id": "org.example.notepad",
+      "version": "1.0.0",
+      "name": "Notepad",
+      "summary": "A simple note-taking extension",
+      "publisher": "example",
+      "kind": "app",
+      "hostApi": {"min":"1.0.0","maxExclusive":"2.0.0"},
+      "entrypoints": {"panel":"ui/index.html"},
+      "contributions": [],
+      "permissions": ["ui.panel","storage.private"]
+    },
+    "entrypoint": "https://extensions.example.org/notepad/ui/index.html",
+    "source": "https://github.com/example/notepad",
+    "license": "MIT"
+  }]
+}
+----
+
+Full examples: `docs/extension-examples/tavi-repository.example.json` and `schemas/tavi.repository.v1.schema.json`. HTTPS source and UI URLs are required; source publication should include build instructions, the license text, dependencies and reproducible release sources. The field named `license` declares an SPDX-style identifier; declaration is not a code audit or license verification.
+
+The repository index must be accessible as JSON using unauthenticated HTTPS GET and allow cross-origin reading by web clients (typically `Access-Control-Allow-Origin: *`); no Tavi or LoopRD bearer is ever transmitted. Hosts must permit sandboxed iframe embedding of their application UI. For now, a repository may contain up to 150 entries and a server/user up to 24 index URLs.
+
+=== Optional server recommendations (`tavi.repository-list/v1`)
+
+Proposed location under the *currently connected LoopRD origin*: `/.well-known/tavi-repositories.json`.
+
+[source,json]
+----
+{
+  "schema": "tavi.repository-list/v1",
+  "repositories": [
+    "https://extensions.example.org/tavi.repository.json"
+  ]
+}
+----
+
+This is a *static operator-managed file*: it does not require changing the Social API, running a repository database, or registering applications with LoopRD. A missing file (404) is not an error; the client simply uses personal subscriptions and bundled apps. When the client and server are on different web origins the operator must enable CORS for this public JSON file. Existing LoopRD deployments do not automatically serve this file; its hosting is an operator configuration action.
+
+== Application execution and permissions
+
+The existing messenger runs inside the Tavi Tauri 2/Web environment. Repository apps are *remote hosted web extensions*, loaded only following a user install action into `<iframe sandbox="allow-scripts">`. The sandbox intentionally omits `allow-same-origin`, `allow-top-navigation`, `allow-popups`, and native/Tauri privileges. The frame's effective origin is opaque and can communicate only through validated `postMessage` RPC.
+
+The host broker checks exact iframe source, expects an opaque `null` origin, limits request volume, and supports only `host.info`, private per-account/server extension storage and optional host toasts/close. It does not provide Social account credentials, unrestricted chat content, profile details, contact lists, arbitrary networking through the host, filesystem, or permissions to call LoopRD APIs on behalf of Tavi.
+
+Remote extensions receive *only their own URL, their own hosted application state and specifically permitted host broker operations*. The extension host URL is shown during install because the repo operator controls the remote web content and can change it. Remote app code may itself make network requests from its frame and can collect data entered into that extension. Users should only subscribe to authors they trust; sandboxing is a technical isolation boundary, not an endorsement of arbitrary content.
+
+The previously bundled example still uses asset SHA-256 checking. Hosted extensions currently run from the HTTPS website referenced in the index; they are *not* downloaded as offline `.tavix` packages and are not hash-pinned. Updating a repository can change its hosted UI without a byte-for-byte immutable artifact guarantee. This is an explicit limitation, not an implied signed release or rollback feature. A future *optional*, repository-owned checksum/immutable artifact format may improve integrity and offline availability without imposing a central store.
+
+A native capability that doesn't exist in the Tavi host still requires a host update. Future native overlay privileges must be individually reviewed and exposed through narrow, host-owned APIs; never by allowing an extension to install an unrestricted native binary.
+
+== Ownership and server independence
+
+* Tavi: communication, sign-in, contacts, notifications, account-specific grants, navigation, extension panels and install state.
+* LoopRD server: messaging, identities and game/service APIs, optionally operator-suggested extension repository addresses. It is **not** required to host an App Store backend.
+* Repository maintainer: static index, source repository, extension UI hosting and release/version publication.
+* User: custom repository subscriptions, installation, permission grants, enable/disable and uninstall.
+* Atrium: one Tavi extension provider for the Games UI; Atrium continues to list its own games. An individual Life game is *not* necessarily another Tavi extension.
+* Companions: one optional extension UI with later profile widget/native overlay host APIs; its cosmetics can be content packs within the Companions ecosystem.
+
+A server's recommendations are *not* a server-enforced authorization rule: users can add their own sources. Server-side LoopRD permissions remain separate from Tavi extension grants; advertising or installing an app cannot grant access to protected services.
+
+== What is implemented in the 0.3.60 source candidate
+
+* Existing curated bundled sample, installer, manifest validator, SDK and opaque-origin host from 0.3.59 retained.
+* `client/src/extensions/repositories.js`: optional server recommendation lookup, user-local subscriptions per LoopRD server, HTTPS validation, remote index loading with no bearer, source links, duplicate handling and source pinning.
+* App Store UI: add/remove repository URL, refresh catalogs, show source/remote host/license, install/update remote hosted web extension with explicit permission confirmation, enable/disable/remove, Home return.
+* `schemas/tavi.repository.v1.schema.json`, `schemas/tavi.repository-list.v1.schema.json`, open examples, tests and publishing instructions.
+* Social server descriptor remains **0.3.58**; no database migration or new mandatory LoopRD route. Native/real WebView tests and hosted HTTPS/CORS acceptance remain pending.
+
+== Shared services and published SDK (next-phase contract)
+
+See link:TAVI_SHARED_SERVICES_LEDGER_SDK_V2.adoc[Tavi Shared Services, Ledger and SDK v2].
+This separates Tavi-owned wallet/contacts/messages/pet displays from authoritative LoopRD services, specifies a double-entry wallet ledger, allows extensions to provide their own LoopRD component or independently deployed LoopRD instance, and defines source-distributed JS/TypeScript SDK contracts. No central registry or extension publisher authorization is introduced.
+
+The shipping `tavi.extension/v1` validator does *not* authorize `wallet.read`, pet, contacts or messaging permissions. A future `tavi.extension/v2` manifest and a per-service server grant flow are separately specified. Host discovery exposes only actually supported permissions.
+
+== Next work, without a central marketplace
+
+. Verify user-subscription and operator-recommendation flows with a *real HTTPS extension repository* on Windows, Android and browser; test CORS, iframe embedding, origin isolation, broken/removed indexes, malicious redirects and password phishing indicators.
+. Convert Companions into an independent extension and add permissioned profile widget/native overlay APIs where supported. Provide migration for existing pet state.
+. Convert Atrium Games into an extension provider. Keep Life and board game state on LoopRD/game backends; game notifications still reach Tavi independently of Atrium's UI installation.
+. Consider optional content-pack manifest, opt-in immutable release hashes, cached/offline updates and provider-specific trust keys. These are not prerequisites to simply host a repository index.
+
+Do not label existing Companions and Atrium integrations as fully migrated extensions, and do not claim remote binary packages are verified or installed offline.

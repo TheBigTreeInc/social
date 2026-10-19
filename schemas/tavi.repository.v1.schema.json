@@ -1,0 +1,21 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://tavi.example/spec/tavi.repository.v1.schema.json",
+  "title":"Decentralized Tavi extension repository index",
+  "type":"object","additionalProperties":false,
+  "required":["schema","name","extensions"],
+  "properties":{
+    "schema":{"const":"tavi.repository/v1"},
+    "name":{"type":"string","minLength":1,"maxLength":80},
+    "extensions":{"type":"array","maxItems":150,"items":{
+      "type":"object","additionalProperties":false,
+      "required":["manifest","entrypoint","source","license"],
+      "properties":{
+        "manifest":{"$ref":"tavi.extension.v1.schema.json"},
+        "entrypoint":{"type":"string","format":"uri","pattern":"^https://"},
+        "source":{"type":"string","format":"uri","pattern":"^https://"},
+        "license":{"type":"string","pattern":"^[A-Za-z0-9.\\-+]{1,50}$"}
+      }
+    }}
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "tavi.extension/v1",
+  "id": "inc.thebigtree.tavi.companions",
+  "version": "1.0.0",
+  "name": "Companions",
+  "summary": "Optional virtual companions and profile integration.",
+  "publisher": "thebigtreeinc",
+  "kind": "app",
+  "hostApi": { "min": "1.1.0", "maxExclusive": "2.0.0" },
+  "entrypoints": { "panel": "ui/index.html" },
+  "contributions": [
+    { "slot": "app.launcher", "id": "pets", "label": "My companion", "action": "openPanel" },
+    { "slot": "profile.trailingWidget", "id": "pet", "label": "Companion", "action": "openPanel" }
+  ],
+  "permissions": [ "ui.panel", "storage.private", "ui.profileWidget", "native.companionOverlay" ],
+  "platforms": [ "windows", "android", "web" ]
+}

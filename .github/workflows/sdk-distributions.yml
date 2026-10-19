@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths: ['sdk/**', 'client/sdk/**', 'integrations/openclaw/**', '.github/workflows/sdk-distributions.yml']
+    paths: ['sdk/**', 'client/sdk/**', 'client/extension-sdk/**', 'integrations/openclaw/**', '.github/workflows/sdk-distributions.yml']
 permissions:
   contents: read
 jobs:
@@ -18,7 +18,7 @@ jobs:
           from pathlib import Path
           from zipfile import ZipFile,ZIP_DEFLATED
           out=Path('sdk-distributions');out.mkdir(exist_ok=True)
-          groups={'javascript':['client/sdk'], 'python':['sdk/python'], 'go':['sdk/go'], 'dotnet':['sdk/csharp'], 'openclaw':['integrations/openclaw','client/sdk']}
+          groups={'javascript':['client/sdk'], 'extension-sdk':['client/extension-sdk'], 'python':['sdk/python'], 'go':['sdk/go'], 'dotnet':['sdk/csharp'], 'openclaw':['integrations/openclaw','client/sdk']}
           for name,dirs in groups.items():
               dest=out/f'tavi-{name}-source.zip'
               with ZipFile(dest,'w',ZIP_DEFLATED) as z:

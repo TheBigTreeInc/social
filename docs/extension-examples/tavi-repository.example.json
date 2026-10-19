@@ -1,0 +1,25 @@
+{
+  "schema": "tavi.repository/v1",
+  "name": "Example open-source Tavi extensions",
+  "extensions": [
+    {
+      "manifest": {
+        "schema": "tavi.extension/v1",
+        "id": "org.tavi.examples.notepad",
+        "version": "1.0.0",
+        "name": "Private Notepad",
+        "summary": "A small optional application with its own isolated user interface.",
+        "publisher": "tavi",
+        "kind": "app",
+        "hostApi": {"min": "1.0.0", "maxExclusive": "2.0.0"},
+        "entrypoints": {"panel": "ui/index.html"},
+        "contributions": [{"slot":"app.launcher", "id":"notepad", "label":"Private Notepad", "action":"openPanel"}],
+        "permissions": ["ui.panel", "ui.toast", "storage.private"],
+        "platforms": ["web", "windows", "android"]
+      },
+      "entrypoint": "https://extensions.example.org/notepad/ui/index.html",
+      "source": "https://github.com/example/tavi-notepad",
+      "license": "MIT"
+    }
+  ]
+}

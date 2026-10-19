@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tavi.example/spec/tavi.extension.v1.schema.json",
+  "title": "Tavi Extension Manifest v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema","id","version","name","summary","publisher","kind","hostApi","entrypoints","contributions","permissions"],
+  "properties": {
+    "schema": {"const":"tavi.extension/v1"},
+    "id": {"type":"string","pattern":"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+){2,}$","maxLength":120},
+    "version": {"$ref":"#/$defs/version"},
+    "name": {"type":"string","minLength":1,"maxLength":60},
+    "summary": {"type":"string","minLength":1,"maxLength":240},
+    "publisher": {"type":"string","pattern":"^[-a-z0-9]{2,64}$"},
+    "kind": {"const":"app"},
+    "hostApi": {"type":"object","additionalProperties":false,"required":["min","maxExclusive"],"properties":{"min":{"$ref":"#/$defs/version"},"maxExclusive":{"$ref":"#/$defs/version"}}},
+    "entrypoints": {"type":"object","additionalProperties":false,"required":["panel"],"properties":{"panel":{"type":"string","pattern":"^(?!/)(?!.*(?:^|/)\\.\\.?/)[a-zA-Z0-9_/-]+\\.(?:html|css|js|png|svg|webp)$"}}},
+    "contributions": {"type":"array","maxItems":12,"items":{"type":"object","additionalProperties":false,"required":["slot","id","label","action"],"properties":{"slot":{"enum":["app.store","app.launcher"]},"id":{"type":"string","pattern":"^[-a-z0-9]{1,40}$"},"label":{"type":"string","minLength":1,"maxLength":50},"action":{"const":"openPanel"}}}},
+    "permissions": {"type":"array","maxItems":10,"uniqueItems":true,"contains":{"const":"ui.panel"},"items":{"enum":["ui.panel","ui.toast","storage.private"]}},
+    "platforms": {"type":"array","minItems":1,"uniqueItems":true,"items":{"enum":["web","windows","android"]}}
+  },
+  "$defs": {"version":{"type":"string","pattern":"^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"}}
+}

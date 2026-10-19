@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tavi.example/spec/tavi.ledger-transfer.v1.schema.json",
+  "title": "Tavi wallet transfer command v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "recipientSubject",
+    "currencyId",
+    "amountMinor",
+    "idempotencyKey"
+  ],
+  "properties": {
+    "schema": {
+      "const": "tavi.ledger-transfer/v1"
+    },
+    "recipientSubject": {
+      "type": "string",
+      "pattern": "^acct_[a-zA-Z0-9_-]{1,100}$"
+    },
+    "currencyId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9.-]*:[a-z][a-z0-9._-]{1,63}$"
+    },
+    "amountMinor": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]{0,30}$"
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9._:-]{8,160}$"
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "expectedWalletRevision": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

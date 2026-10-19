@@ -1,0 +1,42 @@
+{
+  "schema": "tavi.extension/v2",
+  "id": "inc.thebigtree.tavi.companions",
+  "version": "1.0.0",
+  "name": "Companions",
+  "summary": "Pets shared with your Tavi home realm",
+  "publisher": "thebigtreeinc",
+  "kind": "app",
+  "hostApi": {
+    "min": "2.0.0",
+    "maxExclusive": "3.0.0"
+  },
+  "entrypoints": {
+    "panel": "ui/index.html"
+  },
+  "contributions": [
+    {
+      "slot": "profile.petWidget",
+      "id": "pet",
+      "label": "Companion",
+      "action": "openPanel"
+    }
+  ],
+  "permissions": [
+    "ui.panel",
+    "pets.read",
+    "pets.command",
+    "wallet.read",
+    "events.subscribe"
+  ],
+  "serviceBindings": [
+    {
+      "component": "tavi-companions",
+      "mode": "optional",
+      "apiVersion": "1.0.0",
+      "capabilities": [
+        "pets.read",
+        "pets.command"
+      ]
+    }
+  ]
+}

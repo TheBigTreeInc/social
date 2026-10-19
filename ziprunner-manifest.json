@@ -3,16 +3,40 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.58",
-    "base_version": "0.3.57"
+    "version": "0.3.62",
+    "base_version": "0.3.61"
   },
   "update": {
-    "id": "TAVI-20261019-CLASSIC-TOP-ATRIUM-BACKEND-0358",
+    "id": "TAVI-20261019-UI-QA-0362",
     "kind": "source_update",
-    "created_at": "2026-10-19T14:20:00+02:00",
-    "summary": "v0.3.58: action-only classic roster toolbar, optional first-class profile pet, compact player-facing Games library, read-only integrations diagnostics, and one-origin shared LoopRD Atrium catalog access with private apps:read credential. No match creation, launch approval, or database migration."
+    "created_at": "2026-10-19T21:41:54+02:00",
+    "summary": "v0.3.62 adds automated browser UI/UX smoke checks to ZipRunner and blocking CI with disposable local Social fixtures, desktop/phone viewports, install/open extension navigation, screenshots on failure and blocked-preflight reporting. Shared-service SDK unchanged; Social backend remains 0.3.58."
   },
   "planned_work": [
+    {
+      "id": "TAVI-UI-QA-062",
+      "title": "Actual desktop/mobile browser UI smoke and failure artifacts",
+      "acceptance_criteria": "CI browser test green, ZipRunner QA output visible, 1366/390/320 test flows pass and failures produce screenshots; Windows/Android physical checks and pixel baselines remain mandatory before acceptance.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-SHARED-061",
+      "title": "Shared Tavi resources, LoopRD wallet ledger and published SDK contract",
+      "acceptance_criteria": "Source SDK and v2 schema validation pass; capabilities handshake only advertises actually supported features; existing extension host denies unimplemented wallet/contacts/messages/pets calls; LoopRD ledger and native UI remain separate pending implementations with full server permission and device acceptance.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-EXT-060",
+      "title": "Decentralized self-hosted Tavi extension repository browser",
+      "acceptance_criteria": "Repository JSON, server recommendations and user subscriptions load without credentials; app installs need user review; remote UI is an opaque iframe; source changes are blocked; no central publisher service. Node/Python source and real Windows/Android/browser checks.",
+      "priority": "high"
+    },
+    {
+      "id": "TAVI-EXT-059",
+      "title": "Messenger-first optional extension platform foundation",
+      "acceptance_criteria": "Source tests pass; install sample within bundled App Store, no chat token access in sandbox, per-account isolation and Home return; Windows/Android/Web device acceptance. Production publisher registry, signed .tavix and migration remain planned.",
+      "priority": "high"
+    },
     {
       "id": "SCL-021",
       "title": "Compact native Windows roster with separate conversation windows",
@@ -1430,7 +1454,7 @@
       },
       {
         "id": "TAVI-MULTI-044-PY",
-        "description": "Game room seat roster, revocation, migration 9→10, private messages and push content-free wake",
+        "description": "Game room seat roster, revocation, migration 9\u219210, private messages and push content-free wake",
         "status": "passed_source_only",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Linux Python 3.13",
@@ -1533,7 +1557,7 @@
     },
     {
       "id": "TAVI-MULTI-044-OP",
-      "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
+      "description": "Backup and test schema 9\u219210 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
       "status": "required"
     },
     {

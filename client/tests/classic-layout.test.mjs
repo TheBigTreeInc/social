@@ -11,7 +11,7 @@ const source=(await readFile(new URL('../src/main.js',import.meta.url),'utf8'))
 function shell({connected=true,mobileRoster=false,panel='messenger'}={}) {
   const app={innerHTML:''};
   const context={
-    createSurfaceRegistry,petById:()=>null,petSprite:()=>'',atriumLauncher:()=>({available:false}),companionPanel:()=>'',
+    createSurfaceRegistry,createExtensionHost:()=>({unmount(){},mount(){}}),extensionStorageScope:()=>null,petById:()=>null,petSprite:()=>'',atriumLauncher:()=>({available:false}),companionPanel:()=>'',
     document:{addEventListener:()=>{},getElementById:key=>key==='app'?app:null,querySelectorAll:()=>[],querySelector:()=>null},
     localStorage:{getItem:()=>null},newCompanion:()=>({enabled:false,overlay:'off'}),companionBadge:()=>'',readConfig:()=>({server:'https://social.example.org',games:['jones'],gamesByServer:{}}),
     createResumeSync:()=>()=>false,createPushWakeupBridge:()=>()=>false,createDeviceSessionStore:()=>({load:async()=>({record:null,remembered:false})}),invoke:async()=>null,sessionStorage:{getItem:()=>null},isTauri:()=>false,navigator:{userAgent:'Mozilla/5.0'},clearTimeout(){},setTimeout(){},URL,Date,Map,JSON,String,console,
@@ -51,7 +51,7 @@ test('mobile navigation state and login are server-scoped and token-free',()=>{
 test('untrusted friend names/messages are escaped before inclusion',()=>{
   const app={innerHTML:''};
   const context={
-    createSurfaceRegistry,petById:()=>null,petSprite:()=>'',atriumLauncher:()=>({available:false}),companionPanel:()=>'',
+    createSurfaceRegistry,createExtensionHost:()=>({unmount(){},mount(){}}),extensionStorageScope:()=>null,petById:()=>null,petSprite:()=>'',atriumLauncher:()=>({available:false}),companionPanel:()=>'',
     document:{addEventListener:()=>{},getElementById:key=>key==='app'?app:null,querySelectorAll:()=>[],querySelector:()=>null},
     localStorage:{getItem:()=>null},newCompanion:()=>({enabled:false,overlay:'off'}),companionBadge:()=>'',readConfig:()=>({server:'https://social.example.org',games:[],gamesByServer:{}}),
     createResumeSync:()=>()=>false,createPushWakeupBridge:()=>()=>false,createDeviceSessionStore:()=>({load:async()=>({record:null,remembered:false})}),invoke:async()=>null,sessionStorage:{getItem:()=>null},isTauri:()=>false,navigator:{userAgent:'Mozilla/5.0'},clearTimeout(){},setTimeout(){},URL,Date,Map,JSON,String,

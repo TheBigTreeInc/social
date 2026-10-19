@@ -1,0 +1,6 @@
+{
+  "schema": "tavi.repository-list/v1",
+  "repositories": [
+    "https://extensions.example.org/tavi.repository.json"
+  ]
+}

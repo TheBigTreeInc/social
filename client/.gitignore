@@ -8,3 +8,4 @@ src-tauri/gen/
 !.env.example
 .DS_Store
 .ziprunner-state/
+qa-artifacts/

@@ -1,9 +1,64 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.58",
-  "summary": "v0.3.58 source candidate: retain all prior 92 operator workboard entries/statuses, add action-only classic roster, optional profile pet, compact games browser and same-backend Atrium catalog configuration. Requires live server/network/UI acceptance; no automatic Done states.",
+  "version": "0.3.62",
+  "summary": "v0.3.62: adds actual headless-browser UI/UX smoke tests to ZipRunner and blocking PR CI, with deterministic mock LoopRD, viewport checks and screenshots. Previous shared-service and extension work/statuses preserved; server remains 0.3.58.",
   "implemented": [
+    {
+      "id": "TAVI-UI-QA-062",
+      "title": "Automated desktop/mobile browser UI smoke and ZipRunner QA integration",
+      "summary": "Playwright-core browser QA checks actual form/navigation/extension interactions at 1366, 390 and 320px on an isolated disposable LoopRD fixture. CI job gates browser checks; post-update ZipRunner attention on failure/blocked prerequisites. Native Windows/Android and visual baselines still pending.",
+      "priority": "high",
+      "status": "planned",
+      "operator_checks": [
+        "Run npm install --prefix client and npm --prefix client run ui:ci on a host with Chrome/Chromium; inspect client/qa-artifacts/report.json and failure PNGs.",
+        "Confirm ZipRunner post-update test displays attention if prerequisites or actual browser interactions fail.",
+        "Require green .github/workflows/ui-qa.yml on the new commit and actual Windows/Android GUI tests before marking UI/UX accepted.",
+        "Do not access real LoopRD user/server during synthetic QA; fixture must remain local to 127.0.0.1."
+      ]
+    },
+    {
+      "id": "TAVI-SHARED-061",
+      "title": "Shared services and Ledger SDK foundation",
+      "summary": "New AsciiDoc architecture, resource/event/ledger/service schemas, future extension v2 example, distributable SDK source, actual host.capabilities reporting and denied-by-default future wallet/contacts/messages/pets facades. Implemented SDK foundation only; ledger, pet persistence, social grants and external federation explicitly planned.",
+      "priority": "high",
+      "status": "planned",
+      "operator_checks": [
+        "Verify 0.3.61 source over 0.3.60, Social server remains 0.3.58/schema 10, no credentials, no migration, and all existing workboard statuses preserved.",
+        "Run npm run verify and verify all v2 JSON examples against schemas; npm pack SDK and inspect tarball.",
+        "Confirm iframe only returns real host capabilities; all future wallet/pet/contact/message methods are rejected without new grants and server adapters.",
+        "Plan operator-reviewed Ledger LoopRD component and transaction journals, service-to-service grants, app wallet UI, and real Windows/Android/browser + headless game acceptance."
+      ]
+    },
+    {
+      "id": "TAVI-EXT-060",
+      "title": "Decentralized Tavi extension repositories",
+      "summary": "Optional operator .well-known JSON, user custom HTTPS catalog subscriptions, source URL/license display, remote hosted sandboxed UI launch, account grants/source pinning and tests. No central store authority, server API or signed package requirement. Source candidate, device testing pending.",
+      "priority": "high",
+      "status": "planned",
+      "operator_checks": [
+        "Verify source update v0.3.60 imports over 0.3.59; Social server remains 0.3.58 and existing workboard states are preserved.",
+        "Host a sample Tavi extension repo on real HTTPS with CORS and embeddable iframe; add URL in the App Store.",
+        "Test operator-recommended repositories by serving optional .well-known/tavi-repositories.json on connected LoopRD origin.",
+        "Install/disable/enable/remove and update app per user; verify hosted code cannot access messenger credentials, Home always works on Windows Android and web.",
+        "Try malicious repo index, HTTP and duplicate identifiers; client must not accept silently."
+      ]
+    },
+    {
+      "id": "TAVI-EXT-059",
+      "title": "Tavi optional extension host and App Store preview",
+      "summary": "Bundled curated catalog, manifest schema, isolated sandbox frame, user-reviewed install, enable/disable/remove, local private data and publishing CLI. Reuses existing Companions/Atrium built-ins until independently migratable; no LoopRD server changes. Source candidate; remote signed publishing and native acceptance pending.",
+      "priority": "high",
+      "status": "planned",
+      "operator_checks": [
+        "Install source candidate with ZipRunner; verify all prior statuses/criteria remain unchanged.",
+        "Open Main menu > App Store and install bundled Private Notepad with explicit consent; save a note, close/reopen and verify local storage.",
+        "Switch LoopRD user/server and confirm note and install state are not exposed to another account.",
+        "Disable/remove extension and verify existing chats, Companions and Atrium still work.",
+        "Try malformed/foreign origin postMessage and modified source assets; verify host blocks them and Home is always accessible.",
+        "Confirm no remote registry or signed .tavix installer is claimed deployed; acceptance requires Windows, Android and Web GUI checks."
+      ]
+    },
     {
       "id": "TAVI-ATRIUM-056",
       "title": "Read-only Atrium trusted discovery catalog in Tavi Home and Games",
@@ -43,7 +98,7 @@
       "status": "planned",
       "operator_checks": [
         "Import 0.3.55 in ZipRunner on Windows and capture compact 355px Home; compare with hand sketch: central round control visually raised and left/right actions independent, with no wide pill.",
-        "At mobile 320–430px, tablet and web widths, check no label clipping or unintended horizontal scroll; check safe-area bottom on Android.",
+        "At mobile 320\u2013430px, tablet and web widths, check no label clipping or unintended horizontal scroll; check safe-area bottom on Android.",
         "Keyboard navigate/activate Games, Main menu, Messages; focus visible and unread badge legible.",
         "Enter chat and embedded game; verify dock absent, minimize to Home and restore same activity with content intact.",
         "Confirm no server/LoopRD schema change, no runtime config overlay, and do not mark Done without operator visual acceptance."
@@ -68,12 +123,12 @@
     {
       "id": "TAVI-PET-050",
       "title": "Native Windows desktop floating companion",
-      "summary": "Windows floating desktop companion source candidate. Transparent borderless always-on-top Tauri window, 186×226 pixel, drag/reset, local position scoped to signed-in account, token-free event-only care broker and close on opt-out/signout. No real Windows hardware acceptance claimed.",
+      "summary": "Windows floating desktop companion source candidate. Transparent borderless always-on-top Tauri window, 186\u00d7226 pixel, drag/reset, local position scoped to signed-in account, token-free event-only care broker and close on opt-out/signout. No real Windows hardware acceptance claimed.",
       "priority": "medium",
       "status": "planned",
       "operator_checks": [
         "Install new 0.3.52 Windows NSIS and confirm transparent always-on-top small companion; no separate taskbar icon or forced focus.",
-        "Test drag on secondary screen/HiDPI, position after restart, reset↺ on display changes, fullscreen games and keyboard focus.",
+        "Test drag on secondary screen/HiDPI, position after restart, reset\u21ba on display changes, fullscreen games and keyboard focus.",
         "Verify care actions and stats persist and are scoped to the current signed-in account; no Social token/chat/game access in floating webview.",
         "Disable, close, switch accounts and sign out; verify the floating window disappears. Re-enable explicitly and confirm Companion/Gentle/Classic choices never auto-escalate.",
         "Verify unchanged Social DB schema 10 and LoopRD descriptor, and conduct operator approval before Done."
@@ -131,7 +186,7 @@
       "title": "Game-seat-scoped private multiplayer match conversations",
       "summary": "Source candidate: reviewed Life game roster sync with monotonically increasing revisions, Social schema 10, opt-in account room ACL, bounded private chat, content-free wake hints, browser/native shared SDK, Games tab UI. Life integration and native/remote acceptance remain.",
       "operator_checks": [
-        "Back up Social database and validate additive schema 9→10 against deployed DAPI.",
+        "Back up Social database and validate additive schema 9\u219210 against deployed DAPI.",
         "Provide an approved Life service credential and issuer; test real game-owned match rosters and seat revocation.",
         "Complete Android/Windows/web cross-client chat and restart acceptance; verify no unauthorized account or token leaks.",
         "Prove real shared multiplayer game play and Atrium join/resume separately before closing SCL-007 or TAVI-032."
@@ -216,9 +271,9 @@
       "title": "Replace oversized Windows client with native buddy list and separate conversations",
       "summary": "Windows main window is roster-sized instead of 1060px dashboard. Open individual Tauri chat windows and broker authenticated operations via main window without copying credentials. Build emits standalone chat page, leaves Android/web responsive, and adds native geometry/IPC checks.",
       "operator_checks": [
-        "Install the Windows NSIS artifact; sign-in opens as a narrow 355×630 window, with no blue 1060px background or a duplicate app title bar.",
+        "Install the Windows NSIS artifact; sign-in opens as a narrow 355\u00d7630 window, with no blue 1060px background or a duplicate app title bar.",
         "Sign in with an existing Social account; the same window displays buddy groups and turn alerts; verify there is no permanent right-side panel.",
-        "Double-click a buddy or open Community Lobby: a separate approximately 585×525 Windows chat window opens, and reselecting the same buddy focuses it.",
+        "Double-click a buddy or open Community Lobby: a separate approximately 585\u00d7525 Windows chat window opens, and reselecting the same buddy focuses it.",
         "Send and receive a message in the native conversation; verify chat windows do not need another login and can open simultaneously.",
         "Verify Settings/Games/Portrait and server-authorized developer switch work within the roster-sized native host.",
         "Run the Web, Windows and Android workflows; confirm Android navigation and browser API/account parity remain functional."
@@ -419,7 +474,7 @@
     {
       "id": "TAVI-SESSION-RECOVERY-025",
       "title": "Resilient session restore and automatic offline reconnection",
-      "summary": "Introduces client-side session-recovery policy, expiring-token rejection on HTTP 401 only, saved credential retention on HTTP 403 and network/5xx failures, bounded 8–60s reconnect attempts, online/focus recovery, manual Retry and Use another account, cancel-on-login/signout, and compact copy fix.",
+      "summary": "Introduces client-side session-recovery policy, expiring-token rejection on HTTP 401 only, saved credential retention on HTTP 403 and network/5xx failures, bounded 8\u201360s reconnect attempts, online/focus recovery, manual Retry and Use another account, cancel-on-login/signout, and compact copy fix.",
       "operator_checks": [
         "With Remember enabled, close Tavi and reopen while LoopRD is unreachable: confirm the DPAPI session is not deleted and manual Retry appears.",
         "Restore network; confirm Tavi retries without needing a restart and opens the same account roster only after server-side verification.",
@@ -519,7 +574,7 @@
       "title": "Account recovery and hardened public registration",
       "summary": "Source candidate: signed-in password-confirmed recovery-code issue/rotation; one-time 160-bit hashed codes and authenticated revocation/status; username+code recovery resets password and revokes existing sessions, with 15-minute per-account recovery backoff. Additive Social schema 9; global hourly registration backstop and portable SDK/Windows/Android/Web UI. This does NOT close LRS-004: operator migration, device acceptance and abuse review remain.",
       "operator_checks": [
-        "Back up Social database and validate schema 8→9 migration against current LoopRD.",
+        "Back up Social database and validate schema 8\u21929 migration against current LoopRD.",
         "Generate eight codes on account A, store securely offline, then recover without an active session; validate other sessions revoked and new device usable.",
         "Verify invalid/reused/expired/rotated codes are rejected without account enumeration; verify 5-failure recovery lockout.",
         "Verify production registration rate settings, legitimate registrations, and existing users signing in.",

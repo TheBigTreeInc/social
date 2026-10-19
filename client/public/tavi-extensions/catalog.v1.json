@@ -1,0 +1,48 @@
+{
+  "schema": "tavi.store.catalog/v1",
+  "extensions": [
+    {
+      "manifest": {
+        "schema": "tavi.extension/v1",
+        "id": "org.tavi.examples.notepad",
+        "version": "1.0.0",
+        "name": "Private Notepad",
+        "summary": "An isolated example extension with private notes; no chat or account access.",
+        "publisher": "tavi",
+        "kind": "app",
+        "hostApi": {
+          "min": "1.0.0",
+          "maxExclusive": "2.0.0"
+        },
+        "entrypoints": {
+          "panel": "ui/index.html"
+        },
+        "contributions": [
+          {
+            "slot": "app.launcher",
+            "id": "notepad",
+            "label": "Private Notepad",
+            "action": "openPanel"
+          }
+        ],
+        "permissions": [
+          "ui.panel",
+          "ui.toast",
+          "storage.private"
+        ],
+        "platforms": [
+          "web",
+          "windows",
+          "android"
+        ]
+      },
+      "files": [
+        {
+          "path": "ui/index.html",
+          "sha256": "58c7d990ca5d1f75912496c1ed4ab1664e3210b6c49bb1ccfbe6facda58db808",
+          "size": 2226
+        }
+      ]
+    }
+  ]
+}

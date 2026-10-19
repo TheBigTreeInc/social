@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tavi.example/spec/tavi.shared-event.v1.schema.json",
+  "title": "Tavi shared resource event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "eventId",
+    "eventType",
+    "ownerRealm",
+    "resourceId",
+    "revision",
+    "actor",
+    "occurredAt",
+    "cursor"
+  ],
+  "properties": {
+    "schema": {
+      "const": "tavi.event/v1"
+    },
+    "eventId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "eventType": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 160
+    },
+    "ownerRealm": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "resourceId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "correlationId": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "causationId": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cursor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "data": {
+      "type": "object",
+      "maxProperties": 100
+    }
+  }
+}

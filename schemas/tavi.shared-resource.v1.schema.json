@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tavi.example/spec/tavi.shared-resource.v1.schema.json",
+  "title": "Tavi shared resource snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "resourceId",
+    "resourceType",
+    "ownerRealm",
+    "revision",
+    "updatedAt",
+    "visibility",
+    "data"
+  ],
+  "properties": {
+    "schema": {
+      "const": "tavi.resource/v1"
+    },
+    "resourceId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "resourceType": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9.-]*\\.[a-z][a-z0-9.-]*$",
+      "maxLength": 100
+    },
+    "ownerRealm": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "ownerSubject": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "applicationNamespace": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "visibility": {
+      "enum": [
+        "private",
+        "contacts",
+        "public",
+        "granted"
+      ]
+    },
+    "data": {
+      "type": "object",
+      "maxProperties": 100
+    }
+  }
+}

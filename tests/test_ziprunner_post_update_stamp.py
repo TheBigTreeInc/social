@@ -36,4 +36,7 @@ class ZipRunnerPostUpdateStampTests(unittest.TestCase):
     def test_stamp_matches_source_version(self):
         version = json.loads((ROOT / 'package.json').read_text())['version']
         self.assertEqual(self.stamp['version'], version)
-        self.assertEqual(json.loads((ROOT / 'server/looprd-release.json').read_text())['release'], version)
+        # Client-only Tavi releases may advance independently of the existing
+        # LoopRD Social service release (no server descriptor/deployment change).
+        server_version = json.loads((ROOT / 'server/looprd-release.json').read_text())['release']
+        self.assertLessEqual(tuple(map(int, server_version.split('.'))), tuple(map(int, version.split('.'))))

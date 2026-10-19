@@ -1,0 +1,233 @@
+= Tavi Shared Services, Ledger and Extension SDK — Architecture v2
+:revnumber: 2.0-draft
+:revdate: 2026-10-19
+:toc: left
+:toclevels: 3
+
+== Status and intent
+
+*Status*: specification plus publishable SDK source foundation. This is **not** a claim that the Ledger, shared Pet service, service-to-service federation, or wallet UI have been deployed. The shipping Tavi 0.3.60 extension host supports only a few sandboxed host calls. Source candidate 0.3.61 adds versioned documentation, SDK facades and a feature-discovery handshake; every shared-data operation remains disabled until its corresponding LoopRD service and host bridge are implemented and verified.
+
+Tavi is a *messenger first*, a self-hosted open-source ecosystem. The connected LoopRD server is already known to the user. No mandatory central discovery service, Tavi publisher portal, globally trusted account authority, central ledger operator or app approval service may be introduced. Server owners recommend static extension repositories; users may subscribe to others.
+
+=== Requirements
+
+* One canonical identity, contacts, conversations, notifications and (where the services are installed) wallet and pet state per *home authority/realm*.
+* Updating a resource through an authorized game or extension is immediately visible in Tavi and other clients after event delivery or state resynchronization.
+* Persistent shared state must live on an authoritative LoopRD service, not exclusively in a browser, Tavi iframe, or host machine. Local caches are disposable.
+* Extensions can provide an independent LoopRD component on the user's home server **or** operate a separate LoopRD instance. Installing a UI does not install a backend or confer cross-instance trust.
+* A published TypeScript/JavaScript SDK gives extensions, games, headless OpenClaw testers and service backends the same documented contract. SDK packages are usable without Tavi-specific internal imports.
+* Games work without the originating player remaining online. Tavi is not the source of truth for gameplay or balances.
+* Common primitives and shared ownership must not turn every game mechanic into a global Tavi feature.
+
+== Architecture and ownership
+
+[cols="1,2,2",options="header"]
+|===
+|Layer |Owns |Does NOT own
+|Tavi shell |Navigation, chat-first layout, optional wallet/pet/activities views, consent prompts, extension iframe broker, local install state |Trusted financial balances, backend pet progression, game state, external service secrets
+|Social LoopRD component |Home realm accounts, contacts, messaging, conversation read state, existing events/push |An unrelated game's move rules or another realm's identity
+|Ledger LoopRD component (new) |Currencies, accounts, credits/debits, double-entry journal, transaction dedupe, statements, holds/release |Message bodies, contact relationship records, pet attributes
+|Companions LoopRD component (new) |Pet roster, condition, progression, cosmetic entitlements and actions |Central wallet balances or transport credentials
+|Game/Atrium LoopRD components |Sessions, deterministic game transitions, turn commitments, rewards proposals, game-specific resources |Unilateral currency creation or access to other apps' private data
+|Shared service resolver (new) |Capability endpoint discovery within the known realm and explicitly trusted remote instances |Installing arbitrary code or establishing trust from a manifest string
+|Extension repository |Static application index and optional service declarations |Authorization, publishing global truth, forcing a user install
+|===
+
+=== One shared model, specialized projections
+
+A universal *resource contract* provides `resourceId`, `type`, `ownerRealm`, `ownerSubject`, optional `applicationNamespace`, `revision`, `updatedAt`, `visibility` and a type-specific `data` payload. A universal *event envelope* provides `eventId`, `eventType`, `resourceId`, `revision`, `actor`, `causationId`, `correlationId`, `occurredAt` and a replay cursor. An authorized service performs a command, changes its own transactionally stored state, and emits a durable event. Tavi and games consume projections.
+
+An **event journal is not a universal writable database**. Domain services enforce their own invariants. Wallet accounting in particular requires an append-only, balanced journal and transactional materialized balances. Contacts remain a relationship graph; messages retain their established retention/privacy rules; companions need entity-state and per-pet revision rules. Do not migrate working Social tables simply to force them into one generic ledger.
+
+A resource ID MUST be qualified by its realm. `acct_123` on server A is not automatically the same principal as `acct_123` on server B; contacts, wallets, pets and grants cannot merge across server origins on a matching display name.
+
+== Shared capabilities and grants
+
+Capability names proposed for the contract (none are implicitly granted by installing an extension):
+
+[cols="2,1,3",options="header"]
+|===
+|Capability |Type |Boundaries
+|`wallet.read` |User |Read only the consenting user's selected balance(s) and statement window
+|`wallet.transfer.request` |User action |Request a specifically confirmed transfer; never general mint/burn
+|`wallet.reward.propose` |Service |Propose rewards subject to operator-approved issuance policy and idempotency
+|`pets.read` |User |Read permitted pet summaries; no direct editing of backend progress
+|`pets.command` |User action |Feed, play, equip and other explicit domain commands with revision check
+|`contacts.read` |User |Minimum authorized contacts and public profile fields; no contact export by default
+|`messages.read` |User |Only explicitly authorized conversations/scope; no blanket inbox scraping
+|`messages.send` |User action |Send to eligible contacts via Social, with policy and explicit user delegation
+|`events.subscribe` |User |Receive only grant-scoped resource updates, no other users' private events
+|`games.sessions` |User/service |Discover or operate only permitted game sessions
+|`notifications.publish` |Service |Publish application-scoped alerts to permitted recipients, via existing unified events
+|===
+
+Grant records are scoped to `(realm, subject, extensionId, repositorySource, capability, resourceScope, expiry)`. UI-level consent and server-side authorization are separate: the host broker checks local grants; the authoritative LoopRD service checks the current subject, resource and delegation. A malicious iframe **cannot** take the messenger's bearer from a JS variable or use its own manifest to elevate access.
+
+* Writes use server-side validated commands, not `PUT` of arbitrary resource state.
+* New or expanded grants require explicit consent, and revocation takes effect server-side.
+* Native privileges stay separate from data grants. An iframe never receives native OS or Tauri access.
+* Permissions such as `wallet.read`, `messages.read`, `contacts.read`, etc. belong to **planned manifest v2**. The deployed v1 manifest validator intentionally rejects them.
+* `host.capabilities` is a safe, optional discovery endpoint; advertising a capability means the host and backend actually support it, not merely that an SDK method exists.
+
+== Wallet: double-entry ledger, not a mutable integer
+
+=== Scope and currencies
+
+* One home-realm Ledger is authoritative for the user's shared Tavi wallet; extension and game rewards target that realm if policy permits.
+* Currency is represented by a stable ID such as `tavi:cash` or `game.life:tokens`, together with issuer, decimal precision, transferability, scope, icon and policy. All balances and transfers use **integer minor units encoded as decimal strings** in JSON; no floating-point money calculations.
+* Currency may be realm-wide (Tavi Cash), restricted to a game namespace, or strictly non-transferable. Unrelated game currencies do not automatically have an exchange rate.
+* No real-money redemption, payment rails, fiat withdrawals, purchasable chips or cross-realm exchange are part of this contract.
+* Wallet balance is *derived* from posted transactions; displaying a cached balance is never evidence of a successful transfer.
+
+=== Journal invariants
+
+. Each posted transaction has at least two entries that sum to zero **per currency**; a credit creates a corresponding debit in a treasury, rewards pool, or another wallet. Creation/destruction are explicitly issuer-authorized journal operations, not magic balance changes.
+. The journal and balance projections commit atomically in the authoritative database. A failed mutation must leave neither half posted.
+. Every write requires a stable idempotency key, actor, service identity, reason and causation/correlation metadata. Repeated delivery of the same request returns the **same receipt**, never another reward.
+. Unless a currency explicitly opts into debt/credit lines, available balances cannot become negative. Holds reduce spendable value, not posted balance; expired holds are released without duplicate credits.
+. Posted transactions are immutable. Reversals post new balanced entries referencing the original and require issuer/operator or relevant authority.
+. Game code cannot call `mint()` using a normal player grant. Reward proposals are checked against per-game limits, allowed event kinds, completion proof and issuance account policy.
+. Transaction events are durable, ordered at least per wallet and replayable. Clients recover missed changes using cursor-based catch-up and snapshot revision reconciliation.
+. Server-side access controls prevent one game from spending another wallet merely because both display the same user's avatar.
+
+=== API surface (proposed LoopRD component contract)
+
+The concrete path prefix comes from *LoopRD component discovery*, not a hardcoded URL in the extension manifest. The following are **proposed** relative paths on the resolved Ledger component, not live endpoints on Social 0.3.58:
+
+[cols="1,2",options="header"]
+|===
+|Method and path |Semantics
+|`GET /v1/currencies` |Permitted currency metadata
+|`GET /v1/wallets/me?currencyId=...` |Authoritative posted/available balance, revision, cursor
+|`GET /v1/wallets/me/transactions?cursor=...` |Paginated private journal projection
+|`POST /v1/transfers` |Idempotent, recipient-scoped transfer request requiring relevant consent
+|`POST /v1/rewards` |Privileged verified service reward proposal, not accessible to an iframe
+|`GET /v1/events?after=...` |Authenticated event replay for granted resources
+|===
+
+Example successful transfer response:
+
+[source,json]
+----
+{
+  "schema": "tavi.ledger-receipt/v1",
+  "transactionId": "tx_01KABC",
+  "idempotencyKey": "life-match-347-award-v2",
+  "currencyId": "tavi:cash",
+  "amountMinor": "250",
+  "status": "posted",
+  "journalRevision": 1917,
+  "eventCursor": "ledger:1917"
+}
+----
+
+Example transaction request and its schema live in `schemas/tavi.ledger-transfer.v1.schema.json`. Do not accept a user-chosen `sourceAccountId` on a client request; the authenticated server principal determines the source wallet.
+
+=== Example: Life awards Tavi Cash
+
+. Life's *authoritative* LoopRD game instance confirms a session outcome without relying on either player's open browser.
+. It submits a reward proposal with `(homeRealm, gameSession, outcomeRevision, subject, currency, amount, idempotencyKey)` through a service-to-service grant.
+. The home Ledger validates game identity, issuance policy and uniqueness, posts a balanced treasury-to-wallet journal, and emits `wallet.transaction.posted`.
+. Tavi's wallet and any game using the same home realm receive the event (or catch up by cursor) and refresh the balance. Offline users see the balance later and receive a notification when configured.
+. Replaying the same result, reconnecting, or crashing between client retries does not produce multiple payments.
+
+== Contacts, messaging, pets and game state
+
+* Social remains authoritative for contacts and messages. Extensions request *scoped* data via SDK and LoopRD, not a full copy of a user's account. The main conversation UI can send and read without requiring extensions.
+* Companions obtains its own LoopRD service and durable pet IDs, with optional `profile.petWidget` and summary data projected into the Tavi profile. Tavi can display the last permitted pet summary when Companions UI is disabled; pet behavior continues on its own authority.
+* Game-specific state stays on the game component. The SDK exposes common `games.sessions` metadata, moves and activity events only where supported; it does not unify every game's rule engine.
+* Shared events may use existing LoopRD durable transactional event + push capabilities. Consumers dedupe by `eventId`, reconcile by `revision`, and never treat a push notification as proof of a financial write.
+* An extension may implement several features and have multiple service bindings. A game may have no Tavi extension at all yet still use the SDK and send turn notifications via LoopRD.
+
+== Independent LoopRD instances and trust
+
+=== Supported deployment patterns
+
+[cols="1,2,2",options="header"]
+|===
+|Mode |Service residence |Resolution
+|`home` |Component installed on the user's connected LoopRD home server |Use the home realm's component capability discovery
+|`external` |Component on a separate operator-controlled LoopRD server |Use explicit operator/user approved service binding and verified federation/delegation
+|`optional` |Game or extension works without this service |Discover or hide unavailable feature, never break messenger
+|===
+
+A portable extension manifest declares *component IDs and capabilities*, **not** a site-specific LoopRD origin. The server's `looprd.yaml` remains the authoritative declaration for its own deployed endpoints. The optional `tavi.service/v1` descriptor, published by the service deployment/registry, maps a stable component to capabilities and binding mode; see `schemas/tavi.service.v1.schema.json` and `docs/extension-examples/companions-service.example.json`. This supplements LoopRD; it does not replace the server manifest or auto-create a remote trust relationship.
+
+For external LoopRD instances:
+
+. Tavi discovers its own home server during login. A service publisher can advertise an external instance as part of its *installed* component's runtime catalog, or the user/operator can explicitly configure the endpoint.
+. The connecting home server validates server identity, TLS endpoint and trust/delegation policy. A user's subject on the external service is *mapped explicitly*, never assumed equal by string matching.
+. Each backend receives only a short-lived scoped delegated capability or a separately provisioned server-to-server credential, never the user's Social bearer.
+. The external backend authorizes its own commands and may request *specific* home-ledger operations via scoped grants. It cannot impersonate all home-server users.
+. Revocation, outages, stale mappings, server migrations and compensating actions are explicit. Do not promise atomic transactions spanning unrelated LoopRD instances in v1; use idempotent saga-style workflow when necessary.
+
+Separate social identities and game identities remain logically separate if no trust mapping exists. Server-recommended extension repositories do not create backend trust.
+
+== Publishable SDKs
+
+=== Packages
+
+* `@tavi/extension-sdk` — browser/iframe SDK. The current release candidate exports `createTaviExtensionSDK`, capability discovery, existing UI/private storage operations and **planned** typed method facades for wallet, pets, contacts, messaging, and events. Unsupported calls must fail closed. It does not expose a Social session token.
+* `@tavi/extension-sdk/service` — service-side *transport-independent* typed client for LoopRD component authors and headless game tests. Host services supply an authorized request transport. A production transport must obtain, constrain and rotate service credentials using LoopRD deployment configuration; the package never embeds an administrator secret or guesses endpoints.
+* Existing `client/sdk/looprd-social.js` remains the working Social protocol SDK. In a future pass it can internally back `@tavi/extension-sdk` service facades, preserving existing consumers.
+
+Package names are proposed; an npm scope needs to be owned or replaced before a real npm publication. The source archive and npm tarball can be built now without claiming a remote publication or an OSI license not yet chosen for the repository.
+
+=== UI API illustration (planned operations)
+
+[source,typescript]
+----
+import { createTaviExtensionSDK } from '@tavi/extension-sdk';
+const tavi = createTaviExtensionSDK();
+const capabilities = await tavi.capabilities();
+if (capabilities.includes('wallet.read')) {
+  const balance = await tavi.wallet.balance({ currencyId: 'tavi:cash' });
+  // Render only; never assign an authoritative balance on the client.
+}
+// tavi.contacts.list({ limit: 50 }) and tavi.pets.list() require separate grants.
+----
+
+=== LoopRD service API illustration
+
+[source,typescript]
+----
+import { createTaviServiceSDK } from '@tavi/extension-sdk/service';
+const sdk = createTaviServiceSDK({
+  // Supplied by the authorized backend, after resolution and delegation.
+  call: async ({ capability, operation, args }) => serviceTransport(capability, operation, args)
+});
+await sdk.wallet.reward({
+  subject: 'acct_target', currencyId: 'tavi:cash', amountMinor: '250',
+  idempotencyKey: 'life-match-347-award-v2', reason: 'match-win'
+});
+----
+
+The example requires an operator-approved `wallet.reward.propose` service grant. It must not be executed from a remote iframe or from an untrusted player client.
+
+=== Events and offline catch-up
+
+The SDK eventually supports `events.watch({types, cursor})` with explicit permission checks, reconnection and cursor replay. Producers include resource revisions and idempotency IDs. Consumers compare revisions and fetch snapshots after gaps. Event streams can originate from LoopRD's existing event transport rather than a new centralized websocket server.
+
+The `wallet.balance` and `pets.list` methods are **not operational** in client candidate 0.3.61 until the corresponding host broker adapters and LoopRD services are installed. Consumers MUST feature-check first. No implementation should synthesize balances, pet state or contacts from extension-controlled localStorage.
+
+== Extension manifest v2 direction
+
+`schemas/tavi.extension.v2.schema.json` is a **proposal**, not accepted by the currently shipped extension loader. It preserves existing UI declaration and adds `serviceBindings` (stable component ID, binding mode, service contract version, capabilities) and expanded permission identifiers. Example: `docs/extension-examples/companions.v2.future.json`.
+
+Repository index `tavi.repository/v1` remains deliberately unchanged until v2 is implemented. Repository authors must continue publishing the supported `tavi.extension/v1` manifest for v0.3.60/0.3.61 clients, and should not advertise v2 as installable until host support exists.
+
+== Implementation and migration plan
+
+. *Tavi SDK foundation (0.3.61 candidate)* — ship this spec, schemas and SDK source/package; expose actual `host.capabilities` for safe runtime feature testing; no ledger mutation and no Social DB migration.
+. *LoopRD Ledger component* — define/install migrations and verified service scopes, double-entry journal, idempotency, balance query, transaction events, audit tests, crash/replay tests, denied mint, constrained server-to-server reward.
+. *Tavi core wallet view* — display authoritative balance/statement through an authenticated Tavi-owned adapter. Keep wallet discoverable from Home; show explicit unavailable/disconnected state without blocking chat.
+. *Extension data broker* — implement `wallet.read` and future capabilities one by one, integrate server grants and consent UI, bounded event subscriptions, credential separation and cleanup.
+. *Companions service extraction* — migrate existing locally stored pets with a user-confirmed one-time import and conflict-resolution policy. Adopt pet resource revisions and events. Preserve current appearance.
+. *Atrium/Life/game integration* — reward/transaction command model, optional game-specific currencies, server-authoritative session events, online/offline tests and OpenClaw contract tests.
+. *External LoopRD service binding* — verified mapping, delegated token issuance, trust revocation and transfer saga, with cross-realm failures tested before production enablement.
+. *Manifest v2 and ecosystem publication* — migrate app index validation, server recommendation UX and SDK version negotiation; publish npm or self-hosted package once licensing and registry ownership are resolved.
+
+=== Explicit non-goals for first pass
+
+No cryptocurrency, real-money payments, global cross-server wallet, portable identity based on usernames, automatic remote service installation, third-party token access, open full-inbox export, single giant contacts/messages/accounting table, mandatory App Store backend, or claim that an installed UI means the linked backend is trusted.

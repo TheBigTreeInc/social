@@ -1,8 +1,108 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.58",
+  "version": "0.3.62",
   "tasks": [
+    {
+      "id": "TAVI-UI-QA-062",
+      "criteria": [
+        {
+          "id": "TAVI-UI-QA-062-AC-1",
+          "description": "Actual desktop/mobile browser smoke suite builds the web UI, uses disposable LoopRD fixture, installs and opens example extension, returns Home, checks for JS errors and unwanted horizontal scroll. Block if build/browser missing and retain failure screenshots.",
+          "mode": "automated",
+          "checks": [
+            "npm --prefix client run ui:ci"
+          ]
+        },
+        {
+          "id": "TAVI-UI-QA-062-AC-2",
+          "description": "Physical Windows WebView2 and Android UI checks, pixel baseline, accessibility and real LoopRD acceptance remain required; do not mark Done based on browser fixture tests.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-UI-QA-062-NATIVE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-SHARED-061",
+      "criteria": [
+        {
+          "id": "TAVI-SHARED-061-AC-1",
+          "description": "SDK browser capabilities and denied-by-default planned data operations tested; service API transports cannot obtain a token implicitly.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-SHARED-061-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-SHARED-061-AC-2",
+          "description": "LoopRD wallet and pet service deployments, server enforced grants, actual native UI and external LoopRD bindings exist and pass operator live tests.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-SHARED-061-PRODUCTION"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-EXT-060",
+      "criteria": [
+        {
+          "id": "TAVI-EXT-060-AC-1",
+          "description": "JSON index and optional operator recommendations validate; per-LoopRD-server subscription scopes and HTTPS/CORS/no-bearer fetching are covered by tests.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-EXT-060-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-060-AC-2",
+          "description": "Real hosted HTTPS index appears in App Store, remote frame runs in opaque sandbox, no Tavi bearer, correct permissions, Home always available on Windows Android and web.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-EXT-060-UI"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-EXT-059",
+      "criteria": [
+        {
+          "id": "TAVI-EXT-059-AC-1",
+          "description": "Bundled manifest/catalog pass strict validation, tampering fails SHA-256 before launch, and foreign frame/methods cannot read privileged Social state.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-EXT-059-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-059-AC-2",
+          "description": "Publisher registration from local reviewed source produces deterministic catalog with allowed assets, refusing unapproved permissions and symlinks.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-EXT-059-NODE"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-059-AC-3",
+          "description": "On Windows, Android and Web: signed-in account can install/open/disable/remove Private Notepad, chats remain functional, and Home is always accessible.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-EXT-059-UI"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-059-AC-4",
+          "description": "Remote signed .tavix and standalone Companions/Atrium extension migrations remain separate planned work; no native overlay or unreviewed remote loading claimed.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-EXT-059-REVIEW"
+          ]
+        }
+      ]
+    },
     {
       "id": "TAVI-CHAT-002",
       "criteria": [
@@ -361,7 +461,7 @@
         },
         {
           "id": "LRS-004-AC-3",
-          "description": "Social SQL schema 8→9 and Android/Windows actual recovery flow independently verified by operator.",
+          "description": "Social SQL schema 8\u21929 and Android/Windows actual recovery flow independently verified by operator.",
           "mode": "manual",
           "checks": [
             "LRS-004-DEVICE"
@@ -869,6 +969,34 @@
   ],
   "checks": [
     {
+      "id": "TAVI-EXT-060-NODE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Decentralized catalog and extension source pinning test suite",
+      "runner_ref": "tavi-extension-repositories-node",
+      "assertions": [
+        "Rejects non-HTTPS catalog and UI",
+        "Never sends authentication during JSON fetch",
+        "Per-server catalog subscriptions",
+        "Installed repo source is pinned",
+        "Remote sandbox has no same origin"
+      ],
+      "test_ref": "client/tests/extension-repositories.test.mjs"
+    },
+    {
+      "id": "TAVI-EXT-060-UI",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Windows/Android/browser against a real static JSON repository and separate-host extension iframe",
+      "runner_ref": "tavi-extension-repositories-device",
+      "assertions": [
+        "App Store lists custom and server-recommended repositories",
+        "Remote hosted app works without messenger credential",
+        "Removing repository does not break messenger Home"
+      ],
+      "test_ref": "docs/TAVI_EXTENSION_PUBLISHING.adoc"
+    },
+    {
       "id": "TAVI-CHAT-002-PY",
       "kind": "automated",
       "stage": "functional",
@@ -1044,7 +1172,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"
@@ -1433,6 +1561,26 @@
       "stage": "acceptance",
       "description": "Windows/Android classic roster header+optional pet, shared-backend apps:read and safe play gating",
       "instructions": "Operator imports exact ZIP, deploys Social with protected origin/read key, verifies no credentials in clients, life.loop remains discovered only, native screens and minimize/restore."
+    },
+    {
+      "id": "TAVI-EXT-059-NODE",
+      "kind": "command",
+      "stage": "source",
+      "command": "node --test client/tests/extensions.test.mjs"
+    },
+    {
+      "id": "TAVI-EXT-059-UI",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "App Store and isolated extension view on Windows NSIS, Android and Web",
+      "instructions": "With signed-in account install Private Notepad, save/reload, navigate Home from extension, test chat and signout; switch account/host to verify isolation; disable/remove and verify no persistent access."
+    },
+    {
+      "id": "TAVI-EXT-059-REVIEW",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Operator review of production limitations",
+      "instructions": "No independent .tavix downloads, verified publisher signatures, remote registry, Atrium/Companions migration or native overlay permissions in current source."
     }
   ]
 }

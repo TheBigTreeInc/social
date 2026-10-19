@@ -576,3 +576,19 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .tavi-game-invite select{min-width:0;flex:1;max-width:185px;font-size:11px;}
 .tavi-game-empty{font-size:11px;margin:6px 0;color:#648271;}
 @media(max-width:365px){.tavi-identity-strip>.avatar{flex-shrink:0}.tavi-profile-activity{font-size:17px}.tavi-profile-pet{max-width:48px}.tavi-game-status{max-width:80px;}}
+/* Extension store: messenger-owned navigation, no third-party DOM in parent. */
+.tavi-app-store{padding:12px;max-width:850px;margin:auto}
+.tavi-app-store>h2{margin:0 0 6px}
+.tavi-store-item{display:flex;gap:14px;justify-content:space-between;align-items:center;padding:13px 10px;margin:10px 0;border:1px solid #9ec6ae;border-radius:8px;background:#f0fbf3;color:#174e39}
+.tavi-store-item-copy{flex:1;min-width:0}
+.tavi-store-item h3{margin:0 0 5px;font-size:1.03rem}
+.tavi-store-item p{margin:0 0 5px;font-size:.88rem}
+.tavi-store-item small{color:#4b6557;font-size:.75rem;overflow-wrap:anywhere}
+.tavi-store-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.tavi-store-actions button{min-height:34px}
+.tavi-extension-panel{height:min(75vh,670px);display:flex;flex-direction:column;min-height:300px}
+.tavi-extension-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 9px;border-bottom:1px solid #a2c5a8}
+.tavi-extension-toolbar strong{margin-right:auto}
+.tavi-extension-frame{flex:1;min-height:220px}
+.tavi-extension-frame iframe{height:100%;width:100%;display:block;border:0;background:#e9f5ee}
+@media(max-width:540px){.tavi-store-item{display:block}.tavi-store-actions{justify-content:flex-start;margin-top:9px}.tavi-extension-panel{height:calc(100dvh - 110px)}}

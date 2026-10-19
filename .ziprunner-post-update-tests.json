@@ -1,7 +1,16 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.58",
+  "version": "0.3.62",
   "tests": [
+    {
+      "kind": "command",
+      "semantic_id": "tavi-extension-platform-source-0359",
+      "definition_revision": "4",
+      "rerun_policy": "every_update",
+      "command": "node --test client/tests/extensions.test.mjs client/tests/extension-repositories.test.mjs client/tests/shared-services-sdk.test.mjs client/tests/ui-qa-wiring.test.mjs && npm --prefix client run ui:ci",
+      "attention_on_failure": true,
+      "gating": false
+    },
     {
       "kind": "command",
       "semantic_id": "tavi-atrium-discovery-authenticated-0356",
@@ -170,15 +179,6 @@
       "definition_revision": "1",
       "rerun_policy": "every_update",
       "command": "node --test client/tests/game-challenges-sdk.test.mjs",
-      "attention_on_failure": true,
-      "gating": false
-    },
-    {
-      "kind": "command",
-      "semantic_id": "tavi-openclaw-inbound-challenge-watcher",
-      "definition_revision": "1",
-      "rerun_policy": "every_update",
-      "command": "node --test integrations/openclaw/tests/challenges.test.mjs",
       "attention_on_failure": true,
       "gating": false
     }

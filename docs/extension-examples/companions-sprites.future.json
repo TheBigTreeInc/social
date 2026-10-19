@@ -1,0 +1,9 @@
+{
+  "schema": "tavi.content/v1",
+  "id": "inc.thebigtree.tavi.companions.outfits.autumn",
+  "version": "1.0.0",
+  "publisher": "thebigtreeinc",
+  "targetExtension": "inc.thebigtree.tavi.companions",
+  "assets": [ "sprites/autumn-cat.png", "sprites/autumn-dog.png" ],
+  "executable": false
+}

@@ -1,3 +1,5 @@
+> **Tavi 0.3.62 UI QA:** `npm --prefix client run ui:ci` runs a real Chromium smoke suite at desktop and phone sizes against a disposable local Social fixture. ZipRunner runs it on post-update; CI requires it. Missing browser/build is BLOCKED, never a pass. This is not Windows/Android native or pixel-baseline acceptance. See `ZIPRUNNER_HANDOFF_UI_QA_0362.md`.
+
 > **v0.3.49 Companion MVP:** Optional 16-bit-style pet panel, 8 species, local account-scoped state, 5 actions, manually selected Companion/Gentle/Classic modes and voluntary engagement-based invitations. Works in Windows/Android/Web Tavi views. OS-wide overlays are **not** implemented; Social server stays 0.3.48/schema 10. See `docs/TAVI_COMPANIONS_0349.adoc`.
 
 > **v0.3.48 Atrium launcher visibility pass:** The Windows Games view now displays a first-class Atrium launch card based on the existing server-advertised reviewed URL; Tavi remains chat-first and the v0.3.46 legacy challenge flow remains supported. No new Life `/play` or DAPI discovery delivery is implemented. See `docs/TAVI_ATRIUM_LAUNCH_0348.adoc`.
@@ -255,3 +257,17 @@ After signing in, explicitly enable Companions and select **Show an independent 
 ### v0.3.58 — Sketch-matched bottom navigation
 
 On Home only, Games and Messages are compact side icon controls, while Main menu is a raised, circular middle button. The Home dock never appears inside a focused conversation or embedded game. See `docs/TAVI_HOME_DOCK_0354.adoc`.
+
+
+## Tavi Extension Platform (0.3.60 decentralized repository source candidate)
+
+Tavi remains a messenger first. The App Store is a *decentralized repository browser*: LoopRD operators can optionally suggest repository catalog URLs through a public `/.well-known/tavi-repositories.json` file, and users may subscribe to their own HTTPS `tavi.repository/v1` JSON indexes. No publisher registration, approval service, marketplace server or database is needed. Installation requires a user choice; extensions run as isolated hosted web frames with limited host permissions and no Tavi bearer. A developer can host static UI and a catalog on GitHub Pages, Forgejo Pages or an ordinary HTTPS server. The repo list is scoped to the known LoopRD server, and installed permissions are scoped to a particular account/server/device. Bundled Private Notepad remains available; built-in Companions and Atrium are not yet migrated.
+
+Documentation: `docs/TAVI_EXTENSION_PLATFORM_V1.adoc` and `docs/TAVI_EXTENSION_PUBLISHING.adoc`. Schemas and examples: `schemas/tavi.repository*.json` and `docs/extension-examples/`. Hosted pages must support iframe embedding; indexes require CORS. Remote page HTML is not hash-pinned or downloaded offline; the author controls their hosted content. Never enter Tavi credentials in third-party extensions. The LoopRD Social server descriptor remains 0.3.58; no new Social API is required for this optional client feature.
+
+
+## Tavi 0.3.61 — Shared Services / Ledger / SDK contract (source candidate)
+
+Design and SDK foundation for shared wallet, currencies, pets, contacts, messages, notifications and game integration across trusted LoopRD components. Maintains Tavi as the messenger; individual games/apps can deploy their own LoopRD component or an explicitly trusted external instance. No central marketplace or global server directory.
+
+`docs/TAVI_SHARED_SERVICES_LEDGER_SDK_V2.adoc` is the complete spec; `client/extension-sdk` contains ESM and TypeScript browser+trusted service contract packages, and `schemas/tavi.extension.v2.schema.json` is **future**, not an installable 0.3.61 manifest. Only `host.capabilities` is activated in the iframe broker; shared data APIs fail closed until new server services and grants are implemented. Social server and database remain release 0.3.58/schema 10.

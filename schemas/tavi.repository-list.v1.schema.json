@@ -1,0 +1,11 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://tavi.example/spec/tavi.repository-list.v1.schema.json",
+  "title":"Optional LoopRD operator extension repository recommendations",
+  "type":"object","additionalProperties":false,
+  "required":["schema","repositories"],
+  "properties":{
+    "schema":{"const":"tavi.repository-list/v1"},
+    "repositories":{"type":"array","maxItems":24,"uniqueItems":true,"items":{"type":"string","format":"uri","pattern":"^https://"}}
+  }
+}
