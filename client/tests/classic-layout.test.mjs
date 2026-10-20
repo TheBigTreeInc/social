@@ -68,6 +68,9 @@ test('untrusted friend names/messages are escaped before inclusion',()=>{
 
 test('Home matches sketch and only Home shows game/menu/message dock',()=>{
  const home=shell({panel:'home'});
- for(const label of ['tavi-home-roster','menubar','roster-profile','roster-toolbar','roster-search','Conversations','Community Lobby','Online (','Offline (','My Games','window-status','tavi-home-dock','Games','Main menu','Messages'])assert(home.includes(label),label);
+ for(const label of ['tavi-home-roster','menubar','roster-profile','Conversations','Community Lobby','Online (','Offline (','window-status','tavi-home-dock','Games','Main menu','Messages'])assert(home.includes(label),label);
+ assert(!home.includes('roster-toolbar'));
+ assert(!home.includes('roster-search'));
+ assert(!home.includes('My Games'));
  assert(!shell({panel:'messenger'}).includes('tavi-home-dock'));
 });

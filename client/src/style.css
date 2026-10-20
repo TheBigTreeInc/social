@@ -584,6 +584,16 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .tavi-classic-home .tavi-identity-actions button:hover{border-color:#a9cfb3;background:#e4f3dd;}
 .tavi-profile-activity{position:relative;font-size:20px;color:#547f42;}
 .tavi-profile-activity b{position:absolute;right:-1px;top:-2px;background:#3e8765;color:white;border-radius:12px;font-size:9px;min-width:13px;line-height:13px;}
+.tavi-profile-updates{position:relative;font-size:16px;color:#2f6f57;}
+.tavi-profile-updates b,.tavi-profile-activity b{display:inline-grid;place-items:center;padding:0 4px;height:13px;}
+.tavi-profile-updates b{position:absolute;right:-1px;top:-2px;background:#2f6f57;color:white;border-radius:12px;font-size:9px;min-width:13px;line-height:13px;}
+.tavi-roster-compact{padding-top:6px;}
+.tavi-roster-compact .roster-group:first-child .group-title{padding-top:2px;}
+.settings-theme{margin:14px 0;padding:10px 12px;border:1px solid #bfcee0;background:#f5f9fd;}
+.settings-theme h3{margin:0 0 4px;font-size:13px;color:#2e6090;}
+.theme-toggle{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.theme-toggle button{min-width:110px;}
+.theme-toggle button.selected{background:linear-gradient(#fff,#d8eee5);border-color:#5b9988;color:#124f44;font-weight:700;}
 .tavi-profile-pet{display:flex;align-items:center;flex-direction:column;justify-content:center;max-width:62px;min-width:44px!important;}
 .tavi-profile-pet .companion-pixels{width:30px;height:30px;image-rendering:pixelated;}
 .tavi-profile-pet small{font-size:9px;white-space:nowrap;max-width:56px;overflow:hidden;text-overflow:ellipsis;}
@@ -692,3 +702,36 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .tavi-classic-home .tavi-identity-strip{min-height:62px;padding:6px;}
 .tavi-classic-home .tavi-action-toolbar{min-height:32px;}
 .tavi-classic-home .tavi-action-toolbar button{min-height:30px;}
+
+
+html[data-theme='dark'],html[data-theme='dark'] body,html[data-theme='dark'] #app{background:#0f1f1b;color:#d8efe5;color-scheme:dark;}
+html[data-theme='dark'] button{color:#d7eee3;border-color:#467064;background:linear-gradient(#24463d,#18342d);}
+html[data-theme='dark'] button:hover{border-color:#6aa594;background:linear-gradient(#2a5046,#1d3c34);}
+html[data-theme='dark'] button:active{background:#163029;}
+html[data-theme='dark'] .top{background:linear-gradient(#203d35,#17312a 66%,#112721);border-bottom-color:#3f695d;}
+html[data-theme='dark'] .top strong,html[data-theme='dark'] .window-titlebar strong,html[data-theme='dark'] .roster-profile strong,html[data-theme='dark'] .utility h2{color:#d6f4e5;}
+html[data-theme='dark'] .top-version,html[data-theme='dark'] .server-chip,html[data-theme='dark'] .personal-message,html[data-theme='dark'] .window-status,html[data-theme='dark'] .status-right,html[data-theme='dark'] .buddy-copy small,html[data-theme='dark'] .utility>p,html[data-theme='dark'] .fineprint{color:#9ac0b3;}
+html[data-theme='dark'] .desktop-workspace,html[data-theme='dark'] .login-desktop{background:linear-gradient(145deg,#122521 2%,#18342d 70%,#21443a);}
+html[data-theme='dark'] .classic-window,html[data-theme='dark'] .welcome{background:#162924;border-color:#3e6d61;box-shadow:0 1px 0 #2b4d43 inset,0 2px 12px #00000040;}
+html[data-theme='dark'] .window-titlebar{background:linear-gradient(#23453b,#1a352e 43%,#18332c 51%,#203d35);border-bottom-color:#3f695d;color:#d7efe4;}
+html[data-theme='dark'] .menubar,html[data-theme='dark'] .menu-options{background:#162924;border-color:#355d52;}
+html[data-theme='dark'] .menu-drop summary,html[data-theme='dark'] .menu-options button{color:#d8efe5;background:transparent;}
+html[data-theme='dark'] .menu-drop[open] summary,html[data-theme='dark'] .menu-drop summary:hover,html[data-theme='dark'] .menu-options button:hover{background:#224239;outline-color:#3f7467;}
+html[data-theme='dark'] .roster-profile{background:linear-gradient(#1d382f,#173029);border-bottom-color:#355d52;}
+html[data-theme='dark'] .roster-profile small{color:#7cdaa2;}
+html[data-theme='dark'] .group-title,html[data-theme='dark'] .buddy-copy strong,html[data-theme='dark'] .chat-heading h2{color:#d7efe4;}
+html[data-theme='dark'] .buddy,html[data-theme='dark'] .mini-game,html[data-theme='dark'] .mini-alert{color:#d0e7dd;}
+html[data-theme='dark'] .buddy:hover,html[data-theme='dark'] .group-title:hover,html[data-theme='dark'] .roster-toolbar button:hover,html[data-theme='dark'] .conversation-tools button:hover{background:#1f3c34;border-color:#3f7467;}
+html[data-theme='dark'] .buddy.chosen{background:linear-gradient(#24463d,#1b352f);border-color:#5b9988;}
+html[data-theme='dark'] .roster-scroll,html[data-theme='dark'] .chat-scroll,html[data-theme='dark'] .chat-content,html[data-theme='dark'] .aux-content{background:#13241f;}
+html[data-theme='dark'] .roster-search,html[data-theme='dark'] .auth-form input,html[data-theme='dark'] textarea,html[data-theme='dark'] select{background:#0f1d19;color:#dff5eb;border-color:#3b6559;}
+html[data-theme='dark'] .roster-search span{color:#9ec5b8;}
+html[data-theme='dark'] .roster-toolbar,html[data-theme='dark'] .conversation-tools,html[data-theme='dark'] .window-status,html[data-theme='dark'] .chat-heading,html[data-theme='dark'] .compose-toolbar{background:linear-gradient(#173029,#132822);border-color:#355d52;}
+html[data-theme='dark'] .empty-chat,html[data-theme='dark'] .empty-buddies,html[data-theme='dark'] .req-badge,html[data-theme='dark'] .alert-dot{color:#e8d9aa;}
+html[data-theme='dark'] .notice{background:#3f3516;border-color:#90733b;color:#f0e1b0;}
+html[data-theme='dark'] .settings-theme,html[data-theme='dark'] .dev-toggle,html[data-theme='dark'] .tavi-store-item,html[data-theme='dark'] .tavi-game-list-row{background:#183029;border-color:#355d52;color:#d9efe5;}
+html[data-theme='dark'] .theme-toggle button.selected{background:linear-gradient(#355d52,#224239);border-color:#7ab4a3;color:#eefcf6;}
+html[data-theme='dark'] .tavi-profile-activity,html[data-theme='dark'] .tavi-profile-updates{color:#9de0c4;}
+html[data-theme='dark'] .chrome-button{color:#b7dacc;}
+html[data-theme='dark'] .avatar{background:linear-gradient(135deg,#284a41,#183029);border-color:#4d7d70;color:#dff6eb;}
+html[data-theme='dark'] .toast{background:#173029;color:#dff4ea;border-color:#4a7b6e;box-shadow:0 4px 10px #00000055;}

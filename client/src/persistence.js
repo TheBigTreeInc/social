@@ -1,5 +1,6 @@
 const SAFE_GAME=/^[a-z][a-z0-9-]{0,47}$/;
 function safeGames(v){return Array.isArray(v)?[...new Set(v.filter(x=>typeof x==='string'&&SAFE_GAME.test(x)))].slice(0,20):[];}
+function safeTheme(value){return value==='dark'?'dark':'light';}
 function maps(input){const out={};if(input&&typeof input==='object'&&!Array.isArray(input))for(const [server,games] of Object.entries(input)){
   try{if(new URL(server).origin===server)out[server]=safeGames(games);}catch{}
 }return out;}
@@ -9,8 +10,9 @@ export function readConfig(storage = localStorage) {
   const server=typeof json.server==='string'?json.server:'';
   const gamesByServer=maps(json.gamesByServer);
   if(server&&!Object.hasOwn(gamesByServer,server))gamesByServer[server]=safeGames(json.games);
-  return {server,games:gamesByServer[server]||[],gamesByServer};
- }catch{return {server:'',games:[],gamesByServer:{}};}
+  const theme=safeTheme(json.theme);
+  return {server,games:gamesByServer[server]||[],gamesByServer,theme};
+ }catch{return {server:'',games:[],gamesByServer:{},theme:'light'};}
 }
 export function selectServerGames(config,server){
  if(!config.gamesByServer)config.gamesByServer={};
@@ -22,7 +24,7 @@ export function selectServerGames(config,server){
 export function writeConfig(config,storage = localStorage){
  if(!config.gamesByServer)config.gamesByServer={};
  if(config.server)config.gamesByServer[config.server]=safeGames(config.games);
- storage.setItem('looprd.social.client.config.v1',JSON.stringify({server:config.server,games:config.games,gamesByServer:config.gamesByServer}));
+ storage.setItem('looprd.social.client.config.v1',JSON.stringify({server:config.server,games:config.games,gamesByServer:config.gamesByServer,theme:safeTheme(config.theme)}));
 }
 export function portraitStorageKey(origin, profileId) { return `portrait-code-v1:${origin}:${profileId}`; }
 export function seenStorageKey(origin, game, profileId) { return `turn-seen-v1:${origin}:${game}:${profileId}`; }

@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.72",
+  "version": "0.3.73",
   "tasks": [
     {
       "id": "TAVI-EXT-UPDATES-072",
@@ -1733,7 +1733,7 @@
       "id": "TAVI-EXT-072-SOURCE",
       "kind": "automated",
       "stage": "functional",
-      "description": "Tavi 0.3.72 extension revision, nested descriptor and roster acceptance",
+      "description": "Tavi 0.3.73 extension revision, nested descriptor and roster acceptance",
       "runner_ref": "tavi-extension-updates-072",
       "assertions": [
         "Compares pinned revision and semantic version without downgrade",

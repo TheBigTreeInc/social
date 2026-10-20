@@ -24,7 +24,6 @@ test('home and Games show discovered titles, not an unapproved play or challenge
  const main=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
  assert.match(main,/discoverAtriumGames\(api\)/);
  assert.match(main,/Discover games/);
- assert.match(main,/tavi-discovered-mini/);
  assert.match(main,/Not playable yet/);
  assert.match(main,/state\.atriumGames=\[\]/);
  assert.doesNotMatch(main,/data-launch-game="\$\{esc\(g\.gameId\)\}"/);

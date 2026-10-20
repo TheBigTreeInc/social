@@ -1,8 +1,8 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.72",
-  "summary": "Tavi 0.3.72 app updates visibility + metadata revision review, nested publisher looprd.yaml index generator, compact conversations and presence; preserve messenger Home and source workboard.",
+  "version": "0.3.73",
+  "summary": "Tavi 0.3.73 app updates visibility + metadata revision review, nested publisher looprd.yaml index generator, compact conversations and presence; preserve messenger Home and source workboard.",
   "implemented": [
     {
       "id": "TAVI-UX-ROSTER-072",
@@ -11,7 +11,7 @@
       "priority": "high",
       "status": "review",
       "operator_checks": [
-        "Run 0.3.72 source regression tests and exact ZIP validation.",
+        "Run 0.3.73 source regression tests and exact ZIP validation.",
         "Install on Windows/Android/Web; review UI and published/revoked extension metadata against actual server before marking Done."
       ]
     },
@@ -22,7 +22,7 @@
       "priority": "high",
       "status": "review",
       "operator_checks": [
-        "Run 0.3.72 source regression tests and exact ZIP validation.",
+        "Run 0.3.73 source regression tests and exact ZIP validation.",
         "Install on Windows/Android/Web; review UI and published/revoked extension metadata against actual server before marking Done."
       ]
     },
@@ -33,7 +33,7 @@
       "priority": "high",
       "status": "review",
       "operator_checks": [
-        "Run 0.3.72 source regression tests and exact ZIP validation.",
+        "Run 0.3.73 source regression tests and exact ZIP validation.",
         "Install on Windows/Android/Web; review UI and published/revoked extension metadata against actual server before marking Done."
       ]
     },

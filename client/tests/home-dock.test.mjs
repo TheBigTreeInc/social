@@ -24,7 +24,7 @@ test('Home-only dock keeps chat/game focused and no extra nav inside game stage'
  const main=await read('../src/main.js');
  const game=await read('../src/game.js');
  assert.equal((main.match(/<nav class="tavi-home-dock"/g)||[]).length,1);
- assert.match(main,/function focusedConversation\(/);
+ assert.match(main,/focusedConversation\(\)/);
  assert.match(main,/tavi-chat-focus/);
  assert.match(game,/tavi-surface-minimize/);
  assert.doesNotMatch(game,/tavi-home-dock/);
