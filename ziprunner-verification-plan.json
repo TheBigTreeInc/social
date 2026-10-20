@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.73",
+  "version": "0.3.74",
   "tasks": [
     {
       "id": "TAVI-EXT-UPDATES-072",
@@ -1105,6 +1105,27 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-UI-SHELL-074",
+      "criteria": [
+        {
+          "id": "TAVI-UI-SHELL-074-AC-1",
+          "description": "Menu controller + common Home/Messages roster + single extension host Home",
+          "mode": "automated",
+          "checks": [
+            "TAVI-UI-SHELL-074-SOURCE"
+          ]
+        },
+        {
+          "id": "TAVI-UI-SHELL-074-AC-2",
+          "description": "Physical Windows and Android compact display/keyboard testing and exact SHA CI",
+          "mode": "manual",
+          "checks": [
+            "TAVI-UI-SHELL-074-NATIVE"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -1733,7 +1754,7 @@
       "id": "TAVI-EXT-072-SOURCE",
       "kind": "automated",
       "stage": "functional",
-      "description": "Tavi 0.3.73 extension revision, nested descriptor and roster acceptance",
+      "description": "Tavi 0.3.74 extension revision, nested descriptor and roster acceptance",
       "runner_ref": "tavi-extension-updates-072",
       "assertions": [
         "Compares pinned revision and semantic version without downgrade",
@@ -1741,6 +1762,26 @@
         "Compact Home has presence next to contacts"
       ],
       "test_ref": "client/tests/extension-updates-072.test.mjs"
+    },
+    {
+      "id": "TAVI-UI-SHELL-074-SOURCE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Tavi 0.3.74 video-driven UI shell consistency source regression",
+      "runner_ref": "tavi-extension-platform-source-0359",
+      "assertions": [
+        "One open classic menu, Escape closes and returns focus",
+        "Home and Messages have identical grouped contacts",
+        "Only one Tavi-owned Home in Atrium shell"
+      ],
+      "test_ref": "client/tests/ui-shell-consistency.test.mjs"
+    },
+    {
+      "id": "TAVI-UI-SHELL-074-NATIVE",
+      "kind": "manual",
+      "stage": "acceptance",
+      "description": "Windows, Android, Web acceptance of shared shell repair",
+      "instructions": "Replay video menu and navigation steps at 355x630/911, 320/390, with real Windows/Android. Require operator approval; source green is not device acceptance."
     }
   ]
 }

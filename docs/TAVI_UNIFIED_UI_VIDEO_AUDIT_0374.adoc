@@ -1,0 +1,146 @@
+= Tavi Unified UI: Recorded Walkthrough, Design-System Decision and Implementation Plan
+:toc:
+:toclevels: 3
+:revnumber: 0.3.74
+:revdate: 2026-10-20
+:status: Source candidate; operator acceptance pending
+
+== Purpose and evidentiary boundary
+
+This document analyses the operator-supplied ~49-second, 362x668 screen recording `Screen Recording 2026-10-20 184905.mp4` and compares visible behaviour with the *0.3.73 ZipRunner source*. Tavi is a messenger first. Atrium, Life, Companion, Wallet and other optional experiences must never trap the user away from Home or conceal messaging. The video is of a compact desktop Tavi window; it does **not** prove actual Android behaviour, server availability, acceptance of any hosted game or dark-theme rendering. Time ranges below are approximate.
+
+== Observations from the video
+
+[cols="1,3,3,2",options="header"]
+|===
+|Time |What the recording visibly demonstrates |Source-based diagnosis |Action
+|00–10 s |File, Contacts, Actions, Tools and Help menus are opened in sequence; several popup menus remain visible on top of each other. |Each top-level item is an independent HTML `<details>` element, with no controller ensuring only one is expanded. |Immediate: exclusive menu controller, Escape returns keyboard focus.
+|10–24 s |Home starts with one compact *Conversations & contacts* list; moving to Messages shows a different roster: Conversations, Online (0), Offline (0). A recently active contact appears under Conversations while Online says zero. |`contactPane(homeMode)` branches between compact Home and older grouped Messages UI, counting only contacts *not* already in recent chats for the latter. |Immediate: same combined, alphabetically sorted roster on both surfaces; do not show empty duplicate group sections.
+|22–30 s |Games and the icon launcher appear as standalone full pages, each with its own Home header, separate from Home's circular dock. |`dashboard()` has distinct navigation layouts assembled as strings in a large `main.js`. No shared route/view shell enforces consistent back placement or header semantics. |Staged: one host-owned page shell and route model with a single predictable Home escape.
+|32–39 s |Inside Atrium, Tavi shows its top Home button and a second Home button above the iframe; Atrium itself displays “Return to Tavi.” The embedded content is independently scrollable. |`dashboard()` adds Home, `extensionPanel()` adds Home, and the remote publisher provides its own return navigation. Extension iframe is intentionally isolated. |Immediate: remove duplicate Tavi-owned Home from extension toolbar. Follow-up: trusted `host.info` embedded-mode response and Atrium publisher update; keep iframe sandbox.
+|40–47 s |Returning Home, selecting the companion icon and opening the companion displays a dense, long vertically scrolling settings panel. |Companion owns independent layout and styling, rather than consuming a common app-shell/card/form-spacing system. |Staged: standard compact sections and mobile-first panel primitives; preserve optional pet semantics and care data.
+|Across recording |Classic Windows menu strip, modern icon grid, companion retro pixels, and Atrium's dark website all have different spacing, headers, typography and control treatment. |Numerous hand-authored HTML string templates and large global CSS file (about 69 KB) lack formal tokens, reusable component ownership and strict host/extension boundaries. |Introduce a Tavi design system; do **not** enforce host CSS on untrusted publishers.
+|===
+
+=== Additional confirmed constraints
+
+* On Windows, conversations may open as separate native Tauri WebViews; Android/Web use one compact WebView. Shared components must support both without copying sessions into child windows.
+* Extension iframes are `sandbox="allow-scripts"`, without `allow-same-origin` and without any Social bearer. The design-system project must not weaken this.
+* The operator previously requested that Games stay optional and use the Home dock, App Store updates surface as a notification, contacts sort alphabetically, and themes include light green and dark green. Preserve those decisions.
+* The GitHub cross-repository validation/registration workflow and local package cache have been deferred; do not conflate them with the UI work.
+* Some historical workboard acceptance checks explicitly require roster Search, My Games, and the old toolbar. Those contradict the newer operator direction. Keep their original recorded criteria and add an explicit supersession note; never silently edit or mark them Done.
+
+== Framework decision: Lit components + CSS tokens, introduced incrementally
+
+Recommend **Lit (standards-based Web Components)** with a small Tavi-owned TypeScript or JavaScript component library and CSS custom-property design tokens. Keep Vite, Tauri, the canonical browser SDK, and LoopRD untouched initially. Start without a dependency for 0.3.74; prototype Lit components behind existing HTML rendering on a later pass.
+
+Why Lit rather than replacing the app with a full React/Vue rewrite:
+
+* Small components can be extracted one at a time from today's template strings; no parallel permanent UI rewrite or new state manager is required.
+* Native custom elements run in the existing Chromium/WebView2 and Android WebView runtimes and ordinary browsers. Framework compatibility still requires testing against Tauri versions and the SDK.
+* Shadow DOM encapsulates component structure and rules. Theme variables are passed deliberately to the host; external sandboxed iframe styling remains independent.
+* Existing state can be adapted to reactive properties. Prefer explicit app-owned state and thin services instead of putting business logic in view components.
+* Keep classic MSN-style green typography, borders and chrome as tokens rather than adopting a generic mobile material-design look.
+
+Alternatives: Vue or React are reasonable for a new app, but migrating the ~133 KB central view file and associated imperative lifecycle all at once is higher risk. A large ready-made widget library may introduce styles, bundle weight and opinionated navigation inconsistent with compact Tavi. Reassess after an isolated proof-of-concept and bundle/performance measurements.
+
+== Target architecture
+
+[source,text]
+----
+                         Tavi shell (Windows / Android / Web)
+  ┌────────────────────────────────────────────────────────────┐
+  │ Session-aware route store + navigation / focus policies    │
+  │ Token-safe notification, presence, extension-update state  │
+  │                                                            │
+  │ @tavi/ui tokens + components                                │
+  │  ThemeProvider, TaviShell, PageHeader, Roster, Menu,       │
+  │  Dialog, AppTile, StatusBar, EmptyState, AppWorkspace      │
+  │                                                            │
+  │   ┌────────────────────┐    ┌─────────────────────────┐   │
+  │   │ Messenger core     │    │ Extension workspace     │   │
+  │   │ contacts, chat,    │    │ sandboxed remote/local  │   │
+  │   │ presence, inbox    │    │ iframe + Tavi SDK       │   │
+  │   └────────────────────┘    └─────────────────────────┘   │
+  └────────────────────────────────────────────────────────────┘
+                                     │ permission-checked SDK
+                                     ▼
+                            LoopRD authorized services
+----
+
+=== Ownership contract
+
+* Host owns chrome, Home/back/minimize navigation, dialogs requesting permissions, account context, global notifications and update badges.
+* Messenger owns contact and conversation presentation, drafts, unread, presence, native windows and service calls.
+* Publishers own their application content and may choose to use the optional Tavi UI tokens / SDK, but may not reach into host DOM or inherit credentials. Host `host.info` signals embedded-mode and host-managed navigation. Hide an extension's redundant Return affordance *only after an authenticated bridge exchange*; otherwise leave publisher navigation intact.
+* A publisher can scroll inside its own view; the host provides a single bounded viewport. Avoid two independently scrolling containers around the same content.
+
+== Shared primitives / component contracts
+
+[cols="1,2,3",options="header"]
+|===
+|Component |Contract |Acceptance
+|`tavi-shell` |Current route, one Home/back action, desktop-child/window mode, responsive stage |Home always reachable; nested Back returns to previous app surface only when valid.
+|`tavi-page-header` |title, `home`, optional contextual secondary actions |At most one host Home button; no extra header strip for Atrium.
+|`tavi-roster` |alphabetically sorted contacts, one row/contact, recent flag, presence, unread, friend requests |Home and Messages share *identical* row formatting and counts.
+|`tavi-menu` |one open popup, Escape to close, keyboard focus restoration, click-away policy |No stacked menus (video regression); screen readers receive correct expanded state.
+|`tavi-dialog` |focus trap, cancel/confirm, safe permission text |No `window.confirm` / `prompt` for extension installation or routine workflows.
+|`tavi-app-workspace` |isolated extension stage, loading, error, back, nav metadata |Tavi Home always visible; iframe capabilities unchanged.
+|`tavi-app-tile` |icon, name, state and badge |Same affordance in launcher and App Store; stable labels/touch hitbox.
+|`tavi-status` |network, presence, new messages, app updates |Do not repeat primary actions in stacked rows.
+|`tavi-field`, `tavi-card`, `tavi-section` |dense form/section spacing, labels, empty and error states |Companion and Settings fit compact 355×630 and phone screens.
+|`tavi-theme-provider` |`light-green`, `dark-green`, optional system default; tokens via CSS variables |Full contrast/focus/scroll checks; preferences survive restart.
+|===
+
+=== Design tokens
+
+Introduce a versioned set of semantic CSS variables instead of changing hex values ad hoc:
+
+* Color: `--tavi-surface`, `--tavi-surface-raised`, `--tavi-chrome`, `--tavi-accent`, `--tavi-text`, `--tavi-text-muted`, `--tavi-border`, `--tavi-focus-ring`, `--tavi-success`, `--tavi-warning`, `--tavi-danger`.
+* Density: `--tavi-space-1` through `--tavi-space-6`, `--tavi-roster-row-height`, and `--tavi-touch-target` (at least 44 CSS px for touch layouts; compact desktop may use tighter rows with keyboard support).
+* Typography: families, 12/13/14/16/20 px semantic sizes, readable compact line heights, minimum contrast target WCAG AA (including dark mode).
+* Radius, elevation, shadow, z-index groups (`shell`, `menus`, `dialogs`, `toasts`), safe-area insets, motion-reduction and keyboard focus.
+* Extensions may opt into **documented** tokens via their own stylesheet; host must never inject its global CSS across the iframe isolation boundary.
+
+== Implementation sequence / workboard
+
+All milestones below are *planned* unless explicitly called implemented. Minor version numbers are suggestions, not a commitment or release approval.
+
+[cols="1,1,2,3",options="header"]
+|===
+|Pass |Priority |Scope |Operator acceptance
+|**0.3.74** |P1 / Review |Small repairs only: single-open classic menus with Escape; same compact roster in Home and Messages; remove extra Tavi-owned Home control within extension toolbar. Add focused tests. |Verify video's exact sequences at compact 355px, no double menu, same roster and one host Home; source build, browser UI QA and native operator review remain separate.
+|Foundation |P1 / Planned |Document shared route/session/shell contracts; Lit spike, sample `PageHeader` and CSS token theme; bundle and build comparison |Existing app route, device session, native chat windows and extension sandbox survive; no broad rewrite.
+|Navigation |P1 / Planned |Migrate File/Contacts/Actions/Tools/Help, Apps, Games, Notifications, Settings and extension shell to one route store, header policy, focus/Back policy |Back/Home predictable on every screen; no duplicate nav; Android back and Windows Esc keyboard matrix.
+|Messaging roster |P1 / Planned |Extract buddy rows and group presentation, unread state, presence display, recent ordering; optional dense list |No duplicate users, consistent online counts, alphabetical fallback and screen reader labels.
+|Theme and forms |P2 / Planned |Light and dark forest-green tokens, shared dialog/form/card/empty/loading primitives; responsive Companion and profile UI |Windows/Web/Android compare at 320, 355, 390, 768 and >=1024 px; keyboard/touch contrast and no horizontal overflow.
+|Extensions |P1 / Planned |Single iframe workspace, host navigational contract, Atrium embedded-mode adapter; optional publisher tokens/versioned UI SDK |Atrium and Life iframe not granted extra origin/native permissions; no duplicates; game session authorization still external.
+|QA and rollout |P1 / Planned |Storybook-like isolated component gallery, deterministic fixtures, Playwright screenshot baselines, accessibility and resize/focus regression suite |CI screenshots and diffs on Windows-equivalent Chromium/mobile layouts; actual Windows and Android device approval before Done.
+|===
+
+== Required regression matrix
+
+* Window sizes: Windows compact 355×630, resized 355×911, phone 320/390/430, tablet 768, larger desktop 1024–1366. Test with native insets and keyboard present where applicable.
+* Navigation flows: Home → Messages → chat → Home; Home → Apps → Atrium → App Store → Home; Home → Games → Home; Home → companion → Home; any open modal → Cancel/Escape/Android Back → previous valid surface.
+* Menus: File, Contacts, Actions, Tools, Help sequential switching opens exactly one; pressing Escape collapses it and restores summary focus. Keyboard tabbing, no menu clipped outside viewport.
+* Contacts: one row per accepted contact, alphabetical by chosen display name with stable fallback, recent/unread/presence co-located, no contradictory `Online (0)` while an online recent contact is present. Request actions remain accessible.
+* Themes: light/dark green, text contrast, status dots and focus ring, modal/menu surfaces, theme persists after restart, native desktop and Android/WebView safe areas.
+* Extensions: installed/disabled/updating states correct, host Home always present, untrusted iframe remains sandboxed, no Social token leak, same-state return from extension.
+* Conformance: complete Node/Python regression, `tools/generate-looprd.py --check`, compiled web client, browser fixture UI QA, ZipRunner source archive preflight. Native installers and deployed-operator acceptance not inferred from green source tests.
+
+== Workboard preservation / conflicting historical acceptance
+
+The 0.3.73 package's `.ziprunner-workboard-update.json` was reconciled by ID/status against the attached ZipRunner local snapshot captured 2026-10-20; *110/110* IDs matched. Preserve their original statuses, operator checks and criteria. Add new implementation-review and future-work tickets, never rewrite these older decisions.
+
+The following historical acceptance wording conflicts with newer operator-approved UI simplification; annotate, do not retroactively edit:
+
+* `SCL-019`, `TAVI-UX-055`, `TAVI-UX-ROSTER-072` reference search, old toolbar, or separate online/offline groups. New priority: unified combined list, no duplicate search or Games row, and no extra quick-action row.
+* `TAVI-ATRIUM-056` references an old `My Games` visibility path; the current game dock and dedicated Games page own discovery, while messaging Home stays compact.
+* `TAVI-UX-071` still requires operator acceptance of Atrium `host.info` publisher changes. 0.3.74 removes only **Tavi's** redundant Home control.
+
+== Non-goals and release gates
+
+* No LoopRD schema change, no data migration, no private repository automation, no forced local extension installer, no new game authorization contracts.
+* Do not conflate source tests, ZipRunner import, exact-commit CI, native Windows/Android builds, release publication, or real UI/operator acceptance.
+* Do not declare any old workboard ticket Done just because the shared framework plan exists or source tests pass.
+* An eventual design system should be publishable independently as an optional extension SDK, but **never** force extensions to import privileged Tavi host code or break independent external publishers.

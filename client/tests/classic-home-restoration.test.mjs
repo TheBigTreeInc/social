@@ -15,9 +15,9 @@ test('Home keeps the classic information-rich roster above the unchanged sketch 
  assert.match(home,/class="tavi-home-dock"/);
  assert.match(home,/class="tavi-home-menu" data-action="main-menu"/);
  assert.doesNotMatch(home,/homeConversations\(\)|homeProfile\(\)/);
- for(const bit of ['menuBar()','roster-profile','roster-scroll',"rosterGroup('online'","rosterGroup('offline'","Community Lobby",'window-status'])
+ for(const bit of ['menuBar()','roster-profile','roster-scroll','compactContactGroups(recent,online,offline,accepted.length)','window-status'])
   assert.ok(roster.includes(bit),`classic roster missing ${bit}`);
- assert.doesNotMatch(roster,/roster-toolbar|roster-search|compactGames\(\)|My Games/);
+ assert.doesNotMatch(roster,/roster-toolbar|roster-search|compactGames\(\)|My Games|rosterGroup\('online'|rosterGroup\('offline'/);
  assert.match(roster,/homeMode\?homeMinimized\(true\):''/);
  assert.match(css,/\.tavi-classic-home>\.tavi-home-roster/);
  assert.match(css,/\.tavi-profile-updates/);

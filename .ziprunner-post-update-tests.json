@@ -1,13 +1,13 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.73",
+  "version": "0.3.74",
   "tests": [
     {
       "kind": "command",
       "semantic_id": "tavi-extension-platform-source-0359",
-      "definition_revision": "7",
+      "definition_revision": "8",
       "rerun_policy": "every_update",
-      "command": "node --test client/tests/extension-life-launch.test.mjs client/tests/app-launcher.test.mjs client/tests/extensions.test.mjs client/tests/extension-repositories.test.mjs client/tests/shared-services-sdk.test.mjs client/tests/ui-qa-wiring.test.mjs && npm --prefix client run ui:ci && node --test client/tests/extension-updates-072.test.mjs && python -m unittest discover -s tests -p test_tavi_nested_discovery.py -v",
+      "command": "node --test client/tests/extension-life-launch.test.mjs client/tests/app-launcher.test.mjs client/tests/extensions.test.mjs client/tests/extension-repositories.test.mjs client/tests/shared-services-sdk.test.mjs client/tests/ui-qa-wiring.test.mjs && npm --prefix client run ui:ci && node --test client/tests/extension-updates-072.test.mjs && python -m unittest discover -s tests -p test_tavi_nested_discovery.py -v && node --test client/tests/ui-shell-consistency.test.mjs",
       "attention_on_failure": true,
       "gating": false
     },

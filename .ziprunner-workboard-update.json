@@ -1,8 +1,8 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.73",
-  "summary": "Tavi 0.3.73 app updates visibility + metadata revision review, nested publisher looprd.yaml index generator, compact conversations and presence; preserve messenger Home and source workboard.",
+  "version": "0.3.74",
+  "summary": "0.3.74 recorded-flow minor UI consistency repair; full staged Lit/CSS-token design-system plan; all 110 previous local workboard statuses and criteria preserved.",
   "implemented": [
     {
       "id": "TAVI-UX-ROSTER-072",
@@ -1080,6 +1080,26 @@
         "Repeat on Android and web including offline and signed-out mode; test clipboard-denied manual fallback.",
         "Verify earlier Home, extension app drawer and Atrium navigation continue functioning; do not mark Done without operator review."
       ]
+    },
+    {
+      "id": "TAVI-UI-SHELL-074",
+      "title": "Video-driven unified roster, menu and extension host navigation repair",
+      "summary": "Source-only minor 0.3.74 repair: exclusive classic menus with Escape-to-close, same compact merged alphabetic roster on Home and Messages, and remove the second host-owned Home from Atrium extension toolbar. Evidence and larger design-system plan in docs/TAVI_UNIFIED_UI_VIDEO_AUDIT_0374.adoc; operator Windows/Android/Web visual acceptance pending.",
+      "priority": "high",
+      "status": "review",
+      "operator_checks": [
+        "Import the exact 0.3.74 ZipRunner source and run the menu/roster/extension regressions plus full source verification.",
+        "At compact Windows width follow the attached recording: open all classic menu titles sequentially; no overlapping menus; Escape returns focus.",
+        "Home and Messages show the same combined alphabetical buddy/presence list, with no contradictory empty Online/Offline groups.",
+        "Open Atrium: exactly one Tavi-owned Home action remains; publisher Return to Tavi requires separate Atrium adoption.",
+        "Verify 320/355/390 mobile and actual Windows/Android GUI, all prior workboard statuses preserved; do not mark Done on source tests alone."
+      ],
+      "acceptance_criteria": [
+        "No stacked classic menus; keyboard escape and focus restoration verified.",
+        "Home and Messages share one compact merged contact roster and consistent presence counts.",
+        "Tavi-owned extension toolbar has App Store context route but no duplicate Home.",
+        "Regression tests green and operator Windows/Android/Web acceptance independently recorded."
+      ]
     }
   ],
   "remaining": [
@@ -1628,6 +1648,66 @@
       "status": "planned",
       "acceptance_criteria": [
         "Create detailed trust boundaries and operator acceptance before build or publication."
+      ]
+    },
+    {
+      "id": "TAVI-UI-FOUNDATION-075",
+      "title": "Shared Tavi UI design system and Lit evaluation",
+      "summary": "Prototype standards-based Lit host components and shared semantic green design tokens, without moving business logic or sensitive SDK grants into view components.",
+      "priority": "high",
+      "status": "planned",
+      "acceptance_criteria": [
+        "Measure UI bundle/load size and selected WebView compatibility before deciding a framework dependency.",
+        "Prototype reusable Header, Menu, Roster, Dialog and Surface components behind current app rendering.",
+        "Prove CSS token light/dark and keyboard focus on Windows/Web/Android without broad rewrite."
+      ]
+    },
+    {
+      "id": "TAVI-UI-NAVIGATION-076",
+      "title": "Single host-owned navigation, menus and back policy",
+      "summary": "Consolidate Home/Back/minimize and menu actions into one host navigation contract for messenger and extension workspace; preserve independent Windows chat windows.",
+      "priority": "high",
+      "status": "planned",
+      "acceptance_criteria": [
+        "One host Home action on every utility surface; Back/Escape/Android Back have a documented predictable fallback.",
+        "Atrium publisher hides Return to Tavi only after verified host.info; keep sandbox and user mediation.",
+        "App Store, Games, Companion and dialogs tested with no navigation trap or duplicate chrome."
+      ]
+    },
+    {
+      "id": "TAVI-UI-THEMES-077",
+      "title": "Unified forest-green themes and compact responsive primitives",
+      "summary": "Move scattered global styling into design tokens and responsive components, including Companion and settings forms; preserve current light and dark green options.",
+      "priority": "medium",
+      "status": "planned",
+      "acceptance_criteria": [
+        "Contrast/focus review for light and dark green on mobile and Windows WebView.",
+        "No unintended horizontal scrolling at 320, 355, 390, 768 and 1024 px; native insets preserved.",
+        "Common forms, empty states, error messages and notification badges have consistent spacing."
+      ]
+    },
+    {
+      "id": "TAVI-UI-EXTENSION-078",
+      "title": "Consistent isolated extension workspace and publisher theming contract",
+      "summary": "Consolidate iframe stage and its host navigation; standardize optional UI tokens and embedded mode without touching publisher DOM or leaking credentials.",
+      "priority": "high",
+      "status": "planned",
+      "acceptance_criteria": [
+        "Only host owns global Home and notifications; Atrium adapter uses authenticated host.info response.",
+        "Sandbox remains allow-scripts without allow-same-origin; permissions and launch approvals preserved.",
+        "Loading, unavailable, update and sandbox failure are explicit and recoverable."
+      ]
+    },
+    {
+      "id": "TAVI-UI-VISUAL-QA-079",
+      "title": "Recorded-flow UI acceptance across desktop and mobile",
+      "summary": "Create stable component fixtures, browser screenshots and real Windows/Android test matrix from the reviewed recording.",
+      "priority": "high",
+      "status": "planned",
+      "acceptance_criteria": [
+        "Replay File/Contacts/Actions/Tools/Help, Home/Messages, Atrium, Games and Companion flows.",
+        "Browser screenshots at 320/355/390/768/1024 and user-tested Windows and Android keyboard/touch flows.",
+        "Review theme, presence counts, protected account/session, navigation and extension sandbox before operator Done."
       ]
     }
   ]

@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.73",
-    "base_version": "0.3.71"
+    "version": "0.3.74",
+    "base_version": "0.3.73"
   },
   "update": {
-    "id": "TAVI-20261020-EXTENSION-UPDATES-NESTED-DISCOVERY-0372",
+    "id": "TAVI-20261020-VIDEO-UI-CONSISTENCY-0374",
     "kind": "source_update",
-    "created_at": "2026-10-20T00:00:00+02:00",
-    "summary": "Tavi client-only explicit extension update checks, nested LoopRD publisher index generator, compact conversation-presence roster; no deployed Social server change."
+    "created_at": "2026-10-20T19:02:27+02:00",
+    "summary": "Minor Tavi frontend-only video QA repair: exclusive menus, unified roster and no second extension Home. Full Lit/CSS-token UI roadmap in AsciiDoc; no LoopRD schema/deployment changes."
   },
   "planned_work": [
     {
@@ -441,6 +441,48 @@
       "priority": "medium",
       "status": "planned",
       "acceptance_criteria": "Future design only; operator review and explicit deployment approval required."
+    },
+    {
+      "id": "TAVI-UI-SHELL-074",
+      "title": "Video-driven unified roster, menu and extension host navigation repair",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "No stacked classic menus; keyboard escape and focus restoration verified.; Home and Messages share one compact merged contact roster and consistent presence counts.; Tavi-owned extension toolbar has App Store context route but no duplicate Home.; Regression tests green and operator Windows/Android/Web acceptance independently recorded."
+    },
+    {
+      "id": "TAVI-UI-FOUNDATION-075",
+      "title": "Shared Tavi UI design system and Lit evaluation",
+      "priority": "high",
+      "status": "planned",
+      "acceptance_criteria": "Measure UI bundle/load size and selected WebView compatibility before deciding a framework dependency.; Prototype reusable Header, Menu, Roster, Dialog and Surface components behind current app rendering.; Prove CSS token light/dark and keyboard focus on Windows/Web/Android without broad rewrite."
+    },
+    {
+      "id": "TAVI-UI-NAVIGATION-076",
+      "title": "Single host-owned navigation, menus and back policy",
+      "priority": "high",
+      "status": "planned",
+      "acceptance_criteria": "One host Home action on every utility surface; Back/Escape/Android Back have a documented predictable fallback.; Atrium publisher hides Return to Tavi only after verified host.info; keep sandbox and user mediation.; App Store, Games, Companion and dialogs tested with no navigation trap or duplicate chrome."
+    },
+    {
+      "id": "TAVI-UI-THEMES-077",
+      "title": "Unified forest-green themes and compact responsive primitives",
+      "priority": "medium",
+      "status": "planned",
+      "acceptance_criteria": "Contrast/focus review for light and dark green on mobile and Windows WebView.; No unintended horizontal scrolling at 320, 355, 390, 768 and 1024 px; native insets preserved.; Common forms, empty states, error messages and notification badges have consistent spacing."
+    },
+    {
+      "id": "TAVI-UI-EXTENSION-078",
+      "title": "Consistent isolated extension workspace and publisher theming contract",
+      "priority": "high",
+      "status": "planned",
+      "acceptance_criteria": "Only host owns global Home and notifications; Atrium adapter uses authenticated host.info response.; Sandbox remains allow-scripts without allow-same-origin; permissions and launch approvals preserved.; Loading, unavailable, update and sandbox failure are explicit and recoverable."
+    },
+    {
+      "id": "TAVI-UI-VISUAL-QA-079",
+      "title": "Recorded-flow UI acceptance across desktop and mobile",
+      "priority": "high",
+      "status": "planned",
+      "acceptance_criteria": "Replay File/Contacts/Actions/Tools/Help, Home/Messages, Atrium, Games and Companion flows.; Browser screenshots at 320/355/390/768/1024 and user-tested Windows and Android keyboard/touch flows.; Review theme, presence counts, protected account/session, navigation and extension sandbox before operator Done."
     }
   ],
   "done_work": [
@@ -1193,6 +1235,32 @@
           "description": "Device acceptance and limitation boundaries"
         }
       ]
+    },
+    {
+      "id": "TAVI-UI-SHELL-074",
+      "summary": "Source implementation and automated tests only; original 110 workboard statuses preserved and operator device acceptance pending.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/ui/menu-controller.js",
+          "description": "Exclusive menu controller, Escape focus restoration"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/main.js",
+          "description": "Single merged Home/Messages contact UI and removal of second extension Home"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/ui-shell-consistency.test.mjs",
+          "description": "Video-navigation consistency regressions"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/TAVI_UNIFIED_UI_VIDEO_AUDIT_0374.adoc",
+          "description": "Full recorded-flow analysis and staged framework design"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -1436,6 +1504,26 @@
     {
       "id": "TAVI-AUTO-REGISTRY",
       "reason": "Future work deferred per user; no current implementation claim."
+    },
+    {
+      "id": "TAVI-UI-FOUNDATION-075",
+      "reason": "Planned follow-up. No implementation or real-device acceptance claimed in 0.3.74."
+    },
+    {
+      "id": "TAVI-UI-NAVIGATION-076",
+      "reason": "Planned follow-up. No implementation or real-device acceptance claimed in 0.3.74."
+    },
+    {
+      "id": "TAVI-UI-THEMES-077",
+      "reason": "Planned follow-up. No implementation or real-device acceptance claimed in 0.3.74."
+    },
+    {
+      "id": "TAVI-UI-EXTENSION-078",
+      "reason": "Planned follow-up. No implementation or real-device acceptance claimed in 0.3.74."
+    },
+    {
+      "id": "TAVI-UI-VISUAL-QA-079",
+      "reason": "Planned follow-up. No implementation or real-device acceptance claimed in 0.3.74."
     }
   ],
   "validation": {
