@@ -1,9 +1,42 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.71",
-  "summary": "Tavi native-style extension permission confirmation, full-height sandbox workspace and host navigation; no Social server changes.",
+  "version": "0.3.72",
+  "summary": "Tavi 0.3.72 app updates visibility + metadata revision review, nested publisher looprd.yaml index generator, compact conversations and presence; preserve messenger Home and source workboard.",
   "implemented": [
+    {
+      "id": "TAVI-UX-ROSTER-072",
+      "title": "Combine recent conversations and presence into compact Home roster",
+      "summary": "Show one row per recent chat with online/offline dot, followed by other online/offline contacts with smaller headers/padding; preserve unread, search, friend requests and native child windows; Windows/Android/Web visual acceptance pending.",
+      "priority": "high",
+      "status": "review",
+      "operator_checks": [
+        "Run 0.3.72 source regression tests and exact ZIP validation.",
+        "Install on Windows/Android/Web; review UI and published/revoked extension metadata against actual server before marking Done."
+      ]
+    },
+    {
+      "id": "TAVI-EXT-NESTED-072",
+      "title": "Nested looprd.yaml publisher app discovery",
+      "summary": "Read only explicit tavi.extension fields from portable nested descriptors, deterministic public HTTPS index with metadata digest, reject unsafe source and mismatched manifest, no private LoopRD fields. Live publisher publication pending.",
+      "priority": "high",
+      "status": "review",
+      "operator_checks": [
+        "Run 0.3.72 source regression tests and exact ZIP validation.",
+        "Install on Windows/Android/Web; review UI and published/revoked extension metadata against actual server before marking Done."
+      ]
+    },
+    {
+      "id": "TAVI-EXT-UPDATES-072",
+      "title": "Visible app update checks and revision-aware approval",
+      "summary": "Periodic checks, foreground refresh, displayed last-checked and installed/published versions. Block downgrade/source change/unavailable publisher, maintain approval. Source tests; physical Windows/Android/Web and real publisher release acceptance remains.",
+      "priority": "high",
+      "status": "review",
+      "operator_checks": [
+        "Run 0.3.72 source regression tests and exact ZIP validation.",
+        "Install on Windows/Android/Web; review UI and published/revoked extension metadata against actual server before marking Done."
+      ]
+    },
     {
       "id": "TAVI-UX-071",
       "title": "Reviewable extension install dialog and immersive extension panel",
@@ -209,14 +242,14 @@
       "status": "review",
       "operator_checks": [
         "Import 0.3.55 in ZipRunner on Windows and capture compact 355px Home; compare with hand sketch: central round control visually raised and left/right actions independent, with no wide pill.",
-        "At mobile 320\u2013430px, tablet and web widths, check no label clipping or unintended horizontal scroll; check safe-area bottom on Android.",
+        "At mobile 320–430px, tablet and web widths, check no label clipping or unintended horizontal scroll; check safe-area bottom on Android.",
         "Keyboard navigate/activate Games, Main menu, Messages; focus visible and unread badge legible.",
         "Enter chat and embedded game; verify dock absent, minimize to Home and restore same activity with content intact.",
         "Confirm no server/LoopRD schema change, no runtime config overlay, and do not mark Done without operator visual acceptance."
       ],
       "acceptance_criteria": [
         "Import 0.3.54 in ZipRunner on Windows and capture compact 355px Home; compare with hand sketch: central round control visually raised and left/right actions independent, with no wide pill.",
-        "At mobile 320\u2013430px, tablet and web widths, check no label clipping or unintended horizontal scroll; check safe-area bottom on Android.",
+        "At mobile 320–430px, tablet and web widths, check no label clipping or unintended horizontal scroll; check safe-area bottom on Android.",
         "Keyboard navigate/activate Games, Main menu, Messages; focus visible and unread badge legible.",
         "Enter chat and embedded game; verify dock absent, minimize to Home and restore same activity with content intact.",
         "Confirm no server/LoopRD schema change, no runtime config overlay, and do not mark Done without operator visual acceptance.",
@@ -250,18 +283,18 @@
     {
       "id": "TAVI-PET-050",
       "title": "Native Windows desktop floating companion",
-      "summary": "Windows floating desktop companion source candidate. Transparent borderless always-on-top Tauri window, 186\u00d7226 pixel, drag/reset, local position scoped to signed-in account, token-free event-only care broker and close on opt-out/signout. No real Windows hardware acceptance claimed.",
+      "summary": "Windows floating desktop companion source candidate. Transparent borderless always-on-top Tauri window, 186×226 pixel, drag/reset, local position scoped to signed-in account, token-free event-only care broker and close on opt-out/signout. No real Windows hardware acceptance claimed.",
       "status": "review",
       "operator_checks": [
         "Install new 0.3.52 Windows NSIS and confirm transparent always-on-top small companion; no separate taskbar icon or forced focus.",
-        "Test drag on secondary screen/HiDPI, position after restart, reset\u21ba on display changes, fullscreen games and keyboard focus.",
+        "Test drag on secondary screen/HiDPI, position after restart, reset↺ on display changes, fullscreen games and keyboard focus.",
         "Verify care actions and stats persist and are scoped to the current signed-in account; no Social token/chat/game access in floating webview.",
         "Disable, close, switch accounts and sign out; verify the floating window disappears. Re-enable explicitly and confirm Companion/Gentle/Classic choices never auto-escalate.",
         "Verify unchanged Social DB schema 10 and LoopRD descriptor, and conduct operator approval before Done."
       ],
       "acceptance_criteria": [
         "Install new 0.3.51 Windows NSIS and confirm transparent always-on-top small companion; no separate taskbar icon or forced focus.",
-        "Test drag on secondary screen/HiDPI, position after restart, reset\u21ba on display changes, fullscreen games and keyboard focus.",
+        "Test drag on secondary screen/HiDPI, position after restart, reset↺ on display changes, fullscreen games and keyboard focus.",
         "Verify care actions and stats persist and are scoped to the current signed-in account; no Social token/chat/game access in floating webview.",
         "Disable, close, switch accounts and sign out; verify the floating window disappears. Re-enable explicitly and confirm Companion/Gentle/Classic choices never auto-escalate.",
         "Verify unchanged Social DB schema 10 and LoopRD descriptor, and conduct operator approval before Done.",
@@ -351,14 +384,14 @@
       "title": "Game-seat-scoped private multiplayer match conversations",
       "summary": "Source candidate: reviewed Life game roster sync with monotonically increasing revisions, Social schema 10, opt-in account room ACL, bounded private chat, content-free wake hints, browser/native shared SDK, Games tab UI. Life integration and native/remote acceptance remain.",
       "operator_checks": [
-        "Back up Social database and validate additive schema 9\u219210 against deployed DAPI.",
+        "Back up Social database and validate additive schema 9→10 against deployed DAPI.",
         "Provide an approved Life service credential and issuer; test real game-owned match rosters and seat revocation.",
         "Complete Android/Windows/web cross-client chat and restart acceptance; verify no unauthorized account or token leaks.",
         "Prove real shared multiplayer game play and Atrium join/resume separately before closing SCL-007 or TAVI-032."
       ],
       "status": "review",
       "acceptance_criteria": [
-        "Back up Social database and validate additive schema 9\u219210 against deployed DAPI.",
+        "Back up Social database and validate additive schema 9→10 against deployed DAPI.",
         "Provide an approved Life service credential and issuer; test real game-owned match rosters and seat revocation.",
         "Complete Android/Windows/web cross-client chat and restart acceptance; verify no unauthorized account or token leaks.",
         "Prove real shared multiplayer game play and Atrium join/resume separately before closing SCL-007 or TAVI-032."
@@ -509,18 +542,18 @@
       "title": "Replace oversized Windows client with native buddy list and separate conversations",
       "summary": "Windows main window is roster-sized instead of 1060px dashboard. Open individual Tauri chat windows and broker authenticated operations via main window without copying credentials. Build emits standalone chat page, leaves Android/web responsive, and adds native geometry/IPC checks.",
       "operator_checks": [
-        "Install the Windows NSIS artifact; sign-in opens as a narrow 355\u00d7630 window, with no blue 1060px background or a duplicate app title bar.",
+        "Install the Windows NSIS artifact; sign-in opens as a narrow 355×630 window, with no blue 1060px background or a duplicate app title bar.",
         "Sign in with an existing Social account; the same window displays buddy groups and turn alerts; verify there is no permanent right-side panel.",
-        "Double-click a buddy or open Community Lobby: a separate approximately 585\u00d7525 Windows chat window opens, and reselecting the same buddy focuses it.",
+        "Double-click a buddy or open Community Lobby: a separate approximately 585×525 Windows chat window opens, and reselecting the same buddy focuses it.",
         "Send and receive a message in the native conversation; verify chat windows do not need another login and can open simultaneously.",
         "Verify Settings/Games/Portrait and server-authorized developer switch work within the roster-sized native host.",
         "Run the Web, Windows and Android workflows; confirm Android navigation and browser API/account parity remain functional."
       ],
       "status": "review",
       "acceptance_criteria": [
-        "Install the Windows NSIS artifact; sign-in opens as a narrow 355\u00d7630 window, with no blue 1060px background or a duplicate app title bar.",
+        "Install the Windows NSIS artifact; sign-in opens as a narrow 355×630 window, with no blue 1060px background or a duplicate app title bar.",
         "Sign in with an existing Social account; the same window displays buddy groups and turn alerts; verify there is no permanent right-side panel.",
-        "Double-click a buddy or open Community Lobby: a separate approximately 585\u00d7525 Windows chat window opens, and reselecting the same buddy focuses it.",
+        "Double-click a buddy or open Community Lobby: a separate approximately 585×525 Windows chat window opens, and reselecting the same buddy focuses it.",
         "Send and receive a message in the native conversation; verify chat windows do not need another login and can open simultaneously.",
         "Verify Settings/Games/Portrait and server-authorized developer switch work within the roster-sized native host.",
         "Run the Web, Windows and Android workflows; confirm Android navigation and browser API/account parity remain functional."
@@ -854,7 +887,7 @@
     {
       "id": "TAVI-SESSION-RECOVERY-025",
       "title": "Resilient session restore and automatic offline reconnection",
-      "summary": "Introduces client-side session-recovery policy, expiring-token rejection on HTTP 401 only, saved credential retention on HTTP 403 and network/5xx failures, bounded 8\u201360s reconnect attempts, online/focus recovery, manual Retry and Use another account, cancel-on-login/signout, and compact copy fix.",
+      "summary": "Introduces client-side session-recovery policy, expiring-token rejection on HTTP 401 only, saved credential retention on HTTP 403 and network/5xx failures, bounded 8–60s reconnect attempts, online/focus recovery, manual Retry and Use another account, cancel-on-login/signout, and compact copy fix.",
       "operator_checks": [
         "With Remember enabled, close Tavi and reopen while LoopRD is unreachable: confirm the DPAPI session is not deleted and manual Retry appears.",
         "Restore network; confirm Tavi retries without needing a restart and opens the same account roster only after server-side verification.",
@@ -1015,7 +1048,7 @@
       "title": "Account recovery and hardened public registration",
       "summary": "Source candidate: signed-in password-confirmed recovery-code issue/rotation; one-time 160-bit hashed codes and authenticated revocation/status; username+code recovery resets password and revokes existing sessions, with 15-minute per-account recovery backoff. Additive Social schema 9; global hourly registration backstop and portable SDK/Windows/Android/Web UI. This does NOT close LRS-004: operator migration, device acceptance and abuse review remain.",
       "operator_checks": [
-        "Back up Social database and validate schema 8\u21929 migration against current LoopRD.",
+        "Back up Social database and validate schema 8→9 migration against current LoopRD.",
         "Generate eight codes on account A, store securely offline, then recover without an active session; validate other sessions revoked and new device usable.",
         "Verify invalid/reused/expired/rotated codes are rejected without account enumeration; verify 5-failure recovery lockout.",
         "Verify production registration rate settings, legitimate registrations, and existing users signing in.",
@@ -1024,7 +1057,7 @@
       "status": "review",
       "priority": "high",
       "acceptance_criteria": [
-        "Back up Social database and validate schema 8\u21929 migration against current LoopRD.",
+        "Back up Social database and validate schema 8→9 migration against current LoopRD.",
         "Generate eight codes on account A, store securely offline, then recover without an active session; validate other sessions revoked and new device usable.",
         "Verify invalid/reused/expired/rotated codes are rejected without account enumeration; verify 5-failure recovery lockout.",
         "Verify production registration rate settings, legitimate registrations, and existing users signing in.",
@@ -1575,6 +1608,26 @@
         "Characterization tests cover the highest-risk current behavior and failure paths.",
         "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
         "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ]
+    },
+    {
+      "id": "TAVI-EXT-LOCAL-PACKAGES",
+      "title": "Verified local extension packages and rollback",
+      "summary": "Parked future work; do not implement/deploy automatically in this release.",
+      "priority": "medium",
+      "status": "planned",
+      "acceptance_criteria": [
+        "Create detailed trust boundaries and operator acceptance before build or publication."
+      ]
+    },
+    {
+      "id": "TAVI-AUTO-REGISTRY",
+      "title": "Deferred validation workflows and private LoopRD pull registry",
+      "summary": "Parked future work; do not implement/deploy automatically in this release.",
+      "priority": "medium",
+      "status": "planned",
+      "acceptance_criteria": [
+        "Create detailed trust boundaries and operator acceptance before build or publication."
       ]
     }
   ]

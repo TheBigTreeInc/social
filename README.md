@@ -1,3 +1,5 @@
+> **Tavi 0.3.72 extension updates and combined presence:** App Store checks publisher metadata every 15 minutes, shows installed/published version and revision, and asks permission to update. Nested publisher `looprd.yaml` files may produce public App Store indexes via a local generator; no automatic remote registry workflow. Home groups recent chats with online/offline contacts in one compact roster. Remote JS is **still hosted**, not installed offline. Native acceptance pending. See `docs/TAVI_EXTENSION_UPDATES_NESTED_LOOPRD_0372.adoc`.
+
 > **Tavi 0.3.66 hosted Life launch broker:** safe first-party Atrium handoff requires explicit Tavi Open Life click; no credentials or proofs in URL. Atrium 0.5.24 live publication/adapter and authenticated Life resume remain pending. See `docs/TAVI_ATRIUM_HOSTED_LIFE_LAUNCH_0366.adoc`.
 
 > **Tavi 0.3.65 first-party Atrium repository:** built-in optional Atrium catalog source. Publication and device acceptance pending. See `docs/TAVI_FIRST_PARTY_ATRIUM_REPOSITORY_0365.adoc`.

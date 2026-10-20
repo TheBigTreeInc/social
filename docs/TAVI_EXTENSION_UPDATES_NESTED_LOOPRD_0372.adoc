@@ -1,0 +1,87 @@
+= Tavi extension update visibility and nested LoopRD discovery
+:toc:
+:sectnums:
+
+== Scope (Tavi 0.3.72 source candidate)
+
+Tavi remains a messenger first. Applications are optional. This client-only pass adds a visible update status, approval-based updates when publisher metadata changes, and compact buddy-list presence. It also adds a *publisher-side* tool to generate a Tavi repository index from explicit Tavi metadata in nested `looprd.yaml` files. It does *not* modify the authoritative LoopRD service, install backend components, enable automatic cross-repository writes, or provide immutable locally installed remote JavaScript.
+
+== Extension update contract
+
+* The installed extension record is scoped to the existing Social origin + account, and stores extension ID, pinned repository source, installed semantic version, requested permissions, optional SHA-256 release revision, and enabled state.
+* `tavi.repository/v1` remains compatible with older indexes. A repository item may add `release: { revision: <64 lowercase hexadecimal characters> }`.
+* The publisher-generated revision identifies the bytes of the *publisher's source extension bundle* at index generation. It is not an independently verified download signature, and Tavi 0.3.72 still loads remote hosted iframe entrypoints. A malicious publisher can change deployed bytes without changing the index; this limitation is intentionally visible.
+* A publisher metadata change (manifest fields, permissions, reviewed iframe entrypoint), a greater published semantic version or a changed published revision prompts an update review. Legacy hosted installations get a one-time reapproval to pin the entrypoint and manifest metadata. For the *same* version, a new/different revision (including first adoption of publisher revisions by a legacy install) requires approval. An older published version is never treated as an update. Missing/invalid metadata, a different repository source, and failed repository refresh are not presented as "up to date".
+* Every 15 minutes while the user is signed in and Tavi is running, the client fetches publisher indexes without a Social bearer. It also checks when the App Store is opened after a stale period or the app regains focus. User may force refresh through App Store or Help.
+* App Store shows *last checked*, installed vs published versions and revision prefixes, update availability/unknown states, publisher source, and an explicit Update control. Home shows an actionable update indicator when verified metadata indicates updates.
+* Updating still requires the host-owned permissions dialog. Existing source pinning and opaque sandbox permissions remain. No background code installation or silent permissions escalation.
+* A temporary catalog failure retains last-known metadata in memory, but marks its update state unavailable; it is not evidence of a completed check.
+* A remote extension's hosted code is still mutable and online-dependent. Downloaded, hash-verified, versioned local packages + rollback remain a distinct future implementation.
+
+== Nested LoopRD descriptors
+
+Publisher source repositories may define a Tavi discoverable extension via a nested descriptor:
+
+[source,yaml]
+----
+apiVersion: looprd/v1
+component: my-wallet
+release: 0.1.0
+tavi:
+  extension:
+    manifest: manifest.json
+    license: MIT
+----
+
+The parent `looprd.yaml` of the publisher's actual LoopRD component remains independently deployable. The nested descriptor does not need the target server URL. Its `release` must match the referenced `tavi.extension/v1` manifest `version`. The generator only consumes these explicit discovery fields and the public extension assets; runtime routes, SQL migrations, credentials, and server endpoints do not appear in the App Store index.
+
+Example folder:
+
+[source,text]
+----
+repo/
+  extensions/org.vendor.wallet/
+    looprd.yaml
+    manifest.json
+    ui/index.html
+    ui/icon.svg
+----
+
+To generate public metadata from a reviewed source tree:
+
+[source,shell]
+----
+python -m pip install PyYAML
+python tools/index-tavi-looprd.py \
+  --root path/to/repo \
+  --base-url https://publisher.example/apps/ \
+  --source-url https://github.com/publisher/repo \
+  --name 'Publisher apps' \
+  --output dist/tavi.repository.json
+----
+
+The deployment separately publishes the *identical* folder tree under that HTTPS base URL (e.g. `https://publisher.example/apps/extensions/org.vendor.wallet/ui/index.html`). Tavi consumes the generated public index, not private GitHub files or unfiltered `looprd.yaml` contents. Each release revision is recomputed from sorted source file bytes, allowing even same-version source changes to be noticed **when the publisher republishes the index**. A publisher should ordinarily also increase `manifest.version` for changed code.
+
+NOTE: The CLI intentionally remains a local publisher tool. GitHub Actions auto-registration, reconciliation to a private LoopRD registry, and automatic deployment have been parked by the user; they are future work only.
+
+== Home roster
+
+Home combines recent conversations and online/offline contacts in a single compact scrolling region, with per-contact presence indicators. Recent conversations appear once (not duplicated under Online/Offline). Header/padding sizes are reduced for the 355-pixel default Windows Tavi window. Unread badges, friend requests, separate native chat windows, search, and the three-icon Home navigation remain.
+
+== Backlog and acceptance
+
+=== TAVI-EXT-UPDATES-072 (Review)
+* Source tests: greater/same/older version, changed metadata revision, pinned source, missing or inaccessible repository, and permission review.
+* Operator: install an older Atrium version, publish a newer one, sign in to Tavi, verify Home badge, update availability, consent, open/update; check Windows, Android and Web. Confirm offline state is explicitly incomplete.
+
+=== TAVI-EXT-NESTED-072 (Review)
+* Generate two publisher releases using nested `looprd.yaml`, validate exact entrypoints and revisions, reject unsafe paths and duplicate extension IDs. Compare the generated index against the real deployed HTTPS tree.
+* No private LoopRD deployment data may be serialized.
+
+=== TAVI-UX-ROSTER-072 (Review)
+* Visual review at default compact Windows (355x630), expanded Windows, Android portrait and web. Presence visible beside recent chats, none duplicated, no loss of unread indicators/keyboard accessibility, requests and status bar still work.
+
+=== Future — parked
+* `TAVI-EXT-LOCAL-PACKAGES`: verified static bundle download, isolated local serving/storage, offline UI, per-account storage, atomic updates, rollback and revocation rules.
+* `TAVI-AUTO-REGISTRY`: publisher validation and auto-registration workflows for public Tavi indexes and private LoopRD pull-driven registry; preserve independent operator deployment.
+* Native installed-device acceptance and enterprise signing/provenance; GitHub Pages real publication of nested descriptors.

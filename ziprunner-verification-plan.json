@@ -1,8 +1,74 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.71",
+  "version": "0.3.72",
   "tasks": [
+    {
+      "id": "TAVI-EXT-UPDATES-072",
+      "criteria": [
+        {
+          "id": "TAVI-EXT-UPDATES-072-SRC",
+          "description": "Periodic checks, foreground refresh, displayed last-checked and installed/published versions. Block downgrade/source change/unavailable publisher, maintain approval. Source tests; physical Windows/Android/Web and real publisher release acceptance remains.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/extension-updates-072.test.mjs",
+            "python -m unittest discover -s tests -p test_tavi_nested_discovery.py -v"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-UPDATES-072-NATIVE",
+          "description": "Real native and published HTTPS end-to-end acceptance required.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-EXT-UPDATES-072-PRODUCTION"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-EXT-NESTED-072",
+      "criteria": [
+        {
+          "id": "TAVI-EXT-NESTED-072-SRC",
+          "description": "Read only explicit tavi.extension fields from portable nested descriptors, deterministic public HTTPS index with metadata digest, reject unsafe source and mismatched manifest, no private LoopRD fields. Live publisher publication pending.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/extension-updates-072.test.mjs",
+            "python -m unittest discover -s tests -p test_tavi_nested_discovery.py -v"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-NESTED-072-NATIVE",
+          "description": "Real native and published HTTPS end-to-end acceptance required.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-EXT-NESTED-072-PRODUCTION"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-UX-ROSTER-072",
+      "criteria": [
+        {
+          "id": "TAVI-UX-ROSTER-072-SRC",
+          "description": "Show one row per recent chat with online/offline dot, followed by other online/offline contacts with smaller headers/padding; preserve unread, search, friend requests and native child windows; Windows/Android/Web visual acceptance pending.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/extension-updates-072.test.mjs",
+            "python -m unittest discover -s tests -p test_tavi_nested_discovery.py -v"
+          ]
+        },
+        {
+          "id": "TAVI-UX-ROSTER-072-NATIVE",
+          "description": "Real native and published HTTPS end-to-end acceptance required.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-UX-ROSTER-072-PRODUCTION"
+          ]
+        }
+      ]
+    },
     {
       "id": "TAVI-UX-067",
       "criteria": [
@@ -1662,6 +1728,19 @@
       "stage": "acceptance",
       "description": "Verify exact-SHA push workflow runs and ZipRunner data ingestion",
       "instructions": "After operator-reviewed push, check GitHub Actions for new SHA, especially Windows and Browser UI QA; also repair TAVI-QA-047 not_github mapping in ZipRunner without changing historical results."
+    },
+    {
+      "id": "TAVI-EXT-072-SOURCE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Tavi 0.3.72 extension revision, nested descriptor and roster acceptance",
+      "runner_ref": "tavi-extension-updates-072",
+      "assertions": [
+        "Compares pinned revision and semantic version without downgrade",
+        "Generates nested metadata index without runtime deployment data",
+        "Compact Home has presence next to contacts"
+      ],
+      "test_ref": "client/tests/extension-updates-072.test.mjs"
     }
   ]
 }

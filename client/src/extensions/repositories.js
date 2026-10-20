@@ -24,7 +24,8 @@ export function validateRepository(value) {
   if (!isObject(value) || value.schema !== 'tavi.repository/v1' || typeof value.name !== 'string' || !value.name.trim() || value.name.length > 80 || !Array.isArray(value.extensions) || value.extensions.length > 150) throw Error('Invalid Tavi extension repository');
   const seen = new Set();
   return value.extensions.map(item => {
-    if (!isObject(item) || Object.keys(item).some(k => !['manifest','entrypoint','source','license'].includes(k))) throw Error('Invalid repository extension entry');
+    if (!isObject(item) || Object.keys(item).some(k => !['manifest','entrypoint','source','license','release'].includes(k))) throw Error('Invalid repository extension entry');
+    if(item.release!==undefined && (!isObject(item.release)||Object.keys(item.release).some(k=>k!=='revision')||!/^([a-f0-9]{64})$/.test(item.release.revision)))throw Error('Invalid release revision metadata');
     const m = item.manifest;
     validateExtensionManifest(m);
     if (seen.has(m.id)) throw Error('Duplicate extension in repository');
@@ -33,8 +34,8 @@ export function validateRepository(value) {
     // Source URL must point to a browsable HTTPS source repository, not opaque binaries.
     const source = safeUrl(item.source);
     const entrypoint = safeUrl(item.entrypoint);
-    if (new URL(entrypoint).pathname.split('/').pop() !== m.entrypoints.panel.split('/').pop()) throw Error('Entrypoint filename differs from manifest');
-    return {manifest:m,remote:{entrypoint,source,license:item.license}};
+    if (!new URL(entrypoint).pathname.endsWith('/'+m.entrypoints.panel)) throw Error('Entrypoint path differs from manifest');
+    return {manifest:m,remote:{entrypoint,source,license:item.license},...(item.release?{release:{revision:item.release.revision}}:{})};
   });
 }
 export async function fetchJsonLimited(url,{fetcher=fetch}={}) {

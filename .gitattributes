@@ -10,3 +10,10 @@ client/public/tavi-extensions/**/*.css text eol=lf
 client/public/tavi-extensions/**/*.js text eol=lf
 client/public/tavi-extensions/**/*.json text eol=lf
 client/public/tavi-extensions/**/*.svg text eol=lf
+
+# Developer-facing nested descriptor fixture hashes must stay reproducible.
+docs/extension-examples/nested-publisher/**/*.html text eol=lf
+docs/extension-examples/nested-publisher/**/*.css text eol=lf
+docs/extension-examples/nested-publisher/**/*.js text eol=lf
+docs/extension-examples/nested-publisher/**/*.json text eol=lf
+docs/extension-examples/nested-publisher/**/*.svg text eol=lf

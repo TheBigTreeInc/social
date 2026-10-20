@@ -662,3 +662,33 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .tavi-install-buttons{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;}.tavi-install-buttons button{min-height:42px;}
 .tavi-install-approve{background:#267c69!important;color:#fff!important;border-color:#1c604e!important;}
 .tavi-install-dialog button:focus-visible{outline:3px solid #226ca4;outline-offset:2px;}
+
+/* 0.3.72 — App Store update state is visible, not dependent on a manual refresh. */
+.tavi-update-summary{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:9px 0 13px;padding:8px 10px;border:1px solid #bbd9c3;border-radius:9px;background:#e7f5e8;color:#26583b;font-size:12px;}
+.tavi-update-summary strong{font-size:12px;}
+.tavi-update-summary span{font-size:11px;flex:1 1 120px;color:#476851;}
+.tavi-update-summary button{font-size:11px;min-height:32px;}
+.tavi-extension-version{margin:4px 0 2px!important;font-size:11px!important;color:#355e47!important;}
+.tavi-extension-state{font-size:11px!important;font-weight:600;color:#315a46!important;margin:5px 0!important;}
+.tavi-extension-state:where(:not(:empty)){line-height:1.45;}
+.tavi-extension-update-notice{display:flex;gap:6px;align-items:center;justify-content:space-between;background:#e4f5d9;border-top:1px solid #bcd6b6;padding:3px 7px;font-size:10px;color:#295a38;}
+.tavi-extension-update-notice button{padding:2px 7px;font-size:10px;}
+
+/* 0.3.72 — Buddy presence and recent conversations share one compact surface. */
+.tavi-classic-home .tavi-roster-merged>.group-title{padding:4px 7px;min-height:24px;background:#e2f1e5;border-bottom:1px solid #c8dfce;}
+.tavi-classic-home .tavi-roster-merged .group-entries{gap:0;}
+.tavi-roster-compact-section{display:flex;flex-direction:column;min-width:0;}
+.tavi-roster-compact-label{font-size:10px;font-weight:700;padding:3px 8px 1px 12px;color:#527b5c;letter-spacing:.1px;}
+.tavi-roster-compact-empty{padding:2px 8px 3px 15px;color:#6b8b74;font-size:10px;}
+.tavi-inline-presence{display:inline-block;margin-right:6px;width:8px;height:8px;box-sizing:border-box;border:1px solid #869688;border-radius:50%;background:#c4ccc4;}
+.tavi-inline-presence.online{background:#4eac67;border-color:#2c8145;box-shadow:0 0 0 1px #d8eedb;}
+.tavi-classic-home .tavi-roster-merged .buddy{min-height:29px;padding:2px 7px 2px 9px;gap:6px;}
+.tavi-classic-home .tavi-roster-merged .buddy .avatar{height:23px;width:23px;flex:none;}
+.tavi-classic-home .tavi-roster-merged .buddy-copy{line-height:1.18;}
+.tavi-classic-home .tavi-roster-merged .buddy-copy strong{font-size:11px;}
+.tavi-classic-home .tavi-roster-merged .buddy-copy small{font-size:9px;}
+.tavi-classic-home .roster-scroll{padding:0 3px 3px;}
+.tavi-classic-home .roster-search{height:25px;margin:4px 6px 2px;}
+.tavi-classic-home .tavi-identity-strip{min-height:62px;padding:6px;}
+.tavi-classic-home .tavi-action-toolbar{min-height:32px;}
+.tavi-classic-home .tavi-action-toolbar button{min-height:30px;}

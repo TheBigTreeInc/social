@@ -4,6 +4,7 @@
  */
 import {extensionAssetUrl,validateExtensionManifest} from './extensions/contract.js';
 import {extensionSource} from './extensions/repositories.js';
+import {extensionUpdateStatus} from './extensions/updates.js';
 
 export const BUILTIN_APPS=Object.freeze([
   {action:'contacts', label:'Messages', symbol:'messages', tone:'forest'},
@@ -37,7 +38,7 @@ export function launchableExtensions({catalog,store,platform}){
  if(!store)return [];
  return catalog.filter(entry=>{
   const m=entry?.manifest;
-  if(!m||!store.enabled(m.id)||store.source(m.id)!==extensionSource(entry)||store.version(m.id)!==m.version)return false;
+  if(!m||!store.enabled(m.id)||extensionUpdateStatus(entry,store)!=='current')return false;
   if(m.platforms&&!m.platforms.includes(platform))return false;
   if(!m.contributions.some(c=>c.slot==='app.launcher'))return false;
   try{return validateExtensionManifest(m).compatible;}catch{return false;}
@@ -55,9 +56,12 @@ export function extensionIconUrl(entry,baseUrl){
  if(!icon)return null;
  validateExtensionManifest(entry.manifest);
  if(entry.remote){
-  const repo=new URL(entry.repositoryUrl);
-  const url=new URL(icon,new URL('./',repo));
-  if(url.origin!==repo.origin||!url.pathname.startsWith(new URL('./',repo).pathname))throw Error('Extension icon escaped repository');
+  const entrypoint=new URL(entry.remote.entrypoint);
+  const path=entry.manifest.entrypoints.panel;
+  if(!entrypoint.pathname.endsWith('/'+path))throw Error('Extension entrypoint does not match manifest');
+  const assetBase=new URL(entrypoint.href.slice(0,-path.length));
+  const url=new URL(icon,assetBase);
+  if(url.origin!==entrypoint.origin||!url.pathname.startsWith(assetBase.pathname))throw Error('Extension icon escaped application bundle');
   return url.href;
  }
  return extensionAssetUrl(entry.manifest.id,icon,baseUrl);

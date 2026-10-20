@@ -3,16 +3,37 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.71",
-    "base_version": "0.3.70"
+    "version": "0.3.72",
+    "base_version": "0.3.71"
   },
   "update": {
-    "id": "TAVI-20261020-EXTENSION-WORKSPACE-0371",
+    "id": "TAVI-20261020-EXTENSION-UPDATES-NESTED-DISCOVERY-0372",
     "kind": "source_update",
     "created_at": "2026-10-20T00:00:00+02:00",
-    "summary": "Host-controlled extension installation confirmation and responsive extension workspace, client only."
+    "summary": "Tavi client-only explicit extension update checks, nested LoopRD publisher index generator, compact conversation-presence roster; no deployed Social server change."
   },
   "planned_work": [
+    {
+      "id": "TAVI-EXT-UPDATES-072",
+      "title": "Visible app update checks and revision-aware approval",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Periodic checks, foreground refresh, displayed last-checked and installed/published versions. Block downgrade/source change/unavailable publisher, maintain approval. Source tests; physical Windows/Android/Web and real publisher release acceptance remains."
+    },
+    {
+      "id": "TAVI-EXT-NESTED-072",
+      "title": "Nested looprd.yaml publisher app discovery",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Read only explicit tavi.extension fields from portable nested descriptors, deterministic public HTTPS index with metadata digest, reject unsafe source and mismatched manifest, no private LoopRD fields. Live publisher publication pending."
+    },
+    {
+      "id": "TAVI-UX-ROSTER-072",
+      "title": "Combine recent conversations and presence into compact Home roster",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Show one row per recent chat with online/offline dot, followed by other online/offline contacts with smaller headers/padding; preserve unread, search, friend requests and native child windows; Windows/Android/Web visual acceptance pending."
+    },
     {
       "id": "TAVI-UX-071",
       "title": "Host-owned extension install dialog and immersive panel",
@@ -406,6 +427,20 @@
       "title": "Tavi first-party Atrium hosted Life user-confirmed external launch",
       "priority": "high",
       "acceptance_criteria": "Strict schema/identity/source checks and Tavi-owned user launch, passing source tests and preserving Home; Atrium 0.5.24 UI adapter, HTTPS catalog and Life seat/resume must pass operator native acceptance."
+    },
+    {
+      "id": "TAVI-EXT-LOCAL-PACKAGES",
+      "title": "Locally cached verified extension installations with rollback",
+      "priority": "medium",
+      "status": "planned",
+      "acceptance_criteria": "Future design only; operator review and explicit deployment approval required."
+    },
+    {
+      "id": "TAVI-AUTO-REGISTRY",
+      "title": "Deferred shared GitHub validation and pull-driven private LoopRD registry",
+      "priority": "medium",
+      "status": "planned",
+      "acceptance_criteria": "Future design only; operator review and explicit deployment approval required."
     }
   ],
   "done_work": [
@@ -1162,6 +1197,18 @@
   ],
   "todo_work": [
     {
+      "id": "TAVI-EXT-UPDATES-072",
+      "reason": "Source tests need exact ZipRunner and operator native/hosted acceptance."
+    },
+    {
+      "id": "TAVI-EXT-NESTED-072",
+      "reason": "Source tests need exact ZipRunner and operator native/hosted acceptance."
+    },
+    {
+      "id": "TAVI-UX-ROSTER-072",
+      "reason": "Source tests need exact ZipRunner and operator native/hosted acceptance."
+    },
+    {
       "id": "TAVI-DEBUG-070",
       "reason": "Source candidate; operator and physical device acceptance required."
     },
@@ -1381,6 +1428,14 @@
     {
       "id": "TAVI-UX-071",
       "reason": "Client change awaiting operator native and web acceptance"
+    },
+    {
+      "id": "TAVI-EXT-LOCAL-PACKAGES",
+      "reason": "Future work deferred per user; no current implementation claim."
+    },
+    {
+      "id": "TAVI-AUTO-REGISTRY",
+      "reason": "Future work deferred per user; no current implementation claim."
     }
   ],
   "validation": {
@@ -1553,7 +1608,7 @@
       },
       {
         "id": "TAVI-MULTI-044-PY",
-        "description": "Game room seat roster, revocation, migration 9\u219210, private messages and push content-free wake",
+        "description": "Game room seat roster, revocation, migration 9→10, private messages and push content-free wake",
         "status": "passed_source_only",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Linux Python 3.13",
@@ -1667,7 +1722,7 @@
     },
     {
       "id": "TAVI-MULTI-044-OP",
-      "description": "Backup and test schema 9\u219210 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
+      "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
       "status": "required"
     },
     {

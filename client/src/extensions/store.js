@@ -14,9 +14,15 @@ export function createExtensionStore({storage,scope}){
   permissions(id){return Array.isArray(saved[id]?.permissions)?[...saved[id].permissions]:[];},
   source(id){return saved[id]?.source || 'tavi:bundled';},
   version(id){return saved[id]?.version || null;},
-  install(manifest,source='tavi:bundled'){
+  revision(id){return saved[id]?.revision || null;},
+  entrypoint(id){return saved[id]?.entrypoint || null;},
+  metadata(id){return saved[id]?.metadata || null;},
+  listInstalled(){return Object.entries(saved).filter(([,value])=>value?.installed===true).map(([id,value])=>({id,version:value.version||null,source:value.source||'tavi:bundled',enabled:value.enabled===true}));},
+  install(manifest,source='tavi:bundled',revision=null,entrypoint=null){
    validateExtensionManifest(manifest);
-   saved[manifest.id]={installed:true,enabled:true,version:manifest.version,source,permissions:[...manifest.permissions]};persist();
+   if(revision!==null && !/^[a-f0-9]{64}$/.test(revision))throw Error('Invalid extension release revision');
+   if(entrypoint!==null && (typeof entrypoint!=='string'||!entrypoint.startsWith('https://')||entrypoint.length>2048))throw Error('Invalid extension entrypoint');
+   saved[manifest.id]={installed:true,enabled:true,version:manifest.version,revision,entrypoint,metadata:JSON.stringify(manifest),source,permissions:[...manifest.permissions]};persist();
   },
   disable(id){if(!saved[id]?.installed)return; saved[id].enabled=false;persist();},
   enable(manifest,source='tavi:bundled'){

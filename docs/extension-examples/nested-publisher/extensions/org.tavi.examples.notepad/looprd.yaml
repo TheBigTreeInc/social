@@ -1,0 +1,10 @@
+# Optional nested publisher metadata. Not a deployed LoopRD component.
+# Runtime LoopRD credentials, auth handlers, DB migrations, server URLs and
+# secrets must never be copied into the public App Store index.
+apiVersion: looprd/v1
+component: tavi-example-notepad
+release: 1.0.0
+tavi:
+  extension:
+    manifest: manifest.json
+    license: MIT
