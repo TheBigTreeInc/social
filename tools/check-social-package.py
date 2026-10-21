@@ -34,6 +34,14 @@ def verify(path):
         if len(arc.read('.ziprunner-workboard-update.json'))>262144:raise ValueError('Oversize workboard')
         if board.get('schema')!='ziprunner.workboard-update.v1' or board.get('project')!=EXPECTED or not board.get('implemented'):
             raise ValueError('Invalid project workboard')
+        for section in ('implemented','remaining'):
+            rows=board.get(section,[])
+            if not isinstance(rows,list):raise ValueError(f'Workboard update: {section} must be a list')
+            for row in rows:
+                if not isinstance(row,dict):raise ValueError(f'Workboard update: {section} item must be an object')
+                summary=row.get('summary')
+                if not isinstance(summary,str) or not summary.strip() or len(summary)>2000:
+                    raise ValueError('Workboard update: summary must be non-empty text (max 2000 chars).')
         tasks=board['implemented']+board.get('remaining',[])
         ids=[x['id'] for x in tasks]
         if len(ids)!=len(set(ids)) or not all(re.fullmatch('[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}',v) for v in ids):

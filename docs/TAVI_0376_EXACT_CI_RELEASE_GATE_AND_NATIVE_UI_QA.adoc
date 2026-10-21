@@ -1,0 +1,61 @@
+= Tavi 0.3.76: Exact-commit CI recovery, native QA and mobile messenger usability
+:toc:
+:sectnums:
+
+== Scope and evidence
+
+This is a review candidate built from Tavi 0.3.75. It is messenger-first, client UI and release/QA tooling only: no LoopRD Social API, database migration, extension permissions, automatic publishing, production token, or hosted game grant changes.
+
+The operator's ZipRunner QA (2026-10-20 20:21 UTC) reports v0.3.75 locally installed and 118 operator workboard tickets: 62 Review, 38 Planned, 16 Deferred, and 2 Suggested, with no operator-accepted Done ticket. The report's `not_github` value is a collector evidence defect/absence, not proof that actions did not execute. The local ZipRunner collector reports one managed process running but *does not report successful native GUI checks*; checks and ZIP SHA data must be associated only with their exact tested archive.
+
+Public GitHub actions for SHA `2ef64c34a7774c970924fd3fe5fc7006da0e4d4a` (the 0.3.74 push) yielded 16 completed runs: 15 successful, one failed. Of the nine `push` workflows, eight passed and *Tavi browser UI QA failed* (https://github.com/TheBigTreeInc/social/actions/runs/39465216427). The uploaded `tavi-ui-qa-10` QA artifact's report contains three identical failures at desktop, mobile 390px and mobile 320px: selector `.tavi-discovered-mini` was expected to be visible on Home but the Games panel now owns discovery. No browser JavaScript exceptions were reported. This obsolete expectation had already been removed from the v0.3.75 source QA path; do not claim that v0.3.75 has passed GitHub CI unless its exact pushed SHA is verified.
+
+The public v0.3.74 release exists (https://github.com/TheBigTreeInc/social/releases/tag/v0.3.74) despite the failed browser QA. Inspection of v0.3.75's `.github/workflows/release.yml` and `tools/release-gate.py` confirmed the release gate required seven source/build workflows but omitted `Tavi browser UI QA`.
+
+== Implemented in 0.3.76
+
+* Add `Tavi browser UI QA` to the workflow-completion triggers in `.github/workflows/release.yml` and to `tools/release-gate.py`'s mandatory exact-push-SHA checks. Future release publication is blocked if browser QA is missing, pending, or unsuccessful, even if Windows/Android and source tests pass. Previously published immutable releases are not modified.
+* Add read-only `tools/github-ci-evidence.mjs` with an explicit commit SHA argument; it classifies each of the eight required push workflows as passed/failed/pending/missing and distinguishes optional Pages and release-workflow runs. No automatic push, release, promotion, or credential logging. Intended as independently reproducible evidence that ZipRunner may later ingest; does **not** itself fix ZipRunner's cross-project CI-watcher mapping.
+* Improve mobile UI QA at 320 and 390 pixels to verify 44px+ contact/touch targets and prohibit reintroduced duplicate Home Games/search/toolbars. Desktop remains compact. CSS applies elevated hit targets only to coarse pointers; it does not change layout for a mouse-driven 355px Windows roster.
+* Extend opt-in, disposable-account-only Windows WebView2 QA checks: menu exclusivity, Escape handling, and absence of removed Home strips before testing App Store navigation. Native screenshots remain opt-in because live conversations are private.
+
+== How ZipRunner should validate
+
+Source checks (on any host with source dependencies):
+
+----
+npm run verify
+python -m unittest discover -s tests -p 'test_*.py' -q
+python tools/generate-looprd.py --check
+node --test client/tests/ci-evidence-076.test.mjs client/tests/ui-qa-next-pass-076.test.mjs
+----
+
+Fresh GitHub evidence for the *specific pushed SHA* (requires network and public GitHub actions visibility; must not substitute a ZIP SHA):
+
+----
+node tools/github-ci-evidence.mjs --sha <exact-40-char-commit-sha> --output qa-evidence/exact-commit.json
+----
+
+A nonzero exit means `failed`, `pending`, `missing` or network-blocked. Do not normalize these to passed. `qa-evidence/` is not production runtime data, and should not be committed with credentials; checks are public metadata only.
+
+Native Windows acceptance (separate, operator-authorized): set up a dedicated disposable Tavi QA process through `client/tools/START-NATIVE-UI-QA.ps1`, or the same explicit managed-process settings in ZipRunner. Only then run `npm --prefix client run ui:native`. Leave remote debugging disabled for ordinary Tavi clients. A running process, successful Windows NSIS build or the Tavi native main window existing does not prove UI interaction success. Validate that Chrome DevTools Protocol is bound only to local loopback and is not exposed to the network.
+
+Android acceptance: run a signed APK on a real device and confirm 44px+ roster touch targets, readable status bar/safe areas, light/dark theme legibility, intact session after update, and no duplicate Games/action/search strips. The existing Android APK installer chooser and Play Protect incident (TAVI-UPDATES-003, ZRB-9297228324E24D42) remains open.
+
+== Workboard mapping and acceptance
+
+* Existing 118 local tickets: IDs/statuses/priorities/criteria and operator decisions preserved.
+* `TAVI-CI-RELEASE-076A` (Review): required browser UI workflow in future release gate. Requires GitHub push on approved new revision, failed-UI test branch experiment, and operator acceptance.
+* `TAVI-UI-TOUCH-076A` (Review): 44px mobile contact touch targets and native/fixture assertions. Requires real mobile and Windows screenshots and approval.
+* Existing `TAVI-QA-047` remains Planned: ZipRunner's evidence watcher is owned by ZipRunner, not this Tavi source package. Provide the exact SHA, workflow links and SHA-matched evidence when requesting the ZipRunner collector fix.
+* Existing `TAVI-UI-VISUAL-QA-079`, `TAVI-UI-FOUNDATION-075`, `TAVI-UI-NAVIGATION-076`, `TAVI-UI-THEMES-077`, and `TAVI-UI-EXTENSION-078` retain their existing statuses and future scope. Lit implementation is still *planned*, not silently introduced.
+* `LRS-004` remains Review with production account-recovery/security acceptance outstanding; do not advance without operator DB backup, device and policy checks.
+
+== Next implementation stages (not delivered in 0.3.76)
+
+. Normalize the native managed-client QA launch as a first-class ZipRunner integration with disposable profile and session isolation, sanitized screenshots and exact ZIP+build hashes. Coordinate ZipRunner ownership; do not turn on remote debugging in normal sessions.
+. Prove the revised browser UI on the exact new Git commit in GitHub before releasing. Maintain separate real Windows and Android GUI acceptance gates.
+. Once baseline accepted, incrementally extract the roster, reusable menus, dialogs and app shell as testable components under the planned Lit evaluation. Avoid large rewrites and preserve extension iframes and native child-window token boundaries.
+. Fix the Android native update package-installer handoff and SHA validation separately in TAVI-UPDATES-003.
+
+No code in this package sends commits, alters the user account/server, creates a release, or marks any ticket Done.

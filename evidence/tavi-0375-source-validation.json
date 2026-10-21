@@ -1,0 +1,14 @@
+{
+  "schema": "tavi.source-validation/v1",
+  "clientVersion": "0.3.75",
+  "scope": "Linux author environment, client source and synthetic fixture checks only",
+  "node": {"command": "npm run verify", "result": "passed", "serverTests": 11, "clientTests": 186, "integrationTests": 20},
+  "python": {"command": "python -m unittest discover -s tests -p 'test_*.py' -q", "result": "passed", "tests": 153},
+  "looprd": {"command": "python tools/generate-looprd.py --check", "result": "passed", "serverRelease": "0.3.58", "databaseSchemaVersion": 10},
+  "browserFixture": {"command": "node client/tools/ui-qa.mjs", "result": "blocked", "reason": "No built client/dist/index.html and client npm dependencies unavailable in author environment; native/browser success not claimed"},
+  "nativeWindows": {"result": "not_run", "reason": "Requires operator Windows WebView2 executable with explicit disposable QA session and local CDP port"},
+  "nativeAndroid": {"result": "not_run", "reason": "Requires Android device and separate ADB/UIAutomator acceptance"},
+  "githubExactPushCI": {"result": "not_proven", "reason": "Latest ZipRunner snapshot reported not_github for exact push SHA 2ef64c34a7774c970924fd3fe5fc7006da0e4a"},
+  "operatorAcceptance": "pending",
+  "releasePublished": false
+}

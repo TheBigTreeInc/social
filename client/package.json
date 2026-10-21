@@ -1,6 +1,6 @@
 {
   "name": "looprd-social-client",
-  "version": "0.3.74",
+  "version": "0.3.77",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,7 +15,8 @@
     "web:verify": "node tools/verify-web-dist.mjs",
     "web:ci": "npm run check && npm run web:build && npm run web:verify",
     "ui:qa": "node tools/ui-qa.mjs",
-    "ui:ci": "npm run web:build && npm run ui:qa"
+    "ui:ci": "npm run web:build && npm run ui:qa",
+    "ui:native": "node tools/native-ui-qa.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

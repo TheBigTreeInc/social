@@ -37,6 +37,14 @@ class ReleaseGateTests(unittest.TestCase):
         self.run_gate([], branch='newer')
     def test_no_release_when_version_already_published(self):
         self.run_gate([], release_exists=True)
+    def test_browser_ui_qa_is_required_for_release(self):
+        self.assertIn('Tavi browser UI QA', gate.REQUIRED)
+        workflow=(MODULE.parents[1]/'.github/workflows/release.yml').read_text()
+        self.assertIn('      - Tavi browser UI QA', workflow)
+        all_success=[{'name':name,'event':'push','head_sha':'abc','head_branch':'main',
+                      'run_number':1,'run_attempt':1,'status':'completed','conclusion':'success'} for name in gate.REQUIRED]
+        ui_failed=[{**run,'conclusion':'failure'} if run['name']=='Tavi browser UI QA' else run for run in all_success]
+        self.run_gate(ui_failed)
     def test_no_release_when_workflow_failed(self):
         self.run_gate([{'name':'Verify Social server and client source','event':'push','head_sha':'abc','head_branch':'main','run_number':1,'run_attempt':1,'status':'completed','conclusion':'failure'}])
 

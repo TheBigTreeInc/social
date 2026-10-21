@@ -82,8 +82,15 @@ async function testViewport(browser,base,device){
   await noOverflow(page,`${device.name} login`);
   stage='sign-in';await signIn(page,base);
   await noOverflow(page,`${device.name} home`);
-  stage='Life discovered Home';await visible(page,'.tavi-discovered-mini');
-  assert.match(await page.locator('.tavi-discovered-mini').first().innerText(),/The Life Loop/);
+  stage='compact Home without duplicate games';await visible(page,'.tavi-roster-merged');
+  assert.equal(await page.locator('.games-strip, .tavi-discovered-mini, .roster-toolbar, .roster-search').count(),0,'No legacy Games strip, duplicate action toolbar or search in the messenger Home');
+  if(device.mobile){
+   stage='mobile touch targets';
+   const heights=await page.locator('.tavi-roster-merged .buddy').evaluateAll(els=>els.map(el=>Math.round(el.getBoundingClientRect().height)));
+   assert(heights.length&&heights.every(height=>height>=44),`${device.name} buddy rows too small for touch: ${heights}`);
+   const sectionHeight=await page.locator('.tavi-roster-merged>.group-title').evaluate(el=>Math.round(el.getBoundingClientRect().height));
+   assert(sectionHeight>=44,`${device.name} section button is only ${sectionHeight}px`);
+  }
   stage='Life discovered Games';await visible(page,'.tavi-home-dock [data-action="games"]');await page.locator('.tavi-home-dock [data-action="games"]').click();
   await visible(page,'[data-discovered-game="life.loop"]');
   assert.match(await page.locator('[data-discovered-game="life.loop"]').innerText(),/Not playable yet/);
@@ -105,12 +112,12 @@ async function testViewport(browser,base,device){
   await visible(page,'[data-extension-open="org.tavi.examples.notepad"]');
   stage='open extension';await page.locator('[data-extension-open="org.tavi.examples.notepad"]').click();
   await visible(page,'#tavi-extension-surface iframe[sandbox="allow-scripts"]');
-  stage='return home';await page.locator('.tavi-extension-toolbar [data-action="home"]').click();
+  stage='return home';await page.locator('.tavi-shell-bar__back[data-action="minimize-view"]').click();
   await visible(page,'[data-action="main-menu"]');
   await noOverflow(page,`${device.name} returned home`);
   assert.equal(errors.length,0,`${device.name} JavaScript errors: ${errors.join('; ')}`);
   if(process.env.TAVI_QA_CAPTURE==='1')await screenshot(page,`${device.name}-success`);
-  checks.push({device:device.name,result:'passed',stages:['login','home','life-discovered','life-nonplayable','life-withdrawn','main-menu','app-store','extension-install','extension-launch','return-home','viewport-overflow','javascript-errors']});
+  checks.push({device:device.name,result:'passed',stages:['login','home','life-discovered-in-games','life-nonplayable','life-withdrawn','main-menu','app-store','extension-install','extension-launch','return-home','viewport-overflow','mobile-touch-targets','javascript-errors']});
   console.log(`PASS ${device.name}: sign-in, Life discover/withdraw, home, App Store, install/open extension, return home, viewport, script errors`);
  }catch(error){
   const picture=await screenshot(page,`${device.name}-failure`);
@@ -133,7 +140,7 @@ async function main(){
  try{
   await new Promise((accept,reject)=>server.once('error',reject).listen(0,'127.0.0.1',accept));
   const base=`http://127.0.0.1:${server.address().port}/`;
-  for(const device of [{name:'desktop',width:1366,height:768,mobile:false},{name:'mobile-390',width:390,height:844,mobile:true},{name:'mobile-320',width:320,height:720,mobile:true}]){fixture.lifeVisible=true;await testViewport(browser,base,device);}
+  for(const device of [{name:'desktop',width:1366,height:768,mobile:false},{name:'tablet',width:768,height:1024,mobile:true},{name:'compact-355',width:355,height:630,mobile:false},{name:'mobile-390',width:390,height:844,mobile:true},{name:'mobile-320',width:320,height:720,mobile:true}]){fixture.lifeVisible=true;await testViewport(browser,base,device);}
  }finally{await browser.close();await new Promise(r=>server.close(r));}
 }
 let failure;

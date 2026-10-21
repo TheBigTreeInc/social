@@ -18,6 +18,7 @@ REQUIRED = {
     'Web browser client and JavaScript SDK': ('social-web-client',),
     'SDK cross-platform checks': (),
     'SDK source packages and OpenClaw bridge': ('tavi-sdk-and-openclaw-source-packages',),
+    'Tavi browser UI QA': (),  # Required: UI must pass before any release is published.
 }
 
 def gh(*args):

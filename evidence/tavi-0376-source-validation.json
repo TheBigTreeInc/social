@@ -1,0 +1,52 @@
+{
+  "schema": "tavi.source-validation/v1",
+  "clientVersion": "0.3.76",
+  "scope": "Linux source/regression verification and independently observed historical GitHub evidence; not operator UI approval",
+  "node": {
+    "command": "npm run verify",
+    "result": "passed",
+    "serverTests": 11,
+    "clientTests": 191,
+    "integrationTests": 20,
+    "totalTests": 222
+  },
+  "python": {
+    "command": "python -m unittest discover -s tests -p 'test_*.py' -q",
+    "result": "passed",
+    "tests": 154
+  },
+  "looprd": {
+    "command": "python tools/generate-looprd.py --check",
+    "result": "passed",
+    "serverRelease": "0.3.58",
+    "databaseSchemaVersion": 10
+  },
+  "browserFixture": {
+    "command": "npm --prefix client run ui:ci",
+    "result": "blocked",
+    "reason": "Author environment has Chromium installed but client npm dependencies not installed; dependency installation attempt timed out; no browser behavior pass claimed"
+  },
+  "nativeWindows": {
+    "result": "not_run",
+    "reason": "Requires operator-approved disposable Tavi Windows process with local WebView2 CDP"
+  },
+  "nativeAndroid": {
+    "result": "not_run",
+    "reason": "Physical signed Android install and touch acceptance required"
+  },
+  "githubExactPushCI": {
+    "observedCommit": "2ef64c34a7774c970924fd3fe5fc7006da0e4d4a",
+    "observedVersion": "0.3.74",
+    "requiredPushRuns": 9,
+    "passed": 8,
+    "failed": 1,
+    "failedWorkflow": "Tavi browser UI QA",
+    "failedRun": "https://github.com/TheBigTreeInc/social/actions/runs/39465216427",
+    "failure": "Obsolete '.tavi-discovered-mini' Home selector at desktop, 390px and 320px; zero JS exceptions in uploaded QA artifact",
+    "historicalReleaseAlreadyPublished": "https://github.com/TheBigTreeInc/social/releases/tag/v0.3.74",
+    "newSourceVersionPushed": false,
+    "note": "The 0.3.76 release-gate change only applies to a future reviewed push. It cannot retroactively change the immutable v0.3.74 release."
+  },
+  "operatorAcceptance": "pending",
+  "releasePublishedForThisVersion": false
+}

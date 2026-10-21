@@ -1,0 +1,88 @@
+= Tavi 0.3.75: Unified UI Foundation and Native Client QA
+:toc: left
+:sectnums:
+
+== Purpose and evidence boundaries
+
+Tavi is a *messenger first*; optional extensions and social games must never displace Home or block a return to chats.
+This document specifies the staged UI modernization requested after review of the 2026-10-20 screen recording. It uses the operator's most recent ZipRunner QA snapshot (2026-10-20 18:22:47 UTC) as the Work board authority, not as evidence of client/device success.
+
+At collection, that snapshot included *116 tickets*: *60 Review, 38 Planned, 16 Deferred, 2 Suggested, 0 Done*. Every ID, status, priority, operator check and available acceptance criterion is preserved in `.ziprunner-workboard-update.json`. The exported source workboard is additive: two new implementation-review tickets do not close existing tasks. The latest candidate before this pass was 0.3.74 SHA-256 `45b901c581b2bcbf70dec289424b0ecc624c3063d6bc6bd643786b442ef73264`; fresh post-update checks for those bytes were not verified in the operator snapshot. ZipRunner reported `not_github` for commit `2ef64c34a7774c970924fd3fe5fc7006da0e4a`; do not infer exact-commit CI or release acceptance.
+
+== Diagnosis
+
+* UI templates, event registration and business state all live predominantly in `client/src/main.js`, making changes to one surface prone to regressions on another.
+* The light forest-green and dark forest-green palettes were coded as many screen-specific overrides. Changing colors for a component often left its other states unchanged (focus, inputs, dialogs, extensions).
+* Focused views and Home did not have a single host-toolbar rendering contract. Earlier tests still referenced Home controls removed in 0.3.73/0.3.74.
+* Existing test infrastructure starts *headless Chromium* from a synthetic fixture and does not verify the WebView2 instance ZipRunner actually launches. Browser tests remain useful, but native-client acceptance is a separate fact.
+* Tavi uses host-owned iframe sandboxing for Atrium. Optional publisher themes must not grant access to the host DOM, credentials or navigation controls.
+
+== Delivered in 0.3.75: bounded foundation, not completed modernization
+
+=== Semantic host tokens
+
+`client/src/ui/design-tokens.css` defines shared design tokens for backgrounds, raised panels, foregrounds, muted text, accent, borders, focus ring, controls, compact density and touch targets. Both themes define the *same* variables. First adopters: Home/Contacts roster, focused navigation toolbar, app launcher, Settings, dialog surfaces and utility forms. The old global selectors are still present for migration compatibility and must be removed incrementally only after visual acceptance.
+
+Tokens are intentionally scoped to the Tavi host. They are *not* injected into a remote extension iframe or treated as an extension permission.
+
+=== Shared navigation rendering
+
+`client/src/ui/shell.js` generates host-owned focused navigation with HTML escaping and an allowlist of navigation actions. Both Messages and focused utility screens call the same function. Home's recognizable compact buddy list and three-button bottom dock are preserved; native Windows conversation windows stay separate.
+
+=== Browser fixture regression maintenance
+
+`client/tools/ui-qa.mjs` now checks the *absence* of the duplicate Home Games box, while verifying discovery in Games. Its old extension toolbar Home selector is replaced by the shared host Back/Home control. Adds 355px compact Windows and 768px tablet fixture viewports to existing 320px/390px mobile and desktop coverage. This is still browser fixture testing, *not* native WebView2 evidence.
+
+=== Native WebView2 probe (explicit, read-only)
+
+`client/tools/native-ui-qa.mjs` connects via Playwright CDP to an *existing Tauri Windows WebView2* target started with a temporary local debugging port. It checks Home -> Apps -> App Store -> Home, horizontal overflow, theme identity and uncaught page errors. This probe does not send messages, install extensions, change accounts or visit a production server. Screenshots are disabled unless explicitly enabled, as messenger windows can contain private data. It refuses to run without `TAVI_NATIVE_QA_DISPOSABLE=1`. Missing WebView, missing debug port, missing sign-in or unavailable Playwright must emit a `blocked` report rather than `passed`.
+
+The regular `tools/launch-tavi.mjs` used by ZipRunner also enables the temporary WebView2 debug port *only when both* `TAVI_NATIVE_QA_DISPOSABLE=1` and a valid `TAVI_NATIVE_QA_CDP_PORT` are present in its environment *before* Tavi is started. With no opt-in, production launch remains unchanged. The launcher `client/tools/START-NATIVE-UI-QA.ps1` is explicitly opt-in. It requires the reviewed QA executable and a human confirmation that only a disposable QA account/server will be used. The launcher sets `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` for the process it starts. Native WebView2 remote debugging is developer-only and must not be enabled for ordinary user launches. Never expose its port to other hosts.
+
+Sample Windows QA session, from the project root after an operator-reviewed Windows build and closed production Tavi instance:
+
+[source,powershell]
+----
+powershell -ExecutionPolicy Bypass -File client/tools/START-NATIVE-UI-QA.ps1 -TaviExe 'C:\path\to\the\QA\tavi.exe' -CdpPort 9238
+# In the QA Tavi session, sign in with disposable QA credentials only.
+# In a second project terminal:
+$env:TAVI_NATIVE_QA_DISPOSABLE = '1'
+$env:TAVI_NATIVE_QA_CDP_PORT = '9238'
+npm --prefix client run ui:native
+----
+
+The result is `client/native-qa-artifacts/report.json`, status `passed`, `failed`, or `blocked`. Absence of a report for the newly built executable does *not* prove native behavior. Screenshots require explicit `TAVI_NATIVE_QA_CAPTURE=1` and must never be attached to public CI for real accounts.
+
+== Implementation roadmap and order
+
+[cols="1,2,4,3",options="header"]
+|===
+|Order |Workboard |Implementation |Acceptance
+|0 |TAVI-QA-047 |Reconcile GitHub exact-SHA workflow ingestion and exact ZIP evidence in ZipRunner. |The same SHA and ZIP checksum are linked to individual runs; no stale green state.
+|1 |TAVI-UI-FOUNDATION-075, TAVI-UI-THEMES-077 |Finish tokenization, visual specification, standardized form controls, menus, status, dialogs, roster density. Evaluate Lit against current bundle size and native WebView; migrate one component at a time, no large rewrite. |One green design language in light/dark on 320, 355, 390, 768 and 1366 widths. Keyboard focus and contrast reviewed.
+|2 |TAVI-UI-NAVIGATION-076, TAVI-UI-SHELL-074 |Single host state/Back/Escape/Android Back policy, restore scroll/draft, never trap the user in a utility panel. Preserve independent Windows conversations. |Home -> Messages -> Apps -> App Store -> Atrium -> Home repeatable with one host-owned Back action.
+|3 |TAVI-UI-EXTENSION-078 |Standardize extension safe-area, loading, error, updates and optional publisher theme metadata without host DOM access. |Exactly one Tavi Home control, Atrium return suppressed only via verified `host.info` response; iframe remains `allow-scripts` only.
+|4 |TAVI-UI-VISUAL-QA-079 and new QA foundation probe |Automated screenshots from synthetic browser fixtures and opt-in native Windows QA, then Android ADB/UIAutomator device harness. Start this *alongside* design-system work. |Report per viewport, flow and theme; exact built executable/commit recorded; sensitive screens never uploaded automatically.
+|5 |Existing TAVI-UX, SCL-010, LRS-004 tasks |Work through prior operator review criteria and platform acceptance without changing status on unit tests alone. |Operator signs off individually.
+|===
+
+== Framework decision: Lit evaluation, not yet a committed dependency
+
+Lit is an appropriate candidate for isolated host Web Components; current Tavi is framework-free string-template UI with vanilla JavaScript and Tauri. A full adoption *before* measuring the native Windows WebView and Android load/bundle costs would increase risk. The next vertical slice should prototype a reusable Lit `tavi-toolbar` or `tavi-contact-row` behind the existing templates. Compare it with a lightweight native custom element for bundle size, focus/keyboard events, preserved data scope, and render latency. Choose Lit only after reproducible results. This pass adds *no new runtime library dependency* and does not grant any new capabilities to extensions.
+
+== Existing acceptance conflicts: retain, do not overwrite
+
+Older tasks `SCL-019` and `TAVI-UX-055` still demand roster search, an action toolbar and `My Games`, while newer operator design explicitly removed those controls in 0.3.73. `TAVI-UX-ROSTER-072`'s legacy description also mentions preserving search. Keep original acceptance criteria intact in the workboard; request operator reconciliation on the UI specification before closing them. Recreating obsolete controls to satisfy old tests would be a regression.
+
+== Required QA and blocked items
+
+* Windows: confirm the actual 0.3.75 Tauri executable launches at compact 355 x 630, with separate chat windows and no duplicate title/navigation. Use temporary, operator-approved CDP only in a disposable QA session.
+* Android: test APK signing/installation, status-bar insets, touch controls, dark theme, OS Back and return from embedded Atrium. The Windows probe does not cover Android.
+* CI: verify exact commit push workflow URLs before calling the build green. Native test and source test are not interchangeable.
+* Browser: run the local fixture UI suite and inspect artifact report/screenshots. If dependencies cannot install, mark as blocked.
+* Security: no bearer or authenticated chat payload in logs/screenshots, and no external iframe elevated rights.
+* Source package: preserve LoopRD Social server 0.3.58 and database schema 10; this release is client-side source/UI + QA only. No server descriptor deployment, key rotation, Git push or release publishing.
+
+== Completion condition
+
+0.3.75 is a *source candidate* in Review. A successful Node/Python test suite is not proof of visual quality or operator acceptance. The first UI foundation and native QA entrypoint exist, but Lit prototype, full design-system migration and physical Windows/Android acceptance remain unfinished.

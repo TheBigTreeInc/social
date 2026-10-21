@@ -1,0 +1,160 @@
+/* Tavi UI foundations v1 — host-owned semantic tokens.
+   Installed extensions run in isolated frames and do NOT inherit host tokens.
+   Avoid promoting these implementation-specific values into SDK permissions. */
+:root {
+  --tavi-color-background: #e7f3e8;
+  --tavi-color-surface: #fcfdf8;
+  --tavi-color-surface-raised: #f2f9f0;
+  --tavi-color-surface-muted: #dceee0;
+  --tavi-color-text: #213e30;
+  --tavi-color-text-muted: #53725e;
+  --tavi-color-accent: #2d7755;
+  --tavi-color-accent-hover: #1f6447;
+  --tavi-color-accent-contrast: #ffffff;
+  --tavi-color-border: #afcdb7;
+  --tavi-color-focus: #155ec1;
+  --tavi-color-field: #ffffff;
+  --tavi-color-positive: #286d48;
+  --tavi-color-warning: #75520f;
+  --tavi-color-warning-surface: #fff4cf;
+  --tavi-space-1: 4px;
+  --tavi-space-2: 8px;
+  --tavi-space-3: 12px;
+  --tavi-space-4: 16px;
+  --tavi-radius-control: 8px;
+  --tavi-radius-surface: 12px;
+  --tavi-hit-target: 34px;
+  --tavi-hit-target-touch: 44px;
+  --tavi-density-row: 30px;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --tavi-color-background: #0f201a;
+  --tavi-color-surface: #162d24;
+  --tavi-color-surface-raised: #1b382c;
+  --tavi-color-surface-muted: #244838;
+  --tavi-color-text: #e1f5e9;
+  --tavi-color-text-muted: #aecdbb;
+  --tavi-color-accent: #87cfa6;
+  --tavi-color-accent-hover: #a9e1bf;
+  --tavi-color-accent-contrast: #0b2419;
+  --tavi-color-border: #476b58;
+  --tavi-color-focus: #acd2ff;
+  --tavi-color-field: #11271d;
+  --tavi-color-positive: #93d7ab;
+  --tavi-color-warning: #f2d89a;
+  --tavi-color-warning-surface: #483817;
+}
+/* Shared semantics: extend these classes during the Lit migration instead of
+   adding a new per-screen palette. Host navigation and dialogs use one scale. */
+.tavi-single-workspace,
+.tavi-classic-home,
+.tavi-contact-focus,
+.tavi-utility-focus {
+  color: var(--tavi-color-text);
+  background: var(--tavi-color-background);
+}
+.tavi-classic-home>.tavi-home-roster,
+.tavi-contact-focus>.roster-window,
+.tavi-utility-focus>.auxiliary-window {
+  background: var(--tavi-color-surface);
+  color: var(--tavi-color-text);
+}
+.tavi-focus-toolbar,
+.tavi-contact-focus .tavi-focus-toolbar,
+.tavi-utility-focus .tavi-focus-toolbar {
+  background: var(--tavi-color-surface-raised);
+  color: var(--tavi-color-text);
+  border-bottom: 1px solid var(--tavi-color-border);
+  gap: var(--tavi-space-2);
+  min-height: 42px;
+  padding: var(--tavi-space-2) var(--tavi-space-3);
+}
+.tavi-shell-bar__back {
+  flex: 0 0 auto;
+  min-height: var(--tavi-hit-target);
+  background: var(--tavi-color-surface);
+  color: var(--tavi-color-text);
+  border: 1px solid var(--tavi-color-border);
+  border-radius: var(--tavi-radius-control);
+  padding: 4px 11px;
+}
+.tavi-shell-bar__title {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tavi-color-text);}
+.tavi-shell-bar__back:focus-visible,
+.tavi-shell-bar button:focus-visible,
+.tavi-classic-home .buddy:focus-visible,
+.tavi-menu-grid button:focus-visible {
+  outline: 2px solid var(--tavi-color-focus);
+  outline-offset: 2px;
+}
+.tavi-classic-home .roster-scroll,
+.tavi-contact-focus .roster-scroll,
+.tavi-utility-focus .aux-content,
+.tavi-menu-panel {background:var(--tavi-color-surface);color:var(--tavi-color-text);}
+.tavi-classic-home .tavi-roster-merged>.group-title,
+.tavi-contact-focus .tavi-roster-merged>.group-title {
+  background:var(--tavi-color-surface-muted);
+  border-bottom:1px solid var(--tavi-color-border);
+  color:var(--tavi-color-text);
+}
+.tavi-roster-compact-label,
+.tavi-roster-compact-empty,
+.tavi-launcher-hint,
+.tavi-launcher-count {color:var(--tavi-color-text-muted);}
+.tavi-classic-home .tavi-roster-merged .buddy,
+.tavi-contact-focus .tavi-roster-merged .buddy {min-height:var(--tavi-density-row);}
+.tavi-classic-home .tavi-roster-merged .buddy-copy strong,
+.tavi-contact-focus .tavi-roster-merged .buddy-copy strong {color:var(--tavi-color-text);}
+.tavi-menu-panel .tavi-launcher-header h2,
+.tavi-menu-panel .tavi-app-caption,
+.tavi-utility-focus .utility h2 {color:var(--tavi-color-text);}
+.tavi-utility-focus .utility .fineprint,
+.tavi-utility-focus .utility>p {color:var(--tavi-color-text-muted);}
+.tavi-utility-focus .utility input:not([type=checkbox]),
+.tavi-utility-focus .utility textarea,
+.tavi-utility-focus .utility select {
+  background:var(--tavi-color-field);
+  color:var(--tavi-color-text);
+  border:1px solid var(--tavi-color-border);
+}
+.tavi-utility-focus .settings-theme,
+.tavi-utility-focus .dev-toggle {
+  background:var(--tavi-color-surface-raised);
+  color:var(--tavi-color-text);
+  border:1px solid var(--tavi-color-border);
+  border-radius:var(--tavi-radius-control);
+}
+.tavi-utility-focus .settings-theme h3 {color:var(--tavi-color-text);}
+.tavi-utility-focus .theme-toggle button {color:var(--tavi-color-text);background:var(--tavi-color-surface);border-color:var(--tavi-color-border);}
+.tavi-utility-focus .theme-toggle button.selected {background:var(--tavi-color-accent);color:var(--tavi-color-accent-contrast);border-color:var(--tavi-color-accent);}
+.tavi-install-dialog,.tavi-diagnostic-dialog {
+  background:var(--tavi-color-surface);color:var(--tavi-color-text);border-color:var(--tavi-color-border);
+}
+.tavi-install-warning {background:var(--tavi-color-surface-muted);border-left-color:var(--tavi-color-accent);}
+.tavi-diagnostic-dialog textarea {background:var(--tavi-color-field);color:var(--tavi-color-text);border-color:var(--tavi-color-border);}
+.tavi-utility-focus .tavi-update-summary,
+.tavi-utility-focus .tavi-store-item {background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);border-color:var(--tavi-color-border);}
+/* High-contrast themes without separate manually maintained dark-only pages. */
+:root[data-theme='dark'] .tavi-classic-home .buddy:hover,
+:root[data-theme='dark'] .tavi-contact-focus .buddy:hover {background:var(--tavi-color-surface-muted);border-color:var(--tavi-color-border);}
+:root[data-theme='dark'] .tavi-classic-home .window-status,
+:root[data-theme='dark'] .tavi-contact-focus .window-status {background:var(--tavi-color-surface-raised);color:var(--tavi-color-text-muted);border-color:var(--tavi-color-border);}
+:root[data-theme='dark'] .tavi-classic-home .menubar,
+:root[data-theme='dark'] .tavi-contact-focus .menubar {background:var(--tavi-color-surface);border-color:var(--tavi-color-border);}
+:root[data-theme='dark'] .tavi-utility-focus .tavi-app-tile,
+:root[data-theme='dark'] .tavi-utility-focus .tavi-app-caption {color:var(--tavi-color-text);}
+@media (pointer:coarse){.tavi-shell-bar__back {min-height:var(--tavi-hit-target-touch);}}
+@media (prefers-reduced-motion:reduce){.tavi-shell-bar *, .tavi-menu-panel * {transition:none!important;}}
+
+/* 0.3.76 accessibility: compact mouse rows, full-size mobile touch targets.
+   Preserve the single unified roster; do not reintroduce a search/action strip. */
+@media (pointer:coarse) {
+ .tavi-classic-home .tavi-roster-merged .buddy,
+ .tavi-contact-focus .tavi-roster-merged .buddy {min-height:var(--tavi-hit-target-touch);padding-block:5px;}
+ .tavi-classic-home .tavi-roster-merged .buddy-copy strong,
+ .tavi-contact-focus .tavi-roster-merged .buddy-copy strong {font-size:12px;}
+ .tavi-classic-home .tavi-roster-merged>.group-title,
+ .tavi-contact-focus .tavi-roster-merged>.group-title {min-height:var(--tavi-hit-target-touch);}
+ .tavi-classic-home .menubar .menu-drop summary,
+ .tavi-contact-focus .menubar .menu-drop summary {min-height:var(--tavi-hit-target-touch);display:flex;align-items:center;}
+}

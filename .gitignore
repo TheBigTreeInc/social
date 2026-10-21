@@ -16,3 +16,6 @@ client/src-tauri/gen/
 client/node_modules/
 
 .venv/
+
+client/qa-artifacts/
+client/native-qa-artifacts/

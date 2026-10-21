@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.74",
-    "base_version": "0.3.73"
+    "version": "0.3.77",
+    "base_version": "0.3.75"
   },
   "update": {
-    "id": "TAVI-20261020-VIDEO-UI-CONSISTENCY-0374",
+    "id": "TAVI-20261020-ZR-WORKBOARD-METADATA-REPAIR-0377",
     "kind": "source_update",
-    "created_at": "2026-10-20T19:02:27+02:00",
-    "summary": "Minor Tavi frontend-only video QA repair: exclusive menus, unified roster and no second extension Home. Full Lit/CSS-token UI roadmap in AsciiDoc; no LoopRD schema/deployment changes."
+    "created_at": "2026-10-20T20:32:00+02:00",
+    "summary": "0.3.76 source retained; correct pre-overlay ZipRunner workboard summary metadata and add preflight regression. Uses installed 0.3.75 as base; no server schema or runtime config changes."
   },
   "planned_work": [
     {
@@ -483,6 +483,41 @@
       "priority": "high",
       "status": "planned",
       "acceptance_criteria": "Replay File/Contacts/Actions/Tools/Help, Home/Messages, Atrium, Games and Companion flows.; Browser screenshots at 320/355/390/768/1024 and user-tested Windows and Android keyboard/touch flows.; Review theme, presence counts, protected account/session, navigation and extension sandbox before operator Done."
+    },
+    {
+      "id": "TAVI-UI-FOUNDATION-075A",
+      "title": "Initial semantic host design tokens and shared focus toolbar",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Check light/dark forest-green parity for Home, Messages, Settings, App Store, installation dialogs and focused views at 320/355/390/768/1366px.; Verify one host-owned toolbar with escaped title and allowlisted actions, and the original messenger-first Home and native chat isolation.; Run exact source/ZIP checks and obtain operator Windows/Android visual acceptance before Done."
+    },
+    {
+      "id": "TAVI-UI-NATIVE-QA-075A",
+      "title": "Opt-in real Windows WebView2 UI QA attachment and safe evidence",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "From ZipRunner launched QA Tavi enable WEBVIEW2 debugging only with explicit disposable QA opt-in and loopback port.; Connect native QA to actual Tauri window, verify Home -> Apps -> App Store -> Home, overflow and theme, and report pass/fail/blocked accurately.; Never copy chat contents, usernames, URLs, tokens or real-user screenshots; opt-in screenshots only from disposable QA accounts.; Expand to Android via ADB/UIAutomator and physical operator acceptance before Done."
+    },
+    {
+      "id": "TAVI-CI-RELEASE-076A",
+      "title": "Require exact-commit browser UI QA before GitHub release",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Run source tests for tools/release-gate.py and GitHub Actions workflow trigger list; browser UI QA must be mandatory for future release gating.; After an operator-approved push of 0.3.76, verify the exact commit SHA UI workflow succeeds; a failed or missing UI workflow must block release.; Use public GitHub exact-SHA evidence to reconcile ZipRunner not_github separately without claiming source ZIP is pushed or accepted.; Do not modify published v0.3.74 tag/release; no auto-push or automatic operator approval."
+    },
+    {
+      "id": "TAVI-UI-TOUCH-076A",
+      "title": "Responsive 44px contact targets and live native QA menu checks",
+      "priority": "medium",
+      "status": "review",
+      "acceptance_criteria": "Synthetic browser fixture validates 44px+ buddy and group touch targets on 320px and 390px mobile, with no duplicate games/search/action toolbar.; Operator tests 0.3.76 on real Android and compact Windows, including light/dark green, Home/Back, and contact touch behavior.; Disposable Windows native WebView2 QA verifies menus close on switch and Escape; ordinary sessions never expose debug port.; No unrelated LoopRD descriptor, personal data, extension security or account state changes; operator acceptance before Done."
+    },
+    {
+      "id": "engineering-review-looprd_handler-49609733",
+      "title": "Validate ZipRunner workboard summaries before packaging",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "All 121 candidate ticket rows have valid nonempty summary (max 2000).; Preserve 118 QA tickets and two 0.3.76 additions.; 0.3.77 ZipRunner metadata stage accepts before overlay; operator native review pending."
     }
   ],
   "done_work": [
@@ -1524,10 +1559,35 @@
     {
       "id": "TAVI-UI-VISUAL-QA-079",
       "reason": "Planned follow-up. No implementation or real-device acceptance claimed in 0.3.74."
+    },
+    {
+      "id": "TAVI-UI-FOUNDATION-075A",
+      "status": "review",
+      "reason": "Source implementation candidate; physical Windows/Android tests, exact-commit CI and explicit operator acceptance not yet verified.",
+      "next_action": "Install 0.3.75 Windows client from ZipRunner and compare the light/dark themes with 0.3.74.; Navigate Home, Messages, Games, App Store and Atrium at 355px; check Back always returns to Home and no duplicate toolbar.; Verify updated ZIP checksum and exact push-SHA GitHub workflows; no automatic approval."
+    },
+    {
+      "id": "TAVI-UI-NATIVE-QA-075A",
+      "status": "review",
+      "reason": "Source implementation candidate; physical Windows/Android tests, exact-commit CI and explicit operator acceptance not yet verified.",
+      "next_action": "Review CDP security and disposable-account requirements; test absent/incorrect port returns blocked not passed.; Set approved ZipRunner process environment for temporary native QA, start real Windows Tavi, run npm --prefix client run ui:native, inspect sanitized report.json.; Confirm ordinary ZipRunner launches do not expose a WebView2 debugging port; verify physical Windows and Android acceptance independently."
+    },
+    {
+      "id": "TAVI-CI-RELEASE-076A",
+      "reason": "Operator Windows/Android and exact-commit post-push release-gate acceptance outstanding; source tests alone do not close."
+    },
+    {
+      "id": "TAVI-UI-TOUCH-076A",
+      "reason": "Operator Windows/Android and exact-commit post-push release-gate acceptance outstanding; source tests alone do not close."
+    },
+    {
+      "id": "engineering-review-looprd_handler-49609733",
+      "status": "review",
+      "reason": "Source-only metadata and regression fixes; awaiting actual ZipRunner import and operator acceptance."
     }
   ],
   "validation": {
-    "model_reported": "partial",
+    "model_reported": "partial_source_candidate",
     "checks": [
       {
         "id": "TAVI-CHAT-002-PY",
@@ -1733,11 +1793,24 @@
         "command": "npm run verify && python -m unittest discover -s tests -p test_*.py -q && python tools/generate-looprd.py --check",
         "environment": "Author Linux environment; browser npm dependencies unavailable",
         "evidence_ref": "ZIPRUNNER_HANDOFF_ATRIUM_0363.md"
+      },
+      {
+        "id": "TAVI-075-SOURCE",
+        "description": "Tests for shared tokens/toolbar and guarded optional native QA harness",
+        "status": "pending_final_zip_verification",
+        "command": "node --test client/tests/ui-foundation-075.test.mjs",
+        "environment": "Linux Node 22"
+      },
+      {
+        "id": "TAVI-075-NATIVE",
+        "description": "Operator-owned QA on actual Windows WebView2, not synthetic browser",
+        "status": "not_run",
+        "reason": "Requires Windows ZipRunner and explicitly disposable QA session"
       }
     ]
   },
   "handover": {
-    "next_pass": "Push reviewed 0.3.64 source only after approval; require exact SHA Windows and browser UI QA green, check Android and other CI jobs; separately fix ZipRunner not_github Actions ingestion under TAVI-QA-047. Triage existing Android update TAVI-UPDATES-003 with sanitized device evidence. TAVI-ATRIUM-056 real discovery remains Review. Preserve 100-ticket workboard.",
+    "next_pass": "Import corrected 0.3.77 source ZIP on the currently installed 0.3.75 base; verify workboard and actual build, then confirm 0.3.76 CI gate source and native QA separately. No Git push/release implied.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -1760,7 +1833,10 @@
       "Floating Windows pet tested by source fixtures but physical Windows, multi-monitor, fullscreen and Tauri transparent behavior not established; keep operator acceptance open.",
       "Tavi 0.3.63 Windows source test failed because Git CRLF changed SHA-pinned Notepad HTML size; 0.3.64 adds exact LF attributes but must be proven on Windows runner.",
       "Tavi 0.3.63 Playwright UI QA targeted hidden Games menu button; 0.3.64 selects visible dock; fresh GitHub browser test required.",
-      "Android updater chooser/install failure is operator-reported (ZRB-9297228324E24D42) without screenshot/log; no fix is claimed."
+      "Android updater chooser/install failure is operator-reported (ZRB-9297228324E24D42) without screenshot/log; no fix is claimed.",
+      "Never enable WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS remote debugging on ordinary Tavi; native QA requires explicitly disposable account and loopback port.",
+      "Historical v0.3.74 GitHub Release was published despite a failed browser UI QA; release gate in that historical commit omitted UI QA. 0.3.76 fixes future gate only, does not rewrite existing immutable release. New exact-SHA checks must be validated on operator-approved push.",
+      "Latest local operator board has 118 tickets and reported not_github; independent public GitHub observation identified 8/9 exact-push checks passing, one UI QA failure on 0.3.74. The collector itself is not modified by this Tavi package."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -1774,7 +1850,8 @@
     "notes": [
       "Client-side resume logic and minimal login UI only; Social database schema 6 unchanged.",
       "Neither the build scripts nor the ZIP push Git or alter local runtime/private state.",
-      "New Social schema 7 is additive, requires backup/migration and operator approval; no automatic Git push."
+      "New Social schema 7 is additive, requires backup/migration and operator approval; no automatic Git push.",
+      "Exact 0.3.74 release and CI observed independently through GitHub; source 0.3.76 tests do not imply a new GitHub release."
     ]
   },
   "operator_actions": [
@@ -1837,11 +1914,16 @@
       "id": "TAVI-UPDATES-003-TRIAGE",
       "description": "Review ZRB-9297228324E24D42 using Export QA + bug screenshots and sanitized Android installer Logcat; confirm Android update reproduction before code change. Preserve existing Review status.",
       "status": "required"
+    },
+    {
+      "id": "TAVI-075-NATIVE-OP",
+      "description": "Use approved disposable QA account: start ZipRunner Windows client with TAVI_NATIVE_QA_DISPOSABLE=1 and TAVI_NATIVE_QA_CDP_PORT before launch, then run npm --prefix client run ui:native. Inspect local report; no production screenshots.",
+      "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Client 0.3.64, Social server remains 0.3.58/schema 10. Pure client QA/checkout repair; all CI and device tests require new exact-SHA rerun and operator acceptance. No auto publish."
+    "notes": "Source candidate 0.3.76. Existing immutable GitHub release v0.3.74 does exist but had failing UI QA. Eight-workflow future release gate is source-only until next approved push; native Windows/Android acceptance pending. Social server remains 0.3.58/schema 10. No new release/push performed."
   }
 }

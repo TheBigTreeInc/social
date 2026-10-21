@@ -47,7 +47,7 @@ test('Atrium extension has one host Home route, plus contextual App Store link, 
  assert.match(extension,/class="tavi-extension-toolbar"/);
  assert.match(extension,/data-action="app-store"/);
  assert.doesNotMatch(extension,/data-action="home"/);
- assert.match(dashboard,/data-action="minimize-view">← Home/);
+ assert.match(dashboard,/hostToolbar\(/);
  assert.match(extension,/id="tavi-extension-surface"/);
  assert.match(main,/frame\.setAttribute\('sandbox','allow-scripts'\)/);
 });

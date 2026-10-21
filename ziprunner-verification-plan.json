@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.74",
+  "version": "0.3.77",
   "tasks": [
     {
       "id": "TAVI-EXT-UPDATES-072",
@@ -1126,6 +1126,96 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-UI-FOUNDATION-075A",
+      "criteria": [
+        {
+          "id": "TAVI-UI-FOUNDATION-075A-SOURCE",
+          "description": "Source candidate: light/dark host token palette across first adopter surfaces and a safe reusable host Back/Home bar; no Lit dependency yet. Operator-native visual acceptance remains.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/ui-foundation-075.test.mjs"
+          ]
+        },
+        {
+          "id": "TAVI-UI-FOUNDATION-075A-NATIVE",
+          "description": "Install 0.3.75 Windows client from ZipRunner and compare the light/dark themes with 0.3.74.; Navigate Home, Messages, Games, App Store and Atrium at 355px; check Back always returns to Home and no duplicate toolbar.; Verify updated ZIP checksum and exact push-SHA GitHub workflows; no automatic approval.",
+          "mode": "manual",
+          "checks": [
+            "npm --prefix client run ui:native",
+            "TAVI-075-WINDOWS-ANDROID-OPERATOR-ACCEPTANCE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-UI-NATIVE-QA-075A",
+      "criteria": [
+        {
+          "id": "TAVI-UI-NATIVE-QA-075A-SOURCE",
+          "description": "Source candidate: attach through explicitly opted-in WebView2 CDP port to a disposable Windows Tavi QA process, navigate host screens and write a sanitized JSON report. Device not available in author environment; blocked is not passed.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/ui-foundation-075.test.mjs"
+          ]
+        },
+        {
+          "id": "TAVI-UI-NATIVE-QA-075A-NATIVE",
+          "description": "Review CDP security and disposable-account requirements; test absent/incorrect port returns blocked not passed.; Set approved ZipRunner process environment for temporary native QA, start real Windows Tavi, run npm --prefix client run ui:native, inspect sanitized report.json.; Confirm ordinary ZipRunner launches do not expose a WebView2 debugging port; verify physical Windows and Android acceptance independently.",
+          "mode": "manual",
+          "checks": [
+            "npm --prefix client run ui:native",
+            "TAVI-075-WINDOWS-ANDROID-OPERATOR-ACCEPTANCE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-CI-RELEASE-076A",
+      "criteria": [
+        {
+          "id": "TAVI-CI-RELEASE-076A-SOURCE",
+          "description": "Source changes to GitHub release workflow, eight-workflow gate, read-only evidence collection and regression tests; only future releases are protected.",
+          "mode": "automated",
+          "checks": [
+            "python -m unittest discover -s tests -p test_release_gate.py -q",
+            "node --test client/tests/ci-evidence-076.test.mjs client/tests/ui-qa-next-pass-076.test.mjs"
+          ]
+        },
+        {
+          "id": "TAVI-CI-RELEASE-076A-OPERATOR",
+          "description": "Run source tests for tools/release-gate.py and GitHub Actions workflow trigger list; browser UI QA must be mandatory for future release gating.; After an operator-approved push of 0.3.77, verify the exact commit SHA UI workflow succeeds; a failed or missing UI workflow must block release.; Use public GitHub exact-SHA evidence to reconcile ZipRunner not_github separately without claiming source ZIP is pushed or accepted.; Do not modify published v0.3.74 tag/release; no auto-push or automatic operator approval.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-076-EXACT-SHA-CI-OPERATOR-ACCEPTANCE",
+            "TAVI-076-WINDOWS-ANDROID-NATIVE-ACCEPTANCE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-UI-TOUCH-076A",
+      "criteria": [
+        {
+          "id": "TAVI-UI-TOUCH-076A-SOURCE",
+          "description": "Coarse-pointer token CSS, browser fixture assertions and opt-in native WebView2 menu checks; no device acceptance claimed.",
+          "mode": "automated",
+          "checks": [
+            "python -m unittest discover -s tests -p test_release_gate.py -q",
+            "node --test client/tests/ci-evidence-076.test.mjs client/tests/ui-qa-next-pass-076.test.mjs"
+          ]
+        },
+        {
+          "id": "TAVI-UI-TOUCH-076A-OPERATOR",
+          "description": "Synthetic browser fixture validates 44px+ buddy and group touch targets on 320px and 390px mobile, with no duplicate games/search/action toolbar.; Operator tests 0.3.77 on real Android and compact Windows, including light/dark green, Home/Back, and contact touch behavior.; Disposable Windows native WebView2 QA verifies menus close on switch and Escape; ordinary sessions never expose debug port.; No unrelated LoopRD descriptor, personal data, extension security or account state changes; operator acceptance before Done.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-076-EXACT-SHA-CI-OPERATOR-ACCEPTANCE",
+            "TAVI-076-WINDOWS-ANDROID-NATIVE-ACCEPTANCE"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -1782,6 +1872,30 @@
       "stage": "acceptance",
       "description": "Windows, Android, Web acceptance of shared shell repair",
       "instructions": "Replay video menu and navigation steps at 355x630/911, 320/390, with real Windows/Android. Require operator approval; source green is not device acceptance."
+    },
+    {
+      "id": "TAVI-CI-RELEASE-076A-SOURCE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Require exact-commit browser UI QA before GitHub release source regression",
+      "runner_ref": "tavi-ci-ui-076",
+      "assertions": [
+        "Run source tests for tools/release-gate.py and GitHub Actions workflow trigger list; browser UI QA must be mandatory for future release gating.",
+        "After an operator-approved push of 0.3.77, verify the exact commit SHA UI workflow succeeds; a failed or missing UI workflow must block release."
+      ],
+      "test_ref": "client/tests/ci-evidence-076.test.mjs"
+    },
+    {
+      "id": "TAVI-UI-TOUCH-076A-SOURCE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Responsive 44px contact targets and live native QA menu checks source regression",
+      "runner_ref": "tavi-ci-ui-076",
+      "assertions": [
+        "Synthetic browser fixture validates 44px+ buddy and group touch targets on 320px and 390px mobile, with no duplicate games/search/action toolbar.",
+        "Operator tests 0.3.77 on real Android and compact Windows, including light/dark green, Home/Back, and contact touch behavior."
+      ],
+      "test_ref": "client/tests/ui-qa-next-pass-076.test.mjs"
     }
   ]
 }

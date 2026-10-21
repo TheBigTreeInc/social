@@ -9,6 +9,8 @@ import {FIRST_PARTY_REPOSITORIES,createRepositorySubscriptions,fetchRepository,f
 import {atriumLauncher,reviewedAtriumBase} from './atrium-launch.js';
 import {menuApplications,appGlyph,extensionIconUrl} from './launcher.js';
 import './style.css';
+import './ui/design-tokens.css';
+import {hostToolbar} from './ui/shell.js';
 import {wireExclusiveMenus} from './ui/menu-controller.js';
 import {checkTaviRelease,RELEASES_URL} from './release-updates.js';
 import {LooprdSocial,discoverGames,discoverAtriumGames,discoverSocial,loginSocial,registerSocial,recoverSocial,componentPath,gameActivity,newTurnKeys} from './protocol.js';
@@ -35,7 +37,7 @@ import {petById} from './companions/catalog.js';
 import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
 import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
-const CLIENT_VERSION='0.3.74';
+const CLIENT_VERSION='0.3.77';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
@@ -434,10 +436,10 @@ function dashboard(){
  if(state.panel==='home')return `<div class="tavi-single-workspace">${homeScreen()}</div>`;
  const chatting=state.panel==='messenger';
  if(nativeDesktop&&chatting)return `<div class="desktop-workspace native-workspace">${contactPane()}</div>`;
- if(!nativeDesktop&&chatting&&state.mobileRoster)return `<div class="tavi-single-workspace tavi-contact-focus"><div class="tavi-focus-toolbar"><button type="button" data-action="minimize-view">← Home</button><strong>Messages</strong></div>${contactPane()}</div>`;
+ if(!nativeDesktop&&chatting&&state.mobileRoster)return `<div class="tavi-single-workspace tavi-contact-focus">${hostToolbar('Messages')}${contactPane()}</div>`;
  if(!nativeDesktop&&chatting)return `<div class="tavi-single-workspace tavi-chat-focus">${focusedConversation()}</div>`;
  const content=state.panel==='app-store'?appStorePanel():state.panel==='extension'?extensionPanel():state.panel==='menu'?mainMenu():state.panel==='add-friend'?addFriend():state.panel==='inbox'?inbox():state.panel==='games'?gameSettings():state.panel==='companion'?companion():state.panel==='portrait'?portrait():state.panel==='settings'?settings():developerPanel();
- return `<div class="tavi-single-workspace tavi-utility-focus"><section class="classic-window auxiliary-window"><div class="tavi-focus-toolbar"><button type="button" data-action="minimize-view">← Home</button><strong>${esc(({games:'Games',inbox:'Notifications',portrait:'Your portrait',settings:'Settings',companion:'My pet',developer:'Developer tools',menu:'Main menu','app-store':'App Store',extension:'Extension'})[state.panel]||'Tavi')}</strong></div><div class="aux-content">${content}</div></section></div>`;
+ return `<div class="tavi-single-workspace tavi-utility-focus"><section class="classic-window auxiliary-window">${hostToolbar(({games:'Games',inbox:'Notifications',portrait:'Your portrait',settings:'Settings',companion:'My pet',developer:'Developer tools',menu:'Main menu','app-store':'App Store',extension:'Extension'})[state.panel]||'Tavi')}<div class="aux-content">${content}</div></section></div>`;
 }
 // Native floating pet has no Social token or access to application APIs. The
 // authenticated main window mediates all care actions and account persistence.
