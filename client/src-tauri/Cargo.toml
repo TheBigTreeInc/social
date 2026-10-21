@@ -1,6 +1,6 @@
 [package]
 name = "looprd-social-client"
-version = "0.3.77"
+version = "0.3.78"
 description = "LoopRD-backed gaming social client"
 authors = ["TheBigTreeInc"]
 edition = "2021"

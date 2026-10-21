@@ -86,6 +86,8 @@ async function testViewport(browser,base,device){
   assert.equal(await page.locator('.games-strip, .tavi-discovered-mini, .roster-toolbar, .roster-search').count(),0,'No legacy Games strip, duplicate action toolbar or search in the messenger Home');
   if(device.mobile){
    stage='mobile touch targets';
+   const touch=await page.evaluate(()=>({touch:document.documentElement.dataset.touch,maxTouchPoints:navigator.maxTouchPoints}));
+   assert.equal(touch.touch,'true',`${device.name} touch input not recognized: ${JSON.stringify(touch)}`);
    const heights=await page.locator('.tavi-roster-merged .buddy').evaluateAll(els=>els.map(el=>Math.round(el.getBoundingClientRect().height)));
    assert(heights.length&&heights.every(height=>height>=44),`${device.name} buddy rows too small for touch: ${heights}`);
    const sectionHeight=await page.locator('.tavi-roster-merged>.group-title').evaluate(el=>Math.round(el.getBoundingClientRect().height));
@@ -108,7 +110,16 @@ async function testViewport(browser,base,device){
   await visible(page,'.tavi-store-item');
   assert.match(await page.locator('.tavi-store-item').first().innerText(),/Private Notepad/);
   await noOverflow(page,`${device.name} app store`);
-  stage='install extension';await page.locator('[data-extension-install="org.tavi.examples.notepad"]').click();
+  stage='review extension install';await page.locator('[data-extension-install="org.tavi.examples.notepad"]').click();
+  await visible(page,'.tavi-install-dialog[role="dialog"]');
+  assert.match(await page.locator('.tavi-install-dialog').innerText(),/Install Private Notepad\?/);
+  // Installation is never implicit: cancellation retains the uninstalled state.
+  stage='cancel extension install';await page.locator('[data-extension-install-cancel]').click();
+  await page.locator('.tavi-install-dialog').waitFor({state:'detached'});
+  assert.equal(await page.locator('[data-extension-open="org.tavi.examples.notepad"]').count(),0);
+  stage='approve extension install';await page.locator('[data-extension-install="org.tavi.examples.notepad"]').click();
+  await visible(page,'[data-extension-install-approve="org.tavi.examples.notepad"]');
+  await page.locator('[data-extension-install-approve="org.tavi.examples.notepad"]').click();
   await visible(page,'[data-extension-open="org.tavi.examples.notepad"]');
   stage='open extension';await page.locator('[data-extension-open="org.tavi.examples.notepad"]').click();
   await visible(page,'#tavi-extension-surface iframe[sandbox="allow-scripts"]');
@@ -117,8 +128,8 @@ async function testViewport(browser,base,device){
   await noOverflow(page,`${device.name} returned home`);
   assert.equal(errors.length,0,`${device.name} JavaScript errors: ${errors.join('; ')}`);
   if(process.env.TAVI_QA_CAPTURE==='1')await screenshot(page,`${device.name}-success`);
-  checks.push({device:device.name,result:'passed',stages:['login','home','life-discovered-in-games','life-nonplayable','life-withdrawn','main-menu','app-store','extension-install','extension-launch','return-home','viewport-overflow','mobile-touch-targets','javascript-errors']});
-  console.log(`PASS ${device.name}: sign-in, Life discover/withdraw, home, App Store, install/open extension, return home, viewport, script errors`);
+  checks.push({device:device.name,result:'passed',stages:['login','home','life-discovered-in-games','life-nonplayable','life-withdrawn','main-menu','app-store','extension-install-approval-and-cancel','extension-launch','return-home','viewport-overflow','mobile-touch-targets','javascript-errors']});
+  console.log(`PASS ${device.name}: sign-in, Life discover/withdraw, home, App Store, approve/open extension, return home, viewport, script errors`);
  }catch(error){
   const picture=await screenshot(page,`${device.name}-failure`);
   checks.push({device:device.name,result:'failed',stage,error:String(error?.message||error),screenshot:picture,scriptErrors:errors});

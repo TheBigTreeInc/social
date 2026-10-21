@@ -15,8 +15,9 @@ class WorkboardSummaryGateTests(unittest.TestCase):
     def test_all_shipped_workboard_items_have_ziprunner_valid_summaries(self):
         board=json.loads((ROOT/'.ziprunner-workboard-update.json').read_text(encoding='utf-8'))
         rows=board['implemented']+board['remaining']
-        self.assertEqual(board['version'],'0.3.77')
-        self.assertEqual(len(rows),121)
+        expected=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))['version']
+        self.assertEqual(board['version'],expected)
+        self.assertGreaterEqual(len(rows),121)
         self.assertEqual(len({row['id'] for row in rows}),len(rows))
         for row in rows:
             self.assertIsInstance(row.get('summary'),str,row['id'])

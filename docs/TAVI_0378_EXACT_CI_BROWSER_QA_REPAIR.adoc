@@ -1,0 +1,37 @@
+= Tavi 0.3.78: Exact-commit UI QA repair
+:toc:
+
+== Evidence and scope
+
+The operator's ZipRunner QA snapshot (2026-10-21 11:35 UTC) reported locally installed source version 0.3.77 and an unrecognized GitHub push SHA `4d78890f43e70474bc9497fc4b06f090d433e9db`. Public GitHub evidence showed exact-commit UI QA failure: https://github.com/TheBigTreeInc/social/actions/runs/39593041760[GitHub UI QA]. The uploaded `tavi-ui-qa-11` artifact contains `report.json` and five screenshots.
+
+|===
+|Target |CI result |Cause
+|Desktop, compact Windows (355) |Failed waiting for Notepad Open |Tavi requires a reviewable install dialog; QA skipped approval
+|Tablet 768, phone 390, phone 320 |Buddy row 30px |Compact roster selector won over touch sizing when the browser did not activate pointer-coarse styling
+|===
+
+The source/server build workflows are distinct from UI acceptance. The 0.3.77 package passed local ZipRunner build, but new GitHub release remains gated on successful exact-SHA UI QA.
+
+== Bounded implementation
+
+* `client/tools/ui-qa.mjs` now validates the Tavi-owned consent panel, tests Cancel without installation, and explicitly approves the same extension before asserting Open and sandboxed launch.
+* `client/src/main.js` marks the host with `data-touch=true` when touch hardware is detected using `navigator.maxTouchPoints` or `any-pointer: coarse`.
+* `client/src/ui/design-tokens.css` applies 44px minimum height for buddy, roster section and classic menu controls on touch hosts. Mouse-only compact Windows remains dense; a WebView does not need to report pointer-coarse to receive accessible touch targets.
+* `client/tests/ui-qa-contract-078.test.mjs` protects both the consent sequence and the touch style contract.
+* Twenty ZipRunner post-update definitions remain; no LoopRD schema change, credential change, or host/extension isolation change.
+
+== Operator acceptance
+
+. Import this exact source ZIP into ZipRunner; keep runtime configuration, account sessions, local data, and previous installers intact.
+. Confirm mandatory Work Board metadata validation passes and the same 121 existing operator tickets remain untouched. The new Review ticket is `TAVI-UI-CI-078`.
+. Run synthetic UI smoke at 1366px, 768px tablet, 355px Windows, 390px phone, and 320px phone; confirm no horizontal overflow or JS exceptions.
+. On phone/tablet verify `data-touch=true`, all contact rows and the roster section at least 44px; on 355px mouse confirm compact density.
+. Confirm consent dialog appears, Cancel leaves Notepad uninstalled, Install extension approves, Open launches the isolated iframe, and Home returns to the messenger.
+. Verify exact-commit GitHub workflow UI QA and all other required release checks succeed. Source tests and ZipRunner build do not substitute for Windows WebView2 or Android acceptance.
+
+== Deferred
+
+* `TAVI-QA-047`: ZipRunner's `not_github` watcher still requires its own project-level investigation; evidence is obtainable from GitHub using the exact SHA but the ZipRunner watcher itself has not been repaired here.
+* Native Windows WebView2 / Android QA; local extension packages and rollback; broader Lit migration; and LRS-004 production account recovery remain on the existing workboard.
+* No automatic Git push, tag, release, migration, or operator Done transition.

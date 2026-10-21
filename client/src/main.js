@@ -37,7 +37,7 @@ import {petById} from './companions/catalog.js';
 import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
 import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
-const CLIENT_VERSION='0.3.77';
+const CLIENT_VERSION='0.3.78';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
@@ -46,6 +46,12 @@ const nativeWindowsPet=nativeDesktop && /Windows/i.test(navigator.userAgent);
 const sessionStore=createDeviceSessionStore({windows:nativeDesktop&&/Windows/i.test(navigator.userAgent),invoke,local:localStorage,session:sessionStorage});
 if(nativeDesktop&&document.documentElement?.classList)document.documentElement.classList.add('native-shell');
 if(isTauri() && /Android/i.test(navigator.userAgent) && document.documentElement?.classList)document.documentElement.classList.add('android-shell');
+// Touch input is not guaranteed to advertise (pointer: coarse) in embedded WebViews.
+// Keep compact mouse rows, but make real touch devices opt into accessible hit targets.
+if(document.documentElement?.dataset){
+ const hasTouchInput=(Number(navigator.maxTouchPoints)||0)>0 || Boolean(window.matchMedia?.('(any-pointer: coarse)').matches);
+ document.documentElement.dataset.touch=hasTouchInput?'true':'false';
+}
 const config=readConfig();
 function normalizeTheme(value){return value==='dark'?'dark':'light';}
 function applyTheme(){if(document.documentElement?.dataset)document.documentElement.dataset.theme=normalizeTheme(config.theme);}

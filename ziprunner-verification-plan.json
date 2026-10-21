@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.77",
+  "version": "0.3.78",
   "tasks": [
     {
       "id": "TAVI-EXT-UPDATES-072",
@@ -569,7 +569,7 @@
         },
         {
           "id": "LRS-004-AC-3",
-          "description": "Social SQL schema 8→9 and Android/Windows actual recovery flow independently verified by operator.",
+          "description": "Social SQL schema 8\u21929 and Android/Windows actual recovery flow independently verified by operator.",
           "mode": "manual",
           "checks": [
             "LRS-004-DEVICE"
@@ -1216,6 +1216,30 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-UI-CI-078",
+      "criteria": [
+        {
+          "id": "TAVI-UI-CI-078-SOURCE",
+          "description": "Retain isolated extension consent, verify touch capability and workboard summaries; source QA is not browser acceptance.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/ui-qa-contract-078.test.mjs",
+            "npm run verify",
+            "python -m unittest discover -s tests -p test_*.py"
+          ]
+        },
+        {
+          "id": "TAVI-UI-CI-078-CI-AND-DEVICE",
+          "description": "Exact pushed SHA five-viewport Chromium QA green, Windows and Android touch/extension approval acceptance; release blocked until CI passes.",
+          "mode": "manual",
+          "checks": [
+            "TAVI-078-EXACT-COMMIT-BROWSER-QA",
+            "TAVI-078-WINDOWS-ANDROID-OPERATOR-ACCEPTANCE"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -1423,7 +1447,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"
@@ -1896,6 +1920,18 @@
         "Operator tests 0.3.77 on real Android and compact Windows, including light/dark green, Home/Back, and contact touch behavior."
       ],
       "test_ref": "client/tests/ui-qa-next-pass-076.test.mjs"
+    },
+    {
+      "id": "TAVI-UI-CI-078-SOURCE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Touch-compatible roster and reviewable extension install flow source regression",
+      "runner_ref": "tavi-extension-platform-source-0359",
+      "assertions": [
+        "Touch-capability detector and CSS selectors are present",
+        "UI QA tests Cancel and user-approved install before Open"
+      ],
+      "test_ref": "client/tests/ui-qa-contract-078.test.mjs"
     }
   ]
 }

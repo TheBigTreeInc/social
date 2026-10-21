@@ -146,8 +146,10 @@
 @media (pointer:coarse){.tavi-shell-bar__back {min-height:var(--tavi-hit-target-touch);}}
 @media (prefers-reduced-motion:reduce){.tavi-shell-bar *, .tavi-menu-panel * {transition:none!important;}}
 
-/* 0.3.76 accessibility: compact mouse rows, full-size mobile touch targets.
-   Preserve the single unified roster; do not reintroduce a search/action strip. */
+/* 0.3.78 accessibility: compact mouse rows, full-size touch targets.
+   Embedded WebViews can have touch hardware without reporting pointer:coarse.
+   Prefer a capability-derived data-touch attribute, with CSS media fallback.
+   Preserve the unified roster; never reintroduce search/action strips. */
 @media (pointer:coarse) {
  .tavi-classic-home .tavi-roster-merged .buddy,
  .tavi-contact-focus .tavi-roster-merged .buddy {min-height:var(--tavi-hit-target-touch);padding-block:5px;}
@@ -157,4 +159,21 @@
  .tavi-contact-focus .tavi-roster-merged>.group-title {min-height:var(--tavi-hit-target-touch);}
  .tavi-classic-home .menubar .menu-drop summary,
  .tavi-contact-focus .menubar .menu-drop summary {min-height:var(--tavi-hit-target-touch);display:flex;align-items:center;}
+}
+
+/* Explicit touch capability from the host, independent of media-query quirks. */
+:root[data-touch='true'] .tavi-classic-home .tavi-roster-merged .buddy,
+:root[data-touch='true'] .tavi-contact-focus .tavi-roster-merged .buddy {
+ min-height:var(--tavi-hit-target-touch);
+ padding-block:6px;
+}
+:root[data-touch='true'] .tavi-classic-home .tavi-roster-merged>.group-title,
+:root[data-touch='true'] .tavi-contact-focus .tavi-roster-merged>.group-title {
+ min-height:var(--tavi-hit-target-touch);
+}
+:root[data-touch='true'] .tavi-classic-home .menubar .menu-drop summary,
+:root[data-touch='true'] .tavi-contact-focus .menubar .menu-drop summary {
+ min-height:var(--tavi-hit-target-touch);
+ display:flex;
+ align-items:center;
 }

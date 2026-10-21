@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.77",
-    "base_version": "0.3.75"
+    "version": "0.3.78",
+    "base_version": "0.3.77"
   },
   "update": {
-    "id": "TAVI-20261020-ZR-WORKBOARD-METADATA-REPAIR-0377",
+    "id": "TAVI-20261021-EXACT-CI-UI-QA-REPAIR-0378",
     "kind": "source_update",
-    "created_at": "2026-10-20T20:32:00+02:00",
-    "summary": "0.3.76 source retained; correct pre-overlay ZipRunner workboard summary metadata and add preflight regression. Uses installed 0.3.75 as base; no server schema or runtime config changes."
+    "created_at": "2026-10-21T13:35:00+02:00",
+    "summary": "Exact 0.3.77 GitHub UI QA fix: approve Tavi-styled extension install dialog in browser tests, enforce touch-target sizing across WebViews, preserve source and workboard. No LoopRD server/API change."
   },
   "planned_work": [
     {
@@ -518,6 +518,13 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": "All 121 candidate ticket rows have valid nonempty summary (max 2000).; Preserve 118 QA tickets and two 0.3.76 additions.; 0.3.77 ZipRunner metadata stage accepts before overlay; operator native review pending."
+    },
+    {
+      "id": "TAVI-UI-CI-078",
+      "title": "Fix exact-commit five-viewport UI QA regression",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Use the 0.3.77 GitHub UI artifact: all five viewports must pass after explicit extension install consent, mobile 44px targets and no JS exceptions; Windows/Android native QA and operator acceptance remain outstanding."
     }
   ],
   "done_work": [
@@ -1584,6 +1591,11 @@
       "id": "engineering-review-looprd_handler-49609733",
       "status": "review",
       "reason": "Source-only metadata and regression fixes; awaiting actual ZipRunner import and operator acceptance."
+    },
+    {
+      "id": "TAVI-UI-CI-078",
+      "status": "review",
+      "reason": "Source code/test repaired; new GitHub exact-commit UI QA and native operator device QA not run/accepted."
     }
   ],
   "validation": {
@@ -1756,7 +1768,7 @@
       },
       {
         "id": "TAVI-MULTI-044-PY",
-        "description": "Game room seat roster, revocation, migration 9→10, private messages and push content-free wake",
+        "description": "Game room seat roster, revocation, migration 9\u219210, private messages and push content-free wake",
         "status": "passed_source_only",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Linux Python 3.13",
@@ -1810,7 +1822,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Import corrected 0.3.77 source ZIP on the currently installed 0.3.75 base; verify workboard and actual build, then confirm 0.3.76 CI gate source and native QA separately. No Git push/release implied.",
+    "next_pass": "Import the exact 0.3.78 repaired ZIP over the currently installed 0.3.77 project; verify ZipRunner workboard gate, native build and QA. Then push only with explicit operator approval and require all eight exact-commit release CI workflows including browser UI QA to pass before release.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -1887,7 +1899,7 @@
     },
     {
       "id": "TAVI-MULTI-044-OP",
-      "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
+      "description": "Backup and test schema 9\u219210 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
       "status": "required"
     },
     {
@@ -1924,6 +1936,6 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Source candidate 0.3.76. Existing immutable GitHub release v0.3.74 does exist but had failing UI QA. Eight-workflow future release gate is source-only until next approved push; native Windows/Android acceptance pending. Social server remains 0.3.58/schema 10. No new release/push performed."
+    "notes": "0.3.78 source repair only; 0.3.77 exact-commit browser UI QA was failing and this candidate has not run in GitHub. Prior published release v0.3.74 remains independent. Require all exact-commit CI, native Windows/Android verification and operator approval before any release. No push/tag/deployment performed."
   }
 }
