@@ -1,0 +1,45 @@
+= Tavi 0.3.79: exact-commit browser UI QA geometry repair
+:toc:
+:revdate: 2026-10-21
+
+== Basis and observed evidence
+
+This bounded follow-up is based on the latest operator-provided ZipRunner 0.3.78 QA export, the exact GitHub pushed commit `7a91ff72df15d346a1cf36f512df830f1a3ec8aa`, and the downloaded `tavi-ui-qa-12` artifact from workflow https://github.com/TheBigTreeInc/social/actions/runs/39596927675[].
+
+The browser report states:
+
+* `desktop`: pass, including explicit extension install consent and launch.
+* `compact-355`: pass.
+* `tablet`: fail on `mobile touch targets`: section button reported 0px.
+* `mobile-390`: fail on `mobile touch targets`: buddy row reported 0px.
+* `mobile-320`: fail on `mobile touch targets`: section button reported 0px.
+* All three failure screenshots depict a visible contact roster and no JavaScript page errors are reported.
+
+A zero-area measurement may occur when a locator reads a detached/hidden node or before a new render has a layout box. Screenshots taken after failure may show a subsequently committed frame. That hypothesis is plausible, not conclusive evidence that every live touch target is large enough. Full five-viewport UI QA is still required to validate the correction.
+
+== Source-only changes
+
+`client/tools/ui-qa-touch.mjs` introduces a browser-safe atomic DOM snapshot of the primary roster section button and all buddy rows. If any required element has no non-zero rectangle, is detached or not visible, it returns null to request a retry. It always returns real positive heights, even when below the required threshold.
+
+`client/tools/ui-qa.mjs` uses Playwright's animation-frame `waitForFunction` before assertions, then checks >=44px for each visible buddy and the section header. The failure now includes measured heights and CSS min-height values. The source does not change chat behavior, navigation, design tokens or extension permissions.
+
+`client/tests/ui-qa-touch-079.test.mjs` characterizes transient 0px layout, detached elements, valid sizes and genuinely undersized 30px rows. These tests do not substitute for real Chromium UI acceptance.
+
+== ZipRunner and workboard contract
+
+The current 0.3.78 installation is the base. This is a versioned 0.3.79 source overlay, not a request to uninstall Tavi or change private config. `.ziprunner-workboard-update.json` contains the complete latest 122 existing operator tickets with their supplied statuses, priority where supplied, and acceptance criteria; `TAVI-UI-CI-079` is added in Review. Other tickets stay untouched. Workboard source preflight must validate nonempty summary and no duplicates. The post-update test list remains within the 20-definition limit.
+
+No SQL migrations, private LoopRD credentials, `looprd.yaml` changes, Git pushes, tags, releases, or operator approvals are included.
+
+== Acceptance checks
+
+. Install the exact ZIP via ZipRunner, verify the version and native build, and ensure post-update checks match the ZIP SHA.
+. Push only after operator review. Verify all required GitHub workflows for the *new exact SHA*, especially the `Tavi browser UI QA` five-viewport report.
+. Inspect visible buddies and section controls in 320px, 390px and tablet viewports. A real positive target under 44px must fail; a transient zero-area read must retry and report a precise issue if it persists.
+. On a disposable Windows native Tavi QA session, verify classic Home/Back and extension approval. Test Android touch targets on the real device separately.
+. Keep `TAVI-QA-047` open until ZipRunner correctly associates GitHub runs with exact pushed source and separately associates local QA with the exact ZIP bytes. Keep Android installer ticket `TAVI-UPDATES-003` open.
+. Do not infer a released app from successful release-gate workflow jobs. Only an actual published tag/release and green required workflows on the same source SHA count as release evidence.
+
+== Next priority after the QA gate
+
+Continue the messenger-first UI consolidation and native visual QA plan, preserving the existing Workboard. The local operator export also nominates `LRS-004` (account recovery) for the next separate reviewed implementation slice after CI evidence. Production database migration and recovery/device tests remain operator gated.

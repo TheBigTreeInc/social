@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.78",
-    "base_version": "0.3.77"
+    "version": "0.3.79",
+    "base_version": "0.3.78"
   },
   "update": {
-    "id": "TAVI-20261021-EXACT-CI-UI-QA-REPAIR-0378",
+    "id": "TAVI-20261021-EXACT-CI-LAYOUT-SNAPSHOT-0379",
     "kind": "source_update",
-    "created_at": "2026-10-21T13:35:00+02:00",
-    "summary": "Exact 0.3.77 GitHub UI QA fix: approve Tavi-styled extension install dialog in browser tests, enforce touch-target sizing across WebViews, preserve source and workboard. No LoopRD server/API change."
+    "created_at": "2026-10-21T14:50:00+02:00",
+    "summary": "Fix 0.3.78 exact-SHA five-viewport UI QA transient 0px roster reads, preserving strict 44px touch target detection and latest operator workboard. No behavior, server or extension permission changes."
   },
   "planned_work": [
     {
@@ -525,6 +525,13 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": "Use the 0.3.77 GitHub UI artifact: all five viewports must pass after explicit extension install consent, mobile 44px targets and no JS exceptions; Windows/Android native QA and operator acceptance remain outstanding."
+    },
+    {
+      "id": "TAVI-UI-CI-079",
+      "title": "Stable real-layout touch QA during asynchronous Tavi roster refresh",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Import the exact 0.3.79 ZipRunner archive over installed 0.3.78 and verify all source and workboard gates.; Run GitHub UI QA at desktop, tablet, compact 355px and mobile 390px/320px for the exact new push SHA; all five viewports must pass.; Verify asynchronous detached/zero-area element is retried and an actually visible 30px touch target still fails with computed-size diagnostics.; Verify no chat, extension permissions, LoopRD server schema, private data, or installed state changes; native Windows/Android operator acceptance remains required."
     }
   ],
   "done_work": [
@@ -1303,6 +1310,32 @@
           "description": "Full recorded-flow analysis and staged framework design"
         }
       ]
+    },
+    {
+      "id": "TAVI-UI-CI-079",
+      "summary": "Use a single animation-frame DOM snapshot for visible section/button target measurements and retry layout-zero/transient detached nodes, while preserving actual undersized-control failure. Adds source regression tests; full GitHub UI QA and native acceptance pending.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/tools/ui-qa-touch.mjs",
+          "description": "Single-layout visible geometry snapshot and transient retry contract"
+        },
+        {
+          "kind": "source",
+          "ref": "client/tools/ui-qa.mjs",
+          "description": "Playwright waits until non-zero paint before asserting 44px"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/ui-qa-touch-079.test.mjs",
+          "description": "Transient, detached, valid and truly undersized visible row tests"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/TAVI_0379_UI_CI_LAYOUT_SNAPSHOT.adoc",
+          "description": "Exact push QA diagnosis and operator handoff"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -1768,7 +1801,7 @@
       },
       {
         "id": "TAVI-MULTI-044-PY",
-        "description": "Game room seat roster, revocation, migration 9\u219210, private messages and push content-free wake",
+        "description": "Game room seat roster, revocation, migration 9→10, private messages and push content-free wake",
         "status": "passed_source_only",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Linux Python 3.13",
@@ -1822,7 +1855,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Import the exact 0.3.78 repaired ZIP over the currently installed 0.3.77 project; verify ZipRunner workboard gate, native build and QA. Then push only with explicit operator approval and require all eight exact-commit release CI workflows including browser UI QA to pass before release.",
+    "next_pass": "Import 0.3.79 over 0.3.78, verify workboard metadata and native build; require all exact-SHA push workflows including five-viewport UI QA green. Review operator-native Windows and Android separately. No automatic push or release.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -1899,7 +1932,7 @@
     },
     {
       "id": "TAVI-MULTI-044-OP",
-      "description": "Backup and test schema 9\u219210 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
+      "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
       "status": "required"
     },
     {
@@ -1936,6 +1969,6 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.78 source repair only; 0.3.77 exact-commit browser UI QA was failing and this candidate has not run in GitHub. Prior published release v0.3.74 remains independent. Require all exact-commit CI, native Windows/Android verification and operator approval before any release. No push/tag/deployment performed."
+    "notes": "0.3.79 source candidate: 0.3.78 exact-commit UI QA failed on transient 0px geometry despite visible screenshots. Wait for fresh exact-commit CI and operator-native acceptance; no Git push/tag/deployment made by package author."
   }
 }

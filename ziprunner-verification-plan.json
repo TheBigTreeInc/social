@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.78",
+  "version": "0.3.79",
   "tasks": [
     {
       "id": "TAVI-EXT-UPDATES-072",
@@ -569,7 +569,7 @@
         },
         {
           "id": "LRS-004-AC-3",
-          "description": "Social SQL schema 8\u21929 and Android/Windows actual recovery flow independently verified by operator.",
+          "description": "Social SQL schema 8→9 and Android/Windows actual recovery flow independently verified by operator.",
           "mode": "manual",
           "checks": [
             "LRS-004-DEVICE"
@@ -1240,6 +1240,38 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-UI-CI-079",
+      "criteria": [
+        {
+          "id": "TAVI-UI-CI-079-SOURCE",
+          "description": "Source regression verifies transient 0px dimensions trigger retry rather than an inaccurate accessibility failure.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/ui-qa-touch-079.test.mjs",
+            "npm run verify",
+            "python tools/generate-looprd.py --check"
+          ]
+        },
+        {
+          "id": "TAVI-UI-CI-079-GITHUB",
+          "description": "Five viewports, actual Chromium render, exact SHA UI QA must be green; source tests cannot replace this.",
+          "mode": "manual",
+          "checks": [
+            "Confirm GitHub Tavi browser UI QA success for exact pushed 0.3.79 SHA",
+            "Inspect CI artifact for 320, 390, tablet, 355 Windows and desktop viewports"
+          ]
+        },
+        {
+          "id": "TAVI-UI-CI-079-NATIVE",
+          "description": "Native Windows and Android layout/accessibility operator acceptance.",
+          "mode": "manual",
+          "checks": [
+            "Verify mobile 44px targets and compact mouse 30px rows without touching production credentials"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -1447,7 +1479,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"

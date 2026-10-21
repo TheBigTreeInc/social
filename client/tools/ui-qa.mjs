@@ -2,6 +2,7 @@
 // Real-browser Tavi UI smoke tests. Uses only local, disposable LoopRD fixtures;
 // never connects to the operator's server or logs account credentials.
 import assert from 'node:assert/strict';
+import {snapshotTouchTargets} from './ui-qa-touch.mjs';
 import {createServer} from 'node:http';
 import {readFile,stat,mkdir,writeFile} from 'node:fs/promises';
 import {join,resolve,dirname,extname,relative} from 'node:path';
@@ -88,10 +89,15 @@ async function testViewport(browser,base,device){
    stage='mobile touch targets';
    const touch=await page.evaluate(()=>({touch:document.documentElement.dataset.touch,maxTouchPoints:navigator.maxTouchPoints}));
    assert.equal(touch.touch,'true',`${device.name} touch input not recognized: ${JSON.stringify(touch)}`);
-   const heights=await page.locator('.tavi-roster-merged .buddy').evaluateAll(els=>els.map(el=>Math.round(el.getBoundingClientRect().height)));
-   assert(heights.length&&heights.every(height=>height>=44),`${device.name} buddy rows too small for touch: ${heights}`);
-   const sectionHeight=await page.locator('.tavi-roster-merged>.group-title').evaluate(el=>Math.round(el.getBoundingClientRect().height));
-   assert(sectionHeight>=44,`${device.name} section button is only ${sectionHeight}px`);
+   // A login/refresh can replace the roster between locators. Read section
+   // and buddy dimensions together in one animation frame, and retry until
+   // both controls have a real layout box. Never accept a visible sub-44px row.
+   const metricsHandle=await page.waitForFunction(snapshotTouchTargets,null,{timeout:7000,polling:'raf'});
+   const metrics=await metricsHandle.jsonValue();
+   const heights=metrics.buddies.map(item=>item.height);
+   assert(heights.length&&heights.every(height=>height>=44),`${device.name} buddy rows too small for touch: ${JSON.stringify(metrics)}`);
+   const sectionHeight=metrics.section.height;
+   assert(sectionHeight>=44,`${device.name} section button is only ${sectionHeight}px: ${JSON.stringify(metrics)}`);
   }
   stage='Life discovered Games';await visible(page,'.tavi-home-dock [data-action="games"]');await page.locator('.tavi-home-dock [data-action="games"]').click();
   await visible(page,'[data-discovered-game="life.loop"]');
