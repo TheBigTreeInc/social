@@ -1,0 +1,82 @@
+= Tavi Core Wallet: Play-only Gold, earned Gold and server-owned checkout
+:revnumber: 0.3.81
+:revdate: 2026-10-21
+:status: source candidate / operator acceptance pending
+
+== Goal and hard invariant
+
+Tavi is a messenger first. Wallet is a bundled, independently enabled first-party extension.
+All Gold is virtual, nonredeemable and cannot be exchanged for real money or cash.
+The earlier schema-11 Wallet granted the same fungible Gold for both gameplay and shopping.
+This is corrected in schema 12. *No balance originating in the free welcome/refill faucet may ever pay a shop item or purchase, directly or via conversion, refunds or another currency.*
+
+Gold remains one displayed currency, but each account/currency tracks two mutually exclusive balances:
+
+* `playOnly`: issued by the free welcome grant and refill; available for operator-priced `entry` offers, never for items, conversions or player transfers.
+* `availableForShopping`: earned through reviewed game-service rewards or reversible conversion of shopping-eligible currency; available for items, entries and approved conversions.
+* `amount` is the sum of these balances. No endpoint allows the client to specify or change the funding category.
+
+The game uses play-only funds first for a paid `entry`; if insufficient, the remainder is debited from earned funds.
+An `entry` can also have zero price. The faucet refills only `playOnly` up to 100 Gold whenever it is below 100. The earned balance is never increased by the faucet, even if the user already has earned Gold.
+
+== Purchase, exchange and provenance rules
+
+`WalletOrder` offers have operator-approved `type` (`entry` or `item`), `currencyId`, merchant and price.
+The `purchase` endpoint independently checks the published offer and the player's reviewed quote.
+For `item`, the full price must be covered by `availableForShopping`. The policy is server-side, including for direct SDK calls; the UI cannot authorize bypasses.
+For `entry`, `restrictedSpent` is stored on the signed journal receipt. On refund, precisely that amount becomes play-only again. Other refunded funds remain shopping-eligible. Schema-11 legacy purchases lacking provenance are refunded conservatively as play-only.
+
+Currency conversion is only allowed from `availableForShopping`. Free Gold therefore cannot become spendable points, coins, or Gold again through round-trip conversion. Reverse conversion preserves the shopping-eligible class because its source must already be eligible.
+
+User clients and sandboxed remote extensions cannot mint Gold. The first-party extension receives only a tokenless host bridge; it never reads Social session credentials.
+
+== Earned rewards (service-only, disabled by default)
+
+A trusted LoopRD service caller, independently authorized with `social:service`, may credit earned funds through `/ecosystem/wallet-reward` using `tavi.wallet-reward/v1` only when its server-side merchant ID is admitted by both:
+
+* `LOOPRD_TAVI_WALLET_MERCHANTS_JSON` (existing merchant enrollment)
+* `LOOPRD_TAVI_WALLET_REWARDS_JSON` (new earned-reward permission and limits)
+
+Example **operator configuration only** (never a suggested live default):
+
+[source,json]
+----
+{
+  "example-game": {
+    "currencyId": "gold",
+    "maxPerEvent": "100",
+    "dailyPerPlayer": "500"
+  }
+}
+----
+
+With `LOOPRD_TAVI_WALLET_REWARDS_JSON` absent or invalid, service payouts fail closed.
+Each reward requires a recipient account, unique publisher event ID, approved currency and integer amount.
+The wallet protects against duplicate/replayed events using a unique `(merchant,eventId)` constraint, enforces a hard maximum event and per-player UTC-day limit, and records a balanced treasury/user journal entry.
+A game must separately prove that the participant actually earned the reward; **source tests do not prove a game's rule-side eligibility or service principal enrollment**. No client can invoke the service-only route.
+
+== Schema migration and compatibility
+
+* `11 -> 12` is additive: `WalletRestrictedBalance` and `WalletRewardIssue`, with their indexes.
+* **Conservative upgrade:** Every existing positive player currency balance from v11 is seeded as play-only. In v11, free Gold could be converted into another currency; the provenance of preexisting funds is therefore not reliable. Existing funds remain visible and usable for game entry, not shopping or conversion, until a separate audited operator decision establishes an eligible source.
+* Historical WalletEntry / WalletTransaction rows, Social messages, accounts and sessions are not rewritten; no balances are deleted or converted into real money.
+* If upgrading directly from schema 10, migrations 11 and 12 run in order and the new source grants the initial 100 Gold as play-only.
+* Back up production and rehearse both the `10 -> 11 -> 12` and `11 -> 12` paths on isolated copies. Verify that a wallet holding only old free Gold cannot buy shop items or convert.
+* Do not deploy or perform an unattended database migration from this source candidate. Approval and live identity/service validation remain mandatory.
+
+== Acceptance matrix
+
+. A new user sees 100 total / 100 play-only / 0 shopping-eligible Gold; shop item and conversion both fail.
+. After paying an 80-Gold game entry, refill adds 80 play-only; shopping remains 0.
+. A service-authorized earned award of 60 Gold changes balances to 160 total / 100 play-only / 60 shopping-eligible.
+. A 25-Gold shop item debits only earned Gold; a refunded item restores eligible Gold.
+. A mixed-funding entry debits free Gold first; refund restores each original category without laundering.
+. Attempt replay of purchase, refund, refill and earned-reward event IDs; duplicated or conflicting events do not mint or charge a second time.
+. Test conversion from free and earned funds, the daily cap, second account isolation, and account/merchant scoping.
+. Confirm the real Wallet extension reflects the split at phone, tablet and Windows widths without leaking a token or claiming live game fulfillment.
+. Verify ZipRunner workboard IDs and original operator criteria persist; native device and real LoopRD merchant/game acceptance remain open.
+
+== Future work
+
+Cross-realm rewards, user transfers, item ownership, actual Life/Atrium seat redemption and standalone Ledger extraction are separate gated contracts.
+Refill Gold may not be turned into shopping eligibility through any of those future integrations. Do not implement speculative fiat, external deposits or cash-out.

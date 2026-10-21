@@ -111,7 +111,7 @@ class GameRoomMigration(TestCase):
         """Add only the new tables to an existing Social v9 database."""
         import yaml
         spec=yaml.safe_load((ROOT/'looprd.yaml').read_text())
-        assert spec['database']['schemaVersion']==10
+        assert spec['database']['schemaVersion']==11
         engine=sa.create_engine('sqlite+pysqlite:///:memory:')
         try:
             with engine.begin() as db:

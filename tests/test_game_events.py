@@ -126,8 +126,8 @@ class GameEventTests(TestCase):
             self.assertEqual(self.command(self.alice,'game_event_feed',after=0)['events'][-1]['actions'][0]['type'],'reply')
 
     def test_migration_additive_and_new_service_contract(self):
-        self.assertEqual(self.spec['database']['schemaVersion'],10)
-        self.assertEqual([m['version'] for m in self.spec['database']['migrations']],[2,3,4,5,6,7,8,9,10])
+        self.assertEqual(self.spec['database']['schemaVersion'],11)
+        self.assertEqual([m['version'] for m in self.spec['database']['migrations']],[2,3,4,5,6,7,8,9,10,11])
         handlers=[x for x in self.spec['handlers'] if x['path']=='/ecosystem/game-event']
         self.assertEqual(handlers[0]['contract']['name'],'tavi-game-event')
         self.assertEqual(handlers[0]['contract']['version'],1)

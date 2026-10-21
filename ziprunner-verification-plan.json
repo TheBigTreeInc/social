@@ -1,8 +1,98 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.79",
+  "version": "0.3.82",
   "tasks": [
+    {
+      "id": "TAVI-MOBILE-SAFE-082",
+      "criteria": [
+        {
+          "id": "TAVI-MOBILE-SAFE-082-SOURCE",
+          "description": "Root-owned Android/iOS safe area replaces nested 100dvh sizing. Reserve actual height for the Home round Main Menu; keep it above the OS gesture bar and below roster content, and keep Back/focused toolbar under the status area across small/large phones and landscape.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/mobile-safe-area-082.test.mjs",
+            "npm --prefix client run ui:ci"
+          ]
+        },
+        {
+          "id": "TAVI-MOBILE-SAFE-082-OPERATOR",
+          "description": "Native device/empty database operator acceptance remains required",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-WALLET-CLEAN-082",
+      "criteria": [
+        {
+          "id": "TAVI-WALLET-CLEAN-082-SOURCE",
+          "description": "Combine experimental Wallet schema 11 and 12 into one fresh-install version 11. Initial Gold is play-only, shop and conversion require earned Gold, source-preserving refunds and service rewards remain enforced. No migration/backfill from experimental 0.3.80/0.3.81 balances; live deployment requires a fresh prelaunch database.",
+          "mode": "automated",
+          "checks": [
+            "python -m unittest discover -s tests -p test_wallet_ledger.py -q",
+            "python tools/generate-looprd.py --check"
+          ]
+        },
+        {
+          "id": "TAVI-WALLET-CLEAN-082-OPERATOR",
+          "description": "Native device/empty database operator acceptance remains required",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-WALLET-081",
+      "criteria": [
+        {
+          "id": "TAVI-WALLET-081-SOURCE",
+          "description": "Free Gold can never pay shop offers or be converted; earned Gold requires approved service grant, refund preserves funding class, schema-12 migration tested",
+          "mode": "automated",
+          "checks": [
+            "python -m unittest discover -s tests -p test_wallet_ledger.py -q",
+            "node --test client/tests/wallet-core-080.test.mjs",
+            "python tools/generate-looprd.py --check"
+          ]
+        },
+        {
+          "id": "TAVI-WALLET-081-LIVE",
+          "description": "Operator reviews backups, actual schema 12 migration, service enrollment and Windows/Android payment UI",
+          "mode": "manual",
+          "checks": [
+            "TAVI-WALLET-081-LIVE-ACCEPTANCE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-WALLET-080",
+      "criteria": [
+        {
+          "id": "TAVI-WALLET-080-SOURCE",
+          "description": "Verified Wallet ledger, bundled UI integrity, host security, migration schema and replay tests",
+          "mode": "automated",
+          "checks": [
+            "python -m unittest discover -s tests -p test_wallet_ledger.py -q",
+            "node --test client/tests/wallet-core-080.test.mjs",
+            "python tools/generate-looprd.py --check"
+          ]
+        },
+        {
+          "id": "TAVI-WALLET-080-LIVE",
+          "description": "Database backup and schema 11 migration, merchant validation and Windows/Android operator QA",
+          "mode": "manual",
+          "checks": [
+            "TAVI-WALLET-080-LIVE-ACCEPTANCE"
+          ]
+        }
+      ]
+    },
     {
       "id": "TAVI-EXT-UPDATES-072",
       "criteria": [

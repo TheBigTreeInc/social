@@ -9,6 +9,7 @@ import {extensionUpdateStatus} from './extensions/updates.js';
 export const BUILTIN_APPS=Object.freeze([
   {action:'contacts', label:'Messages', symbol:'messages', tone:'forest'},
   {action:'games', label:'Games', symbol:'games', tone:'violet'},
+  {action:'wallet', label:'Wallet', symbol:'wallet', tone:'gold'},
   {action:'inbox', label:'Notifications', symbol:'bell', tone:'gold'},
   {action:'companion', label:'My pet', symbol:'paw', tone:'leaf', requiresPet:true},
   {action:'portrait', label:'My portrait', symbol:'portrait', tone:'plum'},
@@ -20,6 +21,7 @@ export const BUILTIN_APPS=Object.freeze([
 const SHAPES=Object.freeze({
  'messages':'<path d="M5 7h22v15H14l-7 5v-5H5z"/><path d="M10 12h12M10 17h8"/>',
  'games':'<path d="M10 11h12c3 0 5 3 6 9l1 4c.5 3-2.5 4.1-4.5 2l-4.5-4h-8l-4.5 4C5.5 28.1 2.5 27 3 24l1-4c1-6 3-9 6-9z"/><path d="M9 15v7m-3.5-3.5h7M23 16h.01M26 19h.01"/>',
+ 'wallet':'<rect x="4" y="7" width="24" height="21" rx="4"/><path d="M4 13h24M19 18h9v7h-9z"/><circle cx="23" cy="21.5" r="1"/>',
  'bell':'<path d="M7 23h18l-2.5-4v-6a6.5 6.5 0 0 0-13 0v6z"/><path d="M13 27c.6 3 5.4 3 6 0"/>',
  'paw':'<ellipse cx="16" cy="23" rx="7" ry="5"/><ellipse cx="7" cy="13" rx="2" ry="3"/><ellipse cx="13" cy="9" rx="2" ry="3"/><ellipse cx="20" cy="9" rx="2" ry="3"/><ellipse cx="26" cy="13" rx="2" ry="3"/>',
  'portrait':'<circle cx="16" cy="12" r="5"/><path d="M6 27c.7-7 5-10 10-10s9.3 3 10 10z"/>',

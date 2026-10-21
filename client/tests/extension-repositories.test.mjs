@@ -48,7 +48,7 @@ test('remote catalog is fetched without tokens, merged with bundled precedence a
   return {ok:true,text:async()=>JSON.stringify(example)};
  }});
  assert.equal(extensionSource(remote[0]),url);
- assert.equal(mergeRepositoryEntries(bundled,[remote]).length,1); // bundled ID cannot be hijacked
+ assert.equal(mergeRepositoryEntries(bundled,[remote]).length,bundled.length); // bundled ID cannot be hijacked
  const storage=memory(),store=createExtensionStore({storage,scope:extensionStorageScope('https://social.example','u1')});
  store.install(remote[0].manifest,url);
  assert.equal(store.source(remote[0].manifest.id),url);

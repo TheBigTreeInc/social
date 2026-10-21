@@ -49,6 +49,53 @@
           "size": 2226
         }
       ]
+    },
+    {
+      "manifest": {
+        "schema": "tavi.extension/v1",
+        "id": "org.tavi.core.wallet",
+        "version": "0.3.0",
+        "name": "Wallet",
+        "summary": "Core Gold Wallet: free Gold for games, earned Gold for shops and exchange. Fictional currency only.",
+        "publisher": "tavi",
+        "kind": "app",
+        "hostApi": {
+          "min": "1.0.0",
+          "maxExclusive": "2.0.0"
+        },
+        "entrypoints": {
+          "panel": "ui/index.html"
+        },
+        "contributions": [
+          {
+            "slot": "app.launcher",
+            "id": "wallet",
+            "label": "Wallet",
+            "action": "openPanel"
+          }
+        ],
+        "permissions": [
+          "ui.panel"
+        ],
+        "platforms": [
+          "web",
+          "windows",
+          "android"
+        ],
+        "icon": "ui/icon.svg"
+      },
+      "files": [
+        {
+          "path": "ui/icon.svg",
+          "sha256": "ce02cd40eef904e0aa090f584b5d8deefd6b11523c380e0d2f33aef3be85819f",
+          "size": 421
+        },
+        {
+          "path": "ui/index.html",
+          "sha256": "ee8ad9568f8e8835bd1862359480705ad1b81fb3dfccaa659a765c286db920d3",
+          "size": 12565
+        }
+      ]
     }
   ]
 }

@@ -8,7 +8,7 @@ const id=entry.manifest.id;
 const fakeStore={enabled:x=>x===id,source:()=> 'tavi:bundled',version:()=>entry.manifest.version};
 test('app drawer contains working built-in actions with icons and optional pet',()=>{
  const list=menuApplications({});
- assert.deepEqual(list.map(a=>a.action),['contacts','games','inbox','portrait','app-store','add-friend','settings']);
+ assert.deepEqual(list.map(a=>a.action),['contacts','games','wallet','inbox','portrait','app-store','add-friend','settings']);
  assert(list.every(a=>a.symbol&&appGlyph(a.symbol).startsWith('<svg')));
  assert(!list.some(a=>a.action==='companion'));
  assert(menuApplications({petEnabled:true}).some(a=>a.action==='companion'));

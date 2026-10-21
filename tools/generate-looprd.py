@@ -14,6 +14,9 @@ admin_role=(root/'server/admin_role_service.py').read_text(encoding='utf8')
 game_events=(root/'server/game_event_service.py').read_text(encoding='utf8')
 game_grants=(root/'server/game_grant_service.py').read_text(encoding='utf8')
 game_rooms=(root/'server/game_room_service.py').read_text(encoding='utf8')
+wallet_source=(root/'server/wallet_ledger.py').read_text(encoding='utf8')
+wallet_merchant_source=wallet_source+'\n\nasync def handle(ctx):\n    return await handle_merchant(ctx)\n'
+wallet_reward_source=wallet_source+'\n\nasync def handle(ctx):\n    return await handle_reward(ctx)\n'
 def string(max_len,required=False,unique=False):
     return dict(type='string',maxLength=max_len,**({'required':True} if required else {}),**({'unique':True} if unique else {}))
 def integer(required=False,primary=False,generated=False):
@@ -29,7 +32,7 @@ spec={
  'push':{'transport':'unifiedpush','scopes':['push:manage'],
          'deviceLifetimeSeconds':86400,'maxDevicesPerPrincipal':8},
  'limits':{'requestsPerMinute':180,'authAttemptsPerMinute':90,'burstPerSecond':15,'maxInFlight':30},
-  'database':{'backend':'sqlite','schemaVersion':10,'migrations':[{'version':2,'statements':[
+  'database':{'backend':'sqlite','schemaVersion':11,'migrations':[{'version':2,'statements':[
   'CREATE TABLE "SocialAccount" ("id" INTEGER PRIMARY KEY, "handle" VARCHAR(32) NOT NULL UNIQUE, "passwordHash" VARCHAR(255) NOT NULL, "created" INTEGER NOT NULL, "failedAttempts" INTEGER NOT NULL, "lockedUntil" INTEGER NOT NULL)',
   'CREATE TABLE "SocialSession" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "tokenHash" VARCHAR(64) NOT NULL UNIQUE, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL, "lastSeen" INTEGER NOT NULL, "revoked" BOOLEAN NOT NULL)',
   'CREATE TABLE "SocialContact" ("id" INTEGER PRIMARY KEY, "leftId" VARCHAR(72) NOT NULL, "rightId" VARCHAR(72) NOT NULL, "requestedBy" VARCHAR(72) NOT NULL, "status" VARCHAR(16) NOT NULL, "created" INTEGER NOT NULL)',
@@ -68,6 +71,21 @@ spec={
   'CREATE INDEX "SocialGameRoomMember_subject" ON "SocialGameRoomMember" ("subjectId","roomKey")',
   'CREATE TABLE "SocialGameRoomMessage" ("id" INTEGER PRIMARY KEY, "roomKey" VARCHAR(64) NOT NULL, "senderId" VARCHAR(72) NOT NULL, "content" VARCHAR(1000) NOT NULL, "created" INTEGER NOT NULL)',
   'CREATE INDEX "SocialGameRoomMessage_room" ON "SocialGameRoomMessage" ("roomKey","id")'
+  ]},{'version':11,'statements':[
+  'CREATE TABLE "WalletBalance" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "currencyId" VARCHAR(48) NOT NULL, "amount" INTEGER NOT NULL)',
+  'CREATE UNIQUE INDEX "WalletBalance_unique" ON "WalletBalance" ("subjectId","currencyId")',
+  'CREATE TABLE "WalletTransaction" ("id" INTEGER PRIMARY KEY, "actor" VARCHAR(72) NOT NULL, "requestId" VARCHAR(96) NOT NULL, "digest" VARCHAR(64) NOT NULL, "kind" VARCHAR(32) NOT NULL, "data" JSON NOT NULL, "created" INTEGER NOT NULL)',
+  'CREATE UNIQUE INDEX "WalletTransaction_request" ON "WalletTransaction" ("actor","requestId")',
+  'CREATE TABLE "WalletEntry" ("id" INTEGER PRIMARY KEY, "transactionId" INTEGER NOT NULL, "accountId" VARCHAR(72) NOT NULL, "currencyId" VARCHAR(48) NOT NULL, "delta" INTEGER NOT NULL)',
+  'CREATE INDEX "WalletEntry_account" ON "WalletEntry" ("accountId","currencyId","id")',
+  'CREATE TABLE "WalletOrder" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "sku" VARCHAR(96) NOT NULL, "currencyId" VARCHAR(48) NOT NULL, "price" INTEGER NOT NULL, "merchant" VARCHAR(48) NOT NULL, "state" VARCHAR(20) NOT NULL, "transactionId" INTEGER NOT NULL, "created" INTEGER NOT NULL)',
+  'CREATE UNIQUE INDEX "WalletOrder_transaction" ON "WalletOrder" ("transactionId")',
+  'CREATE INDEX "WalletOrder_subject" ON "WalletOrder" ("subjectId","id")',
+  'CREATE TABLE "WalletRestrictedBalance" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "currencyId" VARCHAR(48) NOT NULL, "amount" INTEGER NOT NULL)',
+  'CREATE UNIQUE INDEX "WalletRestrictedBalance_unique" ON "WalletRestrictedBalance" ("subjectId","currencyId")',
+  'CREATE TABLE "WalletRewardIssue" ("id" INTEGER PRIMARY KEY, "merchant" VARCHAR(48) NOT NULL, "eventId" VARCHAR(96) NOT NULL, "recipient" VARCHAR(72) NOT NULL, "currencyId" VARCHAR(48) NOT NULL, "amount" INTEGER NOT NULL, "transactionId" INTEGER NOT NULL, "created" INTEGER NOT NULL)',
+  'CREATE UNIQUE INDEX "WalletRewardIssue_unique" ON "WalletRewardIssue" ("merchant","eventId")',
+  'CREATE INDEX "WalletRewardIssue_daily" ON "WalletRewardIssue" ("merchant","recipient","currencyId","created")'
   ]}]},
  'models':{
     'SocialProfile':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True,True),'data':{'type':'json','required':True},'revision':integer(True),'updated':integer(True)}},
@@ -76,6 +94,12 @@ spec={
     'SocialAccount':{'fields':{'id':integer(primary=True,generated=True),'handle':string(32,True,True),'passwordHash':string(255,True),'created':integer(True),'failedAttempts':integer(True),'lockedUntil':integer(True),'developerEnabled':{'type':'boolean','required':True},'ecosystemAdmin':{'type':'boolean','required':True},'recoveryFailures':integer(True),'recoveryLockedUntil':integer(True)},'indexes':[{'name':'SocialAccount_created','fields':['created']}]},
     'SocialRecoveryCode':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'codeHash':string(64,True,True),'created':integer(True),'expires':integer(True)},'indexes':[{'name':'SocialRecoveryCode_subject','fields':['subjectId','expires']}]},
     'SocialSession':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'tokenHash':string(64,True,True),'created':integer(True),'expires':integer(True),'lastSeen':integer(True),'revoked':{'type':'boolean','required':True}}},
+    'WalletBalance':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'currencyId':string(48,True),'amount':integer(True)},'indexes':[{'name':'WalletBalance_unique','fields':['subjectId','currencyId'],'unique':True}]},
+    'WalletRestrictedBalance':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'currencyId':string(48,True),'amount':integer(True)},'indexes':[{'name':'WalletRestrictedBalance_unique','fields':['subjectId','currencyId'],'unique':True}]},
+    'WalletRewardIssue':{'fields':{'id':integer(primary=True,generated=True),'merchant':string(48,True),'eventId':string(96,True),'recipient':string(72,True),'currencyId':string(48,True),'amount':integer(True),'transactionId':integer(True),'created':integer(True)},'indexes':[{'name':'WalletRewardIssue_unique','fields':['merchant','eventId'],'unique':True},{'name':'WalletRewardIssue_daily','fields':['merchant','recipient','currencyId','created']}]},
+    'WalletTransaction':{'fields':{'id':integer(primary=True,generated=True),'actor':string(72,True),'requestId':string(96,True),'digest':string(64,True),'kind':string(32,True),'data':{'type':'json','required':True},'created':integer(True)},'indexes':[{'name':'WalletTransaction_request','fields':['actor','requestId'],'unique':True}]},
+    'WalletEntry':{'fields':{'id':integer(primary=True,generated=True),'transactionId':integer(True),'accountId':string(72,True),'currencyId':string(48,True),'delta':integer(True)},'indexes':[{'name':'WalletEntry_account','fields':['accountId','currencyId','id']}]},
+    'WalletOrder':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'sku':string(96,True),'currencyId':string(48,True),'price':integer(True),'merchant':string(48,True),'state':string(20,True),'transactionId':integer(True),'created':integer(True)},'indexes':[{'name':'WalletOrder_transaction','fields':['transactionId'],'unique':True},{'name':'WalletOrder_subject','fields':['subjectId','id']}]},
     'SocialContact':{'fields':{'id':integer(primary=True,generated=True),'leftId':string(72,True),'rightId':string(72,True),'requestedBy':string(72,True),'status':string(16,True),'created':integer(True)},'indexes':[{'name':'SocialContact_pair','fields':['leftId','rightId'],'unique':True}]},
     'SocialInteraction':{'fields':{'id':integer(primary=True,generated=True),'recipient':string(72,True),'publisher':string(72,True),'topic':string(96,True),'title':string(120,True),'data':{'type':'json','required':True},'status':string(16,True),'response':{'type':'json'},'created':integer(True),'expires':integer(True)},'indexes':[{'name':'SocialInteraction_recipient','fields':['recipient','id']}]},
     'SocialGameGrant':{'fields':{'id':integer(primary=True,generated=True),'tokenHash':string(64,True,True),
@@ -117,6 +141,28 @@ spec={
               'permissions':{'pulses':['events:read']}},
  'handlers':[
     {'path':'/social','method':'POST','kind':'python','scopes':['social:api'],'source':source},
+    {'path':'/wallet','method':'POST','kind':'python','scopes':['social:api'],'source':wallet_source},
+    {'path':'/ecosystem/wallet-merchant','method':'POST','kind':'python','scopes':['social:service'],'source':wallet_merchant_source,'contract':{'name':'tavi-wallet-merchant','version':1,'serviceOnly':True,
+       'request':{'type':'object','required':['schema','op','orderId','sku'],'additionalProperties':False,
+           'properties':{'schema':{'type':'string','enum':['tavi.wallet-fulfillment/v1']},
+               'op':{'type':'string','enum':['fulfill','refund']},
+               'orderId':{'type':'integer','minimum':1},
+               'sku':{'type':'string','minLength':2,'maxLength':96}}},
+       'response':{'type':'object','required':['accepted'],'additionalProperties':False,
+           'properties':{'accepted':{'type':'boolean'},
+               'delivery':{'type':'string','maxLength':32},'reason':{'type':'string','maxLength':80}}}}},
+    {'path':'/ecosystem/wallet-reward','method':'POST','kind':'python','scopes':['social:service'],'source':wallet_reward_source,'contract':{'name':'tavi-wallet-reward','version':1,'serviceOnly':True,
+       'request':{'type':'object','required':['schema','op','eventId','recipient','currencyId','amount'],'additionalProperties':False,
+           'properties':{'schema':{'type':'string','enum':['tavi.wallet-reward/v1']},
+               'op':{'type':'string','enum':['reward']},
+               'eventId':{'type':'string','minLength':8,'maxLength':96},
+               'recipient':{'type':'string','minLength':6,'maxLength':72},
+               'currencyId':{'type':'string','minLength':1,'maxLength':48},
+               'amount':{'type':'string','pattern':'^[1-9][0-9]{0,12}$'}}},
+       'response':{'type':'object','required':['accepted'],'additionalProperties':False,
+           'properties':{'accepted':{'type':'boolean'},
+               'delivery':{'type':'string','maxLength':32},'reason':{'type':'string','maxLength':80},
+               'transactionId':{'type':'integer','minimum':1}}}}},
     {'path':'/ecosystem/admin-notify','method':'POST','kind':'python','scopes':['social:service'],
      'source':admin_events,'contract':{
        'name':'tavi-admin-notify','version':1,'serviceOnly':True,
@@ -187,7 +233,7 @@ spec={
            'properties':{'subject':{'type':'string','minLength':6,'maxLength':72}}},
        'response':{'type':'object','required':['admin'],'additionalProperties':False,
            'properties':{'admin':{'type':'boolean'}}}}},
-    {'path':'/info','kind':'response','scopes':['social:api'],'response':{'protocol':'looprd.social/1','auth':'social-accounts','registration':'see-capabilities','features':['contacts','direct-messages','lobby','portraits','server-gated-developer-tools','game-event-inbox-v1','game-invites-v1','game-grants-v1','recovery-codes-v1','game-session-rooms-v1'],'release':version}},
+    {'path':'/info','kind':'response','scopes':['social:api'],'response':{'protocol':'looprd.social/1','auth':'social-accounts','registration':'see-capabilities','features':['contacts','direct-messages','lobby','portraits','server-gated-developer-tools','game-event-inbox-v1','game-invites-v1','game-grants-v1','recovery-codes-v1','game-session-rooms-v1','wallet-v1'],'release':version}},
  ]}
 output='# Generated from server/looprd_handler.py. Do not edit by hand.\n'+yaml.safe_dump(spec,sort_keys=False,allow_unicode=True,width=110)
 if '--check' in sys.argv:

@@ -2,9 +2,10 @@
 // network, native, navigation or contact APIs are exposed to extensions.
 import {ATRIUM_EXTENSION_ID,ATRIUM_REPOSITORY_URL,parseReviewedLifeHandoff} from './game-launch.js';
 const CHANNEL='tavi.extension/v1';
+export const CORE_WALLET_ID='org.tavi.core.wallet';
 const KEY=/^[a-zA-Z0-9._-]{1,80}$/;
 const throttle=()=>({started:Date.now(),count:0});
-export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');}}){
+export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');},walletApi=()=>{throw Error('Wallet service unavailable');}}){
  let session=null;
  function send(message){session?.frame?.contentWindow?.postMessage({channel:CHANNEL,direction:'response',...message},'*');}
  function onMessage(e){
@@ -41,11 +42,27 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
      result=onGameLaunch(handoff,{extensionId:current.id,scope:current.scope,source:current.source});
      break;
     }
+    case 'wallet.balance':
+    case 'wallet.transactions':
+    case 'wallet.claim':
+    case 'wallet.convert':
+    case 'wallet.purchase':
+    case 'wallet.orderStatus':{
+     if(current.id!==CORE_WALLET_ID||current.source!=='tavi:bundled'||!permissions.has('ui.panel'))
+       throw Error('Wallet commands are only available to the first-party Wallet');
+     const params=request.params;
+     if(params!==undefined && (!params||typeof params!=='object'||Array.isArray(params)))throw Error('Invalid wallet arguments');
+     // All money operations execute with the verified Social principal in the host.
+     result=walletApi(request.method,params||{});break;
+    }
     case 'ui.close': close();break;
     default:throw Error('Unsupported extension method');
    }
-   send({id,ok:true,result});
-  }catch(error){send({id,ok:false,error:String(error.message||error).slice(0,160)});}
+   if(result&&typeof result.then==='function'){
+    Promise.resolve(result).then(value=>{if(session===current)send({id,ok:true,result:value});},
+      error=>{if(session===current)send({id,ok:false,error:String(error.message||error).slice(0,160)});});
+   }else if(session===current)send({id,ok:true,result});
+  }catch(error){if(session===current)send({id,ok:false,error:String(error.message||error).slice(0,160)});}
  }
  windowRef.addEventListener('message',onMessage);
  return {

@@ -1,0 +1,52 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {createHash,webcrypto} from 'node:crypto';
+import {createExtensionHost,CORE_WALLET_ID} from '../src/extensions/host.js';
+import {validateCatalog} from '../src/extensions/contract.js';
+import {verifyBundledExtension} from '../src/extensions/store.js';
+import {LooprdSocial,componentPath} from '../sdk/looprd-social.js';
+const here=new URL('../public/tavi-extensions/',import.meta.url);
+const catalog=JSON.parse(await readFile(new URL('catalog.v1.json',here)));
+const wallet=catalog.extensions.find(x=>x.manifest.id===CORE_WALLET_ID);
+const memory=()=>{const d=new Map();return {getItem:k=>d.get(k)||null,setItem:(k,v)=>d.set(k,v)};};
+test('core wallet has reviewed bundled manifest, matching hashes and tokenless sandbox UI',async()=>{
+ assert(wallet);assert.equal(validateCatalog(catalog).length,2);
+ assert.equal(wallet.manifest.permissions.join(','),'ui.panel');
+ assert.equal(wallet.manifest.entrypoints.panel,'ui/index.html');
+ const root=new URL(`${CORE_WALLET_ID}/`,here);
+ for(const f of wallet.files){const b=await readFile(new URL(f.path,root));assert.equal(b.length,f.size);assert.equal(createHash('sha256').update(b).digest('hex'),f.sha256);}
+ const html=await readFile(new URL('ui/index.html',root),'utf8');
+ for(const needed of ['Free play-only Gold','Earned Gold · usable in shops','Refill free play Gold to 100','wallet.balance','wallet.purchase','wallet.convert','wallet.claim','wallet.transactions','confirm-order','expectedPrice'])assert(html.includes(needed),needed);
+ assert.match(html,/connect-src 'none'/);
+ assert.doesNotMatch(html,/fetch\(|localStorage|Social bearer|TAVI_TOKEN/);
+ const fetcher=async()=>{throw Error('No network needed for bundled verification fixture');};
+ assert.equal(typeof verifyBundledExtension,'function');
+});
+test('wallet service only accessible to trusted bundled wallet; not via forged remote extension',async()=>{
+ const events=new Map(),windowRef={addEventListener:(k,f)=>events.set(k,f),removeEventListener:k=>events.delete(k)};
+ const sent=[],frame={contentWindow:{postMessage:v=>sent.push(v)}};
+ let calls=0;
+ const host=createExtensionHost({windowRef,storage:memory(),notify:()=>{},close:()=>{},walletApi:async(name,args)=>{calls++;return {ok:true,name,args};}});
+ const emit=async(method,params={})=>{events.get('message')({source:frame.contentWindow,origin:'null',data:{channel:'tavi.extension/v1',direction:'request',id:sent.length+1,method,params}});await new Promise(r=>setImmediate(r));return sent.at(-1);};
+ host.mount(frame,{id:'org.community.untrusted',scope:'test-account',source:'tavi:bundled',permissions:['ui.panel']});
+ assert.equal((await emit('wallet.purchase',{sku:'game'})).ok,false);
+ host.mount(frame,{id:CORE_WALLET_ID,scope:'test-account',source:'https://evil.invalid/repo.json',permissions:['ui.panel']});
+ assert.equal((await emit('wallet.purchase',{sku:'game'})).ok,false);
+ host.mount(frame,{id:CORE_WALLET_ID,scope:'test-account',source:'tavi:bundled',permissions:['ui.panel']});
+ assert.equal((await emit('wallet.balance')).ok,true);
+ assert.equal((await emit('wallet.purchase',{sku:'approved',expectedPrice:'10'})).result.name,'wallet.purchase');
+ assert.equal((await emit('wallet.transfer',{recipientSubject:'acct_2'})).ok,false);
+ assert.equal(calls,2);host.dispose();
+});
+test('SDK wallet route uses only the authenticated Social origin and includes quote metadata',async()=>{
+ const captures=[];
+ const fake=async(url,opts)=>{captures.push({url,opts});return {ok:true,status:200,json:async()=>({ok:true,schema:'tavi.wallet-receipt/v1',transactionId:14})};};
+ const api=new LooprdSocial('https://example.org','x'.repeat(45),fake);
+ await api.walletBalance();await api.walletPurchase('sample.game.entry','wallet-order-123','12','gold','sample-game');
+ assert.equal(captures.length,2);
+ assert.equal(captures[0].url,componentPath('https://example.org','looprd-social','wallet'));
+ const post=JSON.parse(captures[1].opts.body);
+ assert.equal(post.expectedPrice,'12');assert.equal(post.expectedCurrency,'gold');assert.equal(post.expectedMerchant,'sample-game');
+ assert.equal(captures[1].opts.headers.Authorization,'Bearer '+'x'.repeat(45));
+});

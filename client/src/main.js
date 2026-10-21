@@ -3,7 +3,7 @@ import {createDiagnosticEvents,classifyFetchFailure,diagnosticsQuickSummary} fro
 import {loadBundledCatalog,verifyBundledExtension,createExtensionStore,extensionStorageScope} from './extensions/store.js';
 import {extensionAssetUrl,validateExtensionManifest} from './extensions/contract.js';
 import {extensionUpdateStatus,extensionUpdateSummary,releaseRevision} from './extensions/updates.js';
-import {createExtensionHost} from './extensions/host.js';
+import {createExtensionHost,CORE_WALLET_ID} from './extensions/host.js';
 import {ATRIUM_EXTENSION_ID,ATRIUM_REPOSITORY_URL} from './extensions/game-launch.js';
 import {FIRST_PARTY_REPOSITORIES,createRepositorySubscriptions,fetchRepository,fetchServerRepositories,mergeRepositoryEntries,extensionSource,remoteOrigin} from './extensions/repositories.js';
 import {atriumLauncher,reviewedAtriumBase} from './atrium-launch.js';
@@ -37,7 +37,7 @@ import {petById} from './companions/catalog.js';
 import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
 import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
-const CLIENT_VERSION='0.3.79';
+const CLIENT_VERSION='0.3.82';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
@@ -100,7 +100,21 @@ function presentPendingLifeLaunch(){
  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel';cancel.setAttribute('data-life-launch-cancel','');cancel.addEventListener('click',clearPendingLifeLaunch);
  panel.append(detail,link,cancel);toolbar.after(panel);
 }
-const extensionHost=createExtensionHost({storage:localStorage,notify:message=>toast(message),close:()=>{clearPendingLifeLaunch();state.panel='app-store';render();},onGameLaunch:offerLifeLaunch});
+const walletMethods={
+ 'wallet.balance':api=>api.walletBalance(),
+ 'wallet.transactions':(api,p)=>api.walletTransactions(p.limit===undefined?40:p.limit),
+ 'wallet.claim':(api,p)=>api.walletClaim(p.requestId),
+ 'wallet.convert':(api,p)=>api.walletConvert(p.from,p.to,p.amount,p.requestId,p.expectedNumerator,p.expectedDenominator),
+ 'wallet.purchase':(api,p)=>api.walletPurchase(p.sku,p.requestId,p.expectedPrice,p.expectedCurrency,p.expectedMerchant),
+ 'wallet.orderStatus':(api,p)=>api.walletOrderStatus(p.orderId)
+};
+const extensionHost=createExtensionHost({storage:localStorage,notify:message=>toast(message),
+ close:()=>{clearPendingLifeLaunch();state.panel='app-store';render();},onGameLaunch:offerLifeLaunch,
+ walletApi:(method,params)=>{
+  if(!state.connected||!state.api||!state.profile)throw Error('Sign in to use Wallet');
+  const run=walletMethods[method];if(!run)throw Error('Unsupported Wallet operation');
+  return run(state.api,params);
+ }});
 const extensionBase=()=>new URL('./',document.baseURI);
 function extensionAccountStore(){
  const scope=state.api&&state.profile?extensionStorageScope(state.api.origin,state.profile.profileId):null;
@@ -787,6 +801,7 @@ function showDiagnosticReport(){
 async function action(name){
  if(name==='minimize-view'||name==='home'){if(state.panel==='messenger'&&!state.mobileRoster)surfaces.minimizeChat(state.peer,nameOf(state.peer));state.panel='home';state.mobileRoster=true;render();return;}
  if(name==='app-store'){state.panel='app-store';state.mobileRoster=false;render();if(!extensionCatalog.length||Date.now()-extensionLastCheckedAt>=EXTENSION_CHECK_INTERVAL)void loadExtensionStore();return;}
+ if(name==='wallet'){if(extensionAccountStore()?.enabled(CORE_WALLET_ID))await openInstalledExtension(CORE_WALLET_ID);else{state.panel='app-store';render();toast('Wallet is bundled with Tavi. Install Wallet from the App Store once.');}return;}
  if(name==='store-refresh'){void loadExtensionStore({manual:true});return;}
  if(name==='check-extension-updates'){state.panel='app-store';state.mobileRoster=false;render();void loadExtensionStore({manual:true});return;}
  if(name==='main-menu'){state.panel='menu';state.mobileRoster=false;render();return;}

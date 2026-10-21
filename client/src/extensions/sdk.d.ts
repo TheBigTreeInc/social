@@ -11,10 +11,15 @@ export interface TaviExtensionSDK {
   capabilities():Promise<string[]>;
   storage: {get(key:string):Promise<string|null>;set(key:string,value:string):Promise<void>};
   ui: {toast(message:string):Promise<void>;close():Promise<void>;/** First-party Atrium only: asks Tavi to display a Life Open/Cancel gate. */requestGameLaunch(handoff:{schema:'atrium.tavi-launch/v1';gameId:'life.loop';target:string;matchContext:{matchId:string}}):Promise<{awaitingApproval:boolean}>};
-  /** Planned: requires authoritative LoopRD ledger + wallet.read grant. */
+  /** First-party bundled Wallet only. Other extension IDs are denied by the host. */
   wallet: {
-    balance(params:{currencyId:CurrencyId}):Promise<Balance>;
-    transactions(params?:ResourceCursor & {currencyId?:CurrencyId}):Promise<unknown>;
+    balance():Promise<{schema:'tavi.wallet/v1';balances:{currencyId:string;amount:string}[];currencies:unknown[];rates:unknown[];offers:unknown[];faucet:unknown}>;
+    transactions(params?:{limit?:number}):Promise<unknown>;
+    claim(params:{requestId:string}):Promise<unknown>;
+    convert(params:{from:string;to:string;amount:MinorUnitAmount;requestId:string;expectedNumerator:string;expectedDenominator:string}):Promise<unknown>;
+    purchase(params:{sku:string;requestId:string;expectedPrice:string;expectedCurrency:string;expectedMerchant:string}):Promise<unknown>;
+    orderStatus(params:{orderId:number}):Promise<unknown>;
+    /** Not implemented: arbitrary user-to-user transfers remain denied. */
     transfer(params:{recipientSubject:string;currencyId:CurrencyId;amountMinor:MinorUnitAmount;idempotencyKey:string;reason?:string}):Promise<LedgerReceipt>;
   };
   /** Planned: separate Companions LoopRD component and per-pet revision validation. */

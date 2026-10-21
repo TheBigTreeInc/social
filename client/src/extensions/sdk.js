@@ -28,7 +28,10 @@ export function createTaviExtensionSDK(target=window.parent,source=window){
   ui:{toast:message=>request('ui.toast',{message}),close:()=>request('ui.close'),requestGameLaunch:handoff=>request('ui.requestGameLaunch',{handoff})},
   // Future shared-service APIs. Every call is checked by the host broker and
   // again by the corresponding server; this SDK never stores a Social bearer.
-  wallet:{balance:params=>call('wallet.balance',params),transactions:params=>call('wallet.transactions',params),transfer:params=>call('wallet.transfer',params)},
+  wallet:{balance:()=>call('wallet.balance'),transactions:params=>call('wallet.transactions',params),
+    claim:params=>call('wallet.claim',params),convert:params=>call('wallet.convert',params),
+    purchase:params=>call('wallet.purchase',params),orderStatus:params=>call('wallet.orderStatus',params),
+    transfer:params=>call('wallet.transfer',params)},
   pets:{list:params=>call('pets.list',params),get:params=>call('pets.get',params),command:params=>call('pets.command',params)},
   contacts:{list:params=>call('contacts.list',params)},
   messages:{list:params=>call('messages.list',params),send:params=>call('messages.send',params)},

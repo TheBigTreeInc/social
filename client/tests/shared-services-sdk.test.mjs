@@ -17,7 +17,7 @@ test('browser SDK exposes actual grants and fails closed on undistributed shared
  const client=createTaviExtensionSDK(parent,source);
  assert.deepEqual(await client.capabilities(),['ui.panel','storage.private']);
  assert.equal((await client.info()).extensionId,'org.tavi.examples.test');
- await assert.rejects(client.wallet.balance({currencyId:'tavi:cash'}),/Unsupported extension method/);
+ await assert.rejects(client.wallet.balance({currencyId:'tavi:cash'}),/first-party Wallet/);
  await assert.rejects(client.contacts.list(),/Unsupported extension method/);
  await assert.rejects(client.messages.send({peerId:'acct_other',content:'hi',idempotencyKey:'req-1'}),/Unsupported extension method/);
  client.dispose();host.dispose();

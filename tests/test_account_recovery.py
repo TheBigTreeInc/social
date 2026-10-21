@@ -135,7 +135,7 @@ class RecoveryFlow(unittest.TestCase):
                 self.assertEqual(db.execute(sa.text('SELECT COUNT(*) FROM "SocialRecoveryCode"')).scalar_one(),0)
         finally:engine.dispose()
     def test_additive_schema(self):
-        self.assertEqual(self.spec['database']['schemaVersion'],10)
+        self.assertEqual(self.spec['database']['schemaVersion'],11)
         self.assertIn(9,[m['version'] for m in self.spec['database']['migrations']])
         with self.engine.begin() as db:
             code=db.execute(sa.text('SELECT name FROM sqlite_master WHERE name=\'SocialRecoveryCode\'')).scalar()

@@ -86,7 +86,7 @@ class ConversationSyncTests(unittest.TestCase):
   db.close()
  def test_migration_adds_read_table_without_rewriting_messages(self):
   spec=self.fixture.spec
-  self.assertEqual(spec['database']['schemaVersion'],10)
+  self.assertEqual(spec['database']['schemaVersion'],11)
   new=[m for m in spec['database']['migrations'] if m['version']==5][0]
   self.assertEqual(len(new['statements']),2)
   self.assertTrue(all('SocialConversationRead' in stmt for stmt in new['statements']))

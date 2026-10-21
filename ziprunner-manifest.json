@@ -3,16 +3,30 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.79",
-    "base_version": "0.3.78"
+    "version": "0.3.82",
+    "base_version": "0.3.81"
   },
   "update": {
-    "id": "TAVI-20261021-EXACT-CI-LAYOUT-SNAPSHOT-0379",
+    "id": "TAVI-20261021-PRELAUNCH-WALLET-MOBILE-SAFE-0382",
     "kind": "source_update",
-    "created_at": "2026-10-21T14:50:00+02:00",
-    "summary": "Fix 0.3.78 exact-SHA five-viewport UI QA transient 0px roster reads, preserving strict 44px touch target detection and latest operator workboard. No behavior, server or extension permission changes."
+    "created_at": "2026-10-21T19:39:00+02:00",
+    "summary": "Clean prelaunch Gold Wallet schema and safe mobile Home/focused navigation without any runtime state changes."
   },
   "planned_work": [
+    {
+      "id": "TAVI-WALLET-081",
+      "title": "Protect free Gold from shop purchases and exchanges",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Import exact 0.3.81 ZIP and confirm all 126 prior workboard IDs, statuses, priorities and acceptance criteria remain unchanged.; Back up a staging copy of any Social schema 11 wallet; migrate to schema 12, confirm all preexisting balances are conservatively play-only and Social history remains untouched.; Verify 100 free Gold permits game entry but denies items and conversion; repeat refill, refund and exchange attempts cannot create shopping-eligible Gold.; Authorize a game reward service explicitly with per-event and per-player limits; verify replay prevention, earned Gold shop purchases, full or partial game-entry charges, returns and order fulfillment.; Verify UI clearly distinguishes free play Gold and earned Gold on Windows, Android and web; no trusted game publisher or remote extension receives account tokens.; Operator approval and live merchant delivery acceptance required before Done; no deployment or Git push from this candidate."
+    },
+    {
+      "id": "TAVI-WALLET-080",
+      "title": "First-party Gold Wallet, purchase and exchange ledger",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Source and ZipRunner build verification, staging schema 10→11 migration, tested exact receipts, first-party host grant isolation, Android/Windows/Web native Wallet acceptance, merchant fulfillment proof and operator approval."
+    },
     {
       "id": "TAVI-EXT-UPDATES-072",
       "title": "Visible app update checks and revision-aware approval",
@@ -532,6 +546,20 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": "Import the exact 0.3.79 ZipRunner archive over installed 0.3.78 and verify all source and workboard gates.; Run GitHub UI QA at desktop, tablet, compact 355px and mobile 390px/320px for the exact new push SHA; all five viewports must pass.; Verify asynchronous detached/zero-area element is retried and an actually visible 30px touch target still fails with computed-size diagnostics.; Verify no chat, extension permissions, LoopRD server schema, private data, or installed state changes; native Windows/Android operator acceptance remains required."
+    },
+    {
+      "id": "TAVI-WALLET-CLEAN-082",
+      "title": "Prelaunch Wallet clean ledger schema without experimental balance migration",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Verify clean Wallet schema creates all six wallet tables and indexes in one version 11 migration, with no legacy Wallet balance promotion. Confirm no production Tavi user data exists before considering a new clean LoopRD database; preserve ZipRunner and private configuration unmodified. Run wallet ledger tests covering free-only Gold, shop denial, earned rewards, conversion, refunds and duplicate processing. Deploy only into approved empty or isolated prelaunch LoopRD staging; do not downgrade an existing schema-12 database in place. Operator approves staging and real game purchase/fulfillment separately before Done."
+    },
+    {
+      "id": "TAVI-MOBILE-SAFE-082",
+      "title": "Keep mobile Home and focused Back/Menu navigation clear of system bars and roster text",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Browser fixture measures 46px top and 34px bottom simulated Android insets at phone 320/390px and tablet widths. Check Main Menu is within its own dock, not over last Home roster text; dock ends above OS navigation inset. Check focused Back action stays inside header with 44px touch target and safe top inset; embedded games and chat compose keep safe controls. Verify actual Android OEM devices with gesture/three-button navigation, display cutouts, software keyboard, light/dark theme and orientation change. Verify Windows 355x630 compact app remains usable; do not mark Done without device/operator acceptance."
     }
   ],
   "done_work": [
@@ -1340,6 +1368,16 @@
   ],
   "todo_work": [
     {
+      "id": "TAVI-WALLET-081",
+      "status": "review",
+      "reason": "Free Gold shop restriction source implemented; live schema 12 migration, merchant reward admission, Android/Windows/Web and operator approval remain."
+    },
+    {
+      "id": "TAVI-WALLET-080",
+      "status": "review",
+      "reason": "Source ledger/extension is implemented; staged schema 11 migration, live authorized merchant fulfillment and Windows/Android/Web operator acceptance remain outstanding."
+    },
+    {
       "id": "TAVI-EXT-UPDATES-072",
       "reason": "Source tests need exact ZipRunner and operator native/hosted acceptance."
     },
@@ -1629,6 +1667,20 @@
       "id": "TAVI-UI-CI-078",
       "status": "review",
       "reason": "Source code/test repaired; new GitHub exact-commit UI QA and native operator device QA not run/accepted."
+    },
+    {
+      "id": "TAVI-WALLET-CLEAN-082",
+      "title": "Prelaunch Wallet clean ledger schema without experimental balance migration",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Verify clean Wallet schema creates all six wallet tables and indexes in one version 11 migration, with no legacy Wallet balance promotion. Confirm no production Tavi user data exists before considering a new clean LoopRD database; preserve ZipRunner and private configuration unmodified. Run wallet ledger tests covering free-only Gold, shop denial, earned rewards, conversion, refunds and duplicate processing. Deploy only into approved empty or isolated prelaunch LoopRD staging; do not downgrade an existing schema-12 database in place. Operator approves staging and real game purchase/fulfillment separately before Done."
+    },
+    {
+      "id": "TAVI-MOBILE-SAFE-082",
+      "title": "Keep mobile Home and focused Back/Menu navigation clear of system bars and roster text",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Browser fixture measures 46px top and 34px bottom simulated Android insets at phone 320/390px and tablet widths. Check Main Menu is within its own dock, not over last Home roster text; dock ends above OS navigation inset. Check focused Back action stays inside header with 44px touch target and safe top inset; embedded games and chat compose keep safe controls. Verify actual Android OEM devices with gesture/three-button navigation, display cutouts, software keyboard, light/dark theme and orientation change. Verify Windows 355x630 compact app remains usable; do not mark Done without device/operator acceptance."
     }
   ],
   "validation": {
@@ -1855,7 +1907,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Import 0.3.79 over 0.3.78, verify workboard metadata and native build; require all exact-SHA push workflows including five-viewport UI QA green. Review operator-native Windows and Android separately. No automatic push or release.",
+    "next_pass": "Install 0.3.82 via ZipRunner; run local source/Windows QA, exact-commit CI after operator push; manually accept safe-area on Android and stage fresh Wallet schema only in an approved empty prelaunch LoopRD DB.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -1969,6 +2021,6 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.79 source candidate: 0.3.78 exact-commit UI QA failed on transient 0px geometry despite visible screenshots. Wait for fresh exact-commit CI and operator-native acceptance; no Git push/tag/deployment made by package author."
+    "notes": "Source candidate 0.3.82; no user production wallet migration supported. No automatic Git push, release, DB reset or operator acceptance."
   }
 }

@@ -1,0 +1,99 @@
+= Tavi first-party Gold Wallet — Core Extension and Authoritative Ledger
+:revnumber: 0.3.80
+:revdate: 2026-10-21
+:toc:
+:toclevels: 3
+
+== Status and product boundary
+
+This release implements a first-party bundled Tavi Wallet extension (`org.tavi.core.wallet`, v0.1.0) and a co-located, separately modeled virtual-currency Ledger on LoopRD Social. It is a *source candidate*, not a deployed or operator-approved wallet. Native device, live database migration and game-merchant acceptance are outstanding. Tavi remains a *messenger first*; Wallet is optional, accessible from the app launcher and App Store, and never replaces Home.
+
+Gold is exclusively fictional in-platform currency. The system has *no* payment gateway, cash-in, cash-out, purchase of virtual gold with fiat/crypto, trade into cash, gambling stakes, or financial value. Do not use real-money rates or exchanges here.
+
+The prior architecture v2 proposed a fully separate LoopRD Ledger component. This pass temporarily co-locates the Ledger service behind Social's *existing verified identity* in the same home realm, with dedicated `Wallet*` tables and distinct `/wallet` and `/ecosystem/wallet-merchant` handlers. This is a deliberate migration stage, NOT replacement of the durable separate-component goal; see `TAVI-WALLET-SPLIT-082`. Standalone extraction requires a reviewed cross-component grant and deployment plan.
+
+== Player experience
+
+* The first opening of a wallet initializes an *immutable welcome transaction* granting **100 Gold**, once per Tavi account per realm. The first read creates this ledger entry atomically; the UI never creates balances.
+* Gold below 100 unlocks **Get back to 100 Gold · Free**. It credits *exactly the difference*, so at zero the user gets 100; at 35 the user gets 65. This is deliberately repeatable after spending, so players do not permanently lose access to the platform. A wallet can display zero temporarily after a purchase, but a refill remains available. It never claims 100 when already at 100 or more. No ads, purchase requirement or daily waiting period.
+* **Not every game requires gold.** A game may expose an explicitly free SKU at price `0`, or never require the Wallet for free admission. Wallet neither forces a ticket onto games nor creates seats itself.
+* **Buying an item or paid game entry** is reviewed against a server-owned SKU catalog: the extension displays the price, then requires a second explicit Confirm click. The request repeats the observed price, currency and merchant. The Ledger *rejects* a checkout if any of those changed, rather than charging an unseen price.
+* Receipts show a `pending` merchant-fulfillment status. Paying is NOT proof that the game's item or seat has been granted; only the admitted game component can mark that order fulfilled, or refund it if delivery cannot be completed. A game should fulfill only once after its own authoritative inventory/session creation succeeds; cross-service coordination and recovery remain acceptance work.
+* Extra virtual currencies are optional, defined by an operator with stable IDs, symbols, decimal precision and realm/game scope. Conversion uses exact integer-rational policies, no floating point or implied market rates. Forward and reverse conversions must each be explicitly configured. Conversion also uses a second confirmation and a rate-fingerprint check.
+* Transactions are account/realm-scoped; the extension displays only its own authenticated wallet. No user-to-user transfers, arbitrary rewards or minting privileges are exposed in v0.3.80.
+
+== Tavi client files and API
+
+`client/public/tavi-extensions/org.tavi.core.wallet/` holds the manifest, integrity-listed SVG icon and CSP-limited UI. The manifest is in `client/public/tavi-extensions/catalog.v1.json` and can be installed from the App Store like Private Notepad. The main-menu Wallet shortcut opens the installed extension, or opens the App Store to request installation. Existing messenger Home, contacts, chats, games and other extensions remain unchanged.
+
+The isolated iframe runs with `allow-scripts` but *without* same-origin access, direct networking, `localStorage`, Social credentials, native APIs or permission escalation. All Wallet requests cross the tokenless `tavi.extension/v1` bridge. The Tavi host explicitly permits Wallet operations **only** if the frame is the reviewed bundled ID `org.tavi.core.wallet`, the source is `tavi:bundled`, the extension is installed/enabled and the current user is signed in. A community repository reusing the ID is ignored in favor of the built-in catalog; no third-party wallet permissions are introduced into manifest v1. Disable/remove the extension in App Store to close that UI surface.
+
+Supported extension bridge calls: `wallet.balance`, `wallet.transactions`, `wallet.claim`, `wallet.convert`, `wallet.purchase`, `wallet.orderStatus`. `wallet.transfer` and arbitrary rewards are intentionally unsupported. The corresponding trusted host SDK methods use `/looprd/looprd-social/v1/wallet`, authenticated with the existing Social session; user identity is resolved and checked server-side.
+
+== Backend and transactional rules
+
+`server/wallet_ledger.py` is embedded independently in the generated LoopRD Social descriptor as an account-scoped user handler plus a separate *service-only* merchant handler. It does not share presentation state or use any extension-provided amount for purchasing.
+
+The *additive* SQLite schema migration `10 -> 11` creates:
+
+* `WalletBalance`: materialized account/currency integer minor-unit balances (unique account + currency).
+* `WalletTransaction`: append-only receipts, immutable operation/request digest with per-actor idempotency key.
+* `WalletEntry`: append-only journal entries, **sum of signed deltas is zero per currency for each posted transaction**. Source issuance and refills debit an explicit `system:treasury` account; this issuer can be negative, normal users cannot.
+* `WalletOrder`: account-owned SKU orders with `pending`, `fulfilled` or `refunded` states, an immutable priced receipt and a matching transaction.
+
+A user balance cannot fall below zero. Every balance change and its journal entries commit in a single LoopRD database transaction; conditional SQLite updates protect against overlapping debits. The service verifies the current Social session and matches the verified LoopRD principal to the account. Invalid credentials, forged subjects, stale prices or rates, invalid amounts, reused idempotency keys for a different operation, unauthorized services and unapproved products are rejected. In case of database failure, the transaction must roll back.
+
+A free (`price=0`) order has an immutable order receipt and no currency journal deltas. This isn't virtual money creation. Nonzero entries always balance. Fixed-precision integer JSON amounts are transmitted as decimal strings. History is read-only and never contains credentials.
+
+This is not a globally transferable token, blockchain or financial service.
+
+== Operator configuration examples (do not add values or secrets to Git)
+
+The following are *examples*, not live configuration, and use an invented test game. Use private deployment variables, review the game's ownership and supported contracts, and adapt them to real admitted component IDs.
+
+[source,json]
+----
+LOOPRD_TAVI_WALLET_CURRENCIES_JSON = [
+ {"id":"example:points","name":"Points","symbol":"P","decimals":0,"scope":"game"}
+]
+LOOPRD_TAVI_WALLET_RATES_JSON = [
+ {"from":"gold","to":"example:points","numerator":"1","denominator":"10"},
+ {"from":"example:points","to":"gold","numerator":"10","denominator":"1"}
+]
+LOOPRD_TAVI_WALLET_OFFERS_JSON = [
+ {"sku":"demo.free.entry","title":"Free demo entry","merchant":"demo-game","type":"entry","currencyId":"gold","price":"0"},
+ {"sku":"demo.paid.entry","title":"Demo entry","merchant":"demo-game","type":"entry","currencyId":"gold","price":"25"},
+ {"sku":"demo.sword","title":"Demo sword","merchant":"demo-game","type":"item","currencyId":"gold","price":"40"}
+]
+LOOPRD_TAVI_WALLET_MERCHANTS_JSON = {
+ "demo-game":["demo.free.entry","demo.paid.entry","demo.sword"]
+}
+----
+
+The bracketed values above are literal JSON *values* for separate environment variables, not a complete shell script. Absent or invalid extra-currency, offer or exchange configuration safely disables those options: Gold remains available with its refill.
+
+The `demo-game` caller must also be a real operator-admitted LoopRD service principal via the existing private `LOOPRD_SOCIAL_SERVICE_SECRETS_JSON` and associated secret reference. Never put this secret, user credentials or token in a `looprd.yaml`, extension bundle or Git repository. An unapproved service may not call the merchant contract.
+
+The service-only merchant contract is `POST /looprd/looprd-social/v1/ecosystem/wallet-merchant` with a body `{"schema":"tavi.wallet-fulfillment/v1","op":"fulfill","orderId":123,"sku":"demo.sword"}` or `op:"refund"`. It requires `social:service`, a verified component principal, an exact caller/SKU operator allowlist and an existing order for that merchant. It cannot debit a player. Replayed fulfillment/refunds return a duplicate acknowledgement; a fulfilled order cannot be refunded using this first-pass route. The game must not infer ownership from an account name or trust any client-side receipt without server confirmation.
+
+== Deployment and testing — operator-gated
+
+. Keep the existing Social SQLite database, sessions, conversations and runtime state. **Back up the actual database**, verify a restore works, and test schema 10 -> 11 against a staging copy. Do not deploy a new descriptor straight to production without backup.
+. Validate generated descriptor equality (`python tools/generate-looprd.py --check`) and inspect the new DB statements and `/wallet`/merchant handler source. Run the isolated ledger tests and the existing Social suite.
+. Import the v0.3.80 ZipRunner source package without `.env`, active ZipRunner config, database or runtime state. Build Tavi; no automatic Git push or LoopRD deployment is performed by this handoff.
+. Apply the operator-reviewed new Social `looprd.yaml` using normal GitOps; ensure LoopRD supports the declared transaction/service model and preserves accounts and Social schema 10 tables. Verify schema 11 was activated.
+. Sign in on two real Tavi accounts, install the first-party Wallet from App Store, and check 100 Gold on initial access, account isolation, repeat reads, an 80-Gold test entry, refill back to 100, negative-fund protection and cancellation.
+. Install the same Tavi version on Android and Windows. Confirm no credentials in iframe storage or logs, no unauthorized community extension wallet method, correct Home/Back navigation, and user-visible non-connected state if Ledger is not active.
+. Configure *one* private test merchant, buy a test item with two-step price approval, verify only that service fulfills it once, and test a separate pending-order refund. Game-owned seat/item fulfillment needs real game acceptance separately; do not mark any multiplayer or payment fulfillment ticket Done on unit tests alone.
+. Verify exact-commit GitHub CI after any operator-reviewed push. A successful build alone is not proof of approval.
+
+== Follow-up workboard
+
+* `TAVI-WALLET-080` — implementation candidate, **Review**, no live acceptance implied.
+* `TAVI-WALLET-LIVE-081` — merchant/game fulfillment, receipt reconciliation, real purchases, **Planned**.
+* `TAVI-WALLET-SPLIT-082` — standalone home-realm LoopRD Ledger and robust delegated grants, **Planned**.
+* The previous private/public cross-repository publishing workflow is still parked; this release does not add or run it.
+
+== OpenClaw and game testing
+
+The game/Social service APIs—not the wallet UI—are the testing contract. OpenClaw may use a disposable ordinary Tavi account and invoke the same authenticated Wallet endpoint for its *own* balance, approved order and idempotent refill only, with the operator's explicit permission. It cannot mint, bypass the merchant allowlist, use another account's wallet, or claim a game seat merely by observing a pending receipt. Existing OpenClaw bridge and messaging remain unchanged; native wallet CLI commands can be added in a later pass.

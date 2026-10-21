@@ -3,6 +3,7 @@
 // never connects to the operator's server or logs account credentials.
 import assert from 'node:assert/strict';
 import {snapshotTouchTargets} from './ui-qa-touch.mjs';
+import {snapshotSafeLayout} from './ui-qa-insets.mjs';
 import {createServer} from 'node:http';
 import {readFile,stat,mkdir,writeFile} from 'node:fs/promises';
 import {join,resolve,dirname,extname,relative} from 'node:path';
@@ -99,10 +100,37 @@ async function testViewport(browser,base,device){
    const sectionHeight=metrics.section.height;
    assert(sectionHeight>=44,`${device.name} section button is only ${sectionHeight}px: ${JSON.stringify(metrics)}`);
   }
+  if(device.mobile){
+   stage='Android simulated safe areas';
+   // Synthetic 46px top / 34px bottom ensures an edge-to-edge Android
+   // WebView leaves room for status and gesture bars even when env() is zero.
+   await page.evaluate(()=>{
+    document.documentElement.classList.add('android-shell');
+    document.documentElement.style.setProperty('--tavi-safe-top','46px');
+    document.documentElement.style.setProperty('--tavi-safe-bottom','34px');
+   });
+   const layout=await page.evaluate(snapshotSafeLayout,null);
+   assert(layout.roster&&layout.dock&&layout.menu,`${device.name} missing Home regions: ${JSON.stringify(layout)}`);
+   assert(layout.roster.top>=45&&layout.dock.bottom<=layout.viewport.height-33,
+     `${device.name} Home enters system bars: ${JSON.stringify(layout)}`);
+   assert(layout.menu.top>=layout.dock.top-1&&layout.menu.bottom<=layout.dock.bottom+1,
+     `${device.name} Main Menu overlaps roster text: ${JSON.stringify(layout)}`);
+   assert(layout.roster.bottom<=layout.dock.top+1,
+     `${device.name} roster and dock overlap: ${JSON.stringify(layout)}`);
+  }
   stage='Life discovered Games';await visible(page,'.tavi-home-dock [data-action="games"]');await page.locator('.tavi-home-dock [data-action="games"]').click();
   await visible(page,'[data-discovered-game="life.loop"]');
   assert.match(await page.locator('[data-discovered-game="life.loop"]').innerText(),/Not playable yet/);
   assert.equal(await page.locator('[data-discovered-game="life.loop"] [data-launch-game], [data-discovered-game="life.loop"] [data-challenge-game]').count(),0);
+  if(device.mobile){
+   stage='Android safe Back and focused header';
+   const layout=await page.evaluate(snapshotSafeLayout,null);
+   assert(layout.toolbar&&layout.back,`${device.name} Back missing: ${JSON.stringify(layout)}`);
+   assert(layout.toolbar.top>=45&&layout.back.top>=layout.toolbar.top-1&&layout.back.height>=44,
+      `${device.name} Back overlaps header or status bar: ${JSON.stringify(layout)}`);
+   assert(layout.back.bottom<=layout.toolbar.bottom+1,
+      `${device.name} Back overlays focused screen text: ${JSON.stringify(layout)}`);
+  }
   stage='Life withdrawn';await fetch(new URL('__qa/withdraw-life',base),{method:'POST'});
   await page.locator('.tavi-game-title-row [data-action="refresh"]').click();
   await page.locator('[data-discovered-game="life.loop"]').waitFor({state:'detached',timeout:7000});
@@ -134,7 +162,7 @@ async function testViewport(browser,base,device){
   await noOverflow(page,`${device.name} returned home`);
   assert.equal(errors.length,0,`${device.name} JavaScript errors: ${errors.join('; ')}`);
   if(process.env.TAVI_QA_CAPTURE==='1')await screenshot(page,`${device.name}-success`);
-  checks.push({device:device.name,result:'passed',stages:['login','home','life-discovered-in-games','life-nonplayable','life-withdrawn','main-menu','app-store','extension-install-approval-and-cancel','extension-launch','return-home','viewport-overflow','mobile-touch-targets','javascript-errors']});
+  checks.push({device:device.name,result:'passed',stages:['login','home','life-discovered-in-games','life-nonplayable','life-withdrawn','main-menu','app-store','extension-install-approval-and-cancel','extension-launch','return-home','viewport-overflow','mobile-touch-targets','android-safe-insets-and-navigation','javascript-errors']});
   console.log(`PASS ${device.name}: sign-in, Life discover/withdraw, home, App Store, approve/open extension, return home, viewport, script errors`);
  }catch(error){
   const picture=await screenshot(page,`${device.name}-failure`);

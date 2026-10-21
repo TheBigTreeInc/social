@@ -15,7 +15,7 @@ const memory=()=>{
  const data=new Map();return {getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
 };
 test('real catalog/manifest accepted and v1 SDK API range checked',()=>{
- assert.equal(validateCatalog(catalog).length,1);
+ assert.equal(validateCatalog(catalog).length,2);
  assert.equal(validateExtensionManifest(entry.manifest).compatible,true);
  assert.equal(compareVersions('1.0.1','1.0.0'),1);
  const future=structuredClone(entry.manifest);future.hostApi.min='2.0.0';future.hostApi.maxExclusive='3.0.0';

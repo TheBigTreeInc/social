@@ -177,6 +177,25 @@ export class LooprdSocial {
       throw error;
     } finally { clearTimeout(timer); }
   }
+  /** Authenticated first-party Wallet endpoint; tokens remain in the host process. */
+  async walletCommand(op, fields = {}) {
+    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
+    try{
+      const response=await this.fetcher(componentPath(this.origin,SOCIAL_COMPONENT,'wallet'),{
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${this.token}`},
+        body:JSON.stringify({op,...fields,token:this.token}),cache:'no-store',signal:controller.signal});
+      const body=await responseJson(response);
+      if(!body||body.ok!==true)throw new ProtocolError(body?.error||'Wallet operation failed');
+      return body;
+    }catch(error){if(error?.name==='AbortError')throw new ProtocolError('Wallet request timed out.');throw error;}
+    finally{clearTimeout(timer);}
+  }
+  walletBalance(){return this.walletCommand('balance');}
+  walletTransactions(limit=40){return this.walletCommand('transactions',{limit});}
+  walletClaim(requestId){return this.walletCommand('claim',{requestId});}
+  walletConvert(from,to,amount,requestId,expectedNumerator,expectedDenominator){return this.walletCommand('convert',{from,to,amount,requestId,expectedNumerator,expectedDenominator});}
+  walletPurchase(sku,requestId,expectedPrice,expectedCurrency,expectedMerchant){return this.walletCommand('purchase',{sku,requestId,expectedPrice,expectedCurrency,expectedMerchant});}
+  walletOrderStatus(orderId){return this.walletCommand('order_status',{orderId});}
   interactions() { return this.command('interaction_feed'); }
   /** Game event inbox remains Social-owned; the game state stays in Life/Atrium. */
   gameEvents(after = 0) {
