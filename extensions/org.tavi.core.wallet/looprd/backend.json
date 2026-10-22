@@ -1,0 +1,17 @@
+{
+  "schema": "tavi.embedded-looprd-backend/v1",
+  "extensionId": "org.tavi.core.wallet",
+  "component": "looprd-social",
+  "authRealm": "tavi-social",
+  "source": "wallet_ledger.py",
+  "apiSchema": "tavi.wallet/v1",
+  "databaseSchemaVersion": 11,
+  "databaseOwnership": "looprd-social",
+  "handlers": {
+    "user": "/wallet",
+    "merchant": "/ecosystem/wallet-merchant",
+    "reward": "/ecosystem/wallet-reward"
+  },
+  "deployment": "embed-in-existing-component",
+  "migration": "none-no-secondary-database"
+}

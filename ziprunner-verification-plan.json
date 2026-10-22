@@ -1,8 +1,54 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.88",
+  "version": "0.3.90",
   "tasks": [
+    {
+      "id": "TAVI-WALLET-EMBED-089",
+      "criteria": [
+        {
+          "id": "TAVI-WALLET-EMBED-089-SOURCE",
+          "description": "Canonical Wallet extension backend embedded into unchanged Social LoopRD v1 descriptor and schema 11",
+          "mode": "automated",
+          "checks": [
+            "python tools/generate-looprd.py --check",
+            "python -m unittest discover -s tests -p test_wallet_extension_embedding.py -v",
+            "python -m unittest discover -s tests -p test_wallet_ledger.py -q"
+          ]
+        },
+        {
+          "id": "TAVI-WALLET-EMBED-089-OPERATOR",
+          "description": "Running LoopRD schema and identity, Wallet account/merchant validation, signed Android+Windows GUI acceptance",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-CI-COMPANION-BYTES-089",
+      "criteria": [
+        {
+          "id": "TAVI-CI-COMPANION-BYTES-089-SOURCE",
+          "description": "Preserve publisher JS original digest when GitHub checks out Linux CI",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/reviewed-partner-git-integrity-089.test.mjs",
+            "npm run extensions:check",
+            "npm run verify"
+          ]
+        },
+        {
+          "id": "TAVI-CI-COMPANION-BYTES-089-GITHUB",
+          "description": "Exact pushed commit Android and Web source verification plus signed APK and device installation",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
     {
       "id": "TAVI-EXT-NATIVE-HTML-088",
       "criteria": [

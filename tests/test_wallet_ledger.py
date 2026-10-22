@@ -9,7 +9,7 @@ import sqlalchemy as sa
 import yaml
 from sqlalchemy.orm import sessionmaker
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'server'))
+sys.path.insert(0,str(ROOT/'extensions/org.tavi.core.wallet/looprd'))
 from wallet_ledger import execute_wallet,execute_merchant,execute_reward,snapshot,amount,wallet_amount,restricted_amount,shopping_amount
 
 OFFERS=[

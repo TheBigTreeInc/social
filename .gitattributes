@@ -27,3 +27,11 @@ extensions/**/*.svg text eol=lf
 
 # Raw copies must stay byte-exact regardless of Git platform text normalization.
 client/public/tavi-extensions/**/*.bytes -text
+
+# Explicit reviewed Companion publisher bytes include ONE mixed-line-ending line.
+# Git text normalization stripped it on main (commit a45980a) and caused
+# Reviewed partner bundle integrity changed on Linux CI, before APK builds.
+extensions/org.tavi.community.companion/ui/studio-main.js -text
+extensions/org.tavi.community.companion/ui/world-main.js -text
+client/public/tavi-extensions/org.tavi.community.companion/ui/studio-main.js -text
+client/public/tavi-extensions/org.tavi.community.companion/ui/world-main.js -text

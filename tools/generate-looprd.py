@@ -14,7 +14,27 @@ admin_role=(root/'server/admin_role_service.py').read_text(encoding='utf8')
 game_events=(root/'server/game_event_service.py').read_text(encoding='utf8')
 game_grants=(root/'server/game_grant_service.py').read_text(encoding='utf8')
 game_rooms=(root/'server/game_room_service.py').read_text(encoding='utf8')
-wallet_source=(root/'server/wallet_ledger.py').read_text(encoding='utf8')
+# Canonical Wallet backend belongs to the first-party extension; the existing
+# looprd-social component embeds it at build time to keep the same identity,
+# database, schema, routes, and transaction IDs. No secondary ledger is created.
+wallet_source=(root/'extensions/org.tavi.core.wallet/looprd/wallet_ledger.py').read_text(encoding='utf8')
+wallet_contract=json.loads((root/'extensions/org.tavi.core.wallet/looprd/backend.json').read_text(encoding='utf8'))
+registry=json.loads((root/'extensions/registry.json').read_text(encoding='utf8'))
+wallet_entry=next((item for item in registry['extensions'] if item.get('id')=='org.tavi.core.wallet'),None)
+if (wallet_contract.get('schema')!='tavi.embedded-looprd-backend/v1' or
+    wallet_contract.get('extensionId')!='org.tavi.core.wallet' or
+    wallet_contract.get('component')!='looprd-social' or
+    wallet_contract.get('authRealm')!='tavi-social' or
+    wallet_contract.get('source')!='wallet_ledger.py' or
+    wallet_contract.get('apiSchema')!='tavi.wallet/v1' or
+    wallet_contract.get('databaseSchemaVersion')!=11 or
+    wallet_contract.get('databaseOwnership')!='looprd-social' or
+    wallet_contract.get('deployment')!='embed-in-existing-component' or
+    wallet_contract.get('migration')!='none-no-secondary-database' or
+    wallet_contract.get('handlers')!={'user':'/wallet','merchant':'/ecosystem/wallet-merchant','reward':'/ecosystem/wallet-reward'} or
+    wallet_entry is None or wallet_entry.get('mode')!='core' or
+    wallet_entry.get('backend')!={'kind':'looprd-component','component':'looprd-social'}):
+    raise SystemExit('Wallet extension backend ownership mismatch: refuse to generate LoopRD descriptor')
 wallet_merchant_source=wallet_source+'\n\nasync def handle(ctx):\n    return await handle_merchant(ctx)\n'
 wallet_reward_source=wallet_source+'\n\nasync def handle(ctx):\n    return await handle_reward(ctx)\n'
 def string(max_len,required=False,unique=False):

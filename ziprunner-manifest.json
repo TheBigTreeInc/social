@@ -3,16 +3,30 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.88",
-    "base_version": "0.3.87"
+    "version": "0.3.90",
+    "base_version": "0.3.88"
   },
   "update": {
-    "id": "TAVI-20261022-EXT-NATIVE-HTML-0388",
+    "id": "TAVI-20261022-WORKBOARD-PREFLIGHT-0390",
     "kind": "source_update",
-    "created_at": "2026-10-22T21:04:00+02:00",
-    "summary": "Repair Windows Companion/App Store installation blocked by native Tauri CSP HTML transformations using SHA-verified original-byte .bytes mirrors. Source-only; publisher bundle SHA and Ledger unchanged."
+    "created_at": "2026-10-22T21:30:00+02:00",
+    "summary": "ZipRunner preflight-only repair of two missing operator_checks lists in v0.3.89 workboard metadata. Ledger extension-backed LoopRD embedding and byte-preserved reviewed Companion source are unchanged; v0.3.89 did not install."
   },
   "planned_work": [
+    {
+      "id": "TAVI-WALLET-EMBED-089",
+      "title": "Canonical extension-owned Wallet backend within main LoopRD instance",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Run python tools/generate-looprd.py --check and Python ledger/embedding unit tests: generated descriptor and existing schema 11 remain byte-identical.; Confirm Wallet server code resides only under extensions/org.tavi.core.wallet/looprd and never inside static Tavi client assets.; On deployed main LoopRD, back up Social DB and verify schema/version; reconcile if required without DB reset or downgrade.; Prove balance persistence, first grant idempotency, protected free Gold, merchant/reward ACLs, duplicate replay and cross-account isolation; Windows/Android/Web Wallet operator acceptance required.; No auto-push, deploy, separate ledger component, new DB, or second issuer."
+    },
+    {
+      "id": "TAVI-CI-COMPANION-BYTES-089",
+      "title": "Reviewed Companion Git byte preservation on CI",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Verify reviewed Companion 0.6.11 manifest, publisher identity and SHA-256 digest remain unchanged.; Check .gitattributes forces binary byte preservation for affected canonical and mirrored JavaScript assets, with regression test.; On operator-approved next push, inspect GitHub exact SHA source and Android CI: source tests must pass before APK build.; Do not mark Android updater device acceptance complete based on CI; TAVI-UPDATES-003 remains in Review."
+    },
     {
       "id": "TAVI-WALLET-081",
       "title": "Protect free Gold from shop purchases and exchanges",
@@ -2172,6 +2186,11 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.88 native HTML integrity transport source repair. Existing Companion 0.6.11 approved source SHA and Social schema 11 unchanged. No Git push, release, DB change or operator acceptance inferred."
+    "notes": "0.3.90 corrects the v0.3.89 workboard preflight rejection only. No change to Social 0.3.83/schema 11, Wallet ledger implementation, reviewed Companion 0.6.11 digest, native Android updater, private/runtime data or operator acceptance. No Git push/deployment."
+  },
+  "release_notes": {
+    "version": "0.3.90",
+    "summary": "Correct workboard operator_checks for two 0.3.89 Review tickets, preserving the 0.3.89 Wallet extension source and Companion Git byte-integrity repair. No backend/runtime migration or Android updater acceptance.",
+    "server_unchanged": "looprd-social release 0.3.83, schema 11 and existing Wallet tables/receipts retained."
   }
 }
