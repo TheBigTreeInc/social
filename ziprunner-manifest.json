@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.82",
-    "base_version": "0.3.81"
+    "version": "0.3.83",
+    "base_version": "0.3.82"
   },
   "update": {
-    "id": "TAVI-20261021-PRELAUNCH-WALLET-MOBILE-SAFE-0382",
+    "id": "TAVI-20261021-CORE-WALLET-PROFILE-0383",
     "kind": "source_update",
-    "created_at": "2026-10-21T19:39:00+02:00",
-    "summary": "Clean prelaunch Gold Wallet schema and safe mobile Home/focused navigation without any runtime state changes."
+    "created_at": "2026-10-21T22:11:00+02:00",
+    "summary": "Always-available first-party Wallet and clickable authenticated Gold balance in classic Tavi profile; no Ledger database changes."
   },
   "planned_work": [
     {
@@ -560,6 +560,13 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": "Browser fixture measures 46px top and 34px bottom simulated Android insets at phone 320/390px and tablet widths. Check Main Menu is within its own dock, not over last Home roster text; dock ends above OS navigation inset. Check focused Back action stays inside header with 44px touch target and safe top inset; embedded games and chat compose keep safe controls. Verify actual Android OEM devices with gesture/three-button navigation, display cutouts, software keyboard, light/dark theme and orientation change. Verify Windows 355x630 compact app remains usable; do not mark Done without device/operator acceptance."
+    },
+    {
+      "id": "TAVI-WALLET-CORE-083",
+      "title": "Make Wallet a permanent core extension with profile Gold launch",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Import Tavi 0.3.83 into ZipRunner and confirm mandatory workboard gate, source build and exact-package tests succeed while preserving all prior 129 ticket IDs, status, priority and acceptance criteria. On Windows and Android, the account/server text beneath the signed-in display name is replaced by an authenticated Gold balance. Tapping the line opens Wallet directly without an App Store detour or install approval. Wallet always exists in the Main Menu; App Store has no Wallet install/disable/remove buttons. Prior manually installed, disabled or removed Wallet records cannot affect access. Wallet remains a sandboxed verified first-party bundle; remote publisher IDs cannot impersonate it and its iframe never receives the Social session token. The displayed total refreshes after sign-in, foreground activity and Wallet changes. Missing/unavailable API is labeled unavailable and never invents 0 or 100 Gold. Verify same behavior across 320/355/390px phones, tablet and desktop with the five-viewport fixture and real Android/Windows before operator approval; Social schema stays 11."
     }
   ],
   "done_work": [
@@ -1364,6 +1371,32 @@
           "description": "Exact push QA diagnosis and operator handoff"
         }
       ]
+    },
+    {
+      "id": "TAVI-WALLET-CORE-083",
+      "summary": "Source candidate: profile Gold balance from authenticated Wallet API and direct core iframe launch with local bundle verification, no per-device install, no external wallet grants; live operator approval pending.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/wallet/core-ui.js",
+          "description": "Trusted core selection and exact Gold balance parsing"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/main.js",
+          "description": "Core Wallet launch, profile link, authenticated balance refresh"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/core-wallet-083.test.mjs",
+          "description": "Bundled Wallet presence, no duplicate optional app, authoritative Gold format and host routing"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tools/ui-qa.mjs",
+          "description": "Five-viewport Wallet profile click and optional store exclusion"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -1907,7 +1940,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Install 0.3.82 via ZipRunner; run local source/Windows QA, exact-commit CI after operator push; manually accept safe-area on Android and stage fresh Wallet schema only in an approved empty prelaunch LoopRD DB.",
+    "next_pass": "Install 0.3.83, verify real Windows/Android profile Gold link, first-party Wallet iframe and unavailable backend indication; stage Wallet schema-11 backend only on an operator-approved fresh preproduction LoopRD database. Validate exact GitHub CI after source push.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -2016,11 +2049,16 @@
       "id": "TAVI-075-NATIVE-OP",
       "description": "Use approved disposable QA account: start ZipRunner Windows client with TAVI_NATIVE_QA_DISPOSABLE=1 and TAVI_NATIVE_QA_CDP_PORT before launch, then run npm --prefix client run ui:native. Inspect local report; no production screenshots.",
       "status": "required"
+    },
+    {
+      "id": "TAVI-WALLET-CORE-083-OP",
+      "description": "Review Gold link/Wallet core on Windows and Android (no App Store install) against a compatible staging LoopRD schema-11 server and unavailable state; approve after exact CI evidence.",
+      "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Source candidate 0.3.82; no user production wallet migration supported. No automatic Git push, release, DB reset or operator acceptance."
+    "notes": "0.3.83 source candidate; no automatic Git push, release, LoopRD deployment or database reset. Wallet backend contract stays schema 11."
   }
 }

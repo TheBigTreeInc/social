@@ -1,8 +1,8 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.82",
-  "summary": "Tavi 0.3.82: pre-launch Wallet schema consolidated (no legacy balance backfill), and phone/tablet root safe-area layout corrected so Back, Home text and Main Menu never overlap. Existing 127 tickets/decisions preserved; two Review candidates added. Native acceptance pending.",
+  "version": "0.3.83",
+  "summary": "Tavi 0.3.83: first-party Wallet opens directly without installation; authenticated Gold balance replaces profile account/server label. No wallet ledger/schema change. 129 historical tickets retained plus 1 Review. Native device review and live Wallet server pending.",
   "implemented": [
     {
       "id": "LRS-004",
@@ -2033,6 +2033,28 @@
         "Verify actual Android OEM devices with gesture/three-button navigation, display cutouts, software keyboard, light/dark theme and orientation change.",
         "Verify Windows 355x630 compact app remains usable; do not mark Done without device/operator acceptance."
       ]
+    },
+    {
+      "id": "TAVI-WALLET-CORE-083",
+      "title": "Make Wallet a permanent core extension with profile Gold launch",
+      "summary": "Wallet is a non-uninstallable Tavi core extension; tapping the authoritative Gold balance below the signed-in name opens it directly. External extensions remain opt-in. Server account and host information stay in Settings. No fake balance is shown when Wallet API is unavailable.",
+      "priority": "high",
+      "status": "review",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Import Tavi 0.3.83 into ZipRunner and confirm mandatory workboard gate, source build and exact-package tests succeed while preserving all prior 129 ticket IDs, status, priority and acceptance criteria.",
+        "On Windows and Android, the account/server text beneath the signed-in display name is replaced by an authenticated Gold balance. Tapping the line opens Wallet directly without an App Store detour or install approval.",
+        "Wallet always exists in the Main Menu; App Store has no Wallet install/disable/remove buttons. Prior manually installed, disabled or removed Wallet records cannot affect access.",
+        "Wallet remains a sandboxed verified first-party bundle; remote publisher IDs cannot impersonate it and its iframe never receives the Social session token.",
+        "The displayed total refreshes after sign-in, foreground activity and Wallet changes. Missing/unavailable API is labeled unavailable and never invents 0 or 100 Gold.",
+        "Verify same behavior across 320/355/390px phones, tablet and desktop with the five-viewport fixture and real Android/Windows before operator approval; Social schema stays 11."
+      ],
+      "operator_checks": [
+        "Review Gold amount on a running schema-11 Wallet-enabled LoopRD Social service and a disconnected/older server; confirm real balances versus unavailable state.",
+        "Use Wallet without manual installation and check Home navigation, Tavi safe areas and native client behavior.",
+        "Verify exact-commit GitHub browser UI QA and physical Windows/Android acceptance before Done."
+      ],
+      "implementation_summary": "0.3.83 candidate: core Wallet bypasses optional installation, requires reviewed bundled hashes and host-only API; profile shows live Gold link and returns Home; no Social schema change. Device/live server QA pending."
     }
   ],
   "remaining": [

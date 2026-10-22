@@ -4,6 +4,7 @@ import {loadBundledCatalog,verifyBundledExtension,createExtensionStore,extension
 import {extensionAssetUrl,validateExtensionManifest} from './extensions/contract.js';
 import {extensionUpdateStatus,extensionUpdateSummary,releaseRevision} from './extensions/updates.js';
 import {createExtensionHost,CORE_WALLET_ID} from './extensions/host.js';
+import {coreWalletFromBundle,filterOptionalApps,goldStatusLabel} from './wallet/core-ui.js';
 import {ATRIUM_EXTENSION_ID,ATRIUM_REPOSITORY_URL} from './extensions/game-launch.js';
 import {FIRST_PARTY_REPOSITORIES,createRepositorySubscriptions,fetchRepository,fetchServerRepositories,mergeRepositoryEntries,extensionSource,remoteOrigin} from './extensions/repositories.js';
 import {atriumLauncher,reviewedAtriumBase} from './atrium-launch.js';
@@ -37,7 +38,7 @@ import {petById} from './companions/catalog.js';
 import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
 import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
-const CLIENT_VERSION='0.3.82';
+const CLIENT_VERSION='0.3.83';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
@@ -58,11 +59,11 @@ function applyTheme(){if(document.documentElement?.dataset)document.documentElem
 const surfaces=createSurfaceRegistry();
 const nativeChildLabels=new Set();
 const state={companion:newCompanion(),companionKey:null,recoverySupported:false,recoveryCodes:null,recoveryMessage:'',authError:'',reportStatus:'',reportStage:'login',reportCode:'LOGIN_FAILED',reportSending:false,friendError:'',api:null,profile:null,revision:0,connected:false,serverStatus:'',serverSupportsAccounts:false,
-  step:'server',authTab:'register',panel:'home',peer:'lobby',contacts:[],lobby:[],direct:[],
+  goldAmount:null,goldStatus:'loading',goldLastCheckedAt:0,step:'server',authTab:'register',panel:'home',peer:'lobby',contacts:[],lobby:[],direct:[],
   interactions:[],interactionError:'',selectedInteraction:null,inboxFilter:'open',turns:[],gameErrors:{},catalog:[],catalogError:'',atriumGames:[],atriumDiscoveryStatus:'not_connected',lastCatalogAt:0,gameTokens:new Map(),toast:'',mute:false,draft:'',selectedGame:'',avatarCode:'',busy:false,
   sessionRemembered:false,retryAvailable:false,retryOrigin:'',developerAllowed:false,developerVisible:false,developerInfo:null,developerError:'',lastSyncAt:null,pulseState:'disconnected',mobileRoster:true,restoring:false,chatRead:{},unread:{},peerFeeds:new Map(),chatOffset:0,conversationSummaries:[],summarySupported:null,pendingAcks:new Map(),pendingRequestIds:null,notifyPrefs:{messages:true,preview:false,requests:true},pushPrefs:{backgroundEnabled:false},pushCapability:null,pushPermission:'unknown',atriumUrl:null,gameRooms:[],selectedRoomId:null,roomMessages:[],roomError:'',roomDraft:'',theme:normalizeTheme(config.theme),settingsExpanded:{chat:false,push:false},rosterGroups:{online:true,offline:true,requests:true,pending:true,conversations:true}};
 let poll=null,pulse=null,connecting=false,polling=false,toastTimer=null;
-let extensionCatalog=[],extensionCatalogError='',extensionStore=null,extensionStoreScope='',extensionSelected='',extensionBusy=false;
+let extensionCatalog=[],coreWalletEntry=null,extensionCatalogError='',extensionStore=null,extensionStoreScope='',extensionSelected='',extensionBusy=false;
 let extensionInstallApproval=null;
 let extensionVerified=new Set();
 let extensionSuggested=[],extensionRepoStatuses=[],extensionRepoLoad=0;
@@ -109,13 +110,58 @@ const walletMethods={
  'wallet.orderStatus':(api,p)=>api.walletOrderStatus(p.orderId)
 };
 const extensionHost=createExtensionHost({storage:localStorage,notify:message=>toast(message),
- close:()=>{clearPendingLifeLaunch();state.panel='app-store';render();},onGameLaunch:offerLifeLaunch,
- walletApi:(method,params)=>{
+ close:()=>{clearPendingLifeLaunch();state.panel=extensionSelected===CORE_WALLET_ID?'home':'app-store';state.mobileRoster=state.panel==='home';render();},onGameLaunch:offerLifeLaunch,
+ walletApi:async (method,params)=>{
   if(!state.connected||!state.api||!state.profile)throw Error('Sign in to use Wallet');
   const run=walletMethods[method];if(!run)throw Error('Unsupported Wallet operation');
-  return run(state.api,params);
+  const answer=await run(state.api,params);
+  if(method!=='wallet.balance'&&method!=='wallet.transactions'&&method!=='wallet.orderStatus')void refreshGoldBalance(state.api);
+  return answer;
  }});
 const extensionBase=()=>new URL('./',document.baseURI);
+const optionalCatalog=()=>filterOptionalApps(extensionCatalog);
+const optionalUpdateSummary=(entries,store,options)=>{
+ const result=extensionUpdateSummary(filterOptionalApps(entries),store,options);
+ return {...result,missing:result.missing.filter(x=>x.id!==CORE_WALLET_ID)};
+};
+const extensionEntry=id=>id===CORE_WALLET_ID?coreWalletEntry:extensionCatalog.find(e=>e.manifest.id===id);
+const extensionEnabled=id=>id===CORE_WALLET_ID?!!coreWalletEntry:!!extensionAccountStore()?.enabled(id);
+// The core Wallet is trusted only from Tavi's own bundled catalog, never a remote
+// repository or a per-user extension-install record.
+async function ensureCoreWallet(){
+ if(!state.api||!state.profile)throw Error('Sign in to use Wallet');
+ if(!coreWalletEntry){
+  const bundled=await loadBundledCatalog({baseUrl:extensionBase()});
+  coreWalletEntry=coreWalletFromBundle(bundled);
+ }
+ if(!coreWalletEntry)throw Error('The bundled Wallet is missing from this Tavi build');
+ if(!extensionVerified.has(CORE_WALLET_ID)){
+  await verifyBundledExtension(coreWalletEntry,{baseUrl:extensionBase()});
+  extensionVerified.add(CORE_WALLET_ID);
+ }
+ return coreWalletEntry;
+}
+async function openCoreWallet(){
+ try{await ensureCoreWallet();clearPendingLifeLaunch();extensionSelected=CORE_WALLET_ID;state.panel='extension';state.mobileRoster=false;render();}
+ catch(error){toast('Wallet unavailable: '+error.message);}
+}
+async function refreshGoldBalance(api=state.api){
+ if(!api||!state.profile)return;
+ const account=state.profile.profileId;
+ try{
+  const response=await api.walletBalance();
+  if(api!==state.api||state.profile?.profileId!==account)return;
+  const status=goldStatusLabel(response);
+  state.goldAmount=status?.amount??null;
+  state.goldStatus=status?'available':'unavailable';
+ }catch(error){
+  if(api!==state.api||state.profile?.profileId!==account)return;
+  state.goldAmount=null;state.goldStatus='unavailable';
+ }
+ state.goldLastCheckedAt=Date.now();
+ if(state.panel==='home'||state.panel==='messenger')render();
+}
+
 function extensionAccountStore(){
  const scope=state.api&&state.profile?extensionStorageScope(state.api.origin,state.profile.profileId):null;
  if(!scope)return null;
@@ -134,7 +180,7 @@ async function loadExtensionStore({manual=false}={}){
  extensionCatalogError='';extensionRepoStatuses=[];repositoryChecks=[];
  const stale=new Set();
  let bundled=[];
- try{bundled=await loadBundledCatalog({baseUrl:extensionBase()});}
+ try{bundled=await loadBundledCatalog({baseUrl:extensionBase()});coreWalletEntry=coreWalletFromBundle(bundled);}
  catch(error){extensionCatalogError='Bundled catalog: '+error.message;diagnosticEvents.record({area:'extension',operation:'bundled_catalog',...classifyFetchFailure(error)});}
  let suggested=[];
  try{suggested=await fetchServerRepositories(origin);diagnosticEvents.record({area:'repository',operation:'server_recommendations',result:'ok'});}catch(error){extensionRepoStatuses.push('Server recommendations: '+error.message);diagnosticEvents.record({area:'repository',operation:'server_recommendations',...classifyFetchFailure(error)});}
@@ -149,7 +195,7 @@ async function loadExtensionStore({manual=false}={}){
  extensionStaleSources=stale;
  extensionCatalog=mergeRepositoryEntries(bundled,collections);
  extensionLastCheckedAt=Date.now();
- const summary=extensionUpdateSummary(extensionCatalog,extensionAccountStore(),{staleSources:stale});
+ const summary=optionalUpdateSummary(extensionCatalog,extensionAccountStore(),{staleSources:stale});
  if(manual)toast(stale.size?`Checked extensions: ${summary.count} update(s) found; ${stale.size} repository check(s) failed.`:summary.count?`${summary.count} extension update(s) available.`:'Extensions are up to date.');
  else render();
 }
@@ -164,9 +210,9 @@ async function addExtensionRepository(form){
 }
 function appStorePanel(){
  const store=extensionAccountStore(),subscriptions=extensionRepoSubscriptions()?.list()||[];
- const summary=extensionUpdateSummary(extensionCatalog,store,{staleSources:extensionStaleSources});
+ const summary=optionalUpdateSummary(extensionCatalog,store,{staleSources:extensionStaleSources});
  const when=extensionLastCheckedAt?new Date(extensionLastCheckedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'Not checked yet';
- return `<section class="utility tavi-app-store"><h2>App Store</h2><p class="fineprint">Browse optional apps. Updates are checked every 15 minutes while signed in. You approve installation and updates; published hosted code is not yet stored locally.</p><div class="tavi-update-summary" role="status"><strong>${!extensionLastCheckedAt?'Updates not checked':summary.count?`${summary.count} update${summary.count===1?'':'s'} available`:extensionStaleSources.size?'Update status incomplete':'No updates detected'}</strong><span>Last checked: ${esc(when)}${extensionStaleSources.size?` · ${extensionStaleSources.size} repository check(s) failed`: ''}</span><button type="button" data-action="store-refresh">Check for updates</button></div>${extensionCatalogError?`<p class="notice" role="alert">${esc(extensionCatalogError)}</p>`:''}${extensionCatalog.length?extensionCatalog.map(entry=>{
+ return `<section class="utility tavi-app-store"><h2>App Store</h2><p class="fineprint">Browse optional apps. Updates are checked every 15 minutes while signed in. You approve installation and updates; published hosted code is not yet stored locally.</p><div class="tavi-update-summary" role="status"><strong>${!extensionLastCheckedAt?'Updates not checked':summary.count?`${summary.count} update${summary.count===1?'':'s'} available`:extensionStaleSources.size?'Update status incomplete':'No updates detected'}</strong><span>Last checked: ${esc(when)}${extensionStaleSources.size?` · ${extensionStaleSources.size} repository check(s) failed`: ''}</span><button type="button" data-action="store-refresh">Check for updates</button></div>${extensionCatalogError?`<p class="notice" role="alert">${esc(extensionCatalogError)}</p>`:''}${optionalCatalog().length?optionalCatalog().map(entry=>{
  const m=entry.manifest,installed=store?.installed(m.id),enabled=store?.enabled(m.id),source=extensionSource(entry);
  const status=extensionUpdateStatus(entry,store);
  const sourceMismatch=status==='source-changed';
@@ -177,7 +223,7 @@ function appStorePanel(){
  let iconSrc=null;try{iconSrc=extensionIconUrl(entry,extensionBase());}catch{}
  return `<article class="tavi-store-item"><span class="tavi-store-icon tone-forest">${appGlyph(m.id===ATRIUM_EXTENSION_ID?'atrium':'extension')}${iconSrc?`<img src="${esc(iconSrc)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}</span><div class="tavi-store-item-copy"><h3>${esc(m.name)}</h3><p>${esc(m.summary)}</p><small>${esc(m.publisher)} · ${esc(m.version)} · ${esc(m.permissions.join(', '))}</small>${installed?`<p class="tavi-extension-version">Installed ${esc(store.version(m.id)||'unknown')} · Published ${esc(m.version)}${releaseRevision(entry)?` · Revision ${esc(releaseRevision(entry).slice(0,8))}`:''}</p>`:''}<p class="tavi-extension-state" data-extension-state="${esc(m.id)}" aria-live="polite">${stale?'Update check unavailable — showing last known listing':outdated?'Update available — approval required':older?'Installed version is newer than published listing':unknown?'Version verification unavailable':sourceMismatch?'Publisher source changed':installed?'Installed · up to date':'Not installed'}</p><p class="fineprint">${entry.remote?`${FIRST_PARTY_REPOSITORIES.includes(source)?'Official Atrium repository':'Community repository'}: ${esc(source)} · ${esc(entry.remote.license)} · <a href="${esc(entry.remote.source)}" target="_blank" rel="noopener noreferrer">Source code ↗</a>`:'Bundled with Tavi'}</p>${sourceMismatch?'<p class="notice">The source repository changed; remove this installation before reinstalling.</p>':''}</div><div class="tavi-store-actions">${!compatible?'<small>Unavailable on this client</small>':sourceMismatch||older||unknown||stale?'':enabled&&!outdated?`<button type="button" data-extension-open="${esc(m.id)}">Open</button><button type="button" data-extension-disable="${esc(m.id)}">Disable</button>`:installed&&!outdated?`<button type="button" data-extension-enable="${esc(m.id)}">Enable</button>`:`<button type="button" data-extension-install="${esc(m.id)}" ${extensionBusy?'disabled':''}>${outdated?'Update':'Install'}</button>`}${installed?`<button type="button" data-extension-remove="${esc(m.id)}">Remove</button>`:''}</div></article>`;
  }).join(''):'<p class="fineprint">No extensions found in subscribed repositories.</p>'}
- <h3>Extension repositories</h3><p class="fineprint">Tavi includes the official Atrium repository by default. Extensions are optional and require installation approval. Other repositories can be added by you or suggested by your server.</p><p class="fineprint">Built-in: ${FIRST_PARTY_REPOSITORIES.map(esc).join(', ')}</p>
+ <h3>Extension repositories</h3><p class="fineprint">Tavi includes the official Atrium repository by default. Extensions are optional and require installation approval. Wallet is a built-in core app and always available through your Gold balance. Other repositories can be added by you or suggested by your server.</p><p class="fineprint">Built-in: ${FIRST_PARTY_REPOSITORIES.map(esc).join(', ')}</p>
  ${extensionSuggested.length?`<p class="fineprint">Suggested by this server: ${extensionSuggested.map(esc).join(', ')}</p>`:'<p class="fineprint">No repository suggestions supplied by this server.</p>'}
  ${extensionLastCheckedAt&&summary.missing.length?`<div class="notice" role="status">${summary.missing.length} installed app(s) are missing from the current catalogs. They are not considered up to date; refresh or restore the publishing source.</div>`:''}
  ${subscriptions.map(url=>`<div class="row-actions"><code>${esc(url)}</code><button type="button" data-repository-remove="${esc(url)}">Remove</button></div>`).join('')}
@@ -197,15 +243,15 @@ function extensionInstallDialog(){
  return `<div class="tavi-install-overlay" role="presentation"><section class="tavi-install-dialog" role="dialog" aria-modal="true" aria-labelledby="tavi-install-heading" aria-describedby="tavi-install-description"><div class="tavi-install-heading"><span class="tavi-store-icon tone-forest" aria-hidden="true">${icon}</span><div><h2 id="tavi-install-heading">${esc(extensionAccountStore()?.installed(m.id)?'Update':'Install')} ${esc(m.name)}?</h2><small>${esc(m.publisher)} · ${esc(m.version)}</small></div></div><p id="tavi-install-description">${esc(m.summary)}</p><dl><dt>Permissions</dt><dd>${esc(m.permissions.join(', ')||'None')}</dd>${oldVersion?`<dt>Installed</dt><dd>${esc(oldVersion)}</dd><dt>Available</dt><dd>${esc(m.version)}${releaseRevision(entry)?` · revision ${esc(releaseRevision(entry).slice(0,12))}`:''}</dd>`:''}<dt>Extension source</dt><dd>${esc(entry.remote?'Remote repository':'Bundled with Tavi')}</dd>${origin?`<dt>Hosted origin</dt><dd>${esc(origin)}</dd><dt>Repository</dt><dd>${esc(source)}</dd>`:''}</dl><p class="tavi-install-warning">${entry.remote?'The publisher can update hosted code. ':''}Your Tavi sign-in token and messages are not shared.</p><div class="tavi-install-buttons"><button type="button" data-extension-install-cancel>Cancel</button><button type="button" class="tavi-install-approve" data-extension-install-approve="${esc(m.id)}">${esc(extensionAccountStore()?.installed(m.id)?'Approve update':'Install extension')}</button></div></section></div>`;
 }
 function extensionPanel(){
- const manifest=extensionCatalog.find(e=>e.manifest.id===extensionSelected)?.manifest;
- if(!manifest||!extensionAccountStore()?.enabled(manifest.id))return `<section class="utility"><p>Extension is not enabled.</p><button data-action="app-store">Return to App Store</button></section>`;
- return `<section class="tavi-extension-panel"><div class="tavi-extension-toolbar"><strong>${esc(manifest.name)}</strong><button data-action="app-store" type="button">← App Store</button></div><div id="tavi-extension-surface" data-extension-id="${esc(manifest.id)}" class="tavi-extension-frame"></div></section>`;
+ const manifest=extensionEntry(extensionSelected)?.manifest;
+ if(!manifest||!extensionEnabled(manifest.id))return `<section class="utility"><p>${extensionSelected===CORE_WALLET_ID?'Wallet is temporarily unavailable.':'Extension is not enabled.'}</p><button data-action="${extensionSelected===CORE_WALLET_ID?'home':'app-store'}">Return to ${extensionSelected===CORE_WALLET_ID?'Home':'App Store'}</button></section>`;
+ return `<section class="tavi-extension-panel"><div class="tavi-extension-toolbar"><strong>${esc(manifest.name)}</strong><button data-action="${manifest.id===CORE_WALLET_ID?'home':'app-store'}" type="button">← ${manifest.id===CORE_WALLET_ID?'Home':'App Store'}</button></div><div id="tavi-extension-surface" data-extension-id="${esc(manifest.id)}" class="tavi-extension-frame"></div></section>`;
 }
 function attachExtensionFrame(previous){
  const slot=document.getElementById('tavi-extension-surface');
  if(!slot){clearPendingLifeLaunch();extensionHost.unmount();return;}
- const entry=extensionCatalog.find(e=>e.manifest.id===extensionSelected),store=extensionAccountStore();
- if(!entry||!store?.enabled(entry.manifest.id)){clearPendingLifeLaunch();extensionHost.unmount();return;}
+ const entry=extensionEntry(extensionSelected),store=extensionAccountStore();
+ if(!entry||!extensionEnabled(entry.manifest.id)||!store){clearPendingLifeLaunch();extensionHost.unmount();return;}
  if(previous?.dataset?.extensionId===extensionSelected){slot.append(previous);presentPendingLifeLaunch();return;}
  clearPendingLifeLaunch();extensionHost.unmount();
  if(!extensionVerified.has(extensionSelected))return;
@@ -215,9 +261,10 @@ function attachExtensionFrame(previous){
  frame.dataset.extensionId=extensionSelected;
  frame.src=entry.remote ? entry.remote.entrypoint : extensionAssetUrl(entry.manifest.id,entry.manifest.entrypoints.panel,extensionBase());
  slot.append(frame);
- extensionHost.mount(frame,{id:entry.manifest.id,permissions:store.permissions(entry.manifest.id),scope:extensionStoreScope,source:extensionSource(entry)});
+ extensionHost.mount(frame,{id:entry.manifest.id,permissions:entry.manifest.id===CORE_WALLET_ID?['ui.panel']:store.permissions(entry.manifest.id),scope:extensionStoreScope,source:entry.manifest.id===CORE_WALLET_ID?'tavi:bundled':extensionSource(entry)});
 }
 async function openInstalledExtension(id){
+ if(id===CORE_WALLET_ID)return openCoreWallet();
  const entry=extensionCatalog.find(e=>e.manifest.id===id);
  if(!entry||!extensionAccountStore()?.enabled(id))return toast('Extension is not installed or enabled.');
  if(extensionAccountStore()?.source(id)!==extensionSource(entry))return toast('Extension repository changed. Remove and reinstall before opening.');
@@ -228,6 +275,7 @@ async function openInstalledExtension(id){
  }catch(error){toast('Extension verification failed: '+error.message);}
 }
 async function installExtension(id){
+ if(id===CORE_WALLET_ID)return toast('Wallet is a built-in Tavi app; no installation is needed.');
  const entry=extensionCatalog.find(e=>e.manifest.id===id),store=extensionAccountStore();if(!entry||!store||extensionBusy)return;
  const m=entry.manifest;
  if(!validateExtensionManifest(m).compatible)return toast('This extension requires a different host API version.');
@@ -268,7 +316,7 @@ const nameOf=peer=>state.contacts.find(x=>x.id===peer)?.username||peer;
 const unreadTotal=()=>Object.values(state.unread).reduce((n,x)=>n+(Number(x)||0),0);
 const displayNameOf=contact=>contact?.displayName||contact?.username||contact?.id||'';
 const sortContacts=list=>[...list].sort((a,b)=>displayNameOf(a).localeCompare(displayNameOf(b),undefined,{sensitivity:'base'}));
-const extensionUpdateCount=()=>extensionUpdateSummary(extensionCatalog,extensionAccountStore(),{staleSources:extensionStaleSources}).count;
+const extensionUpdateCount=()=>optionalUpdateSummary(extensionCatalog,extensionAccountStore(),{staleSources:extensionStaleSources}).count;
 const appUpdateCount=()=>extensionUpdateCount()+(updateInfo?1:0);
 function setTheme(theme){state.theme=normalizeTheme(theme);config.theme=state.theme;writeConfig(config);applyTheme();render();}
 const isSafeAtriumUrl=value=>!!reviewedAtriumBase(value);
@@ -322,7 +370,7 @@ function contactPane(homeMode=false){
  const openInbox=state.interactions.filter(e=>e.status==='open').length;
  const updates=appUpdateCount();
  const statusRight=`${updates?`${updates} app update${updates===1?'':'s'} · `:''}Social connected`;
- return `<aside class="classic-window roster-window ${homeMode?'tavi-home-roster':''} ${state.mobileRoster?'mobile-active':''}" aria-label="Contact list">${windowCaption('Tavi', '<button class="chrome-button" data-action="home" title="Home">⌂</button>')}${menuBar()}<div class="roster-profile tavi-identity-strip">${avatar(state.profile?.displayName||'Me',true)}<div class="tavi-identity-text"><strong>${esc(state.profile?.displayName||'Me')}</strong><small><span class="presence online"></span>Available</small><span class="personal-message">${esc(state.profile?.profileId||'')} · ${esc(new URL(state.api.origin).host)}</span></div><div class="tavi-identity-actions"><button type="button" data-action="inbox" class="tavi-profile-activity" title="Activity and notifications" aria-label="Activity and notifications"><span aria-hidden="true">✦</span>${openInbox?`<b>${openInbox}</b>`:''}</button>${updates?`<button type="button" data-action="app-store" class="tavi-profile-updates" title="App updates" aria-label="${updates} app update${updates===1?'':'s'}"><span aria-hidden="true">↻</span><b>${updates}</b></button>`:''}<button type="button" title="Profile and status settings" aria-label="Profile and status settings" data-action="settings" class="chrome-button">▾</button>${state.companion?.enabled?`<button type="button" data-action="companion" class="tavi-profile-pet" title="Care for ${esc(state.companion.name)}" aria-label="Your pet ${esc(state.companion.name)}">${petSprite(petById(state.companion.petId),{small:true})}<small>${esc(state.companion.name)}</small></button>`:''}</div></div><div class="roster-scroll tavi-roster-compact">${compactContactGroups(recent,online,offline,accepted.length)}${homeMode?homeMinimized(true):''}${incoming.length?rosterGroup('requests','Friend requests',incoming):''}${pending.length?rosterGroup('pending','Pending',pending):''}</div><div class="window-status"><span class="presence online"></span>${accepted.filter(c=>c.online).length} online · ${accepted.length} contacts · ${unreadTotal()} unread<span class="status-right">${statusRight}</span></div></aside>`;}
+ return `<aside class="classic-window roster-window ${homeMode?'tavi-home-roster':''} ${state.mobileRoster?'mobile-active':''}" aria-label="Contact list">${windowCaption('Tavi', '<button class="chrome-button" data-action="home" title="Home">⌂</button>')}${menuBar()}<div class="roster-profile tavi-identity-strip">${avatar(state.profile?.displayName||'Me',true)}<div class="tavi-identity-text"><strong>${esc(state.profile?.displayName||'Me')}</strong><small><span class="presence online"></span>Available</small><button type="button" class="tavi-gold-balance" data-action="wallet" aria-label="${esc(state.goldStatus==='available'?`${state.goldAmount} Gold. Open Wallet`:state.goldStatus==='loading'?'Gold balance loading. Open Wallet':'Gold unavailable. Open Wallet')}" title="Open your Gold Wallet"><span aria-hidden="true">●</span> ${esc(state.goldStatus==='available'?`${state.goldAmount} Gold`:state.goldStatus==='loading'?'Gold · loading…':'Gold unavailable')}</button></div><div class="tavi-identity-actions"><button type="button" data-action="inbox" class="tavi-profile-activity" title="Activity and notifications" aria-label="Activity and notifications"><span aria-hidden="true">✦</span>${openInbox?`<b>${openInbox}</b>`:''}</button>${updates?`<button type="button" data-action="app-store" class="tavi-profile-updates" title="App updates" aria-label="${updates} app update${updates===1?'':'s'}"><span aria-hidden="true">↻</span><b>${updates}</b></button>`:''}<button type="button" title="Profile and status settings" aria-label="Profile and status settings" data-action="settings" class="chrome-button">▾</button>${state.companion?.enabled?`<button type="button" data-action="companion" class="tavi-profile-pet" title="Care for ${esc(state.companion.name)}" aria-label="Your pet ${esc(state.companion.name)}">${petSprite(petById(state.companion.petId),{small:true})}<small>${esc(state.companion.name)}</small></button>`:''}</div></div><div class="roster-scroll tavi-roster-compact">${compactContactGroups(recent,online,offline,accepted.length)}${homeMode?homeMinimized(true):''}${incoming.length?rosterGroup('requests','Friend requests',incoming):''}${pending.length?rosterGroup('pending','Pending',pending):''}</div><div class="window-status"><span class="presence online"></span>${accepted.filter(c=>c.online).length} online · ${accepted.length} contacts · ${unreadTotal()} unread<span class="status-right">${statusRight}</span></div></aside>`;}
 function activePeer(){return state.contacts.find(x=>x.id===state.peer);}
 function focusedConversation(){
  const peer=activePeer(),lobby=state.peer==='lobby',title=lobby?'Community Lobby':peer?.displayName||peer?.username||'Conversation';
@@ -527,8 +575,8 @@ function render(){
  }
  document.querySelector('body > .toast')?.remove();if(state.panel!=='settings')state.recoveryCodes=null;const entry=document.getElementById('message');if(entry&&document.activeElement===entry)state.draft=entry.value;const oldFrame=document.getElementById('portrait-frame');const oldExtensionFrame=document.querySelector('#tavi-extension-surface iframe');if(oldExtensionFrame)oldExtensionFrame.remove();const filter=document.getElementById('roster-filter');const search=filter?.value||'';const focused=document.activeElement===entry?{start:entry.selectionStart,end:entry.selectionEnd}:null;const settingsScroll=document.querySelector('.aux-content')?.scrollTop||0;const oldScroll=document.getElementById('chat-scroll');const nearBottom=!oldScroll||oldScroll.scrollHeight-oldScroll.scrollTop-oldScroll.clientHeight<90;const oldTop=oldScroll?.scrollTop;document.title=unreadTotal()?`(${unreadTotal()}) Tavi`:'Tavi';applyTheme();app.innerHTML=(!state.connected&&!nativeDesktop?header():'')+(state.connected?dashboard():signIn())+(state.toast?`<div class="toast" role="status">${esc(state.toast)}</div>`:'')+(state.connected?companionBadge(state.companion):'')+(state.connected?extensionInstallDialog():'');if(oldFrame&&state.panel==='portrait')document.getElementById('portrait-frame')?.replaceWith(oldFrame);attachExtensionFrame(oldExtensionFrame);wire();const newSettings=document.querySelector('.aux-content');if(newSettings&&state.panel==='settings')newSettings.scrollTop=settingsScroll;const newFilter=document.getElementById('roster-filter');if(newFilter){newFilter.value=search;applyContactFilter(search);}if(focused){const field=document.getElementById('message');if(field){field.focus();field.setSelectionRange(focused.start,focused.end);}}if(state.panel==='messenger'){const scroll=document.getElementById('chat-scroll');if(scroll){scroll.scrollTop=nearBottom?scroll.scrollHeight:oldTop;}}}
 function applyContactFilter(query){const term=query.trim().toLowerCase();document.querySelectorAll('[data-contact-name]').forEach(node=>{node.hidden=!!term&&!node.dataset.contactName.includes(term);});}
-function stop(){extensionInstallApproval=null;clearPendingLifeLaunch();++extensionRepoLoad;extensionSuggested=[];extensionRepoStatuses=[];repositoryChecks=[];diagnosticEvents.clear();extensionHost.unmount();extensionSelected='';extensionCatalog=[];extensionCatalogError='';extensionStore=null;extensionStoreScope='';extensionVerified=new Set();extensionLastCheckedAt=0;extensionStaleSources=new Set();if(extensionUpdatePoll){clearInterval(extensionUpdatePoll);extensionUpdatePoll=null;}void closePetWindow();for(const label of nativeChildLabels){void WebviewWindow.getByLabel(label).then(w=>w?.close()).catch(()=>{});}nativeChildLabels.clear();mailboxWake?.close();mailboxWake=null;sessionRetry.disable();state.retryAvailable=false;state.retryOrigin='';if(pulse){pulse.onclose=null;pulse.close();pulse=null;}clearInterval(poll);poll=null;state.api=null;state.connected=false;state.companion=newCompanion();state.companionKey=null;state.profile=null;state.lobby=[];state.direct=[];state.contacts=[];state.avatarCode='';state.gameTokens.clear();state.turns=[];state.gameRooms=[];state.selectedRoomId=null;state.roomMessages=[];state.roomError='';state.interactions=[];state.selectedInteraction=null;state.interactionError='';state.catalog=[];state.catalogError='';state.atriumGames=[];state.atriumDiscoveryStatus='not_connected';state.lastCatalogAt=0;state.draft='';state.developerAllowed=false;state.developerVisible=false;state.developerInfo=null;state.developerError='';state.lastSyncAt=null;state.pulseState='disconnected';state.chatRead={};state.unread={};state.peerFeeds.clear();state.chatOffset=0;state.conversationSummaries=[];state.summarySupported=null;state.pendingAcks.clear();state.pendingRequestIds=null;state.notifyPrefs={messages:true,preview:false,requests:true};state.pushPrefs={backgroundEnabled:false};state.pushCapability=null;state.atriumUrl=null;state.pushPermission='unknown';state.step='server';state.panel='home';state.mobileRoster=true;surfaces.clear();closeEmbeddedGame();render();}
-async function activate(api){const me=await api.me();if(!me?.profile?.profileId)throw Error('Social did not return your profile');stop();await closePetWindow();state.api=api;state.connected=true;state.profile=me.profile;try{state.companionKey=storageKey(api.origin,me.profile.profileId);state.companion=loadCompanion(localStorage,state.companionKey);}catch{state.companionKey=null;state.companion=newCompanion();}state.revision=me.revision;void reconcilePetWindow();updateDeveloperPermission(me);state.avatarCode=me.profile.portraitCode||'';selectServerGames(config,api.origin);writeConfig(config);state.peer='lobby';state.panel='home';state.mobileRoster=true;try{state.chatRead=loadChatReadState(localStorage,readKey());state.notifyPrefs=loadNotificationPrefs(localStorage,notificationPrefsKey(api.origin,me.profile.profileId));state.pushPrefs=readPushPreferences(localStorage,pushKey());}catch{}render();void loadExtensionStore();extensionUpdatePoll=setInterval(()=>{if(state.api===api&&navigator.onLine!==false)void loadExtensionStore();},EXTENSION_CHECK_INTERVAL);void refreshPushReadiness();await loadCatalog();await refresh();mailboxWake=createWakeCoordinator(()=>refresh({mailboxOnly:true}),{isBusy:()=>polling});startPulse();poll=setInterval(()=>{void refresh();if(Date.now()-state.lastCatalogAt>=60000)void loadCatalog();},25000);}
+function stop(){extensionInstallApproval=null;clearPendingLifeLaunch();++extensionRepoLoad;extensionSuggested=[];extensionRepoStatuses=[];repositoryChecks=[];diagnosticEvents.clear();extensionHost.unmount();extensionSelected='';extensionCatalog=[];extensionCatalogError='';extensionStore=null;extensionStoreScope='';coreWalletEntry=null;extensionVerified=new Set();state.goldAmount=null;state.goldStatus='loading';state.goldLastCheckedAt=0;extensionLastCheckedAt=0;extensionStaleSources=new Set();if(extensionUpdatePoll){clearInterval(extensionUpdatePoll);extensionUpdatePoll=null;}void closePetWindow();for(const label of nativeChildLabels){void WebviewWindow.getByLabel(label).then(w=>w?.close()).catch(()=>{});}nativeChildLabels.clear();mailboxWake?.close();mailboxWake=null;sessionRetry.disable();state.retryAvailable=false;state.retryOrigin='';if(pulse){pulse.onclose=null;pulse.close();pulse=null;}clearInterval(poll);poll=null;state.api=null;state.connected=false;state.companion=newCompanion();state.companionKey=null;state.profile=null;state.lobby=[];state.direct=[];state.contacts=[];state.avatarCode='';state.gameTokens.clear();state.turns=[];state.gameRooms=[];state.selectedRoomId=null;state.roomMessages=[];state.roomError='';state.interactions=[];state.selectedInteraction=null;state.interactionError='';state.catalog=[];state.catalogError='';state.atriumGames=[];state.atriumDiscoveryStatus='not_connected';state.lastCatalogAt=0;state.draft='';state.developerAllowed=false;state.developerVisible=false;state.developerInfo=null;state.developerError='';state.lastSyncAt=null;state.pulseState='disconnected';state.chatRead={};state.unread={};state.peerFeeds.clear();state.chatOffset=0;state.conversationSummaries=[];state.summarySupported=null;state.pendingAcks.clear();state.pendingRequestIds=null;state.notifyPrefs={messages:true,preview:false,requests:true};state.pushPrefs={backgroundEnabled:false};state.pushCapability=null;state.atriumUrl=null;state.pushPermission='unknown';state.step='server';state.panel='home';state.mobileRoster=true;surfaces.clear();closeEmbeddedGame();render();}
+async function activate(api){const me=await api.me();if(!me?.profile?.profileId)throw Error('Social did not return your profile');stop();await closePetWindow();state.api=api;state.connected=true;state.profile=me.profile;state.goldAmount=null;state.goldStatus='loading';state.goldLastCheckedAt=0;try{state.companionKey=storageKey(api.origin,me.profile.profileId);state.companion=loadCompanion(localStorage,state.companionKey);}catch{state.companionKey=null;state.companion=newCompanion();}state.revision=me.revision;void reconcilePetWindow();updateDeveloperPermission(me);state.avatarCode=me.profile.portraitCode||'';selectServerGames(config,api.origin);writeConfig(config);state.peer='lobby';state.panel='home';state.mobileRoster=true;try{state.chatRead=loadChatReadState(localStorage,readKey());state.notifyPrefs=loadNotificationPrefs(localStorage,notificationPrefsKey(api.origin,me.profile.profileId));state.pushPrefs=readPushPreferences(localStorage,pushKey());}catch{}render();void loadExtensionStore();void refreshGoldBalance(api);extensionUpdatePoll=setInterval(()=>{if(state.api===api&&navigator.onLine!==false)void loadExtensionStore();},EXTENSION_CHECK_INTERVAL);void refreshPushReadiness();await loadCatalog();await refresh();mailboxWake=createWakeCoordinator(()=>refresh({mailboxOnly:true}),{isBusy:()=>polling});startPulse();poll=setInterval(()=>{void refresh();void refreshGoldBalance(api);if(Date.now()-state.lastCatalogAt>=60000)void loadCatalog();},25000);}
 async function refresh({mailboxOnly=false}={}){if(!state.api||polling)return;polling=true;try{const api=state.api;
  if(!mailboxOnly){const me=await api.me();if(api!==state.api)return;updateDeveloperPermission(me);}
  const needLobby=!mailboxOnly||state.peer==='lobby'&&!nativeDesktop;
@@ -771,7 +819,7 @@ function diagnosticReport(){
    inboxCount:safeCount(state.interactions),nativeChildWindowCount:nativeChildLabels.size},
   integrations:{atriumDiscoveryStatus:state.atriumDiscoveryStatus,atriumConfigured:!!state.atriumUrl,
    extensionCount:extensionRows.length,extensions:extensionRows,
-   repositoryChecks:repositoryChecks.map(x=>({...x})),repositoryStatus:repositoryChecks.map(x=>({status:x.result,httpStatus:x.httpStatus||null})),extensionUpdates:{checkedAt:extensionLastCheckedAt||null,available:extensionUpdateSummary(extensionCatalog,extensionAccountStore(),{staleSources:extensionStaleSources}).count,unavailableRepositories:extensionStaleSources.size}},
+   repositoryChecks:repositoryChecks.map(x=>({...x})),repositoryStatus:repositoryChecks.map(x=>({status:x.result,httpStatus:x.httpStatus||null})),extensionUpdates:{checkedAt:extensionLastCheckedAt||null,available:optionalUpdateSummary(extensionCatalog,extensionAccountStore(),{staleSources:extensionStaleSources}).count,unavailableRepositories:extensionStaleSources.size}},
   recentEvents:diagnosticEvents.snapshot(),
   notifications:{permission:state.pushPermission,pulse:state.pulseState,backgroundEnabled:!!state.pushPrefs?.backgroundEnabled},
   updates:{checked:updateChecked,availableVersion:updateInfo?.version||null},
@@ -801,7 +849,7 @@ function showDiagnosticReport(){
 async function action(name){
  if(name==='minimize-view'||name==='home'){if(state.panel==='messenger'&&!state.mobileRoster)surfaces.minimizeChat(state.peer,nameOf(state.peer));state.panel='home';state.mobileRoster=true;render();return;}
  if(name==='app-store'){state.panel='app-store';state.mobileRoster=false;render();if(!extensionCatalog.length||Date.now()-extensionLastCheckedAt>=EXTENSION_CHECK_INTERVAL)void loadExtensionStore();return;}
- if(name==='wallet'){if(extensionAccountStore()?.enabled(CORE_WALLET_ID))await openInstalledExtension(CORE_WALLET_ID);else{state.panel='app-store';render();toast('Wallet is bundled with Tavi. Install Wallet from the App Store once.');}return;}
+ if(name==='wallet'){await openCoreWallet();return;}
  if(name==='store-refresh'){void loadExtensionStore({manual:true});return;}
  if(name==='check-extension-updates'){state.panel='app-store';state.mobileRoster=false;render();void loadExtensionStore({manual:true});return;}
  if(name==='main-menu'){state.panel='menu';state.mobileRoster=false;render();return;}
@@ -1040,7 +1088,7 @@ async function openChatWindow(peer){
  }catch(e){toast('Could not open conversation: '+e.message);}
 }
 window.addEventListener('message',async e=>{if(e.origin!==location.origin||e.source!==document.getElementById('portrait-frame')?.contentWindow||e.data?.type!=='looprd.portrait.selected/v1'||!state.api)return;const code=e.data.code;try{const result=await state.api.saveProfile({schema:'looprd.social.profile/v1',profileId:state.profile.profileId,displayName:state.profile.displayName,appearance:state.profile.appearance||null,portraitCode:code},state.revision);state.profile=result.profile;state.revision=result.revision;state.avatarCode=code;toast('Portrait saved to Social.');}catch(error){toast(error.message);}});
-window.addEventListener('focus',()=>{if(state.api){refresh();if(Date.now()-extensionLastCheckedAt>=EXTENSION_CHECK_INTERVAL)void loadExtensionStore();}});
+window.addEventListener('focus',()=>{if(state.api){refresh();void refreshGoldBalance(state.api);if(Date.now()-extensionLastCheckedAt>=EXTENSION_CHECK_INTERVAL)void loadExtensionStore();}});
 const sessionRetry=createSessionRetry({retry:()=>restoreSession()});
 window.addEventListener('online',()=>{if(state.retryAvailable&&!state.api)void sessionRetry.trigger().catch(()=>{});});
 window.addEventListener('focus',()=>{if(state.retryAvailable&&!state.api)void sessionRetry.trigger().catch(()=>{});});

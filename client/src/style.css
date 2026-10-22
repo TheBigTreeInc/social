@@ -814,3 +814,19 @@ html[data-theme='dark'] .toast{background:#173029;color:#dff4ea;border-color:#4a
   top:var(--tavi-safe-top);bottom:var(--tavi-safe-bottom);
   left:var(--tavi-safe-left);right:var(--tavi-safe-right);
 }
+
+/* v0.3.83: Gold occupies the former account/server label under the user name.
+   Built-in Wallet never needs an App Store install and remains keyboard/touch accessible. */
+.tavi-identity-text .tavi-gold-balance{
+ display:inline-flex;align-items:center;gap:5px;align-self:flex-start;max-width:100%;
+ margin:2px 0 0;padding:2px 4px 2px 0;border:1px solid transparent;
+ border-radius:5px;background:transparent;color:#7d5714;cursor:pointer;
+ font-size:11px;font-weight:600;line-height:1.25;font-family:inherit;text-align:left;white-space:nowrap;overflow:hidden;
+ text-overflow:ellipsis;min-height:22px;
+}
+.tavi-identity-text .tavi-gold-balance span{color:#be8b26;font-size:12px;flex-shrink:0;}
+.tavi-identity-text .tavi-gold-balance:hover{background:#fff5cd;border-color:#dbc57e;}
+.tavi-identity-text .tavi-gold-balance:focus-visible{outline:2px solid #16734d;outline-offset:2px;}
+html[data-theme='dark'] .tavi-identity-text .tavi-gold-balance{color:#f7d88b;}
+html[data-theme='dark'] .tavi-identity-text .tavi-gold-balance:hover{background:#423b20;border-color:#ab8e44;}
+@media (pointer:coarse){.tavi-identity-text .tavi-gold-balance{min-height:44px;padding:7px 4px 7px 0;}}

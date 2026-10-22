@@ -1,3 +1,7 @@
+## Tavi 0.3.83
+
+Core Wallet is now permanently available, and the former `account · server` line under the profile is replaced by a clickable authenticated Gold total. See `ZIPRUNNER_HANDOFF_CORE_WALLET_0383.md`. Full source QA and native acceptance are separate.
+
 ## Tavi 0.3.49 — Companion MVP
 
 ZIPRUNNER_HANDOFF v1|project=looprd-social|version=0.3.49|file=looprd-social-0.3.49-companions-consent-ziprunner.zip

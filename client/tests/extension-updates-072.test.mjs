@@ -71,5 +71,6 @@ test('UI announces last checked time, explicit updates, and compact combined pre
  assert.match(source,/Conversations &amp; contacts/);
  assert.match(source,/tavi-inline-presence/);
  assert.match(css,/\.tavi-roster-merged \.buddy\{min-height:29px/);
- assert.match(source,/extensionUpdateSummary\(extensionCatalog/);
+ assert.match(source,/optionalUpdateSummary\(extensionCatalog/);
+ assert.match(source,/filterOptionalApps\(entries\)/);
 });

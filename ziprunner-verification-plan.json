@@ -1,8 +1,31 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.82",
+  "version": "0.3.83",
   "tasks": [
+    {
+      "id": "TAVI-WALLET-CORE-083",
+      "criteria": [
+        {
+          "id": "TAVI-WALLET-CORE-083-SOURCE",
+          "description": "Wallet uses a trusted bundled manifest and never requires optional-store installation. Gold under the signed-in name comes from authenticated wallet.balance, not free refill assumptions. Five viewports exercise Gold click and return-to-Home.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/core-wallet-083.test.mjs",
+            "npm run verify",
+            "npm --prefix client run ui:ci"
+          ]
+        },
+        {
+          "id": "TAVI-WALLET-CORE-083-OPERATOR",
+          "description": "Real Windows WebView2, Android and deployed Wallet backend are required for user acceptance; never auto-approve.",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
     {
       "id": "TAVI-MOBILE-SAFE-082",
       "criteria": [

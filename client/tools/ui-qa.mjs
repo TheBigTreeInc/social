@@ -38,6 +38,13 @@ function fixtureServer(){
    const pathname=new URL(req.url,'http://127.0.0.1').pathname;
    if(pathname==='/__qa/withdraw-life'&&req.method==='POST'){fixture.lifeVisible=false;return reply(res,{ok:true});}
    if(pathname==='/looprd/looprd-social/v1/info')return reply(res,{protocol:'looprd.social/1',auth:'social-accounts',release:'0.3.58'});
+   if(pathname==='/looprd/looprd-social/v1/wallet'&&req.method==='POST'){
+    let body='';for await(const chunk of req){body+=chunk;if(body.length>10000)return reply(res,{error:'Too large'},413);}
+    let op;try{op=JSON.parse(body).op;}catch{return reply(res,{error:'Malformed wallet request'},400);}
+    if(op==='balance')return reply(res,{ok:true,schema:'tavi.wallet/v1',balances:[{currencyId:'gold',amount:'100',playOnly:'100',availableForShopping:'0'}],currencies:[{id:'gold',name:'Gold',symbol:'Gold',decimals:0}],rates:[],offers:[],faucet:{claimable:false}});
+    if(op==='transactions')return reply(res,{ok:true,transactions:[]});
+    return reply(res,{ok:false,error:'Unavailable in fixture'});
+   }
    if(pathname==='/looprd/looprd-social/v1/social'&&req.method==='POST'){
     let body='';for await(const chunk of req){body+=chunk;if(body.length>10000){reply(res,{ok:false,error:'Input too large'},413);return;}}
     let op;try{op=JSON.parse(body).op;}catch{reply(res,{ok:false,error:'Invalid JSON'},400);return;}
@@ -118,6 +125,18 @@ async function testViewport(browser,base,device){
    assert(layout.roster.bottom<=layout.dock.top+1,
      `${device.name} roster and dock overlap: ${JSON.stringify(layout)}`);
   }
+  stage='core Wallet profile balance';
+  await page.locator('.tavi-gold-balance').waitFor({state:'visible',timeout:6000});
+  await page.waitForFunction(()=>document.querySelector('.tavi-gold-balance')?.textContent?.includes('100 Gold'),null,{timeout:6000});
+  assert.equal(await page.locator('.tavi-identity-text .personal-message').count(),0,'Profile must not show internal account/server IDs');
+  stage='open core Wallet directly';await page.locator('.tavi-gold-balance').click();
+  await visible(page,'#tavi-extension-surface[data-extension-id="org.tavi.core.wallet"] iframe[sandbox="allow-scripts"]');
+  assert.equal(await page.locator('.tavi-install-dialog').count(),0,'Core Wallet requires no install dialog');
+  assert.equal(await page.locator('.tavi-app-store').count(),0,'Core Wallet must bypass App Store');
+  await page.frameLocator('#tavi-extension-surface iframe').locator('#gold').waitFor({state:'visible',timeout:6000});
+  await page.waitForFunction(()=>document.querySelector('#tavi-extension-surface iframe')!==null);
+  stage='Wallet return Home';await page.locator('.tavi-shell-bar__back[data-action="minimize-view"]').click();
+  await visible(page,'.tavi-gold-balance');
   stage='Life discovered Games';await visible(page,'.tavi-home-dock [data-action="games"]');await page.locator('.tavi-home-dock [data-action="games"]').click();
   await visible(page,'[data-discovered-game="life.loop"]');
   assert.match(await page.locator('[data-discovered-game="life.loop"]').innerText(),/Not playable yet/);
@@ -140,6 +159,8 @@ async function testViewport(browser,base,device){
   await visible(page,'.tavi-menu-grid [data-action="app-store"]');
   stage='app-store';await page.locator('.tavi-menu-grid [data-action="app-store"]').click();
   await visible(page,'.tavi-app-store');
+  assert.equal(await page.locator('[data-extension-install="org.tavi.core.wallet"], [data-extension-remove="org.tavi.core.wallet"], [data-extension-disable="org.tavi.core.wallet"]').count(),0,'Core Wallet must have no install/remove/disable controls');
+  assert.equal(await page.locator('.tavi-store-item').filter({hasText:'Core Gold Wallet'}).count(),0,'Core Wallet is not an optional store app');
   await visible(page,'#extension-repository-form input[name="repository"]');
   await visible(page,'.tavi-store-item');
   assert.match(await page.locator('.tavi-store-item').first().innerText(),/Private Notepad/);
@@ -162,7 +183,7 @@ async function testViewport(browser,base,device){
   await noOverflow(page,`${device.name} returned home`);
   assert.equal(errors.length,0,`${device.name} JavaScript errors: ${errors.join('; ')}`);
   if(process.env.TAVI_QA_CAPTURE==='1')await screenshot(page,`${device.name}-success`);
-  checks.push({device:device.name,result:'passed',stages:['login','home','life-discovered-in-games','life-nonplayable','life-withdrawn','main-menu','app-store','extension-install-approval-and-cancel','extension-launch','return-home','viewport-overflow','mobile-touch-targets','android-safe-insets-and-navigation','javascript-errors']});
+  checks.push({device:device.name,result:'passed',stages:['login','home','gold-balance-in-profile','core-wallet-direct-open','life-discovered-in-games','life-nonplayable','life-withdrawn','main-menu','app-store','extension-install-approval-and-cancel','extension-launch','return-home','viewport-overflow','mobile-touch-targets','android-safe-insets-and-navigation','javascript-errors']});
   console.log(`PASS ${device.name}: sign-in, Life discover/withdraw, home, App Store, approve/open extension, return home, viewport, script errors`);
  }catch(error){
   const picture=await screenshot(page,`${device.name}-failure`);

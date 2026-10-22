@@ -1,3 +1,4 @@
+import {CORE_WALLET_ID} from './extensions/host.js';
 /** The Tavi app drawer is local UI. It does not register/install third-party code.
  * Extensions only appear after explicit installation and while their pinned source
  * and version match the currently loaded catalog. Every tile has an icon fallback.
@@ -40,7 +41,7 @@ export function launchableExtensions({catalog,store,platform}){
  if(!store)return [];
  return catalog.filter(entry=>{
   const m=entry?.manifest;
-  if(!m||!store.enabled(m.id)||extensionUpdateStatus(entry,store)!=='current')return false;
+  if(!m||m.id===CORE_WALLET_ID||!store.enabled(m.id)||extensionUpdateStatus(entry,store)!=='current')return false;
   if(m.platforms&&!m.platforms.includes(platform))return false;
   if(!m.contributions.some(c=>c.slot==='app.launcher'))return false;
   try{return validateExtensionManifest(m).compatible;}catch{return false;}
