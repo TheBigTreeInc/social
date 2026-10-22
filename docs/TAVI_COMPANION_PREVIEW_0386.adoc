@@ -1,0 +1,36 @@
+= Reviewed Companion 0.6.11: host-owned painted preview
+:revnumber: 0.3.86
+:toc:
+
+== Scope
+
+Tavi is the messenger. `org.tavi.community.companion` is an optional publisher-owned application distributed as `bundled-partner`. Companion owns simulation, evolving genes, creature profiles, art, saves and how it produces an 80x80 painted thumbnail. Tavi owns host authorization, persistent profile surface, launch, and navigation. No LoopRD server changes.
+
+== Reviewed source
+
+The source registry at `extensions/registry.json` pins extension version `0.6.11`, publisher `tavi-community`, and SHA-256 digest `e979fd0c473167c64106fa59c45eae366692b6d2cf2d2ab0c3bcc0fdeb9b11a6`. The official importer verifies metadata, files and publisher, and publishes only after successful isolated validation. The compiled host trust grant at `client/src/extensions/reviewed-companion.js` must match this exact reviewed digest; unit tests compare it to registry and catalog. Runtime host also calls existing SHA-256 asset verification before accepting portrait messages.
+
+Do not use the retired `register-tavi-extension.mjs` importer or write generated `client/public/tavi-extensions/` files directly.
+
+== Protocol
+
+`companion.preview` is an extension/v1 host method, only accepted from the mounted sandbox iframe of the installed/enabled reviewed Companion. A validated payload has exactly `{schema,form,name,image}`, where schema is `tavi.companion.preview/v1`, form is Cat or Unicorn, name is <= 32 characters without control characters, and image is an inline PNG capped at 90,000 characters with IHDR width/height 80x80. This does not accept genome, private save, needs, social identity or bearer tokens. Requests are restricted to 12 preview publications per 60 seconds and the host's normal 60 requests per minute.
+
+Account-scoped storage uses the already existing Social origin and profile namespace; its key is pinned to the reviewed digest. The host returns Home when the Companion frame requests `ui.close`. Clearing installed/disabled state hides the preview, disabling/uninstalling clears the scoped cache, and switching account changes the namespace without exposing prior-account data. The core Wallet host permissions are unchanged.
+
+== Integration workflow
+
+[source,powershell]
+----
+# In Companion 0.6.12 source, published extension snapshot is still 0.6.11
+npm run tavi:bundle
+node tools/stage-into-tavi.mjs C:\Users\dorbi\source\looprd-social
+node tools/stage-into-tavi.mjs C:\Users\dorbi\source\looprd-social --apply
+
+# In Tavi's reviewed 0.3.86 source
+npm run extensions:check
+npm run verify
+node client/tools/companion-browser-smoke.mjs
+----
+
+Tavi host source changes MUST be reviewed separately; the companion staging tool does not rewrite host JS. Physical Windows/Android and installed browser/host launch acceptance remain operator decisions, not established by source tests.

@@ -1,6 +1,6 @@
 {
   "name": "looprd-social-client",
-  "version": "0.3.83",
+  "version": "0.3.87",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,7 +16,9 @@
     "web:ci": "npm run check && npm run web:build && npm run web:verify",
     "ui:qa": "node tools/ui-qa.mjs",
     "ui:ci": "npm run web:build && npm run ui:qa",
-    "ui:native": "node tools/native-ui-qa.mjs"
+    "ui:native": "node tools/native-ui-qa.mjs",
+    "preweb:build": "node ../tools/sync-internal-extensions.mjs",
+    "predev": "node ../tools/sync-internal-extensions.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

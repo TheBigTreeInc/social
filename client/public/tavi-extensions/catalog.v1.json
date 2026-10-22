@@ -96,6 +96,135 @@
           "size": 12565
         }
       ]
+    },
+    {
+      "manifest": {
+        "schema": "tavi.extension/v1",
+        "id": "org.tavi.community.companion",
+        "version": "0.6.11",
+        "name": "Companion",
+        "summary": "Optional care-based digital pets with consent-first local preview.",
+        "publisher": "tavi-community",
+        "kind": "app",
+        "hostApi": {
+          "min": "1.0.0",
+          "maxExclusive": "2.0.0"
+        },
+        "entrypoints": {
+          "panel": "ui/index.html"
+        },
+        "contributions": [
+          {
+            "slot": "app.launcher",
+            "id": "companion",
+            "label": "Companion",
+            "action": "openPanel"
+          }
+        ],
+        "permissions": [
+          "ui.panel",
+          "ui.toast",
+          "storage.private"
+        ],
+        "platforms": [
+          "web",
+          "windows",
+          "android"
+        ],
+        "icon": "ui/icon.svg"
+      },
+      "files": [
+        {
+          "path": "ui/cat-study.html",
+          "sha256": "660e8f0a0a7d6c125d5b65976f056ec7d0eed93a48f3fe85930e18ddbf67b62a",
+          "size": 4164
+        },
+        {
+          "path": "ui/chunks/000.js",
+          "sha256": "26b37db2b24b0b4b497abf6683d01fda8134d8a5a3ee9154f9b30bb645d660ce",
+          "size": 700145
+        },
+        {
+          "path": "ui/chunks/001.js",
+          "sha256": "84eae944aaba3c954967c460450b1b786067c248678e586ab79b79049b34fde6",
+          "size": 700145
+        },
+        {
+          "path": "ui/chunks/002.js",
+          "sha256": "7ed61bed67abb8cc7f1607db35100d3b8722b26083f2056afa8a49fc1629246a",
+          "size": 632313
+        },
+        {
+          "path": "ui/chunks/003.js",
+          "sha256": "7e2240a55df6216ec2d3420c33d7d90212805decd6e400e1363dbc96f4d6bbf7",
+          "size": 91056
+        },
+        {
+          "path": "ui/chunks/004.js",
+          "sha256": "854ada3a0025caf44766aecf244e8ab4e73447c32345c150af41d3df0c6f3bea",
+          "size": 119080
+        },
+        {
+          "path": "ui/chunks/005.js",
+          "sha256": "ff6fdc605bb92d54e399e990c56a4d8efe3bc148ef69f9d6bc9db457a19dd5e5",
+          "size": 700141
+        },
+        {
+          "path": "ui/chunks/006.js",
+          "sha256": "1ae7cf69118678c3554337ff8d1ea1b7481dd940588f4ff9d7fb7cc707c8d889",
+          "size": 700141
+        },
+        {
+          "path": "ui/chunks/007.js",
+          "sha256": "ed54897213022a6d822bc812b8c052481e6278cd432fc8e678ed6d3ad712197f",
+          "size": 428293
+        },
+        {
+          "path": "ui/chunks/008.js",
+          "sha256": "3cdfc8cd3661245a76930c34c5304eae27edb4fe37520f79507ef0a28e3b06fe",
+          "size": 231471
+        },
+        {
+          "path": "ui/collection.html",
+          "sha256": "23a70090a94a0cc8be34081721b87a5180bfb62a7efa0f35ebecb9b721131dce",
+          "size": 206
+        },
+        {
+          "path": "ui/credits.html",
+          "sha256": "022fad09d1a13a3ba18649a2b9628595de7bad53bd5743449e68122d35376dd3",
+          "size": 7079
+        },
+        {
+          "path": "ui/icon.svg",
+          "sha256": "0922f4ede35406289efc8692596e61f8a0eac63d0d92c41738ac854eb8876c9d",
+          "size": 324
+        },
+        {
+          "path": "ui/index.html",
+          "sha256": "1de066eee6943d78c493d847fb06b7d088160c9924eb5a592052afc75c68985e",
+          "size": 6674
+        },
+        {
+          "path": "ui/studio-main.js",
+          "sha256": "156da7bdce211e27927a1e152fa08f4427dfc2564389af2ec94c987417ad806f",
+          "size": 40515
+        },
+        {
+          "path": "ui/world-main.js",
+          "sha256": "65813a3a6675ec11e66292ebecb1d2b38b7b56b524d16b1ed85b743951d8ff75",
+          "size": 85253
+        },
+        {
+          "path": "ui/world/studio.css",
+          "sha256": "27433b0148b0bad006919e13ebcb8cc0ecfd4df07097e9a1cf23180cfd27a9ac",
+          "size": 744
+        },
+        {
+          "path": "ui/world/style.css",
+          "sha256": "6a2a03761511353602d3256953d870ea550f8f5bcfafe1fb1650a41ff8bcaa31",
+          "size": 7977
+        }
+      ]
     }
   ]
 }

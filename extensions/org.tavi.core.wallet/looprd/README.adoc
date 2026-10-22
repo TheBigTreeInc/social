@@ -1,0 +1,7 @@
+= Wallet server integration — current owner and extraction boundary
+
+The Wallet is bundled in Tavi but its balance and payment rules are server-authoritative. In Tavi 0.3.84 its functioning backend is *not* an independent importable LoopRD package: the current API/SQLite implementation remains in `server/wallet_ledger.py` and Social's LoopRD handler. `extensions/registry.json` declares this actual owner as `looprd-social`.
+
+When a self-contained Ledger component is built later, place the portable descriptor and implementation here and update the registry only after service authentication, scoped wallet subject identity, existing orders/refunds, journal transactions and merchant fulfillment have been tested. Never silently install a second or incomplete Wallet backend from the Tavi client.
+
+Wallet rules retained: free Gold funds game participation only; earned Gold funds games, shops or operator-approved exchanges; wallet prices are server-authoritative; purchases and merchant acknowledgements are idempotent; no real-money rails.

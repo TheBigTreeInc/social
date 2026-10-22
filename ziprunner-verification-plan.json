@@ -1,8 +1,77 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.83",
+  "version": "0.3.87",
   "tasks": [
+    {
+      "id": "TAVI-EXT-COMPANION-WINPATH-087",
+      "criteria": [
+        {
+          "id": "TAVI-EXT-COMPANION-WINPATH-087-SOURCE",
+          "description": "Windows-safe file URL path normalization for reviewed Companion source and pinned digest equality.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/companion-preview-086.test.mjs",
+            "npm run verify",
+            "npm run extensions:check"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-COMPANION-WINPATH-087-OPERATOR",
+          "description": "ZipRunner Windows rerun and real Windows/Android Companion visual acceptance.",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-EXT-PARTNER-085",
+      "criteria": [
+        {
+          "id": "TAVI-EXT-PARTNER-085-SOURCE",
+          "description": "Partner 0.6.8 has approved publisher, content-pinned offline source, original Cat/Unicorn bits and checked App Store/launcher integration.",
+          "mode": "automated",
+          "checks": [
+            "npm run extensions:check",
+            "node --test client/tests/bundled-partner-085.test.mjs",
+            "npm run verify"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-PARTNER-085-OPERATOR",
+          "description": "Operator Windows/Android/Web acceptance for real iframe, visuals, private saves and legacy My pet fallback.",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-EXT-INTERNAL-084",
+      "criteria": [
+        {
+          "id": "TAVI-EXT-INTERNAL-084-SOURCE",
+          "description": "Tavi-owned extension source lives in root extensions/, deterministic byte-exact static mirror and host policy remain enforced; Git-owned Atrium stays external.",
+          "mode": "automated",
+          "checks": [
+            "npm run extensions:check",
+            "node --test client/tests/internal-extensions-084.test.mjs",
+            "npm run verify"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-INTERNAL-084-OPERATOR",
+          "description": "Use Windows and Android clients to check permanent Wallet versus opt-in Notepad and real server API isolation; no backend deployment by this change.",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
     {
       "id": "TAVI-WALLET-CORE-083",
       "criteria": [

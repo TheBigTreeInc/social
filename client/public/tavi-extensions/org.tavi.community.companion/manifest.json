@@ -1,0 +1,35 @@
+{
+  "schema": "tavi.extension/v1",
+  "id": "org.tavi.community.companion",
+  "version": "0.6.11",
+  "name": "Companion",
+  "summary": "Optional care-based digital pets with consent-first local preview.",
+  "publisher": "tavi-community",
+  "kind": "app",
+  "hostApi": {
+    "min": "1.0.0",
+    "maxExclusive": "2.0.0"
+  },
+  "entrypoints": {
+    "panel": "ui/index.html"
+  },
+  "contributions": [
+    {
+      "slot": "app.launcher",
+      "id": "companion",
+      "label": "Companion",
+      "action": "openPanel"
+    }
+  ],
+  "permissions": [
+    "ui.panel",
+    "ui.toast",
+    "storage.private"
+  ],
+  "platforms": [
+    "web",
+    "windows",
+    "android"
+  ],
+  "icon": "ui/icon.svg"
+}

@@ -1,0 +1,53 @@
+= Tavi internal extensions
+:toc:
+
+== Ownership model
+
+This is the *canonical source directory* for Tavi-owned extensions without their own Git repository and explicitly operator-reviewed offline snapshots of independently owned partner extensions.
+A module is listed explicitly in `extensions/registry.json`; that list controls packaging and distinguishes `core` from `optional`.
+The public directory `client/public/tavi-extensions/` is an automatically generated, SHA-256-verified *static delivery mirror* for Vite/Tauri. Never edit that mirror directly.
+
+* `org.tavi.core.wallet/` — `core`, always bundled and available without a user installation record. Gold balances are read from the authenticated Wallet service, never local extension state.
+* `org.tavi.examples.notepad/` — `optional`, locally bundled example, still requires install approval and uses private extension-local storage.
+* `org.tavi.community.companion/` — `bundled-partner`, approved offline snapshot from independent tavi-community source. The original publisher remains; the user still installs it from App Store.
+* Atrium and Life continue to have separate source repositories; Atrium uses its reviewed HTTPS repository for updates. Independently maintained partners enter this tree ONLY as explicitly reviewed and digest-pinned offline distributions.
+* Messaging, contacts, notifications, Settings, portrait handling and Companion currently have host-owned implementation. A Main Menu icon does not automatically make something a sandboxed extension. Move a feature here when its extension contract and isolation have actually been implemented; do not falsely reclassify it.
+
+== Suggested module layout
+
+----
+extensions/
+  registry.json
+  org.tavi.core.wallet/
+    manifest.json
+    ui/
+      index.html
+      icon.svg
+    looprd/
+      README.adoc
+  org.tavi.examples.notepad/
+    manifest.json
+    ui/
+      index.html
+      icon.svg
+----
+
+Non-web implementation source can live under `tests/`, `docs/` or `looprd/` within an extension and is never included in its public static asset bundle. All other files in a module must be explicitly valid extension assets and are SHA-pinned.
+
+== Workflow
+
+1. Add `extensions/<id>/manifest.json` and UI source, then register it in `extensions/registry.json`. First-party modules must declare `publisher: "tavi"`; reviewed partner modules use `distribution: "bundled-partner"` and pin their unchanged source publisher, version and complete SHA-256 bundle digest. Use the explicit `import-reviewed-extension.mjs` dry-run/`--apply` workflow.
+2. For a newly reviewed partner bundle, run `node tools/import-reviewed-extension.mjs BUNDLE --publisher EXPECTED_PUBLISHER` and explicitly `--apply` after review. Run `npm run extensions:sync` from the repository root. This creates or updates the curated static catalog and copies assets to `client/public/tavi-extensions/`, including SHA-256 digests.
+3. Run `npm run extensions:check` and `npm run verify`. CI checks that the generated mirror exactly matches the source; any hand-edited or stale published assets fail verification.
+4. Run `npm --prefix client run ui:ci` in an environment with Vite and Chromium installed. Source tests do not substitute for Windows and Android native acceptance.
+5. Import the reviewed full source ZIP through ZipRunner. No account data, app configuration, credential or deployment state belongs in this directory.
+
+Core status is a *privilege decision*. Adding `mode: "core"` to the registry must not automatically grant Wallet or Social operations: the host allowlists methods and trusts only the reviewed first-party Wallet ID, SHA-verified package and authenticated server API.
+
+== LoopRD APIs belong with the feature, not in its static iframe
+
+An internal extension that needs server APIs may keep portable LoopRD component source and a descriptor under `extensions/<id>/looprd/`. Treat it as a separately reviewed *importable LoopRD component*, not a folder that Tavi automatically executes. The descriptor is portable (no hardcoded server URL), the operator imports/publishes it into a chosen LoopRD instance and configures private service secrets on the server.
+
+The current Gold Wallet uses the *existing* `looprd-social` authenticated Wallet API and `server/wallet_ledger.py`, whose deployment is separate from this source-layout change. We are **not** copying its tables into a second database, generating a second ledger, migrating identities or claiming a standalone Ledger component is deployed. Future extraction is an explicitly gated cross-component change.
+
+The bundle script must never copy `looprd/` (or docs/tests) into `client/public`, and there is no client-visible service secret. Games pay through approved, idempotent Wallet service endpoints; the permanent free-play Gold versus earned-Gold spending policy remains server enforced.

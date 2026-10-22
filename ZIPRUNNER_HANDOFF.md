@@ -34,3 +34,7 @@ Source candidate `TAVI-PET-050`: Windows-only native transparent always-on-top p
 
 ## v0.3.53 — sketch-based focused UI
 New client-only Home with minimal three-way dock, private minimized-chat and embedded-game surfaces, and full-screen conversations/game views. Do not claim live Life match or Windows/Android device QA. All new source ZIP versions strictly increase.
+
+## Tavi 0.3.85 reviewed bundled partner integration
+
+The internal `extensions/` registry now admits explicitly reviewed optional bundled partners with original publisher, SHA-256 source identity, and no core privileges. Tavi ships offline Companion 0.6.8 under `org.tavi.community.companion`; install it explicitly from App Store, then My pet prefers the installed Companion, falling back to existing Tavi pet. Run `npm run extensions:check` and read `docs/TAVI_REVIEWED_BUNDLED_PARTNER_COMPANIONS_0385.adoc`. The source importer `tools/import-reviewed-extension.mjs` defaults to a true dry-run; `--apply` requires operator approval and never deploys LoopRD or rebuilds native Tavi. Actual painted Windows/Android iframe acceptance pending; no approval or release claimed.

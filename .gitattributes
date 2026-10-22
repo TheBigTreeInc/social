@@ -17,3 +17,10 @@ docs/extension-examples/nested-publisher/**/*.css text eol=lf
 docs/extension-examples/nested-publisher/**/*.js text eol=lf
 docs/extension-examples/nested-publisher/**/*.json text eol=lf
 docs/extension-examples/nested-publisher/**/*.svg text eol=lf
+
+# Canonical in-repository extension source, including SHA-pinned assets.
+extensions/**/*.html text eol=lf
+extensions/**/*.css text eol=lf
+extensions/**/*.js text eol=lf
+extensions/**/*.json text eol=lf
+extensions/**/*.svg text eol=lf

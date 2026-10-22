@@ -1,0 +1,32 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Companion host browser contract smoke</title></head>
+<body data-result="PENDING"><button id="portrait" type="button">Companion</button><div id="status">Not started</div><div id="test-frame"></div>
+<script type="module">
+import {createExtensionHost} from '../../src/extensions/host.js';
+import {REVIEWED_COMPANION} from '../../src/extensions/reviewed-companion.js';
+import {readCompanionPreview} from '../../src/extensions/companion-preview.js';
+const scope='tavi.extensions.install/v1:https%3A%2F%2Fsocial.example:alice';
+const storage=new Map(),store={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)};
+const status=document.getElementById('status'),button=document.getElementById('portrait');
+let granted=true,closed=false,seenPreview=false;
+const host=createExtensionHost({storage:store,notify:()=>{},close:()=>{closed=true;status.textContent='Home'},
+ onCompanionPreview:preview=>{seenPreview=true;button.textContent=preview.name;const img=new Image();img.src=preview.image;img.width=40;button.append(img);},
+ isReviewedCompanionSession:session=>granted&&session.scope===scope&&session.id===REVIEWED_COMPANION.id&&session.reviewedBundle===REVIEWED_COMPANION.sha256&&session.source==='tavi:bundled'});
+const frame=document.createElement('iframe');frame.setAttribute('sandbox','allow-scripts');frame.setAttribute('title','Companion smoke iframe');
+document.getElementById('test-frame').append(frame);
+host.mount(frame,{id:REVIEWED_COMPANION.id,source:'tavi:bundled',scope,permissions:['ui.panel','ui.toast','storage.private'],reviewedBundle:REVIEWED_COMPANION.sha256});
+const img=document.createElement('canvas');img.width=80;img.height=80;const ctx=img.getContext('2d');ctx.fillStyle='rgb(120,160,110)';ctx.fillRect(0,0,80,80);
+const sample={schema:'tavi.companion.preview/v1',form:'cat',name:'Pippin',image:img.toDataURL('image/png')};
+const code=`let id=0;const preview=${JSON.stringify(sample)};window.addEventListener('message',e=>{if(e.data?.direction!=='response')return;
+ if(e.data.id===1){window.parent.postMessage({channel:'tavi.extension/v1',direction:'request',id:2,method:'companion.preview',preview},'*');}
+ if(e.data.id===2){window.parent.postMessage({channel:'tavi.extension/v1',direction:'request',id:3,method:'ui.close'},'*');}
+ });
+ setTimeout(()=>window.parent.postMessage({channel:'tavi.extension/v1',direction:'request',id:1,method:'host.info'},'*'),100);`;
+frame.srcdoc='<script>'+code.replace(/<\/script/gi,'<\\/script')+'<\/script>';
+const interval=setInterval(()=>{
+ if(closed){clearInterval(interval);const saved=readCompanionPreview(store,scope);
+  document.body.dataset.result=seenPreview&&saved?.name==='Pippin'&&button.querySelector('img')?'PASS':'FAIL';
+  status.textContent+=` · ${document.body.dataset.result} · sandbox: ${frame.getAttribute('sandbox')}`;
+ }
+},50);
+setTimeout(()=>{if(!closed){document.body.dataset.result='FAIL-TIMEOUT';status.textContent='Host did not receive sandbox requests';}},2000);
+</script></body></html>

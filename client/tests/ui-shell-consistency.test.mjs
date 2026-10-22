@@ -45,7 +45,7 @@ test('Atrium extension has one host Home route, plus contextual App Store link, 
  const extension=main.split('function extensionPanel()')[1].split('function attachExtensionFrame(')[0];
  const dashboard=main.split('function dashboard()')[1].split('function companion()')[0];
  assert.match(extension,/class="tavi-extension-toolbar"/);
- assert.match(extension,/CORE_WALLET_ID\?'home':'app-store'/);
+ assert.match(extension,/extensionReturnsHome\(manifest.id\)\?'home':'app-store'/);
  assert.doesNotMatch(extension,/data-action="home"/);
  assert.doesNotMatch(extension,/data-action="app-store"/);
  assert.match(dashboard,/hostToolbar\(/);

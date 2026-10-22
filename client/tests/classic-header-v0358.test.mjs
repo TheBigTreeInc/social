@@ -8,9 +8,9 @@ test('classic roster keeps identity, optional top-right pet, inbox activity and 
  const end=main.indexOf('function conversation()');
  const roster=start>=0&&end>start?main.slice(start,end):'';
  assert.match(roster,/class="roster-profile tavi-identity-strip"/);
- assert.match(roster,/state\.companion\?\.enabled\?/);
- assert.match(roster,/data-action="companion" class="tavi-profile-pet"/);
- assert.match(roster,/petSprite\(petById\(state\.companion\.petId\)/);
+ assert.match(roster,/companionPortraitButton\(\)/);
+ assert.match(main,/data-action="companion" class="tavi-profile-pet tavi-companion-portrait"/);
+ assert.match(main,/readCompanionPreview\(localStorage,extensionStoreScope\)/);
  assert.match(roster,/data-action="inbox" class="tavi-profile-activity"/);
  assert.match(roster,/data-action="app-store" class="tavi-profile-updates"/);
  assert.doesNotMatch(roster,/roster-toolbar tavi-action-toolbar/);

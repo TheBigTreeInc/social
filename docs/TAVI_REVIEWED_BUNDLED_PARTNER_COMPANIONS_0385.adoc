@@ -1,0 +1,76 @@
+= Tavi 0.3.85: reviewed offline partner extensions and Companion integration
+:revdate: 2026-10-22
+:toc:
+
+== Purpose
+
+Tavi is a messenger first, with optional extensions and game integrations second. A source repository is not a distribution location: independently authored Companion can remain in its own Git source while Tavi distributes a reviewed offline snapshot inside the Windows, Android and web build. This is not a new system-wide game engine or a native local ZIP extension installer.
+
+== Delivered ownership classes
+
+[cols="1,2,2",options="header"]
+|===
+|Kind |Example |Policy
+|Core internal |`org.tavi.core.wallet` |Owned by Tavi, non-removable, privileged Wallet calls limited to SHA-verified bundled first-party Wallet
+|Optional internal |`org.tavi.examples.notepad` |Owned by Tavi, requires per-account installation permission
+|Bundled partner |`org.tavi.community.companion` |Original publisher `tavi-community` preserved, packaged offline from independently developed Companion source, opt-in install
+|Remote optional |Atrium |Independent reviewed HTTPS index and embedded origin; never copied into internal source registry by default
+|===
+
+The registry at `extensions/registry.json` remains the source of truth. Each partner record pins `id`, `publisher`, `version`, `mode: optional`, `distribution: bundled-partner`, and a digest over the entire manifest and each public asset. Running `npm run extensions:sync` generates the static mirror at `client/public/tavi-extensions`. `extensions:check` rejects manually changed assets, modified partner source, publisher impersonation, unexpected module additions, unauthorized privileged mode and stale catalogs. The source takes precedence if an untrusted remote repository advertises the same ID.
+
+== Companion 0.6.8 snapshot shipped in Tavi 0.3.85
+
+The reviewed offline Companion 0.6.8 is present under `extensions/org.tavi.community.companion/`, with 18 public asset files. Painted Cat and Unicorn PNG bytes remain preserved through self-contained script chunks. They are not replaced by procedural art. The app uses an opaque sandbox iframe and only the existing permission set: `ui.panel`, `ui.toast`, and `storage.private`.
+
+My pet and Tools / Companions open the installed and enabled Companion extension when present. Otherwise they use the prior Tavi pet panel; no silent migration of legacy pet data is attempted. A host-owned Home route remains visible for Companion and Wallet. My portrait retains its independent account/avatar purpose. The permanent Wallet is never accidentally treated as an optional install.
+
+The **top-right painted companion portrait is not implemented in this pass**. A future host contribution needs an explicit consent and bounded, read-only summary contract rather than arbitrary iframe DOM access or injecting the partner's painting code into the Tavi shell.
+
+== New reviewed source importer
+
+From Tavi 0.3.85+:
+
+----
+node tools/import-reviewed-extension.mjs PATH_TO_PREPARED_BUNDLE --publisher tavi-community
+----
+
+This performs the complete same importer/registry/compiler checks in a disposable tree. It does not modify Tavi source. To stage an operator-reviewed updated bundle:
+
+----
+node tools/import-reviewed-extension.mjs PATH_TO_PREPARED_BUNDLE --publisher tavi-community --apply
+npm run extensions:check
+npm run verify
+----
+
+The `--apply` path changes only Tavi source registry, reviewed partner files and generated public mirror; it does not import runtime private storage, install Tavi for any account, rebuild native Tavi, push Git, or deploy LoopRD. It refuses same-version payload mutations and downgrade/publisher substitution. An error during publication restores the prior source/mirror snapshot.
+
+From Companion 0.6.9+, after `npm run tavi:bundle`:
+
+----
+node tools/stage-into-tavi.mjs C:\Users\dorbi\source\looprd-social
+node tools/stage-into-tavi.mjs C:\Users\dorbi\source\looprd-social --apply
+----
+
+The second command is optional and for a **newer** reviewed bundle. Tavi 0.3.85 already embeds Companion **0.6.8**; the Companion project 0.6.9 can be used to update Tavi source separately. An actual Windows/Android user must still install and explicitly approve the optional Companion from Tavi's App Store after rebuilding Tavi with the reviewed bundle. Optional extension install state is scoped by account/server; local session saves are not cloud sync.
+
+== Important security and acceptance boundaries
+
+* No Social credential or Wallet privilege goes to Companion. The sandbox remains `allow-scripts` without `allow-same-origin`.
+* No local `.tavix`/ZIP picker or arbitrary filesystem import in the running Tavi application is included. This requires independent design for safe storage, signatures, rollback and revocation.
+* Static output excludes extension `looprd/`, docs/tests and service secrets. Importable LoopRD components remain separately reviewed and deployed. Companion 0.6.8 needs none for its current private device-local saves.
+* Installing a new offline bundle in Tavi **source** does not instantly update the installed Windows or Android application. Rebuild and install Tavi with ZipRunner and separately review Git/CI.
+* Native iframe execution must be tested on Windows WebView2 and Android WebView, including Companion CSP/script loading, Cat/Unicorn painted frames, choose/interact, private saves, Back/Home navigation and account/server isolation. The author environment's browser refuses localhost navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`; this is **not** a passed UI test.
+* The operator must inspect the registry diff, publisher/version/digest, original Companion artwork, static content-safety policy and manifest permissions before approving a production package.
+* Preserved all 131 existing Tavi 0.3.84 ticket IDs/status/criteria and added only a Review candidate. No tickets auto-completed.
+
+== Operator acceptance walkthrough
+
+. Import Tavi 0.3.85 into ZipRunner; run source build and review the 132-ticket workboard.
+. Launch Tavi on Windows with a disposable test account; use App Store to locate `Companion` under `tavi-community`, not Wallet's core area.
+. Confirm Cancel does not install, Install requires explicit action, then My pet and Tools / Companions open the painted Cat/Unicorn application.
+. Verify the visible Tavi Home button works; exiting or disabling Companion returns to the old pet interface without destroying its data or changing the avatar portrait editor.
+. Save a companion, restart, test account change/server change, confirm private state isolation; verify no network access or bearer credentials inside the iframe.
+. Repeat on Android/Web (small phone safe areas, back button, keyboard, orientation). Confirm Wallet is still always available and Atrium still uses its own repository.
+. If the iframe fails to load scripts because of CSP/opaque-origin semantics, treat it as a bug; **do not** add `allow-same-origin` just to suppress the failure.
+. Independently review exact-commit GitHub Actions and native installer artifacts after operator push. Only operator approval can mark workboard tickets Done.

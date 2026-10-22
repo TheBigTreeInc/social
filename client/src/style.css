@@ -830,3 +830,9 @@ html[data-theme='dark'] .toast{background:#173029;color:#dff4ea;border-color:#4a
 html[data-theme='dark'] .tavi-identity-text .tavi-gold-balance{color:#f7d88b;}
 html[data-theme='dark'] .tavi-identity-text .tavi-gold-balance:hover{background:#423b20;border-color:#ab8e44;}
 @media (pointer:coarse){.tavi-identity-text .tavi-gold-balance{min-height:44px;padding:7px 4px 7px 0;}}
+
+/* Reviewed Companion preview: usable from 320px mobile through desktop. */
+.tavi-companion-portrait{display:flex;min-width:48px;min-height:50px;padding:2px;cursor:pointer;align-items:center;justify-content:center;flex-direction:column;gap:2px}
+.tavi-companion-portrait-img{display:block;width:40px;height:40px;object-fit:contain;border-radius:7px}
+.tavi-companion-portrait-empty{display:grid;place-items:center;width:40px;height:40px;font-size:25px}
+.tavi-companion-portrait small{max-width:58px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;font-size:9px}

@@ -51,6 +51,6 @@ export async function registerExtension(source,{target=publicRoot}={}){
  return entry;
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- if(process.argv.length!==3){console.error('Usage: node tools/register-tavi-extension.mjs path/to/extension');process.exitCode=2;}
- else registerExtension(process.argv[2]).then(e=>console.log(`Registered ${e.manifest.id}@${e.manifest.version} in curated source catalog (not live-published)`)).catch(e=>{console.error(e.message);process.exitCode=1;});
+ console.error('Internal Tavi extensions are maintained under extensions/<id>/ and extensions/registry.json. Run npm run extensions:sync instead. External Git-owned extensions publish through their own HTTPS repository index.');
+ process.exitCode=2;
 }

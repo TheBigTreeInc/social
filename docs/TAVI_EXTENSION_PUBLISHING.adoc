@@ -33,7 +33,7 @@ The owner can run a private, access-controlled *community* for its members while
 
 == Development and testing
 
-The bundled `examples/extension-notepad/` remains available as a local smoke test and can be registered for reviewed source-bundled builds using `node tools/register-tavi-extension.mjs path/to/extension`. That CLI is *not* an external publication requirement. A repository-hosted extension requires no Tavi rebuild when its hosted UI/manifest changes within the already implemented host API.
+Tavi-owned extensions without independent Git repositories now live under `extensions/<id>/` and are registered in `extensions/registry.json`. Use `npm run extensions:sync` to generate the bundled SHA-verified client assets and `npm run extensions:check` to validate them. The previous direct-public-folder registration CLI is retired. A repository-hosted extension requires no Tavi rebuild when its hosted UI/manifest changes within the already implemented host API. See `extensions/README.adoc`.
 
 Unit tests run via `node --test client/tests/extensions.test.mjs client/tests/extension-repositories.test.mjs` and the full test suite via `npm run verify`. Browser/Windows/Android tests against an actual HTTPS extension repository are outstanding. If the remote server denies framing or CORS, the app may appear in the catalog but fail to open; fix the hosting configuration rather than relaxing the iframe sandbox.
 

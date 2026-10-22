@@ -12,13 +12,14 @@ export const BUILTIN_APPS=Object.freeze([
   {action:'games', label:'Games', symbol:'games', tone:'violet'},
   {action:'wallet', label:'Wallet', symbol:'wallet', tone:'gold'},
   {action:'inbox', label:'Notifications', symbol:'bell', tone:'gold'},
-  {action:'companion', label:'My pet', symbol:'paw', tone:'leaf', requiresPet:true},
+  {action:'companion', label:'Companion', symbol:'paw', tone:'leaf'},
   {action:'portrait', label:'My portrait', symbol:'portrait', tone:'plum'},
   {action:'app-store', label:'App Store', symbol:'store', tone:'teal'},
   {action:'add-friend', label:'Add friend', symbol:'person-plus', tone:'blue'},
   {action:'settings', label:'Settings', symbol:'settings', tone:'slate'}
 ]);
 // All paths are fixed markup literals: no source-derived SVG attributes.
+export const BUNDLED_COMPANION_ID='org.tavi.community.companion';
 const SHAPES=Object.freeze({
  'messages':'<path d="M5 7h22v15H14l-7 5v-5H5z"/><path d="M10 12h12M10 17h8"/>',
  'games':'<path d="M10 11h12c3 0 5 3 6 9l1 4c.5 3-2.5 4.1-4.5 2l-4.5-4h-8l-4.5 4C5.5 28.1 2.5 27 3 24l1-4c1-6 3-9 6-9z"/><path d="M9 15v7m-3.5-3.5h7M23 16h.01M26 19h.01"/>',
@@ -41,7 +42,7 @@ export function launchableExtensions({catalog,store,platform}){
  if(!store)return [];
  return catalog.filter(entry=>{
   const m=entry?.manifest;
-  if(!m||m.id===CORE_WALLET_ID||!store.enabled(m.id)||extensionUpdateStatus(entry,store)!=='current')return false;
+  if(!m||m.id===CORE_WALLET_ID||m.id===BUNDLED_COMPANION_ID||!store.enabled(m.id)||extensionUpdateStatus(entry,store)!=='current')return false;
   if(m.platforms&&!m.platforms.includes(platform))return false;
   if(!m.contributions.some(c=>c.slot==='app.launcher'))return false;
   try{return validateExtensionManifest(m).compatible;}catch{return false;}
@@ -49,7 +50,7 @@ export function launchableExtensions({catalog,store,platform}){
      symbol:entry.manifest.id==='inc.thebigtree.tavi.atrium'?'atrium':'extension',tone:'forest'}));
 }
 export function menuApplications({catalog=[],store=null,platform='web',petEnabled=false}={}){
- return [...BUILTIN_APPS.filter(a=>!a.requiresPet||petEnabled).map(a=>({...a,kind:'builtin'})),
+ return [...BUILTIN_APPS.filter(a=>!a.requiresPet||petEnabled||Boolean(store?.enabled(BUNDLED_COMPANION_ID))).map(a=>({...a,kind:'builtin'})),
     ...launchableExtensions({catalog,store,platform})];
 }
 // Icons must be relative, manifest-validated assets. Never resolve a URL or

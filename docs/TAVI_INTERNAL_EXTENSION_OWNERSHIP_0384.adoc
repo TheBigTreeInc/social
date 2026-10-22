@@ -1,0 +1,40 @@
+= Tavi 0.3.84 — Internal extension ownership and portable LoopRD boundary
+:revdate: 2026-10-22
+:toc:
+
+== Decision
+
+Tavi is a messenger first. Extensions developed within the Tavi repository and *without an independent Git repository* have one canonical home: the root `extensions/` directory. Extensions with independent source repositories, such as Atrium, remain external and continue to use reviewed HTTPS source manifests and sandboxed integration.
+
+The Apps drawer is a navigation surface, not a source-ownership manifest. Core messenger functions (Messages, Notifications, Settings, Portrait and the current Companion implementation) remain host modules until deliberately extracted into an extension API; their placement in the drawer does not imply iframe isolation or a separate bundled extension.
+
+== Implemented in 0.3.84
+
+* `extensions/registry.json` records known Tavi-owned modules and their `core`/`optional` installation mode.
+* `extensions/org.tavi.core.wallet` is the canonical UI source for a permanent core Wallet. Its trusted identity, authenticated host broker and existing Gold spending logic are not changed.
+* `extensions/org.tavi.examples.notepad` is a canonical bundled **optional** extension. It still requires opt-in installation, per-account isolation and explicit grants.
+* `tools/sync-internal-extensions.mjs` regenerates `client/public/tavi-extensions/` and its SHA-256 catalog from the source, with byte-exact `--check`, allowlisted file types and explicit denial of symlinks, duplicate IDs, missing icons, remote publisher identities and unexpected deployed modules.
+* Client web builds and dev sessions sync internal modules; the source verification pipeline checks the generated copies for unexpected edits. The ZipRunner Windows native-build cache now hashes canonical extension source changes.
+* Backend/design sources under `extensions/<id>/looprd/`, documentation and tests are excluded from the public iframe bundle.
+* Historical source installer `tools/register-tavi-extension.mjs` is no longer a direct command for mutating the public bundle; in-repository modules use the registry and sync flow.
+
+== Backend decision: no speculative import
+
+The Wallet backend is currently the authenticated `looprd-social` service with `server/wallet_ledger.py`, and Social schema 11. This pass does *not* publish a second Ledger service, fork wallet tables, reset balances or migrate accounts. Any future extension-owned importable LoopRD service will require an explicitly versioned portable descriptor, reviewed service-to-service authorization, operator-controlled import/deployment, and separate QA for merchants and idempotent payments.
+
+The Wallet's free and earned Gold rules remain unchanged. The Wallet host grants stay denied to untrusted extensions. Real-money pathways remain excluded.
+
+== Operator acceptance
+
+. Import the reviewed 0.3.84 source ZIP through ZipRunner without deleting local settings, databases or runtime state.
+. Check that `extensions/` and the generated `client/public/tavi-extensions/` have identical source-defined manifests and assets (`npm run extensions:check`), and that Node/Python project tests are green.
+. Open native Windows compact Tavi. Tapping the profile Gold amount opens Wallet directly; no App Store install/remove control appears for Wallet.
+. Install Private Notepad from App Store with explicit approval and verify private notes across restart and account changes. Atrium retains its external repository flow.
+. Check Android phone (including the current inset/header acceptance issues) and Web, and confirm the Home button always returns to the messenger.
+. Review exact-commit CI after pushing; never treat source tests or a local build as operator acceptance. LoopRD deployment and standalone Ledger extraction require *separate* explicit operator approval.
+
+== Scope intentionally deferred
+
+* Moving My Pet/Companion, Portrait, Notifications or Settings into sandboxed extensions, which would require host permission and state interfaces rather than a mechanical file move.
+* Independent Wallet Ledger service extraction and portable importable backend package.
+* Native Android/Windows acceptance and hosted Atrium game integration; this source-layout pass does not certify them.

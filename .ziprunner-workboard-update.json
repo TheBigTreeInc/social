@@ -1,8 +1,8 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.83",
-  "summary": "Tavi 0.3.83: first-party Wallet opens directly without installation; authenticated Gold balance replaces profile account/server label. No wallet ledger/schema change. 129 historical tickets retained plus 1 Review. Native device review and live Wallet server pending.",
+  "version": "0.3.87",
+  "summary": "Tavi 0.3.87 repairs Windows URL.pathname path corruption in the Companion source integrity test/importer. No Companion simulation, server, or wallet change.",
   "implemented": [
     {
       "id": "LRS-004",
@@ -2042,12 +2042,9 @@
       "status": "review",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
-        "Import Tavi 0.3.83 into ZipRunner and confirm mandatory workboard gate, source build and exact-package tests succeed while preserving all prior 129 ticket IDs, status, priority and acceptance criteria.",
-        "On Windows and Android, the account/server text beneath the signed-in display name is replaced by an authenticated Gold balance. Tapping the line opens Wallet directly without an App Store detour or install approval.",
-        "Wallet always exists in the Main Menu; App Store has no Wallet install/disable/remove buttons. Prior manually installed, disabled or removed Wallet records cannot affect access.",
-        "Wallet remains a sandboxed verified first-party bundle; remote publisher IDs cannot impersonate it and its iframe never receives the Social session token.",
-        "The displayed total refreshes after sign-in, foreground activity and Wallet changes. Missing/unavailable API is labeled unavailable and never invents 0 or 100 Gold.",
-        "Verify same behavior across 320/355/390px phones, tablet and desktop with the five-viewport fixture and real Android/Windows before operator approval; Social schema stays 11."
+        "Review Gold amount on a running schema-11 Wallet-enabled LoopRD Social service and a disconnected/older server; confirm real balances versus unavailable state.",
+        "Use Wallet without manual installation and check Home navigation, Tavi safe areas and native client behavior.",
+        "Verify exact-commit GitHub browser UI QA and physical Windows/Android acceptance before Done."
       ],
       "operator_checks": [
         "Review Gold amount on a running schema-11 Wallet-enabled LoopRD Social service and a disconnected/older server; confirm real balances versus unavailable state.",
@@ -2055,6 +2052,79 @@
         "Verify exact-commit GitHub browser UI QA and physical Windows/Android acceptance before Done."
       ],
       "implementation_summary": "0.3.83 candidate: core Wallet bypasses optional installation, requires reviewed bundled hashes and host-only API; profile shows live Gold link and returns Home; no Social schema change. Device/live server QA pending."
+    },
+    {
+      "id": "TAVI-EXT-INTERNAL-084",
+      "title": "Canonical in-repository extension modules and audited static bundling",
+      "summary": "Tavi-owned no-Git extensions have canonical source under extensions/<id> with an explicit core/optional registry; SHA-verified client mirrors are generated from source. Existing Wallet and Private Notepad retain their ownership, permissions and launch semantics. Future LoopRD backend imports remain independent operator-gated work.",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": [
+        "Verify root extensions/registry.json declares first-party Wallet as non-removable core, Private Notepad as optional and never registers Atrium from another repository.",
+        "Run npm run extensions:sync and extensions:check, npm run verify and package preflight; altering bundled public assets or remote publisher identity must fail validation.",
+        "Confirm Wallet still opens directly from the profile Gold button and Notepad still requires approval; confirm no token or backend source enters the public iframe asset bundle.",
+        "Verify existing LoopRD Wallet service and Social schema 11 unchanged; if standalone Ledger extraction is later approved, import a portable descriptor separately without hardcoded URL.",
+        "Operator test Windows, Android and web extension launch/navigation before marking Done; keep all 130 earlier statuses and criteria unchanged."
+      ],
+      "operator_checks": [
+        "Check Windows Main Menu has Wallet and optional app store Notepad; Wallet cannot be installed/disabled/removed and Gold click opens it directly.",
+        "Confirm installed Notepad notes persist and remain isolated per account/server; update and reinstall do not rewrite data.",
+        "Check no independent Atrium or Life source is copied to the Tavi internal extension folder; do not deploy LoopRD database or component without separate approval.",
+        "Check exact pushed Git commit and required Actions; build/source success alone is not operator acceptance."
+      ],
+      "implementation_summary": "Source candidate: extensions registry, canonical Wallet/Notepad bundles, reproducible SHA256 catalog/mirror sync, build and test wiring, future LoopRD import boundary. No server schema or wallet accounting behavior changed."
+    },
+    {
+      "id": "TAVI-EXT-PARTNER-085",
+      "title": "Reviewed offline partner extensions and Companion 0.6.8 in Tavi",
+      "summary": "Provide explicit publisher- and content-digest-pinned bundled-partner source in Tavi and a real dry-run/apply importer. Ship reviewed Companion 0.6.8 as optional offline app while preserving Wallet core and Notepad optional semantics; verify My pet routing and keep real device acceptance open.",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": [
+        "Check external-publisher snapshot for org.tavi.community.companion version 0.6.8 is pinned in extensions/registry.json without changing publisher to tavi.",
+        "Run the exact reviewed Tavi importer in dry-run and --apply against disposable copies. Reject source/publisher takeover, same-version digest change, privileged Wallet/Core impersonation and invalid static files.",
+        "Use App Store Cancel and Install on Windows and Android; confirm My pet/Tools routes to painted Companion only when installed and enabled, with fallback to old pet and no changes to My portrait.",
+        "Verify Cat and Unicorn paint, scripts and CSS in a real opaque-origin sandbox frame, private saves, Home navigation and account/server isolation; no Social credentials reach the iframe.",
+        "Verify no new LoopRD component/schema, no standalone runtime ZIP installer and no automatic Git push/release; exact-commit GitHub CI and operator acceptance remain separate."
+      ],
+      "operator_checks": [
+        "Check external-publisher snapshot for org.tavi.community.companion version 0.6.8 is pinned in extensions/registry.json without changing publisher to tavi.",
+        "Run the exact reviewed Tavi importer in dry-run and --apply against disposable copies. Reject source/publisher takeover, same-version digest change, privileged Wallet/Core impersonation and invalid static files.",
+        "Use App Store Cancel and Install on Windows and Android; confirm My pet/Tools routes to painted Companion only when installed and enabled, with fallback to old pet and no changes to My portrait.",
+        "Verify Cat and Unicorn paint, scripts and CSS in a real opaque-origin sandbox frame, private saves, Home navigation and account/server isolation; no Social credentials reach the iframe.",
+        "Verify no new LoopRD component/schema, no standalone runtime ZIP installer and no automatic Git push/release; exact-commit GitHub CI and operator acceptance remain separate."
+      ],
+      "implementation_summary": "Offline source candidate: verified partner publisher and SHA256 bundle, source registry and deterministic static mirror, Tavi My pet/Tools conditional launch, documented host Home. Chromium and native execution still pending acceptance."
+    },
+    {
+      "id": "TAVI-EXT-COMPANION-PREVIEW-086",
+      "title": "Review-scoped Companion 0.6.11 top-right portrait and navigation",
+      "summary": "Bind verified partner digest, account-scoped preview, rate and payload checks. Independent operator device testing still required.",
+      "operator_checks": [
+        "Review registry digest and importer dry-run/apply/idempotence and hostile messages.",
+        "Rebuild Windows/Android/Web clients; test install consent, home/back, 80px portrait and account separation.",
+        "Confirm Wallet/Notepad intact and no unwanted data migration."
+      ]
+    },
+    {
+      "id": "TAVI-EXT-COMPANION-WINPATH-087",
+      "title": "Fix Windows file URL resolution for reviewed Companion source validation",
+      "summary": "Fix Node file URL vs native Windows paths in reviewed Companion source validation. Source tested; Win/Android operator acceptance pending.",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": [
+        "On Windows, run `node --test client/tests/companion-preview-086.test.mjs`; no ENOENT or `C:\\C:\\` path, and both file URL and native filesystem path return the same reviewed source SHA-256.",
+        "Verify `npm run verify` and `npm run extensions:check` on the exact ZipRunner overlay; ensure the reviewed Companion publisher and digest are unchanged.",
+        "Confirm Windows build and App Store/My pet/painted Companion preview; repeat in Android client. Operator native approval is required before Done.",
+        "Preserve all existing workboard statuses, private data and LoopRD descriptor; source-only repair, no automatic Git push or deployment."
+      ],
+      "operator_checks": [
+        "On Windows, run `node --test client/tests/companion-preview-086.test.mjs`; no ENOENT or `C:\\C:\\` path, and both file URL and native filesystem path return the same reviewed source SHA-256.",
+        "Verify `npm run verify` and `npm run extensions:check` on the exact ZipRunner overlay; ensure the reviewed Companion publisher and digest are unchanged.",
+        "Confirm Windows build and App Store/My pet/painted Companion preview; repeat in Android client. Operator native approval is required before Done.",
+        "Preserve all existing workboard statuses, private data and LoopRD descriptor; source-only repair, no automatic Git push or deployment."
+      ],
+      "implementation_summary": "Importer normalizes file URLs with fileURLToPath and source regression compares URL/native paths. No extension data or source digests changed."
     }
   ],
   "remaining": [
@@ -2893,6 +2963,11 @@
         "Plan backup, data migration, dual-write avoidance, and rollback between co-located and standalone services.",
         "Verify source-compatible SDK and game adapters, including multi-currency exchange rates and service-scoped reward proposals."
       ]
+    },
+    {
+      "id": "TAVI-EXT-COMPANION-NATIVE-QA-086",
+      "title": "Operator approve installed Windows and Android Companion host experience",
+      "summary": "Native device checks for install, appearance, scope separation, closed/reopened saving, accessibility and shell navigation remain unverified."
     }
   ]
 }
