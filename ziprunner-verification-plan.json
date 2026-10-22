@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.90",
+  "version": "0.3.91",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",

@@ -162,8 +162,13 @@ async function testViewport(browser,base,device){
   assert.equal(await page.locator('[data-extension-install="org.tavi.core.wallet"], [data-extension-remove="org.tavi.core.wallet"], [data-extension-disable="org.tavi.core.wallet"]').count(),0,'Core Wallet must have no install/remove/disable controls');
   assert.equal(await page.locator('.tavi-store-item').filter({hasText:'Core Gold Wallet'}).count(),0,'Core Wallet is not an optional store app');
   await visible(page,'#extension-repository-form input[name="repository"]');
-  await visible(page,'.tavi-store-item');
-  assert.match(await page.locator('.tavi-store-item').first().innerText(),/Private Notepad/);
+  // App Store can contain Notepad, Companion, and additional extensions.
+  // Never wait on an unscoped multi-match locator (Playwright strict mode).
+  const notepadInstall=page.locator('[data-extension-install="org.tavi.examples.notepad"]');
+  await notepadInstall.waitFor({state:'visible',timeout:6000});
+  const notepadCard=page.locator('.tavi-store-item').filter({has:notepadInstall});
+  assert.equal(await notepadCard.count(),1,'Exactly one Private Notepad App Store card expected');
+  assert.match(await notepadCard.innerText(),/Private Notepad/);
   await noOverflow(page,`${device.name} app store`);
   stage='review extension install';await page.locator('[data-extension-install="org.tavi.examples.notepad"]').click();
   await visible(page,'.tavi-install-dialog[role="dialog"]');

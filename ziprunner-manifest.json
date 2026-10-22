@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.90",
-    "base_version": "0.3.88"
+    "version": "0.3.91",
+    "base_version": "0.3.90"
   },
   "update": {
-    "id": "TAVI-20261022-WORKBOARD-PREFLIGHT-0390",
+    "id": "TAVI-20261022-STORE-QA-0391",
     "kind": "source_update",
     "created_at": "2026-10-22T21:30:00+02:00",
-    "summary": "ZipRunner preflight-only repair of two missing operator_checks lists in v0.3.89 workboard metadata. Ledger extension-backed LoopRD embedding and byte-preserved reviewed Companion source are unchanged; v0.3.89 did not install."
+    "summary": "Resolve Playwright strict mode in five-viewport App Store QA by selecting Private Notepad by stable extension ID. No product/store behavior, Social runtime, Wallet, Companion or Android updater changes."
   },
   "planned_work": [
     {
@@ -2186,11 +2186,11 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.90 corrects the v0.3.89 workboard preflight rejection only. No change to Social 0.3.83/schema 11, Wallet ledger implementation, reviewed Companion 0.6.11 digest, native Android updater, private/runtime data or operator acceptance. No Git push/deployment."
+    "notes": "0.3.91 repairs only the Chromium App Store smoke selector and adds a regression test. LoopRD server release 0.3.83/schema 11 unchanged; operator GitHub UI and Android native acceptance pending."
   },
   "release_notes": {
-    "version": "0.3.90",
-    "summary": "Correct workboard operator_checks for two 0.3.89 Review tickets, preserving the 0.3.89 Wallet extension source and Companion Git byte-integrity repair. No backend/runtime migration or Android updater acceptance.",
+    "version": "0.3.91",
+    "summary": "Fix App Store QA strict mode when Private Notepad and Companion are both listed; preserves Ledger extension and reviewed Companion bytes. No native Android update behavior change.",
     "server_unchanged": "looprd-social release 0.3.83, schema 11 and existing Wallet tables/receipts retained."
   }
 }

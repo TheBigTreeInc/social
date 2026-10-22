@@ -1,5 +1,3 @@
-# Tavi 0.3.90 — ZipRunner workboard preflight repair
+# Tavi 0.3.91 — Browser App Store QA selector repair
 
-The 0.3.89 source package failed mandatory workboard validation before installation. Both new Review tickets lacked required `operator_checks`; 0.3.90 supplies these lists without changing their acceptance criteria, prior workboard decisions, Ledger source or Companion bytes.
-
-See `ZIPRUNNER_HANDOFF_WORKBOARD_PREFLIGHT_0390.md` for operator checks and `ZIPRUNNER_HANDOFF_WALLET_EMBED_CI_0389.md` for the unchanged functional implementation. The LoopRD server release remains 0.3.83/schema 11, and the failed v0.3.89 never installed. Do not auto-push, deploy, release or mark Review tickets Done.
+Fixes five-viewport `ui:ci` Playwright strict-mode failures in v0.3.90 by selecting the optional Private Notepad App Store card via its stable extension ID. Does not remove Companion or change the App Store. Details in `ZIPRUNNER_HANDOFF_UI_STORE_QA_0391.md`. Ledger source from v0.3.89, preflight checks from v0.3.90, Social release 0.3.83/schema 11 and native Android updater remain unchanged. Device and exact-commit QA require operator acceptance; do not auto-push, deploy or mark Done.

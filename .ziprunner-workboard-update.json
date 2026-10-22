@@ -1,8 +1,8 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.90",
-  "summary": "0.3.90 packaging-only repair: add required operator_checks for both new 0.3.89 Review tickets after ZipRunner 1.2.304.164 preflight rejection; preserve all 138 workboard entries and existing operator decisions, Ledger source, Companion digest, schema 11 and LoopRD server release. Version bumped because 0.3.89 never overlaid.",
+  "version": "0.3.91",
+  "summary": "0.3.91 narrow browser QA selector repair after 0.3.90 exact-commit five-viewport UI QA strict-mode failures. Select Private Notepad by extension ID rather than requiring a single .tavi-store-item. Preserve existing 138 workboard records, Ledger and Companion source, Social schema 11, Android updater state and local runtime data.",
   "implemented": [
     {
       "id": "LRS-004",
@@ -2189,6 +2189,29 @@
         "On operator-approved next push, inspect GitHub exact SHA source and Android CI: source tests must pass before APK build.",
         "Do not mark Android updater device acceptance complete based on CI; TAVI-UPDATES-003 remains in Review."
       ]
+    },
+    {
+      "id": "TAVI-UI-STORE-QA-091",
+      "title": "Select specific optional extension in multi-card App Store browser QA",
+      "summary": "Playwright strict-mode failure in all five viewports: unscoped .tavi-store-item wait resolves both Private Notepad and Companion. Select the Notepad row by stable extension ID; preserve real install/approve and Home tests.",
+      "priority": "high",
+      "status": "review",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "Run node --test client/tests/ui-qa-store-selector-091.test.mjs and npm run verify on exact ZipRunner overlay.",
+        "Run npm --prefix client run ui:ci using real Chromium and inspect all five viewport results; no strict-mode App Store locator failure.",
+        "Verify App Store contains both Private Notepad and Companion; Cancel and Approve apply to Notepad only and opening it returns Home safely.",
+        "Confirm Wallet remains core (no App Store install), Companion remains optional and its publisher digest is unchanged.",
+        "Inspect exact pushed SHA GitHub browser UI QA, Android and release gate; retain Android TAVI-UPDATES-003 open until actual on-device update succeeds."
+      ],
+      "operator_checks": [
+        "Run node --test client/tests/ui-qa-store-selector-091.test.mjs and npm run verify on exact ZipRunner overlay.",
+        "Run npm --prefix client run ui:ci using real Chromium and inspect all five viewport results; no strict-mode App Store locator failure.",
+        "Verify App Store contains both Private Notepad and Companion; Cancel and Approve apply to Notepad only and opening it returns Home safely.",
+        "Confirm Wallet remains core (no App Store install), Companion remains optional and its publisher digest is unchanged.",
+        "Inspect exact pushed SHA GitHub browser UI QA, Android and release gate; retain Android TAVI-UPDATES-003 open until actual on-device update succeeds."
+      ],
+      "implementation_summary": "Replace ambiguous .tavi-store-item wait / first-card assertion with unique Notepad install control and a card filtered by that control; add Node regression and retain five-viewport Chromium QA as independent CI gate. Native Android and Windows not accepted."
     }
   ],
   "remaining": [
