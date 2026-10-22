@@ -1,8 +1,31 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.87",
+  "version": "0.3.88",
   "tasks": [
+    {
+      "id": "TAVI-EXT-NATIVE-HTML-088",
+      "criteria": [
+        {
+          "id": "TAVI-EXT-NATIVE-HTML-088-SOURCE",
+          "description": "Byte-exact .html.bytes verification transport, unchanged publisher digest, tests and ZipRunner overlay checks.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/extension-native-html-integrity-088.test.mjs",
+            "npm run extensions:check",
+            "npm run verify"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-NATIVE-HTML-088-WINDOWS",
+          "description": "Actual compiled Windows Tauri HTML injection behavior and App Store Companion+Notepad installs; repeat Android/web.",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
     {
       "id": "TAVI-EXT-COMPANION-WINPATH-087",
       "criteria": [

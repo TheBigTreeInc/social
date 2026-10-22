@@ -69,6 +69,12 @@ export async function syncInternalExtensions({root=project,check=false}={}) {
     if(check){
      const output=await readFile(published).catch(()=>null);
      if(!output||!equal(output,bytes))throw Error(`Published extension asset stale or absent: ${item.id}/${path}. Run npm run extensions:sync.`);
+     // Tauri 2 modifies bundled .html at compile time for its CSP. A second,
+     // non-HTML resource preserves the original source bytes for runtime SHA-256.
+     if(path.endsWith('.html')){
+      const raw=await readFile(published+'.bytes').catch(()=>null);
+      if(!raw||!equal(raw,bytes))throw Error(`Published extension raw HTML stale or absent: ${item.id}/${path}. Run npm run extensions:sync.`);
+     }
     }
    }
   }
@@ -84,6 +90,9 @@ export async function syncInternalExtensions({root=project,check=false}={}) {
   if(!check)for(const asset of files){
    const to=join(out,item.id,asset.path);
    await mkdir(dirname(to),{recursive:true});await copyFile(join(dir,asset.path),to);
+   // The .bytes URL is a verification-only transport, NOT a separately
+   // approved asset, executable entrypoint or change to the reviewed digest.
+   if(asset.path.endsWith('.html'))await copyFile(join(dir,asset.path),to+'.bytes');
   }
   const manifestBytes=await readFile(join(dir,'manifest.json'));
   if(check){
@@ -104,7 +113,7 @@ export async function syncInternalExtensions({root=project,check=false}={}) {
    }
   }
   await listPublished(join(out,item.id));
-  const expected=new Set(['manifest.json',...files.map(f=>f.path)]);
+  const expected=new Set(['manifest.json',...files.flatMap(f=>f.path.endsWith('.html')?[f.path,f.path+'.bytes']:[f.path])]);
   const unexpected=publishedAssets.filter(x=>!expected.has(x));
   if(unexpected.length){
    if(check)throw Error(`Stale published extension assets: ${item.id}: ${unexpected.join(', ')}`);

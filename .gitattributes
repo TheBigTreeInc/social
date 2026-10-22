@@ -24,3 +24,6 @@ extensions/**/*.css text eol=lf
 extensions/**/*.js text eol=lf
 extensions/**/*.json text eol=lf
 extensions/**/*.svg text eol=lf
+
+# Raw copies must stay byte-exact regardless of Git platform text normalization.
+client/public/tavi-extensions/**/*.bytes -text

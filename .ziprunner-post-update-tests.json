@@ -1,6 +1,6 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.87",
+  "version": "0.3.88",
   "tests": [
     {
       "kind": "command",
@@ -77,9 +77,9 @@
     {
       "kind": "command",
       "semantic_id": "tavi-windows-companion-native",
-      "definition_revision": "3",
+      "definition_revision": "4",
       "rerun_policy": "every_update",
-      "command": "node --test client/tests/companion-window.test.mjs && node --test client/tests/companion-preview-086.test.mjs client/tests/bundled-partner-085.test.mjs && npm run extensions:check",
+      "command": "node --test client/tests/companion-window.test.mjs && node --test client/tests/companion-preview-086.test.mjs client/tests/bundled-partner-085.test.mjs && npm run extensions:check && node --test client/tests/extension-native-html-integrity-088.test.mjs",
       "attention_on_failure": true,
       "gating": false
     },

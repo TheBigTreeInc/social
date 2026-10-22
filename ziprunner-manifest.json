@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.87",
-    "base_version": "0.3.86"
+    "version": "0.3.88",
+    "base_version": "0.3.87"
   },
   "update": {
-    "id": "TAVI-20261022-COMPANION-WINPATH-0387",
+    "id": "TAVI-20261022-EXT-NATIVE-HTML-0388",
     "kind": "source_update",
-    "created_at": "2026-10-22T20:51:00+02:00",
-    "summary": "Repair Windows file URL handling in the reviewed Companion preview importer/test; source-only patch preserving Companion 0.6.11 and all Wallet/extension contracts."
+    "created_at": "2026-10-22T21:04:00+02:00",
+    "summary": "Repair Windows Companion/App Store installation blocked by native Tauri CSP HTML transformations using SHA-verified original-byte .bytes mirrors. Source-only; publisher bundle SHA and Ledger unchanged."
   },
   "planned_work": [
     {
@@ -1813,6 +1813,11 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": "Browser fixture measures 46px top and 34px bottom simulated Android insets at phone 320/390px and tablet widths. Check Main Menu is within its own dock, not over last Home roster text; dock ends above OS navigation inset. Check focused Back action stays inside header with 44px touch target and safe top inset; embedded games and chat compose keep safe controls. Verify actual Android OEM devices with gesture/three-button navigation, display cutouts, software keyboard, light/dark theme and orientation change. Verify Windows 355x630 compact app remains usable; do not mark Done without device/operator acceptance."
+    },
+    {
+      "id": "TAVI-EXT-NATIVE-HTML-088",
+      "status": "review",
+      "reason": "Generated original-byte mirrors and fail-closed integrity tests passed locally. Actual compiled Windows Tauri and Android/native device installation must be validated before Done."
     }
   ],
   "validation": {
@@ -2035,6 +2040,14 @@
         "description": "Operator-owned QA on actual Windows WebView2, not synthetic browser",
         "status": "not_run",
         "reason": "Requires Windows ZipRunner and explicitly disposable QA session"
+      },
+      {
+        "id": "TAVI-EXT-NATIVE-HTML-088-NODE",
+        "description": "Original-byte mirror, digest/fail-closed checks and bundle source regressions",
+        "status": "tested_source",
+        "command": "node --test client/tests/extension-native-html-integrity-088.test.mjs && npm run extensions:check",
+        "environment": "Node.js Linux; native Windows acceptance pending",
+        "evidence_ref": "ZIPRUNNER_HANDOFF_COMPANION_NATIVE_HTML_0388.md"
       }
     ]
   },
@@ -2159,6 +2172,6 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.87 Windows path source fix only; Companion 0.6.11 and Social schema 11 unchanged. No Git push/release/deployment or operator acceptance inferred."
+    "notes": "0.3.88 native HTML integrity transport source repair. Existing Companion 0.6.11 approved source SHA and Social schema 11 unchanged. No Git push, release, DB change or operator acceptance inferred."
   }
 }

@@ -48,7 +48,11 @@ export async function verifyBundledExtension(entry,{baseUrl,fetcher=fetch,crypto
  validateExtensionManifest(entry.manifest);
  for(const f of entry.files){
   const url=extensionAssetUrl(entry.manifest.id,f.path,baseUrl);
-  const response=await fetcher(url,{credentials:'omit',cache:'no-store',redirect:'error'});
+  // Tauri's release codegen injects CSP into .html during native compilation.
+  // Verify the original canonical bytes from the non-HTML sidecar instead.
+  // Never skip the digest, accept a mismatch or fall back to HTML on errors.
+  const immutableUrl=f.path.endsWith('.html')?url+'.bytes':url;
+  const response=await fetcher(immutableUrl,{credentials:'omit',cache:'no-store',redirect:'error'});
   if(!response.ok)throw Error(`Extension asset unavailable: ${f.path}`);
   const data=await response.arrayBuffer();
   if(data.byteLength!==f.size)throw Error(`Extension asset size changed: ${f.path}`);
