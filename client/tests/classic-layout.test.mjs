@@ -3,7 +3,12 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {runInNewContext} from 'node:vm';
 import {createSurfaceRegistry} from '../src/surfaces.js';
-import {hostToolbar} from '../src/ui/shell.js';
+import {hostToolbar,homeToolbar,mobileTabs} from '../src/ui/shell.js';
+import {wireAppPages,wireElasticScroll} from '../src/ui/touch-navigation.js';
+import {extensionPanelUrl} from '../src/ui/companion-world-entry.js';
+import {uiGlyph} from '../src/launcher.js';
+import {buddyGroups,conversationThreads} from '../src/ui/messenger-model.js';
+import {applyInboxFilter} from '../src/ui/message-inbox.js';
 
 const source=(await readFile(new URL('../src/main.js',import.meta.url),'utf8'))
   .split('\n').filter(line=>!line.startsWith('import ')).join('\n')
@@ -12,7 +17,7 @@ const source=(await readFile(new URL('../src/main.js',import.meta.url),'utf8'))
 function shell({connected=true,mobileRoster=false,panel='messenger'}={}) {
   const app={innerHTML:''};
   const context={
-    BUNDLED_COMPANION_ID:'org.tavi.community.companion',CORE_WALLET_ID:'org.tavi.core.wallet',hostToolbar,wireExclusiveMenus:()=>{},createDiagnosticEvents:()=>({record(){},clear(){},snapshot(){return [];}}),createSurfaceRegistry,extensionUpdateSummary:()=>({count:0,missing:[]}),filterOptionalApps:entries=>entries,createExtensionHost:()=>({unmount(){},mount(){}}),extensionStorageScope:()=>null,petById:()=>null,petSprite:()=>'',atriumLauncher:()=>({available:false}),companionPanel:()=>'',
+    uiHeader:()=>'<header>Tavi · Sign in</header>',buddyGroups,conversationThreads,applyInboxFilter,homeToolbar,BUNDLED_COMPANION_ID:'org.tavi.community.companion',CORE_WALLET_ID:'org.tavi.core.wallet',hostToolbar,uiGlyph,mobileTabs,wireAppPages,wireElasticScroll,extensionPanelUrl,wireExclusiveMenus:()=>{},createDiagnosticEvents:()=>({record(){},clear(){},snapshot(){return [];}}),createSurfaceRegistry,extensionUpdateSummary:()=>({count:0,missing:[]}),filterOptionalApps:entries=>entries,createExtensionHost:()=>({unmount(){},mount(){}}),extensionStorageScope:()=>null,petById:()=>null,petSprite:()=>'',atriumLauncher:()=>({available:false}),companionPanel:()=>'',
     document:{addEventListener:()=>{},getElementById:key=>key==='app'?app:null,querySelectorAll:()=>[],querySelector:()=>null},
     localStorage:{getItem:()=>null},newCompanion:()=>({enabled:false,overlay:'off'}),companionBadge:()=>'',readConfig:()=>({server:'https://social.example.org',games:['jones'],gamesByServer:{}}),
     createResumeSync:()=>()=>false,createPushWakeupBridge:()=>()=>false,createDeviceSessionStore:()=>({load:async()=>({record:null,remembered:false})}),invoke:async()=>null,sessionStorage:{getItem:()=>null},isTauri:()=>false,navigator:{userAgent:'Mozilla/5.0'},clearTimeout(){},setTimeout(){},URL,Date,Map,JSON,String,console,
@@ -41,7 +46,7 @@ test('focused chat uses message area without navigation dock and keeps escaped t
 test('mobile navigation state and login are server-scoped and token-free',()=>{
   const html=shell({mobileRoster:true});
   assert(html.includes('tavi-contact-focus'));
-  assert(html.includes('data-action="minimize-view"'));
+  assert(html.includes('data-action="back"')); // navigates to Home without exiting
   const login=shell({connected:false});
   assert(login.includes('Tavi · Sign in'));
   assert(login.includes('LoopRD server address'));
@@ -52,7 +57,7 @@ test('mobile navigation state and login are server-scoped and token-free',()=>{
 test('untrusted friend names/messages are escaped before inclusion',()=>{
   const app={innerHTML:''};
   const context={
-    BUNDLED_COMPANION_ID:'org.tavi.community.companion',CORE_WALLET_ID:'org.tavi.core.wallet',hostToolbar,wireExclusiveMenus:()=>{},createDiagnosticEvents:()=>({record(){},clear(){},snapshot(){return [];}}),createSurfaceRegistry,extensionUpdateSummary:()=>({count:0,missing:[]}),filterOptionalApps:entries=>entries,createExtensionHost:()=>({unmount(){},mount(){}}),extensionStorageScope:()=>null,petById:()=>null,petSprite:()=>'',atriumLauncher:()=>({available:false}),companionPanel:()=>'',
+    uiHeader:()=>'<header>Tavi · Sign in</header>',buddyGroups,conversationThreads,applyInboxFilter,homeToolbar,BUNDLED_COMPANION_ID:'org.tavi.community.companion',CORE_WALLET_ID:'org.tavi.core.wallet',hostToolbar,uiGlyph,mobileTabs,wireAppPages,wireElasticScroll,extensionPanelUrl,wireExclusiveMenus:()=>{},createDiagnosticEvents:()=>({record(){},clear(){},snapshot(){return [];}}),createSurfaceRegistry,extensionUpdateSummary:()=>({count:0,missing:[]}),filterOptionalApps:entries=>entries,createExtensionHost:()=>({unmount(){},mount(){}}),extensionStorageScope:()=>null,petById:()=>null,petSprite:()=>'',atriumLauncher:()=>({available:false}),companionPanel:()=>'',
     document:{addEventListener:()=>{},getElementById:key=>key==='app'?app:null,querySelectorAll:()=>[],querySelector:()=>null},
     localStorage:{getItem:()=>null},newCompanion:()=>({enabled:false,overlay:'off'}),companionBadge:()=>'',readConfig:()=>({server:'https://social.example.org',games:[],gamesByServer:{}}),
     createResumeSync:()=>()=>false,createPushWakeupBridge:()=>()=>false,createDeviceSessionStore:()=>({load:async()=>({record:null,remembered:false})}),invoke:async()=>null,sessionStorage:{getItem:()=>null},isTauri:()=>false,navigator:{userAgent:'Mozilla/5.0'},clearTimeout(){},setTimeout(){},URL,Date,Map,JSON,String,
@@ -67,11 +72,11 @@ test('untrusted friend names/messages are escaped before inclusion',()=>{
   assert(app.innerHTML.includes('&lt;img src=x'));
 });
 
-test('Home matches sketch and only Home shows game/menu/message dock',()=>{
+test('Home preserves contacts with shared four-tab navigation',()=>{
  const home=shell({panel:'home'});
- for(const label of ['tavi-home-roster','menubar','roster-profile','Conversations','Community Lobby','Online (','Offline (','window-status','tavi-home-dock','Games','Main menu','Messages'])assert(home.includes(label),label);
+ for(const label of ['tavi-home-messenger','tavi-home-self-portrait','tavi-home-companion','Online','Offline','tavi-mobile-tabs','Games','Apps','Chats'])assert(home.includes(label),label);
  assert(!home.includes('roster-toolbar'));
  assert(!home.includes('roster-search'));
  assert(!home.includes('My Games'));
- assert(!shell({panel:'messenger'}).includes('tavi-home-dock'));
+ assert(!shell({panel:'messenger'}).includes('tavi-unified-home'));
 });

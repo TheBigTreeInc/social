@@ -21,6 +21,6 @@ test('native Games surface exposes play and explicit challenge from accepted con
  assert.match(code,/data-challenge-game/);
  assert.match(code,/state\.contacts\.filter\(c=>c\.status==='accepted'\)/);
  assert.match(code,/state\.api\.challengeContact\(peer,gameId\)/);
- assert.match(code,/class="tavi-dock-side" data-action="games"/);
+ assert.match(code,/mobileTabs\('home'/);
  assert.match(code,/data-launch-game/);
 });

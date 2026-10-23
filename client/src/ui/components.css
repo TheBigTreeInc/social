@@ -1,0 +1,216 @@
+/* Tavi host UI system v2 / source-of-truth styling for all first-party windows.
+ * The separate publisher iframe remains unstyled and isolated by design. */
+:root {
+  --tavi-font: 'Segoe UI', Tahoma, system-ui, sans-serif;
+  --tavi-control-min: 38px;
+  --tavi-color-shadow: #11291b20;
+  --tavi-color-overlay: #27412f12;
+  --tavi-radius-card: 4px;
+  --tavi-font-body: 13px;
+  --tavi-font-title: 15px;
+}
+:root[data-theme='dark'] { --tavi-color-shadow: #00000055; --tavi-color-overlay: #0000001a; }
+:root[data-touch='true'] { --tavi-control-min: 44px; }
+.tavi-single-workspace,.pop-chat,.tavi-player { font-family:var(--tavi-font);font-size:var(--tavi-font-body);color:var(--tavi-color-text);background:var(--tavi-color-background); }
+.tavi-single-workspace .classic-window,.pop-chat,.tavi-player,.tavi-utility-focus .auxiliary-window {border-color:var(--tavi-color-border);background:var(--tavi-color-surface);color:var(--tavi-color-text);}
+.tavi-ui-header,.tavi-shell-bar,.tavi-chat-top,.tavi-native-chat-head,.tavi-player>header {display:flex;align-items:center;flex-shrink:0;gap:var(--tavi-space-2);min-height:52px;padding:var(--tavi-space-2) var(--tavi-space-3);border-bottom:1px solid var(--tavi-color-border);background:var(--tavi-color-surface-raised)!important;color:var(--tavi-color-text)!important;}
+.tavi-ui-header__title,.tavi-shell-bar__title,.tavi-chat-top strong,.tavi-native-chat-head strong,.tavi-player>header strong {color:var(--tavi-color-text)!important;font-size:var(--tavi-font-title);font-weight:650;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tavi-ui-header__title{flex:1;}.tavi-ui-header__subtitle{color:var(--tavi-color-text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tavi-ui-action,.tavi-ui-header button,.tavi-chat-top button,.tavi-shell-bar button,.tavi-native-chat-head button,.tavi-player>header button {display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-width:var(--tavi-control-min);min-height:var(--tavi-control-min);padding:5px 9px;gap:7px;border:1px solid transparent!important;border-radius:var(--tavi-radius-control);background:transparent!important;color:var(--tavi-color-text)!important;box-shadow:none!important;cursor:pointer;}
+.tavi-ui-action:hover,.tavi-ui-header button:hover,.tavi-chat-top button:hover,.tavi-shell-bar button:hover,.tavi-native-chat-head button:hover,.tavi-player>header button:hover {background:var(--tavi-color-surface-muted)!important;border-color:var(--tavi-color-border)!important;}
+.tavi-ui-action:focus-visible,.tavi-ui-header button:focus-visible,.tavi-shell-bar button:focus-visible,.pop-chat button:focus-visible,.tavi-player button:focus-visible {outline:2px solid var(--tavi-color-focus);outline-offset:2px;}
+.tavi-ui-action svg {width:21px;height:21px;}
+.tavi-ui-action--primary {background:var(--tavi-color-accent)!important;color:var(--tavi-color-accent-contrast)!important;}
+.tavi-ui-action--primary:hover{background:var(--tavi-color-accent-hover)!important;}
+.tavi-utility-focus .utility,.tavi-menu-panel,.tavi-games-browser,.tavi-store-panel {color:var(--tavi-color-text);font:inherit;}
+.tavi-utility-focus .utility>h2,.tavi-games-browser>h2,.tavi-menu-panel h2 {font-size:var(--tavi-font-title);color:var(--tavi-color-text);font-weight:650;}
+.tavi-utility-focus .utility h3,.tavi-menu-panel h3 {color:var(--tavi-color-text);font-size:13px;}
+.tavi-utility-focus .utility input:not([type=checkbox]),.tavi-utility-focus .utility textarea,.tavi-utility-focus .utility select,.tavi-chat-compose textarea,.pop-composer textarea {background:var(--tavi-color-field);color:var(--tavi-color-text);border:1px solid var(--tavi-color-border);border-radius:var(--tavi-radius-control);}
+.tavi-utility-focus .utility button:not(.tavi-ui-action),.pop-chat button:not(.tavi-ui-action),.tavi-player button:not(.tavi-ui-action) {border-radius:var(--tavi-radius-control);}
+.tavi-utility-focus .utility .solid,.pop-chat button.solid {background:var(--tavi-color-accent);color:var(--tavi-color-accent-contrast);border-color:var(--tavi-color-accent);}
+.tavi-utility-focus .settings-theme,.tavi-utility-focus .settings-disclosure,.tavi-utility-focus .dev-toggle,.tavi-utility-focus .tavi-store-item,.tavi-utility-focus .tavi-games-group {background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);border-color:var(--tavi-color-border);border-radius:var(--tavi-radius-card);}
+.tavi-utility-focus .aux-content,.tavi-contact-focus .roster-scroll,.pop-chat .pop-transcript {scrollbar-color:var(--tavi-color-border) transparent;}
+.tavi-single-workspace .window-titlebar,.tavi-single-workspace .roster-profile,.tavi-single-workspace .roster-toolbar,.tavi-single-workspace .window-status,.tavi-native-chat-head,.pop-chat .pop-tools,.pop-chat .pop-format,.pop-chat .window-status {color:var(--tavi-color-text);background:var(--tavi-color-surface-raised);border-color:var(--tavi-color-border);}
+.tavi-single-workspace .window-titlebar strong,.tavi-single-workspace .roster-profile strong,.pop-chat .pop-tools strong {color:var(--tavi-color-text);}
+.tavi-single-workspace .menubar,.tavi-single-workspace .menu-options,.pop-chat .menubar {background:var(--tavi-color-surface);color:var(--tavi-color-text);border-color:var(--tavi-color-border);}
+.tavi-single-workspace .menu-options button,.tavi-single-workspace .menu-drop summary {background:transparent;color:var(--tavi-color-text);}
+.tavi-single-workspace .menu-options button:hover,.tavi-single-workspace .menu-drop summary:hover {background:var(--tavi-color-surface-muted);}
+.tavi-single-workspace .buddy.chosen {background:var(--tavi-color-surface-muted);border-color:var(--tavi-color-border);}
+.tavi-single-workspace .buddy-copy small,.tavi-single-workspace .personal-message,.pop-chat .pop-tools small {color:var(--tavi-color-text-muted);}
+.pop-chat .pop-tools {background:var(--tavi-color-surface);}
+.pop-chat .pop-contact {border-color:var(--tavi-color-border);background:var(--tavi-color-surface-muted);color:var(--tavi-color-text);}
+.pop-chat .pop-transcript {background:var(--tavi-color-surface);color:var(--tavi-color-text);border-color:var(--tavi-color-border);}
+.pop-chat .pop-format {background:var(--tavi-color-surface-raised);color:var(--tavi-color-text-muted);}
+.pop-chat .pop-composer textarea {background:var(--tavi-color-field);color:var(--tavi-color-text);}
+.tavi-player .player-body,.tavi-player .game-stage {background:var(--tavi-color-surface);color:var(--tavi-color-text);}
+.tavi-player .game-chat,.tavi-player footer {background:var(--tavi-color-surface-raised);color:var(--tavi-color-text-muted);border-color:var(--tavi-color-border);}
+.tavi-ui-status {padding:var(--tavi-space-2);background:var(--tavi-color-surface-raised);color:var(--tavi-color-text-muted);border-top:1px solid var(--tavi-color-border);}
+@media(max-width:620px) {
+ .tavi-utility-focus .utility>h2,.tavi-games-browser>h2 {display:none;} /* Host toolbar has the screen title. */
+ .tavi-ui-header__subtitle {display:none;}
+ .tavi-ui-action__text {display:none;}
+}
+@media(pointer:coarse){.tavi-ui-action,.tavi-ui-header button{min-height:44px;min-width:44px;}}
+@media(prefers-reduced-motion:reduce){.tavi-ui-action,.tavi-ui-header button{transition:none;}}
+/* v0.3.95 — The messenger roster is a Tavi content surface, not a separate
+ * desktop window. Header, navigation, fields, panels and themes are shared.
+ * The reviewed publisher iframe is intentionally outside this styling. */
+.tavi-unified-home > .tavi-home {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  overflow: hidden;
+  background: var(--tavi-color-surface);
+  color: var(--tavi-color-text);
+  font-family: var(--tavi-font);
+}
+.tavi-unified-home .tavi-home-roster,
+.tavi-contact-focus .roster-window {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  background: var(--tavi-color-surface);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+.tavi-unified-home .roster-profile,
+.tavi-contact-focus .roster-profile {
+  flex-shrink: 0;
+  min-height: 76px;
+  padding: var(--tavi-space-3);
+  gap: var(--tavi-space-3);
+  background: var(--tavi-color-surface-raised);
+  border-bottom: 1px solid var(--tavi-color-border);
+  color: var(--tavi-color-text);
+}
+.tavi-unified-home .roster-profile strong,
+.tavi-contact-focus .roster-profile strong {color:var(--tavi-color-text);font:650 var(--tavi-font-title) var(--tavi-font);}
+.tavi-unified-home .roster-scroll,
+.tavi-contact-focus .roster-scroll {
+  flex:1 1 auto;
+  min-height:0;
+  height:0;
+  padding:var(--tavi-space-2);
+  overflow-y:auto;
+  background:var(--tavi-color-surface);
+}
+.tavi-unified-home .tavi-roster-merged>.group-title,
+.tavi-contact-focus .tavi-roster-merged>.group-title {
+  min-height:40px;
+  padding:8px 11px;
+  border:0;
+  border-radius:var(--tavi-radius-control);
+  background:var(--tavi-color-surface-muted);
+  color:var(--tavi-color-text);
+  font:600 var(--tavi-font-body) var(--tavi-font);
+}
+.tavi-unified-home .tavi-roster-merged .buddy,
+.tavi-contact-focus .tavi-roster-merged .buddy {
+  min-height:44px;
+  padding:8px 11px;
+  margin-block:2px;
+  border:1px solid transparent;
+  border-radius:var(--tavi-radius-control);
+  color:var(--tavi-color-text);
+  background:transparent;
+}
+.tavi-unified-home .tavi-roster-merged .buddy:hover,
+.tavi-contact-focus .tavi-roster-merged .buddy:hover,
+.tavi-unified-home .tavi-roster-merged .buddy.chosen,
+.tavi-contact-focus .tavi-roster-merged .buddy.chosen {
+  background:var(--tavi-color-surface-muted);
+  border-color:var(--tavi-color-border);
+}
+.tavi-unified-home .tavi-roster-merged .buddy-copy strong,
+.tavi-contact-focus .tavi-roster-merged .buddy-copy strong {font:600 13px var(--tavi-font);color:var(--tavi-color-text);}
+.tavi-unified-home .tavi-roster-merged .buddy-copy small,
+.tavi-contact-focus .tavi-roster-merged .buddy-copy small {font:11px var(--tavi-font);color:var(--tavi-color-text-muted);}
+.tavi-unified-home .tavi-roster-compact-section,
+.tavi-contact-focus .tavi-roster-compact-section {color:var(--tavi-color-text);}
+.tavi-unified-home .tavi-roster-compact-label,
+.tavi-contact-focus .tavi-roster-compact-label {color:var(--tavi-color-text-muted);font:600 12px var(--tavi-font);}
+.tavi-unified-home .tavi-mobile-tabs,
+.tavi-contact-focus .tavi-mobile-tabs {display:flex;}
+.tavi-unified-home .tavi-ui-header {flex-shrink:0;}
+/* Only one bottom navigation owns the gesture-safe area. */
+.tavi-unified-home .tavi-home-dock {display:none;}
+@media (max-width:620px) {
+ .tavi-unified-home .tavi-roster-merged .buddy,
+ .tavi-contact-focus .tavi-roster-merged .buddy {min-height:44px;}
+}
+/* Shared application navigation is not restricted to phone media queries:
+ * desktop browser and compact native windows must expose the same routes. */
+.tavi-single-workspace > .tavi-mobile-tabs {display:flex;justify-content:center;}
+.tavi-single-workspace > .tavi-mobile-tabs button {flex:1 1 0;max-width:150px;}
+.tavi-unified-home .tavi-roster-merged .buddy:focus-visible,
+.tavi-contact-focus .tavi-roster-merged .buddy:focus-visible,
+.tavi-single-workspace > .tavi-mobile-tabs button:focus-visible {outline:2px solid var(--tavi-color-focus);outline-offset:2px;}
+.tavi-unified-home .tavi-roster-compact-empty,
+.tavi-contact-focus .tavi-roster-compact-empty {color:var(--tavi-color-text-muted);font:12px var(--tavi-font);}
+/* v0.3.96 — one messenger-first Home, one messages-only inbox.
+ * Both use shared semantic tokens; no extension or Wallet chrome in Messages. */
+.tavi-unified-home .tavi-home-messenger,
+.tavi-contact-focus .tavi-message-inbox {
+  display:flex;flex:1 1 auto;flex-direction:column;min-height:0;min-width:0;
+  background:var(--tavi-color-surface);color:var(--tavi-color-text);
+}
+.tavi-home-identity {
+  display:flex;flex-shrink:0;align-items:center;gap:10px;
+  padding:10px 9px;border-bottom:1px solid var(--tavi-color-border);
+  background:var(--tavi-color-surface-raised);min-height:94px;
+}
+.tavi-home-self-portrait {
+  padding:1px!important;display:grid;place-items:center;flex-shrink:0;
+  width:62px;height:62px;border:1px solid var(--tavi-color-border)!important;
+  border-radius:3px!important;background:var(--tavi-color-field)!important;
+}
+.tavi-home-self-portrait .avatar {width:54px;height:54px;font-size:27px;}
+.tavi-home-self-details {display:flex;flex-direction:column;align-items:flex-start;flex:1 1 auto;min-width:0;gap:3px;}
+.tavi-home-self-details strong {font-size:var(--tavi-font-title);color:var(--tavi-color-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+.tavi-home-self-details small {display:flex;align-items:center;gap:5px;color:var(--tavi-color-text-muted);font-size:12px;}
+.tavi-home-self-details .tavi-gold-balance {padding:2px 0;border:0;background:transparent;color:var(--tavi-color-warning);font-size:11px;text-align:left;box-shadow:none;}
+.tavi-home-companion {align-self:stretch;display:flex;justify-content:flex-end;flex:0 0 auto;max-width:88px;border-left:1px solid var(--tavi-color-border);padding-left:7px;}
+.tavi-home-companion .tavi-companion-portrait {min-width:61px;max-width:80px;min-height:65px;margin:auto 0;border:1px solid transparent;background:transparent;border-radius:3px;box-shadow:none;color:var(--tavi-color-text);}
+.tavi-home-companion .tavi-companion-portrait:hover {border-color:var(--tavi-color-border);background:var(--tavi-color-surface-muted);}
+.tavi-home-companion .tavi-companion-portrait-img {max-width:52px;max-height:52px;object-fit:contain;}
+.tavi-home-roster-scroll {min-height:0;flex:1 1 auto;overflow-y:auto;padding:0!important;background:var(--tavi-color-surface);}
+.tavi-home-contacts-heading {display:flex;align-items:center;justify-content:space-between;min-height:43px;padding:6px 10px;border-bottom:1px solid var(--tavi-color-border);}
+.tavi-home-contacts-heading strong {font-size:13px;}
+.tavi-home-contacts-heading button,.tavi-message-compose {display:grid;place-items:center;width:var(--tavi-control-min);height:var(--tavi-control-min);border:1px solid var(--tavi-color-border);border-radius:3px;background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);padding:5px;}
+.tavi-home-contacts-heading svg,.tavi-message-compose svg {width:21px;height:21px;}
+.tavi-home-group-title {display:flex;align-items:center;gap:8px;width:100%;text-align:left;min-height:36px;padding:7px 10px;border:0;border-bottom:1px solid var(--tavi-color-border);border-radius:0;background:var(--tavi-color-surface-muted);font-weight:650;color:var(--tavi-color-text);}
+.tavi-home-group-title .tavi-group-count {margin-left:auto;color:var(--tavi-color-text-muted);font-weight:400;}
+.tavi-home-group-list {display:flex;flex-direction:column;}
+.tavi-home-buddy,.tavi-message-thread {display:flex;align-items:center;gap:9px;text-align:left;width:100%;min-height:49px;border:0;border-bottom:1px solid var(--tavi-color-border);border-radius:0;background:var(--tavi-color-surface);color:var(--tavi-color-text);padding:8px 12px;}
+.tavi-home-buddy:hover,.tavi-message-thread:hover {background:var(--tavi-color-surface-muted);}
+.tavi-home-buddy .avatar,.tavi-message-thread .avatar {width:34px;height:34px;flex-shrink:0;}
+.tavi-home-buddy-copy,.tavi-message-thread-copy {min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:3px;}
+.tavi-home-buddy-copy strong,.tavi-message-thread-copy strong {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 13px var(--tavi-font);}
+.tavi-home-buddy-copy small,.tavi-message-thread-copy small {display:flex;align-items:center;gap:5px;color:var(--tavi-color-text-muted);font:11px var(--tavi-font);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tavi-home-empty-group {padding:8px 13px;color:var(--tavi-color-text-muted);}
+.tavi-message-tools {display:flex;gap:7px;align-items:center;padding:10px;border-bottom:1px solid var(--tavi-color-border);background:var(--tavi-color-surface-raised);}
+.tavi-message-search {display:block;min-width:0;flex:1 1 auto;}
+.tavi-message-search input {width:100%;min-height:var(--tavi-control-min);padding:8px 10px;border:1px solid var(--tavi-color-border);border-radius:3px;background:var(--tavi-color-field);color:var(--tavi-color-text);}
+.tavi-message-filters {display:flex;gap:0;min-height:38px;align-items:stretch;border-bottom:1px solid var(--tavi-color-border);background:var(--tavi-color-surface-raised);}
+.tavi-message-filters button {flex:1 1 0;min-height:38px;border:0;border-right:1px solid var(--tavi-color-border);border-radius:0;background:transparent;color:var(--tavi-color-text);padding:8px;}
+.tavi-message-filters button:last-child {border-right:0;}
+.tavi-message-filters button[aria-pressed=true] {background:var(--tavi-color-surface-muted);font-weight:650;box-shadow:inset 0 -2px var(--tavi-color-accent);}
+.tavi-message-scroll {flex:1 1 auto;overflow-y:auto;min-height:0;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;}
+.tavi-message-lobby-icon {width:34px;height:34px;display:grid;place-items:center;flex-shrink:0;border:1px solid var(--tavi-color-border);border-radius:3px;background:var(--tavi-color-surface-muted);}
+.tavi-message-lobby-icon svg {width:20px;height:20px;}
+.tavi-message-empty {padding:18px 12px;color:var(--tavi-color-text-muted);text-align:center;}
+.tavi-home-messenger button:focus-visible,.tavi-message-inbox button:focus-visible,.tavi-message-search input:focus-visible {outline:2px solid var(--tavi-color-focus);outline-offset:-2px;}
+@media(pointer:coarse){.tavi-home-buddy,.tavi-message-thread {min-height:52px;}.tavi-home-contacts-heading button,.tavi-message-compose,.tavi-message-search input {min-height:44px;}}
+@media(max-width:355px){.tavi-home-identity {gap:6px;padding-inline:6px;}.tavi-home-self-portrait {width:53px;height:53px;}.tavi-home-self-portrait .avatar {width:47px;height:47px;}.tavi-home-companion {max-width:69px;padding-left:4px;}.tavi-home-companion .tavi-companion-portrait {min-width:55px;}}
+/* Override old dashboard-only `.tavi-home-identity` declarations, which were
+ * incorrectly shared with the new messenger identity strip. */
+.tavi-home-messenger .tavi-home-identity {flex:0 0 auto;flex-direction:row;overflow:visible;}
+.tavi-home-messenger .tavi-home-identity strong {max-width:100%;}
+.tavi-home-messenger .tavi-home-identity small {white-space:normal;}
+
+/* Rectangular shared navigation, on both phone and desktop. */
+.tavi-single-workspace > .tavi-mobile-tabs button {border-radius:4px;}

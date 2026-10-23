@@ -1,10 +1,18 @@
 /** Separate game window. The game iframe is untrusted; it never receives Social credentials. */
 import './game.css';
+import './ui/design-tokens.css';
+import './ui/components.css';
+import {uiHeader} from './ui/components.js';
+import {readConfig} from './persistence.js';
 import {emitTo,listen} from '@tauri-apps/api/event';
 import {isSafePublishedGameUrl} from '../sdk/looprd-social.js';
 const gameId=new URL(location.href).searchParams.get('game');
 if(!/^[a-z][a-z0-9-]{1,47}$/.test(gameId||''))throw Error('Invalid game ID');
 const label='game-'+gameId;
+// Theme preference is cosmetic only, independent of the authenticated main broker.
+try { document.documentElement.dataset.theme=readConfig().theme; } catch {}
+// Cosmetic Tavi host theme follows the main messenger while this window is open.
+void listen('tavi-ui-theme',({payload})=>{if(payload?.theme==='light'||payload?.theme==='dark')document.documentElement.dataset.theme=payload.theme;});
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let current=null,sequence=0,pending=new Map(),chatOpen=false,chatDraft='';
@@ -25,7 +33,7 @@ const host=$('game-app');
 function draw(snapshot){
  const prev=$('game-frame');const same=prev?.dataset.url===snapshot.game.url;
  const messages=(snapshot.messages||[]).slice(-40);
- host.innerHTML=`<div class="tavi-player"><header><strong>${esc(snapshot.game.name)}</strong><button id="minimize-game" type="button" aria-label="Minimize game to Tavi Home">− Minimize</button></header><section class="player-body"><div class="game-stage" id="game-stage"></div></section></div>`;
+ host.innerHTML=`<div class="tavi-player">${uiHeader({title:snapshot.game.name,minimizeId:'minimize-game'})}<section class="player-body"><div class="game-stage" id="game-stage"></div></section></div>`;
  $('minimize-game').onclick=()=>emitTo('main','tavi-surface-minimize',{kind:'game',id:gameId}).catch(()=>{});
  const stage=$('game-stage');
  if(snapshot.game.embedded){

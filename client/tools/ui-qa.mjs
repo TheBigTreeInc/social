@@ -117,8 +117,8 @@ async function testViewport(browser,base,device){
     document.documentElement.style.setProperty('--tavi-safe-bottom','34px');
    });
    const layout=await page.evaluate(snapshotSafeLayout,null);
-   assert(layout.roster&&layout.dock&&layout.menu,`${device.name} missing Home regions: ${JSON.stringify(layout)}`);
-   assert(layout.roster.top>=45&&layout.dock.bottom<=layout.viewport.height-33,
+   assert(layout.roster&&layout.dock&&layout.menu&&layout.homeHeader,`${device.name} missing Home regions: ${JSON.stringify(layout)}`);
+   assert(layout.homeHeader.top>=45&&layout.roster.top>=layout.homeHeader.bottom-1&&layout.dock.bottom<=layout.viewport.height-33,
      `${device.name} Home enters system bars: ${JSON.stringify(layout)}`);
    assert(layout.menu.top>=layout.dock.top-1&&layout.menu.bottom<=layout.dock.bottom+1,
      `${device.name} Main Menu overlaps roster text: ${JSON.stringify(layout)}`);
@@ -137,7 +137,7 @@ async function testViewport(browser,base,device){
   await page.waitForFunction(()=>document.querySelector('#tavi-extension-surface iframe')!==null);
   stage='Wallet return Home';await page.locator('.tavi-shell-bar__back[data-action="minimize-view"]').click();
   await visible(page,'.tavi-gold-balance');
-  stage='Life discovered Games';await visible(page,'.tavi-home-dock [data-action="games"]');await page.locator('.tavi-home-dock [data-action="games"]').click();
+  stage='Life discovered Games';await visible(page,'.tavi-unified-home .tavi-mobile-tabs [data-action="games"]');await page.locator('.tavi-unified-home .tavi-mobile-tabs [data-action="games"]').click();
   await visible(page,'[data-discovered-game="life.loop"]');
   assert.match(await page.locator('[data-discovered-game="life.loop"]').innerText(),/Not playable yet/);
   assert.equal(await page.locator('[data-discovered-game="life.loop"] [data-launch-game], [data-discovered-game="life.loop"] [data-challenge-game]').count(),0);

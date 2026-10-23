@@ -50,7 +50,7 @@ test('SDK sends read acknowledgements only to the authenticated Social endpoint'
 });
 test('roster prefers single mailbox summary and does not render a permanent chat panel',()=>{
  const source=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
- for(const feature of ['synchronizeMailbox','conversationSummaries','pushRead','reconcileConversationSummary','compactContactGroups(recent,online,offline,accepted.length)','peers.map(buddyRow)'])assert.ok(source.includes(feature),feature);
+ for(const feature of ['synchronizeMailbox','conversationSummaries','pushRead','reconcileConversationSummary','conversationThreads(state.contacts,state.conversationSummaries,state.unread)',"homeBuddyGroup('online'","homeBuddyGroup('offline'"])assert.ok(source.includes(feature),feature);
  assert.match(source,/state\.summarySupported=false/);
  assert.match(source,/state\.notifyPrefs\.preview\?/);
  assert.match(source,/if\(peerVisible\(state.peer\)\)markRead/);

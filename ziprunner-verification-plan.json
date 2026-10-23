@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.91",
+  "version": "0.3.96",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -1523,6 +1523,59 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-UI-CORE-094",
+      "criteria": [
+        {
+          "id": "TAVI-UI-CORE-094-SOURCE",
+          "description": "Shared host icon, header, styling, theme relay and iframe isolation pass automated verification.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/ui-central-foundation-094.test.mjs",
+            "npm run verify",
+            "python tools/generate-looprd.py --check"
+          ]
+        },
+        {
+          "id": "TAVI-UI-CORE-094-NATIVE",
+          "description": "Unverified acceptance on physical Windows, Android and browser viewports; no Done before operator review.",
+          "mode": "manual",
+          "checks": [
+            "In 0.3.96 Windows Tavi inspect Home, contacts, chat, games, Settings, Wallet and App Store at 355px and wide desktop: headers, icons, colors, fields and touch targets follow a single system.",
+            "Change light/dark appearance while native chat and game windows remain open; all windows update immediately without reload, draft loss, iframe recreation or access to Social bearer tokens.",
+            "On Android and Web, test 320px/390px and tablet viewports, device system Back, bottom tabs, dialogs, scroll, keyboard/safe areas, light/dark contrast and reduced-motion.",
+            "Install Companion 0.6.11 and confirm its published iframe remains independently styled, sandboxed and byte-for-byte content-digest identical; Tavi host toolbar, Back and Home stay accessible.",
+            "Check exact ZIP workboard preflight, npm run verify, Python tests, generated LoopRD descriptor, exact-push GitHub Android/Windows/Web and Chromium UI QA; operator acceptance before Done."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-UI-MESSENGER-096",
+      "criteria": [
+        {
+          "id": "TAVI-UI-MESSENGER-096-SOURCE",
+          "description": "Home and Messages renderer segregation, inbox filters and token boundaries pass Node tests",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/messenger-home-inbox-096.test.mjs",
+            "npm run verify",
+            "python tools/generate-looprd.py --check"
+          ]
+        },
+        {
+          "id": "TAVI-UI-MESSENGER-096-NATIVE",
+          "description": "Operator screenshots and real Android/Windows acceptance pending",
+          "mode": "manual",
+          "checks": [
+            "On Windows compact 355x630, Home shows own profile portrait left and Companion portrait right, Gold only in Home; buddy groups show Online and Offline contacts, friend requests and presence indicators.",
+            "Messages has no own profile/Gold/Companion widgets; it shows Community Lobby, direct conversations, live search and All/Unread/Friends filters; selecting conversation still works on Android and Windows native chat windows.",
+            "Test 320px/390px Android and desktop/web widths: touch targets, keyboard, Android Back, bottom navigation, light/dark themes, square edges and no clipping of profiles or Companion.",
+            "Verify npm run verify, descriptor check, Companion publisher digest, Windows/Android native builds and screenshots; keep in Review until operator device acceptance."
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -2215,6 +2268,34 @@
         "UI QA tests Cancel and user-approved install before Open"
       ],
       "test_ref": "client/tests/ui-qa-contract-078.test.mjs"
+    },
+    {
+      "id": "TAVI-UI-CORE-094-SOURCE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Single host design system regression across Tavi main and native chat/game",
+      "runner_ref": "tavi-extension-platform-source-0359",
+      "assertions": [
+        "One shared host SVG glyph module with zero font dependency",
+        "Host header/action/semantic CSS shared across native Tavi windows",
+        "Native child cosmetic-only theme broadcast; no auth data in event",
+        "Extension sandbox stays unchanged"
+      ],
+      "test_ref": "client/tests/ui-central-foundation-094.test.mjs"
+    },
+    {
+      "id": "TAVI-UI-MESSENGER-096-SOURCE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Messenger-first Home with separate Messages inbox",
+      "runner_ref": "tavi-extension-platform-source-0359",
+      "assertions": [
+        "Home top-left profile, top-right verified Companion preview",
+        "Wallet only on Home; no Companion or Wallet in Messages",
+        "Conversation-only Messages with live search and Unread/Friends filters",
+        "Android and Windows share semantic square controls"
+      ],
+      "test_ref": "client/tests/messenger-home-inbox-096.test.mjs"
     }
   ]
 }

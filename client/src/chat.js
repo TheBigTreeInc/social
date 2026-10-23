@@ -1,9 +1,17 @@
 /** Independent native conversation window. All authenticated operations stay in main. */
 import './style.css';
 import './chat.css';
+import './ui/design-tokens.css';
+import './ui/components.css';
+import {uiHeader} from './ui/components.js';
+import {readConfig} from './persistence.js';
 import {emitTo,listen} from '@tauri-apps/api/event';
 import {isValidChatPeer,chatWindowLabel} from './native-windows.js';
 
+// Theme preference is cosmetic only, independent of the authenticated main broker.
+try { document.documentElement.dataset.theme=readConfig().theme; } catch {}
+// Cosmetic Tavi host theme follows the main messenger while this window is open.
+void listen('tavi-ui-theme',({payload})=>{if(payload?.theme==='light'||payload?.theme==='dark')document.documentElement.dataset.theme=payload.theme;});
 const $=id=>document.getElementById(id);
 const peer=new URL(location.href).searchParams.get('peer');
 if(!isValidChatPeer(peer))throw Error('Unknown conversation');
@@ -21,7 +29,7 @@ function redraw(){
  const previousTop=prevHistory?.scrollTop||0;
  const title=current?.title||'Conversation';
  const pendingInvite=current?.pending;
- $('chat-app').innerHTML=`<div class="pop-chat"><div class="tavi-native-chat-head"><strong>✉ ${esc(title)} · Tavi</strong><button type="button" id="minimize-chat" title="Minimize to Tavi Home">− Minimize</button></div><nav class="menubar"><span class="pop-menu">File &nbsp; Edit &nbsp; Actions &nbsp; Help</span></nav>
+ $('chat-app').innerHTML=`<div class="pop-chat">${uiHeader({title:title+' · Tavi',minimizeId:'minimize-chat',variant:'native-chat'})}
  <div class="pop-tools"><span class="pop-contact">☻</span><strong>${esc(title)}</strong><small>${esc(current?.online?'● Online':current?.server||'Social Messenger')}</small></div>
  <div class="pop-transcript" id="history" role="log" aria-label="Conversation history">${(current?.messages||[]).map(m=>`<div class="transcript-message"><span class="transcript-heading"><strong class="${m.authorId===current?.myId?'mine':''}">${esc(m.authorId===current?.myId?'You':m.displayName)}</strong><time>${esc(stamp(m.at))}</time></span><div class="transcript-text">${esc(m.text)}</div></div>`).join('')||'<div class="empty-chat">No messages yet.</div>'}</div>
  ${pendingInvite?`<div class="pop-request">${pendingInvite==='incoming'?'This person would like to add you.':'Friend request awaiting acceptance.'}${pendingInvite==='incoming'?'<button data-accept>Accept</button>':''}</div>`:`<div class="pop-format">A &nbsp; ☺ &nbsp; ♡ <span>Enter sends · Shift+Enter new line</span></div><form id="chat-form" class="pop-composer"><textarea id="message" required maxlength="${peer==='lobby'?320:1000}" aria-label="Your message" placeholder="Type a message…">${esc(draft)}</textarea><button type="submit" class="solid">Send</button></form>`}

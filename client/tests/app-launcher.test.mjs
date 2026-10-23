@@ -41,7 +41,7 @@ test('remote icons are resolved only within their own publisher repository path,
 test('menu and store use icon tiles, persistent Home and standard extension controls',async()=>{
  const ui=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/style.css',import.meta.url),'utf8');
- assert.match(ui,/aria-label="App launcher"/);assert.match(ui,/class="tavi-app-tile"/);
+ assert.match(ui,/aria-label="Swipe between app categories"/);assert.match(ui,/class="tavi-app-tile"/);
  assert.match(ui,/data-action="minimize-view"/);assert.match(ui,/data-extension-open/);
  assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
  assert.match(css,/\.tavi-app-icon-image/);

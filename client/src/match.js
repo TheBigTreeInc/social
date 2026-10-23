@@ -1,9 +1,16 @@
 /** Isolated native match conversation. Never receives or stores Social credentials. */
 import './style.css';
 import './chat.css';
+import './ui/design-tokens.css';
+import './ui/components.css';
+import {uiHeader} from './ui/components.js';
+import {readConfig} from './persistence.js';
 import {emitTo,listen} from '@tauri-apps/api/event';
 import {isValidMatchRoom,matchWindowLabel} from './match-windows.js';
 
+// Cosmetic theme contract shared with the main host (not an authentication channel).
+try { document.documentElement.dataset.theme=readConfig().theme; } catch {}
+void listen('tavi-ui-theme',({payload})=>{if(payload?.theme==='light'||payload?.theme==='dark')document.documentElement.dataset.theme=payload.theme;});
 const roomId=new URL(location.href).searchParams.get('room');
 if(!isValidMatchRoom(roomId))throw Error('Invalid match window');
 const label=matchWindowLabel(roomId);
@@ -21,7 +28,7 @@ function redraw(){
  const scrollTop=history?.scrollTop||0;
  const room=active?.room;
  const messages=active?.messages||[];
- app.innerHTML=`<div class="pop-chat"><nav class="menubar"><strong>♟ Tavi · Private match conversation</strong></nav>
+ app.innerHTML=`<div class="pop-chat">${uiHeader({title:'Tavi · Private match conversation'})}
  <div class="pop-tools"><span class="pop-contact">♟</span><div><strong>${esc(room?room.gameId:'Match chat')}</strong><small> ${room?esc(room.matchId):'Awaiting verified player seat'} · ${room?Number(room.participants)||0:0} seats</small></div></div>
  <div class="pop-transcript" id="match-history" role="log" aria-label="Private match messages">${messages.map(m=>`<div class="transcript-message"><span class="transcript-heading"><strong class="${m.authorId===active?.myId?'mine':''}">${esc(m.authorId===active?.myId?'You':m.displayName)}</strong><time>${esc(stamp(m.at))}</time></span><div class="transcript-text">${esc(m.text)}</div></div>`).join('')||'<div class="empty-chat">No match messages yet.</div>'}</div>
  ${room?`<div class="pop-format">Only verified, consenting seats may write <span>Enter sends · Shift+Enter new line</span></div><form id="match-form" class="pop-composer"><textarea id="match-message" required maxlength="1000" placeholder="Message your match…">${esc(draft)}</textarea><button class="solid" type="submit">Send</button></form>`:'<div class="pop-request">You are not currently authorized for this match conversation.</div>'}

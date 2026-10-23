@@ -13,3 +13,6 @@ html,body,#game-app {background:#ebf7f1;color:#20483d}
 .tavi-player>header button{border:0;border-radius:7px;background:#e1efdf;color:#245b3e;padding:4px 9px;}
 .tavi-player>.player-body{flex:1;height:calc(100% - 36px);width:100%;}
 .tavi-player .game-stage{height:100%;width:100%;}
+
+/* Shared UI header height is token-driven, not a fixed legacy 36px. */
+.tavi-player>.player-body{height:auto;min-height:0;flex:1 1 auto;}

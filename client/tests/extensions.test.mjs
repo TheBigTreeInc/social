@@ -84,7 +84,8 @@ test('publisher importer builds identical validated catalog without touching liv
 });
 test('messenger exposes a persistent Home return from extension panel and curated app store',async()=>{
  const code=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
- assert.match(code,/data-action="home"/);
+ assert.match(code,/homeToolbar\(\)/);
+ assert.match(code,/mobileTabs\('home'/);
  assert.match(code,/data-action="app-store"/);
  assert.match(code,/sandbox','allow-scripts'/);
  assert.doesNotMatch(code,/sandbox','allow-scripts allow-same-origin'/);

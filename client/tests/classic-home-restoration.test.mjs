@@ -2,30 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 const read=async p=>readFile(new URL(p,import.meta.url),'utf8');
-test('Home keeps the classic information-rich roster above the unchanged sketch dock',async()=>{
+test('Home is a buddy list with account and companion top corners, not a duplicate inbox',async()=>{
  const main=await read('../src/main.js');
- const css=await read('../src/style.css');
- const homeStart=main.indexOf('function homeScreen()');
- const homeEnd=main.indexOf('function dashboard()');
- const rosterStart=main.indexOf('function contactPane(homeMode=false)');
- const rosterEnd=main.indexOf('function activePeer()');
- const home=homeStart>=0&&homeEnd>homeStart?main.slice(homeStart,homeEnd):'';
- const roster=rosterStart>=0&&rosterEnd>rosterStart?main.slice(rosterStart,rosterEnd):'';
- assert.match(home,/contactPane\(true\)/);
- assert.match(home,/class="tavi-home-dock"/);
- assert.match(home,/class="tavi-home-menu" data-action="main-menu"/);
- assert.doesNotMatch(home,/homeConversations\(\)|homeProfile\(\)/);
- for(const bit of ['menuBar()','roster-profile','roster-scroll','compactContactGroups(recent,online,offline,accepted.length)','window-status'])
-  assert.ok(roster.includes(bit),`classic roster missing ${bit}`);
- assert.doesNotMatch(roster,/roster-toolbar|roster-search|compactGames\(\)|My Games|rosterGroup\('online'|rosterGroup\('offline'/);
- assert.match(roster,/homeMode\?homeMinimized\(true\):''/);
- assert.match(css,/\.tavi-classic-home>\.tavi-home-roster/);
- assert.match(css,/\.tavi-profile-updates/);
+ const css=await read('../src/ui/components.css');
+ const home=main.split('function homeScreen()')[1].split('function dashboard()')[0];
+ assert.match(home,/homeContactPane\(\)/);
+ const identity=main.split('function homeIdentity()')[1].split('function homeContactPane()')[0];
+ const buddies=main.split('function homeContactPane()')[1].split('function messageThreadRow')[0];
+ assert.match(identity,/tavi-home-self-portrait/);
+ assert.match(identity,/tavi-home-companion/);
+ assert.match(buddies,/homeBuddyGroup\('online'/);
+ assert.match(buddies,/homeBuddyGroup\('offline'/);
+ assert.doesNotMatch(buddies,/messageInbox\(\)|menuBar\(\)/);
+ assert.match(css,/\.tavi-unified-home \.tavi-home/);
 });
-test('No global Games/Menu/Messages dock in chat or game surfaces',async()=>{
+test('all main messenger views use one host-owned navigation policy',async()=>{
  const main=await read('../src/main.js');
- assert.equal((main.match(/<nav class="tavi-home-dock"/g)||[]).length,1);
- assert.match(main,/if\(nativeDesktop&&chatting\)/);
+ assert.match(main,/if\(nativeDesktop&&chatting\)return[^\n]*hostToolbar\('Messages'/);
+ assert.match(main,/if\(state.panel==='home'\)return[^\n]*homeToolbar\(\)/);
  assert.match(main,/tavi-chat-focus/);
  assert.match(main,/tavi-utility-focus/);
 });

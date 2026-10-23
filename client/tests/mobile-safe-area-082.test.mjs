@@ -12,11 +12,10 @@ test('mobile root owns its safe insets and nested workspace cannot exceed its co
  assert.match(css,/\.tavi-single-workspace\s*\{height:100%;max-height:100%;min-height:0;/);
 });
 
-test('Home main menu height is owned by dock; no overhanging negative margin',async()=>{
+test('Home menu is owned by the common tab bar, not a raised dock',async()=>{
  const css=await read('../src/style.css');
- assert.match(css,/\.tavi-home-dock \{\s*box-sizing:border-box;\s*height:110px/);
- assert.match(css,/\.tavi-home-dock \.tavi-home-menu \{\s*align-self:center;\s*margin-top:0;/);
- assert.match(css,/\.tavi-home-dock::before \{top:3px;/);
+ assert.match(css,/\.tavi-mobile-tabs\{display:none/);
+ assert.match(css,/\.tavi-mobile-tabs button\{/);
 });
 
 test('five-viewport browser QA measures real simulated Android system-bar geometry',async()=>{
@@ -27,7 +26,7 @@ test('five-viewport browser QA measures real simulated Android system-bar geomet
 
 test('safe layout snapshot reads root-padding and physical element bounds',()=>{
  const el=(top,bottom)=>({getBoundingClientRect:()=>({top,bottom,left:0,right:355,width:355,height:bottom-top})});
- const targets={'#app':el(0,600),'.tavi-home-dock':el(480,600),'.tavi-home-dock .tavi-home-menu':el(493,585)};
+ const targets={'#app':el(0,600),'.tavi-unified-home .tavi-mobile-tabs':el(480,600),'.tavi-unified-home .tavi-mobile-tabs [data-action=\"main-menu\"]':el(493,585)};
  const win={innerHeight:630,innerWidth:355,getComputedStyle:()=>({paddingTop:'46px',paddingBottom:'34px'})};
  const d={querySelector:selector=>targets[selector]||null,documentElement:{ownerDocument:{defaultView:win}}};
  const result=snapshotSafeLayout(d);

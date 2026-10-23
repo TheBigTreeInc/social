@@ -31,7 +31,8 @@ test('source keeps only a minimal game toolbar and an authenticated main-owned m
  assert.match(main,/showEmbeddedGame\(game\)/);
  assert.match(main,/document\.body\.append\(root\)/);
  assert.match(main,/root\.hidden=true;surfaces\.minimizeGame/);
- assert.match(main,/tavi-home-dock/);
+ assert.match(main,/homeToolbar\(\)/);
+ assert.match(main,/mobileTabs\('home'/);
  assert.match(main,/tavi-modern-chat/);
  assert.match(main,/function resumeSurface\(surfaceId\)/);
  assert.match(nativeGame,/tavi-surface-minimize/);

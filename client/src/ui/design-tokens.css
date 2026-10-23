@@ -21,8 +21,8 @@
   --tavi-space-2: 8px;
   --tavi-space-3: 12px;
   --tavi-space-4: 16px;
-  --tavi-radius-control: 8px;
-  --tavi-radius-surface: 12px;
+  --tavi-radius-control: 4px;
+  --tavi-radius-surface: 4px;
   --tavi-hit-target: 34px;
   --tavi-hit-target-touch: 44px;
   --tavi-density-row: 30px;

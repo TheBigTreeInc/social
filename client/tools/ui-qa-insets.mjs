@@ -14,7 +14,8 @@ export function snapshotSafeLayout(doc) {
   viewport:{height:root.ownerDocument.defaultView.innerHeight,width:root.ownerDocument.defaultView.innerWidth},
   insets:{top:parseFloat(css.paddingTop)||0,bottom:parseFloat(css.paddingBottom)||0},
   home:rect('.tavi-home'),roster:rect('.tavi-classic-home>.tavi-home-roster'),
-  dock:rect('.tavi-home-dock'),menu:rect('.tavi-home-dock .tavi-home-menu'),
+  dock:rect('.tavi-unified-home .tavi-mobile-tabs'),menu:rect('.tavi-unified-home .tavi-mobile-tabs [data-action="main-menu"]'),
+  homeHeader:rect('.tavi-unified-home .tavi-ui-header'),
   toolbar:rect('.tavi-focus-toolbar'),back:rect('.tavi-shell-bar__back'),
   chatCompose:rect('.tavi-chat-compose'),
  };

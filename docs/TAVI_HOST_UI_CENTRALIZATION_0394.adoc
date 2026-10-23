@@ -1,0 +1,23 @@
+= Tavi Host UI Centralization — 0.3.94
+:toc:
+
+== Authority and boundaries
+
+Tavi is a messenger first. Its host owns navigation, focus, page titles, actions, iconography, responsive density, colors, dialogs and activity restoration. Optional games and apps are secondary. A screen is never permitted to strand a user away from the messenger Home.
+
+`client/src/ui/glyphs.js` owns the built-in, font-independent SVG path registry. `client/src/ui/components.js` owns escaped host toolbar/action/status templates. `client/src/ui/design-tokens.css` defines forest-green light/dark tokens; `client/src/ui/components.css` maps those tokens to messenger, native chat, native match chat, native game, Settings, App Store, utility cards and controls.
+
+The single `decideHostBack` policy remains authoritative for Android system Back, on-screen Back, and keyboard action. Distinct Windows native conversation/game windows stay independent and receive only cosmetic UI theme messages. Publishers retain full ownership of their iframe content and do not inherit arbitrary host styles or privileged JavaScript capability.
+
+== Migration strategy
+
+. Common host headers/actions and SVG glyph registry (0.3.94, candidate).
+. Main utility/control style bridge including native child windows (0.3.94, candidate).
+. Component extraction from the remaining template functions in `main.js` with fixtures, without replacing messaging protocol or rewriting application behavior.
+. Standard accessible dialogs/menus/form controls and consistent Back/scroll/draft behavior across every screen; prune superseded legacy CSS after native checks.
+. Publish optional versioned theme and embedded-mode metadata for partner extensions. Adoption is opt-in by each publisher; do not inject CSS, parent DOM access or session tokens into sandboxed iframes.
+. Validate browser, Android (gestures/3-button/keyboard) and Windows WebView2 (355px chat, multi-window theme) on real devices before operator marks UI/UX Done.
+
+== Acceptance
+
+UI/UX can be called fully done only after all owned routes render via the centralized components and tokens, native Android and Windows visual checks pass, active child chat/game windows respond consistently, extension isolation is preserved, five-viewport browser QA and exact-commit CI pass, and the operator signs off. A green source unit test is necessary but insufficient.

@@ -2,21 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 const src=async path=>readFile(new URL(path,import.meta.url),'utf8');
-test('classic roster keeps identity, optional top-right pet, inbox activity and app update notification entry',async()=>{
+test('Home keeps account portrait left and reviewed Companion right without duplicate shell actions',async()=>{
  const main=await src('../src/main.js');
- const start=main.indexOf('function contactPane(homeMode=false)');
- const end=main.indexOf('function conversation()');
- const roster=start>=0&&end>start?main.slice(start,end):'';
- assert.match(roster,/class="roster-profile tavi-identity-strip"/);
- assert.match(roster,/companionPortraitButton\(\)/);
+ const home=main.split('function homeIdentity()')[1].split('function homeContactPane()')[0];
+ assert.match(home,/tavi-home-self-portrait/);
+ assert.match(home,/companionPortraitButton\(\)/);
+ assert.match(home,/data-action="wallet"/);
  assert.match(main,/data-action="companion" class="tavi-profile-pet tavi-companion-portrait"/);
  assert.match(main,/readCompanionPreview\(localStorage,extensionStoreScope\)/);
- assert.match(roster,/data-action="inbox" class="tavi-profile-activity"/);
- assert.match(roster,/data-action="app-store" class="tavi-profile-updates"/);
- assert.doesNotMatch(roster,/roster-toolbar tavi-action-toolbar/);
- assert.doesNotMatch(roster,/roster-search/);
- assert.doesNotMatch(roster,/My Games/);
- assert.match(main,/class="tavi-home-dock"/);
+ assert.match(main,/homeToolbar\(\)/);
+ assert.match(main,/mobileTabs\('home'/);
+ assert.doesNotMatch(home,/data-action="inbox"|tavi-profile-updates/);
 });
 test('game catalog is a compact player view, diagnostics are not player content',async()=>{
  const main=await src('../src/main.js');

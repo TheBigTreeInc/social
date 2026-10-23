@@ -30,16 +30,19 @@ test('classic menu dropdowns are mutually exclusive and Escape returns focus',()
  assert.equal(file.open,true,'normal keyboard activation must remain available');
 });
 
-test('Home and Messages render the same combined alphabetic roster without second empty online/offline groups',async()=>{
+test('Home displays buddy presence groups, while Messages displays search and threads',async()=>{
  const main=await read('../src/main.js');
- const pane=main.split('function contactPane(homeMode=false)')[1].split('function activePeer()')[0];
- assert.equal((pane.match(/compactContactGroups\(recent,online,offline,accepted\.length\)/g)||[]).length,1);
- assert.doesNotMatch(pane,/rosterGroup\('online'|rosterGroup\('offline'/);
- assert.match(pane,/homeMode\?homeMinimized\(true\):''/);
+ const home=main.split('function homeContactPane()')[1].split('function messageThreadRow')[0];
+ const messages=main.split('function messageInbox()')[1].split('function activePeer()')[0];
+ assert.match(home,/homeBuddyGroup\('online'/);
+ assert.match(home,/homeBuddyGroup\('offline'/);
+ assert.doesNotMatch(home,/messageInbox\(\)/);
+ assert.match(messages,/conversationThreads\(/);
+ assert.match(messages,/data-message-filter/);
+ assert.doesNotMatch(messages,/companionPortraitButton|wallet/);
  assert.match(main,/const sortContacts=list=>\[\.\.\.list\]\.sort/);
  assert.match(main,/wireExclusiveMenus\(document\.querySelectorAll\('\.menubar \.menu-drop'\)\)/);
 });
-
 test('Atrium extension has one host Home route, plus contextual App Store link, without duplicate host Home button',async()=>{
  const main=await read('../src/main.js');
  const extension=main.split('function extensionPanel()')[1].split('function attachExtensionFrame(')[0];

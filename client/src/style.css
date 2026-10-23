@@ -836,3 +836,52 @@ html[data-theme='dark'] .tavi-identity-text .tavi-gold-balance:hover{background:
 .tavi-companion-portrait-img{display:block;width:40px;height:40px;object-fit:contain;border-radius:7px}
 .tavi-companion-portrait-empty{display:grid;place-items:center;width:40px;height:40px;font-size:25px}
 .tavi-companion-portrait small{max-width:58px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;font-size:9px}
+
+/* Tavi 0.3.92 — font-independent semantic vector icons.
+ * Inherit currentColor and remain legible on Android WebView, WebView2 and web.
+ * Keep labels, aria-labels and hit targets independent of icon glyphs. */
+.tavi-ui-glyph{display:inline-block;width:19px;height:19px;min-width:19px;vertical-align:middle;flex-shrink:0;pointer-events:none;stroke:currentColor;fill:none;}
+.tavi-shell-bar__back{display:inline-flex;gap:5px;align-items:center;justify-content:center;min-height:44px;min-width:44px;}
+.tavi-chat-top button{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
+.tavi-chat-top .tavi-ui-glyph,.tavi-chat-compose .tavi-ui-glyph{width:21px;height:21px;min-width:21px;}
+.tavi-chat-compose button{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
+.tavi-identity-actions .tavi-ui-glyph,.chrome-button .tavi-ui-glyph{width:18px;height:18px;min-width:18px;}
+.tavi-extension-toolbar button{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:44px;}
+
+/* Tavi 0.3.93: native-feeling, touch-first navigation while preserving desktop mode. */
+.tavi-mobile-tabs{display:none;flex-shrink:0;align-items:stretch;justify-content:space-around;min-height:58px;background:var(--tavi-color-surface,#f6fbf6);border-top:1px solid var(--tavi-color-border,#b9d2c0);padding:3px max(5px,env(safe-area-inset-right)) 4px max(5px,env(safe-area-inset-left));z-index:10;}
+.tavi-mobile-tabs button{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:0;min-height:48px;border:0;border-radius:11px;background:transparent;color:var(--tavi-color-text-muted,#436655);font-size:11px;touch-action:manipulation;}
+.tavi-mobile-tabs button[aria-current="page"]{background:var(--tavi-color-background,#e4f3e8);color:var(--tavi-color-accent,#226947);font-weight:700;}
+.tavi-mobile-tabs svg{height:23px;width:23px;flex:none;}
+.tavi-mobile-tabs b{position:absolute;top:1px;left:calc(50% + 10px);min-width:16px;font-size:10px;color:#fff;border-radius:8px;background:#b13039;}
+.tavi-shell-bar__home{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;flex:none;border:0!important;background:transparent!important;}
+.tavi-shell-bar__home svg,.tavi-shell-bar__back svg{width:21px;height:21px;}
+.tavi-shell-bar__title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tavi-app-page-tabs{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding:6px 0 10px;}
+.tavi-app-page-tabs::-webkit-scrollbar,.tavi-app-pages::-webkit-scrollbar{display:none;}
+.tavi-app-page-tabs button{flex:0 0 auto;min-height:44px;padding:7px 15px;border-radius:23px;background:var(--tavi-color-background,#eff7ef);border:1px solid var(--tavi-color-border,#b4d5bd);color:var(--tavi-color-text,#18382c);font-weight:600;}
+.tavi-app-page-tabs button[aria-selected="true"]{background:#2b7052;color:#fff;border-color:#2b7052;}
+.tavi-app-pages{display:grid;grid-auto-flow:column;grid-auto-columns:100%;width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;}
+.tavi-app-page{scroll-snap-align:start;scroll-snap-stop:always;min-width:0;width:100%;padding:7px 1px 16px;}
+.tavi-app-page h3{font-size:13px;color:var(--tavi-color-text-muted,#38624b);margin-bottom:11px;}
+.tavi-menu-panel{width:100%;}
+.roster-scroll,.aux-content,.tavi-chat-history{overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;}
+@media(max-width:620px){
+  /* One icon-based shell: don't stack the old File/Contacts/Tools menus. */
+  .tavi-single-workspace .menubar{display:none!important;}
+  .tavi-mobile-tabs{display:flex;}
+  .tavi-shell-bar .tavi-back-label{display:none;}
+  .tavi-shell-bar__back{border:0!important;background:transparent!important;padding:0 7px!important;}
+  .tavi-utility-focus>.auxiliary-window{min-height:0;flex:1 1 auto;height:0;}
+  .tavi-utility-focus .aux-content{min-height:0;flex:1;overflow-y:auto;}
+  .tavi-utility-focus:has(.tavi-extension-panel) .aux-content{overflow:hidden;}
+  .tavi-extension-panel>.tavi-extension-toolbar{display:none;}
+  .tavi-extension-panel:has(#tavi-life-launch-confirmation)>.tavi-extension-toolbar{display:flex;}
+  .tavi-contact-focus>.roster-window{min-height:0;flex:1 1 auto;height:0;}
+  .tavi-contact-focus .roster-scroll{min-height:0;flex:1;overflow-y:auto;}
+}
+@media (prefers-reduced-motion:reduce){.tavi-app-pages{scroll-behavior:auto;scroll-snap-type:x proximity;}.roster-scroll,.aux-content,.tavi-chat-history{scroll-behavior:auto;}}
+html[data-theme='dark'] .tavi-mobile-tabs{background:#162924;border-color:#355d52;}
+html[data-theme='dark'] .tavi-mobile-tabs button{color:#b3d8c7;}
+html[data-theme='dark'] .tavi-mobile-tabs button[aria-current="page"]{background:#294a3c;color:#dff9e9;}
+html[data-theme='dark'] .tavi-app-page-tabs button[aria-selected="true"]{background:#3a8060;color:#fff;}

@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.91",
-    "base_version": "0.3.90"
+    "version": "0.3.96",
+    "base_version": "0.3.95"
   },
   "update": {
-    "id": "TAVI-20261022-STORE-QA-0391",
+    "id": "TAVI-20261023-MESSENGER-HOME-0396",
     "kind": "source_update",
-    "created_at": "2026-10-22T21:30:00+02:00",
-    "summary": "Resolve Playwright strict mode in five-viewport App Store QA by selecting Private Notepad by stable extension ID. No product/store behavior, Social runtime, Wallet, Companion or Android updater changes."
+    "created_at": "2026-10-23T18:00:00+02:00",
+    "summary": "UI-only: messenger Home with own profile top-left and Companion top-right; separate Messages inbox with search, unread filters and no Wallet/Companion chrome. Classic block styling using shared UI system."
   },
   "planned_work": [
     {
@@ -602,6 +602,27 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": "On Windows, run `node --test client/tests/companion-preview-086.test.mjs`; no ENOENT or `C:\\C:\\` path, and both file URL and native filesystem path return the same reviewed source SHA-256.; Verify `npm run verify` and `npm run extensions:check` on the exact ZipRunner overlay; ensure the reviewed Companion publisher and digest are unchanged.; Confirm Windows build and App Store/My pet/painted Companion preview; repeat in Android client. Operator native approval is required before Done.; Preserve all existing workboard statuses, private data and LoopRD descriptor; source-only repair, no automatic Git push or deployment."
+    },
+    {
+      "id": "TAVI-ANDROID-BACK-092",
+      "title": "Android host Back and recognizable bundled SVG glyphs",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Run local navigation/source tests, exact-commit Android and UI QA, and physical phone gesture/three-button Back across messages, extensions, dialogs, Home, and keyboard. Verify app never implicitly closes and no server migration."
+    },
+    {
+      "id": "TAVI-UI-CORE-094",
+      "title": "Centralized host UI components for Tavi windows",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "In 0.3.94 Windows Tavi inspect Home, contacts, chat, games, Settings, Wallet and App Store at 355px and wide desktop: headers, icons, colors, fields and touch targets follow a single system.; Change light/dark appearance while native chat and game windows remain open; all windows update immediately without reload, draft loss, iframe recreation or access to Social bearer tokens.; On Android and Web, test 320px/390px and tablet viewports, device system Back, bottom tabs, dialogs, scroll, keyboard/safe areas, light/dark contrast and reduced-motion.; Install Companion 0.6.11 and confirm its published iframe remains independently styled, sandboxed and byte-for-byte content-digest identical; Tavi host toolbar, Back and Home stay accessible.; Check exact ZIP workboard preflight, npm run verify, Python tests, generated LoopRD descriptor, exact-push GitHub Android/Windows/Web and Chromium UI QA; operator acceptance before Done."
+    },
+    {
+      "id": "TAVI-UI-MESSENGER-096",
+      "title": "Messenger-first Home with distinct Messages inbox",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Install 0.3.96 through ZipRunner; verify source version and workboard validation without modifying config, local accounts or generated build output.; On Windows compact 355x630, Home shows own profile portrait left and Companion portrait right, Gold only in Home; buddy groups show Online and Offline contacts, friend requests and presence indicators.; Messages has no own profile/Gold/Companion widgets; it shows Community Lobby, direct conversations, live search and All/Unread/Friends filters; selecting conversation still works on Android and Windows native chat windows.; Test 320px/390px Android and desktop/web widths: touch targets, keyboard, Android Back, bottom navigation, light/dark themes, square edges and no clipping of profiles or Companion.; Verify npm run verify, descriptor check, Companion publisher digest, Windows/Android native builds and screenshots; keep in Review until operator device acceptance."
     }
   ],
   "done_work": [
@@ -1832,6 +1853,16 @@
       "id": "TAVI-EXT-NATIVE-HTML-088",
       "status": "review",
       "reason": "Generated original-byte mirrors and fail-closed integrity tests passed locally. Actual compiled Windows Tauri and Android/native device installation must be validated before Done."
+    },
+    {
+      "id": "TAVI-UI-CORE-094",
+      "status": "review",
+      "reason": "Code and source tests provided; full adoption of every Tavi-owned screen and actual Windows/Android/Web visual acceptance remain open."
+    },
+    {
+      "id": "TAVI-UI-MESSENGER-096",
+      "status": "review",
+      "reason": "Implementation source verified; actual compact Windows, Android, browser visual and native acceptance pending."
     }
   ],
   "validation": {
@@ -2066,7 +2097,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Import 0.3.87 after failed Windows 0.3.86; ensure preview test resolves file URLs with fileURLToPath and Windows native build succeeds. Test Companion 0.6.11 in installed Windows/Android clients and review exact-commit CI before approval.",
+    "next_pass": "Import 0.3.96 via ZipRunner and verify Home profile/Companion positions, messenger buddy groups, Messages-only inbox and filters on Android/Windows; collect real screenshots before accepting UI work. Do not change LoopRD server or publisher bundles.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -2186,11 +2217,12 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.91 repairs only the Chromium App Store smoke selector and adds a regression test. LoopRD server release 0.3.83/schema 11 unchanged; operator GitHub UI and Android native acceptance pending."
+    "notes": "Tavi 0.3.96 source candidate; Home and Messages separation only. No Git push, deployment or operator/device approval."
   },
   "release_notes": {
-    "version": "0.3.91",
-    "summary": "Fix App Store QA strict mode when Private Notepad and Companion are both listed; preserves Ledger extension and reviewed Companion bytes. No native Android update behavior change.",
-    "server_unchanged": "looprd-social release 0.3.83, schema 11 and existing Wallet tables/receipts retained."
+    "version": "0.3.96",
+    "summary": "Messenger-first Home profile left, Companion right, buddy roster; Messages-only inbox with search, filters and block-style shared shell.",
+    "server_unchanged": "looprd-social release 0.3.83/schema 11",
+    "native_qa": "pending"
   }
 }

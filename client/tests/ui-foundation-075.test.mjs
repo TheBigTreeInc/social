@@ -5,7 +5,7 @@ import {hostToolbar,uiTokens} from '../src/ui/shell.js';
 const read=async path=>readFile(new URL(path,import.meta.url),'utf8');
 test('shared host navigation does not permit injected attributes/actions',()=>{
  const html=hostToolbar('<Wallet & Friends>');
- assert.match(html,/class="tavi-focus-toolbar tavi-shell-bar"/);
+ assert.match(html,/class="tavi-ui-header tavi-focus-toolbar tavi-shell-bar"/);
  assert.match(html,/data-action="minimize-view"/);
  assert.match(html,/&lt;Wallet &amp; Friends&gt;/);
  assert.doesNotMatch(html,/<Wallet/);
@@ -22,7 +22,8 @@ test('host UI uses shared, scoped design tokens and preserves dark palette',asyn
  assert.match(tokens,/tavi-contact-focus/);
  assert.match(tokens,/--tavi-hit-target-touch: 44px/);
  assert.match(main,/import '\.\/ui\/design-tokens\.css'/);
- assert.equal((main.match(/hostToolbar\(/g)||[]).length,2);
+ assert.equal((main.match(/hostToolbar\(/g)||[]).length,3);
+ assert.match(main,/homeToolbar\(\)/);
  assert.match(main,/frame\.setAttribute\('sandbox','allow-scripts'\)/);
  assert.doesNotMatch(tokens,/iframe\.contentDocument|postMessage|Social bearer/);
 });

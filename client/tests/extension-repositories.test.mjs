@@ -57,7 +57,7 @@ test('remote catalog is fetched without tokens, merged with bundled precedence a
 });
 test('Tavi client binds remote entrypoints into opaque iframe without revealing session tokens',async()=>{
  const code=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
- assert.match(code,/frame\.src=entry\.remote \? entry\.remote\.entrypoint/);
+ assert.match(code,/frame\.src=extensionPanelUrl\(entry\.remote \? entry\.remote\.entrypoint/);
  assert.match(code,/sandbox','allow-scripts'/);
  assert.doesNotMatch(code,/sandbox','allow-scripts allow-same-origin'/);
  assert.match(code,/Hosted origin/);

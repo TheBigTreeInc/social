@@ -38,7 +38,7 @@ test('Gold label is taken from server, never synthesized from free refill rule',
 
 test('Tavi profile Gold click opens permanent core Wallet rather than App Store',async()=>{
  const source=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
- assert.match(source,/class="tavi-gold-balance" data-action="wallet"/);
+ assert.match(source,/data-action="wallet" class="tavi-gold-balance"/);
  assert.match(source,/if\(name==='wallet'\)\{await openCoreWallet\(\);return;\}/);
  assert.doesNotMatch(source,/Install Wallet from the App Store once/);
  assert.match(source,/coreWalletFromBundle\(bundled\)/);
