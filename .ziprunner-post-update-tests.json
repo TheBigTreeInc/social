@@ -1,6 +1,6 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.98",
+  "version": "0.3.99",
   "tests": [
     {
       "kind": "command",
@@ -131,7 +131,7 @@
     {
       "kind": "command",
       "semantic_id": "tavi-account-recovery",
-      "definition_revision": "1",
+      "definition_revision": "2",
       "rerun_policy": "every_update",
       "command": "python -m unittest discover -s tests -p test_account_recovery.py -v",
       "attention_on_failure": true,

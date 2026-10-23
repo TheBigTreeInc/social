@@ -18,10 +18,10 @@ test('Social multiplayer match rooms add schema 10 without losing game-event cap
   const pkg=JSON.parse(await read('package.json'));
   const server=JSON.parse(await read('server/looprd-release.json'));
   const spec=await read('looprd.yaml');
-  // Messenger client-only pass may advance without a LoopRD server deployment.
-  assert.equal(pkg.version,'0.3.98');
-  assert.equal(server.release,'0.3.83');
-  assert.match(spec,/release: 0\.3\.83/);
+  // Server hardening pass advances its descriptor independently of client packaging.
+  assert.equal(pkg.version,'0.3.99');
+  assert.equal(server.release,'0.3.99');
+  assert.match(spec,/release: 0\.3\.99/);
   assert.match(spec,/mode: verified/);
   assert.match(spec,/transport: unifiedpush/);
   assert.match(spec,/schemaVersion: 11/);

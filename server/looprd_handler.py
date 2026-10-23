@@ -491,14 +491,18 @@ def recover_account(db,body,now):
     try: handle=username(body.get('username'))
     except ValueError: return denied
     code=body.get('recoveryCode')
-    if not isinstance(code,str) or not RECOVERY_FORMAT.fullmatch(code):return denied
     account=db.execute(sa.select(ACCOUNT).where(ACCOUNT.c.handle==handle)).mappings().first()
     if not account:return denied
     if account['recoveryLockedUntil']>now:return denied
     subject='acct_'+str(account['id'])
-    code_hash=hashlib.sha256(code.encode()).hexdigest()
-    match=db.execute(sa.select(RECOVERY.c.id).where(RECOVERY.c.subjectId==subject,
-        RECOVERY.c.codeHash==code_hash,RECOVERY.c.expires>now)).scalar_one_or_none()
+    # Every failed attempt for an existing account consumes the same recovery
+    # failure budget, including malformed input. Previously a caller could send
+    # unlimited invalid-format guesses without ever reaching the lockout.
+    match=None
+    if isinstance(code,str) and RECOVERY_FORMAT.fullmatch(code):
+        code_hash=hashlib.sha256(code.encode()).hexdigest()
+        match=db.execute(sa.select(RECOVERY.c.id).where(RECOVERY.c.subjectId==subject,
+            RECOVERY.c.codeHash==code_hash,RECOVERY.c.expires>now)).scalar_one_or_none()
     if match is None:
         n=account['recoveryFailures']+1
         db.execute(sa.update(ACCOUNT).where(ACCOUNT.c.id==account['id']).values(
@@ -534,8 +538,8 @@ def logout(db,token):
 # LoopRD management role. Checked on EVERY privileged request and profile refresh.
 # Development tokens cannot get this privilege, even when their subject resembles
 # a registered user; no public API path changes the flag.
-SOCIAL_RELEASE = '0.3.48'
-SOCIAL_SCHEMA_VERSION = 9
+SOCIAL_RELEASE = '0.3.99'
+SOCIAL_SCHEMA_VERSION = 11
 
 def account_developer_permission(db, subject):
     if not isinstance(subject, str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):

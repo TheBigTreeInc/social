@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.98",
-    "base_version": "0.3.97"
+    "version": "0.3.99",
+    "base_version": "0.3.98"
   },
   "update": {
-    "id": "TAVI-20261023-BROWSER-BACK-QA-0398",
+    "id": "TAVI-20261023-RECOVERY-HARDENING-0399",
     "kind": "source_update",
-    "created_at": "2026-10-23T20:10:00+02:00",
-    "summary": "Browser-only UI QA fix: use shared Back (Wallet and Games) and Home (Notepad) actions, protecting the messenger-first Home/Chats split. No runtime or server/extension changes."
+    "created_at": "2026-10-23T22:23:34+02:00",
+    "summary": "Harden schema-9 account recovery in current schema-11 Social server: count malformed account-specific attempts toward lockout; correct diagnostic schema reporting. No DB migration. No operator approval or deployment inferred."
   },
   "planned_work": [
     {
@@ -643,7 +643,7 @@
       "title": "Five-viewport shared Back and Home smoke navigation after Wallet, Games and Notepad",
       "priority": "high",
       "status": "review",
-      "acceptance_criteria": "Import exact Tavi 0.3.98 ZipRunner ZIP; rerun local Node, Python, LoopRD descriptor and SHA-pinned extension checks.; On the next operator-approved exact push SHA, verify actual five-viewport Browser UI QA completes green including Wallet Back, Games Back, Notepad Home and no regression to other navigation, touch/safe area or extension security checks.; Confirm all eight required push workflows complete successfully on that SHA. Preserve ZipRunner's full 145 earlier tickets, statuses and criteria; treat stale local ZIP check failures and not_github watcher separately.; Inspect native Windows compact and Android 320/390px UI before marking review tasks Done; do not infer installation/device acceptance from CI."
+      "acceptance_criteria": "Import exact Tavi 0.3.99 ZipRunner ZIP; rerun local Node, Python, LoopRD descriptor and SHA-pinned extension checks.; On the next operator-approved exact push SHA, verify actual five-viewport Browser UI QA completes green including Wallet Back, Games Back, Notepad Home and no regression to other navigation, touch/safe area or extension security checks.; Confirm all eight required push workflows complete successfully on that SHA. Preserve ZipRunner's full 145 earlier tickets, statuses and criteria; treat stale local ZIP check failures and not_github watcher separately.; Inspect native Windows compact and Android 320/390px UI before marking review tasks Done; do not infer installation/device acceptance from CI."
     }
   ],
   "done_work": [
@@ -2176,7 +2176,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Import 0.3.97 into ZipRunner, capture exact installed ZIP hash and post-update checks. Push only with operator approval; verify new exact GitHub SHA all eight workflows, especially five-viewport UI QA. Keep TAVI-UI-CI-097, TAVI-UI-MESSENGER-096 and TAVI-QA-047 open for device/evidence reconciliation.",
+    "next_pass": "Install Tavi 0.3.99 as operator-reviewed ZipRunner source. Run source and exact ZIP tests. Before any server publication, back up the current Social DB and validate deployed schema 11, session and recovery behavior on staging. Check generated looprd.yaml diff: release advances 0.3.83 -> 0.3.99 but schema remains 11. Test recovery using disposable accounts on Windows/Android. Push/release/deploy only with separate approval. Keep TAVI-QA-047 and TAVI-UPDATES-003 open.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -2291,25 +2291,35 @@
       "id": "TAVI-UI-CI-097-OP",
       "description": "Import 0.3.97 ZIP, run npm --prefix client run ui:ci, inspect five viewport screenshots/reports and exact next push-SHA workflows; physical Android/Windows approval separately.",
       "status": "required"
+    },
+    {
+      "id": "LRS-004-099-OP",
+      "description": "Back up deployed Social DB, validate schema 11, apply server descriptor only via approved deployment, test malformed recovery lockout and successful code flow on staging and Windows/Android; do not log secrets. Keep LRS-004 in Review until operator acceptance.",
+      "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.97 source candidate only; no automatic push, release, server publication or device approval."
+    "notes": "0.3.99 source candidate only; this pass changes the Social handler and descriptor release but does not migrate live data. No push, release, publication, or physical device acceptance."
   },
   "release_notes": {
-    "version": "0.3.97",
-    "summary": "Repair exact-commit browser UI QA for 0.3.96 messenger Home / Messages layout; preserve 0.3.96 interface and publisher integrity.",
-    "server_unchanged": "looprd-social release 0.3.83/schema 11",
-    "native_qa": "pending",
-    "browser_qa": "requires real Chromium run on exact 0.3.97 SHA"
+    "version": "0.3.99",
+    "summary": "LRS-004 account recovery lockout bypass correction and Social schema-11 diagnostic alignment.",
+    "server_unchanged": false,
+    "server_release": "0.3.99",
+    "database_schema_version": 11,
+    "database_migration": "none",
+    "native_qa": "pending operator Windows/Android test",
+    "browser_qa": "pending 0.3.99 exact-commit five-viewport run"
   },
   "verification_summary": {
-    "source_candidate": "0.3.98",
-    "browser_qa": "pending next exact-commit five-viewport run; 0.3.97 failed on old Back selector",
-    "native_acceptance": "pending actual Windows/Android checks",
+    "source_candidate": "0.3.99",
+    "browser_qa": "pending new exact-commit run",
+    "native_acceptance": "pending physical Windows/Android devices",
     "git_push": "not performed by source author",
-    "server_deploy": "not performed"
+    "server_deploy": "not performed",
+    "database_schema": "11 unchanged",
+    "operator_review": "LRS-004 remains Review"
   }
 }

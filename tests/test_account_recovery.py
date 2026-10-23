@@ -100,6 +100,40 @@ class RecoveryFlow(unittest.TestCase):
         with patch.dict(os.environ, {'LOOPRD_SOCIAL_ALLOW_REGISTRATION':'false'}):
             self.assertFalse(self.call(op='register',username='charlie',password='new and strong password 1234!')['ok'])
             self.assertFalse(self.call(op='recover_account',username='alice',recoveryCode='TAVI-'+('AAAA-'*7)+'AAAA',newPassword='new and strong password 1234!')['ok'])
+    def test_malformed_attempts_count_toward_the_same_five_failure_lockout(self):
+        a=self.signup()
+        code=self.call(op='recovery_codes_create',token=a['token'],
+            password='test password 1234!')['codes'][0]
+        # A malformed payload must not bypass the account-specific failure limit.
+        for bad in ('invalid', '', None, 42, {'code':'not-a-code'}):
+            rejected=self.call(op='recover_account',username='alice',
+                recoveryCode=bad,newPassword='new and strong password 1234!')
+            self.assertEqual(rejected['code'],'RECOVERY_DENIED')
+        with self.sessions.begin() as db:
+            record=db.execute(sa.text('SELECT recoveryFailures,recoveryLockedUntil FROM "SocialAccount" WHERE handle=:name'),
+                {'name':'alice'}).one()
+            self.assertEqual(tuple(record),(5,1000900))
+        self.assertEqual(self.call(op='recover_account',username='alice',
+            recoveryCode=code,newPassword='new and strong password 1234!')['code'],'RECOVERY_DENIED')
+        # The lockout expires; valid single-use recovery is still possible.
+        unlocked=execute({'op':'recover_account','username':'alice','recoveryCode':code,
+            'newPassword':'new and strong password 1234!'},self.sessions,tokens={},now=1000901)[0]
+        self.assertTrue(unlocked['ok'],unlocked)
+        self.assertFalse(self.call(op='me',token=a['token'])['ok'])
+
+    def test_current_descriptor_and_recovery_diagnostics_agree_on_schema(self):
+        from looprd_handler import SOCIAL_SCHEMA_VERSION
+        self.assertEqual(self.spec['database']['schemaVersion'],11)
+        self.assertEqual(SOCIAL_SCHEMA_VERSION,11)
+        self.assertEqual(max(m['version'] for m in self.spec['database']['migrations']),11)
+        a=self.signup()
+        with self.sessions.begin() as db:
+            db.execute(sa.text('UPDATE "SocialAccount" SET "developerEnabled"=1 WHERE handle=:handle'),
+                {'handle':'alice'})
+        info=self.call(op='developer_diagnostics',token=a['token'])
+        self.assertTrue(info['ok'],info)
+        self.assertEqual(info['databaseSchemaVersion'],11)
+
     def test_atomic_recovery_revokes_push_devices_with_session_reset(self):
         a=self.signup()
         code=self.call(op='recovery_codes_create',token=a['token'],password='test password 1234!')['codes'][0]
