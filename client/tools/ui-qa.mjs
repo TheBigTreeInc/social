@@ -157,7 +157,8 @@ async function testViewport(browser,base,device){
   assert.equal(await page.locator('.tavi-app-store').count(),0,'Core Wallet must bypass App Store');
   await page.frameLocator('#tavi-extension-surface iframe').locator('#gold').waitFor({state:'visible',timeout:6000});
   await page.waitForFunction(()=>document.querySelector('#tavi-extension-surface iframe')!==null);
-  stage='Wallet return Home';await page.locator('.tavi-shell-bar__back[data-action="minimize-view"]').click();
+  stage='Wallet return Home through shared Back';await page.locator('.tavi-utility-focus .tavi-shell-bar__back[data-action="back"]').click();
+  await visible(page,'.tavi-home-messenger .tavi-home-identity');
   await visible(page,'.tavi-gold-balance');
   stage='Life discovered Games';await visible(page,'.tavi-unified-home .tavi-mobile-tabs [data-action="games"]');await page.locator('.tavi-unified-home .tavi-mobile-tabs [data-action="games"]').click();
   await visible(page,'[data-discovered-game="life.loop"]');
@@ -176,7 +177,8 @@ async function testViewport(browser,base,device){
   await page.locator('.tavi-game-title-row [data-action="refresh"]').click();
   await page.locator('[data-discovered-game="life.loop"]').waitFor({state:'detached',timeout:7000});
   assert.match(await page.locator('.tavi-games-browser').innerText(),/No reviewed games are currently available/);
-  stage='return from Games';await page.locator('.tavi-focus-toolbar [data-action="minimize-view"]').click();
+  stage='return from Games through shared Back';await page.locator('.tavi-utility-focus .tavi-shell-bar__back[data-action="back"]').click();
+  await visible(page,'.tavi-home-messenger .tavi-home-identity');
   stage='main-menu';await page.locator('[data-action="main-menu"]').click();
   await visible(page,'.tavi-menu-grid [data-action="app-store"]');
   stage='app-store';await page.locator('.tavi-menu-grid [data-action="app-store"]').click();
@@ -205,8 +207,9 @@ async function testViewport(browser,base,device){
   await visible(page,'[data-extension-open="org.tavi.examples.notepad"]');
   stage='open extension';await page.locator('[data-extension-open="org.tavi.examples.notepad"]').click();
   await visible(page,'#tavi-extension-surface iframe[sandbox="allow-scripts"]');
-  stage='return home';await page.locator('.tavi-shell-bar__back[data-action="minimize-view"]').click();
-  await visible(page,'[data-action="main-menu"]');
+  stage='return from Notepad through shared Home';await page.locator('.tavi-utility-focus .tavi-shell-bar__home[data-action="home"]').click();
+  await visible(page,'.tavi-home-messenger .tavi-home-identity');
+  await visible(page,'.tavi-unified-home .tavi-mobile-tabs [data-action="main-menu"]');
   await noOverflow(page,`${device.name} returned home`);
   assert.equal(errors.length,0,`${device.name} JavaScript errors: ${errors.join('; ')}`);
   if(process.env.TAVI_QA_CAPTURE==='1')await screenshot(page,`${device.name}-success`);

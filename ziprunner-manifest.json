@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.97",
-    "base_version": "0.3.96"
+    "version": "0.3.98",
+    "base_version": "0.3.97"
   },
   "update": {
-    "id": "TAVI-20261023-BROWSER-QA-0397",
+    "id": "TAVI-20261023-BROWSER-BACK-QA-0398",
     "kind": "source_update",
-    "created_at": "2026-10-23T19:29:48+02:00",
-    "summary": "Client/browser QA repair: stop testing removed Home merged roster; test current messenger-first Home, distinct Messages inbox, portrait positions, touch/safe-area geometry. No LoopRD or reviewed extension changes."
+    "created_at": "2026-10-23T20:10:00+02:00",
+    "summary": "Browser-only UI QA fix: use shared Back (Wallet and Games) and Home (Notepad) actions, protecting the messenger-first Home/Chats split. No runtime or server/extension changes."
   },
   "planned_work": [
     {
@@ -623,6 +623,27 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": "Install 0.3.96 through ZipRunner; verify source version and workboard validation without modifying config, local accounts or generated build output.; On Windows compact 355x630, Home shows own profile portrait left and Companion portrait right, Gold only in Home; buddy groups show Online and Offline contacts, friend requests and presence indicators.; Messages has no own profile/Gold/Companion widgets; it shows Community Lobby, direct conversations, live search and All/Unread/Friends filters; selecting conversation still works on Android and Windows native chat windows.; Test 320px/390px Android and desktop/web widths: touch targets, keyboard, Android Back, bottom navigation, light/dark themes, square edges and no clipping of profiles or Companion.; Verify npm run verify, descriptor check, Companion publisher digest, Windows/Android native builds and screenshots; keep in Review until operator device acceptance."
+    },
+    {
+      "id": "TAVI-UI-CI-097",
+      "title": "Five-viewport browser QA adoption for messenger-first Home and Messages",
+      "priority": "medium",
+      "status": "review",
+      "acceptance_criteria": "Check exact ZIP hash and source version in ZipRunner, rerun and retain actual Windows post-update test evidence.; Inspect five-viewport browser report and exact new-SHA GitHub UI workflow; do not use success from 0.3.91.; Review 355x630 Windows and 320/390px Android Home vs Messages and keyboard/back interactions before Done."
+    },
+    {
+      "id": "TAVI-EXT-NATIVE-HTML-088",
+      "title": "Fix native Tauri HTML CSP rewrites breaking bundled extension installation",
+      "priority": "medium",
+      "status": "review",
+      "acceptance_criteria": "Confirm Companion 0.6.11 publisher digest remains unchanged.; Check ZipRunner npm run verify and extensions:check on exact ZIP.; Install Companion in actual Windows WebView2; verify no HTML size mismatch, painted pet, navigation and note storage.; Validate Android/Web client and approved UI/extension security acceptance."
+    },
+    {
+      "id": "TAVI-UI-CI-098",
+      "title": "Five-viewport shared Back and Home smoke navigation after Wallet, Games and Notepad",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Import exact Tavi 0.3.98 ZipRunner ZIP; rerun local Node, Python, LoopRD descriptor and SHA-pinned extension checks.; On the next operator-approved exact push SHA, verify actual five-viewport Browser UI QA completes green including Wallet Back, Games Back, Notepad Home and no regression to other navigation, touch/safe area or extension security checks.; Confirm all eight required push workflows complete successfully on that SHA. Preserve ZipRunner's full 145 earlier tickets, statuses and criteria; treat stale local ZIP check failures and not_github watcher separately.; Inspect native Windows compact and Android 320/390px UI before marking review tasks Done; do not infer installation/device acceptance from CI."
     }
   ],
   "done_work": [
@@ -1531,27 +1552,6 @@
           "description": "Windows failure reproduction and operator acceptance instructions"
         }
       ]
-    },
-    {
-      "id": "TAVI-UI-CI-097",
-      "summary": "Replaced obsolete .tavi-roster-merged browser selectors with current Home/Inbox, introduced photo placement check and touch/safe-area snapshots for real Home structure, and updated regression guard tests. No publisher or server changes.",
-      "evidence": [
-        {
-          "kind": "source",
-          "ref": "client/tools/ui-qa.mjs",
-          "description": "Real browser fixture checks Home, Messages, touch, safe area, Wallet, Life and extensions"
-        },
-        {
-          "kind": "source",
-          "ref": "client/tools/ui-qa-touch.mjs",
-          "description": "Actual Home control geometry and no false zero-size acceptance"
-        },
-        {
-          "kind": "test",
-          "ref": "client/tests/ui-qa-next-pass-076.test.mjs",
-          "description": "Regression rejects obsolete merged roster expectation"
-        }
-      ]
     }
   ],
   "todo_work": [
@@ -1889,6 +1889,26 @@
       "id": "TAVI-UI-CI-097",
       "status": "review",
       "reason": "Exact .97 SHA GitHub UI QA, physical Android and Windows checks are not yet verified."
+    },
+    {
+      "id": "TAVI-WALLET-EMBED-089",
+      "status": "review",
+      "reason": "Review pending: source implementation and actual operator device/CI acceptance are separate."
+    },
+    {
+      "id": "TAVI-CI-COMPANION-BYTES-089",
+      "status": "review",
+      "reason": "Review pending: source implementation and actual operator device/CI acceptance are separate."
+    },
+    {
+      "id": "TAVI-ANDROID-BACK-092",
+      "status": "review",
+      "reason": "Review pending: source implementation and actual operator device/CI acceptance are separate."
+    },
+    {
+      "id": "TAVI-UI-CI-098",
+      "status": "review",
+      "reason": "Review pending: source implementation and actual operator device/CI acceptance are separate."
     }
   ],
   "validation": {
@@ -2284,5 +2304,12 @@
     "server_unchanged": "looprd-social release 0.3.83/schema 11",
     "native_qa": "pending",
     "browser_qa": "requires real Chromium run on exact 0.3.97 SHA"
+  },
+  "verification_summary": {
+    "source_candidate": "0.3.98",
+    "browser_qa": "pending next exact-commit five-viewport run; 0.3.97 failed on old Back selector",
+    "native_acceptance": "pending actual Windows/Android checks",
+    "git_push": "not performed by source author",
+    "server_deploy": "not performed"
   }
 }
