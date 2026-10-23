@@ -17,3 +17,10 @@ test('disposable browser QA checks updated layout and 44px mobile touch target',
  assert.match(css,/min-height:var\(--tavi-hit-target-touch\)/);
  assert.doesNotMatch(tool,/visible\(page,'\.tavi-discovered-mini'\)/);
 });
+
+test('browser QA targets messenger Home and verifies focused Messages before games and extensions',async()=>{
+ const qa=await read('../tools/ui-qa.mjs');
+ for(const selector of ['.tavi-home-messenger .tavi-home-identity','.tavi-home-self-portrait','.tavi-home-companion .tavi-companion-portrait','.tavi-home-group-title[data-group="online"]','.tavi-message-inbox .tavi-message-search input','.tavi-message-threads [data-message-kind="lobby"]'])assert(qa.includes(selector),selector);
+ assert.doesNotMatch(qa,/await visible\(page,'\.tavi-roster-merged'\)/);
+ assert(qa.indexOf("stage='Messages: independent inbox")<qa.indexOf("stage='core Wallet profile balance'"));
+});

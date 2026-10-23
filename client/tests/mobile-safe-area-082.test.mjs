@@ -34,4 +34,6 @@ test('safe layout snapshot reads root-padding and physical element bounds',()=>{
  assert.equal(result.insets.bottom,34);
  assert.equal(result.menu.top,493);
  assert.equal(result.menu.bottom,585);
+ assert.match(String(snapshotSafeLayout),/tavi-home-roster-scroll/);
+ assert.doesNotMatch(String(snapshotSafeLayout),/tavi-classic-home/);
 });

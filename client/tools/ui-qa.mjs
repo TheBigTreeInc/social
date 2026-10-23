@@ -91,7 +91,29 @@ async function testViewport(browser,base,device){
   await noOverflow(page,`${device.name} login`);
   stage='sign-in';await signIn(page,base);
   await noOverflow(page,`${device.name} home`);
-  stage='compact Home without duplicate games';await visible(page,'.tavi-roster-merged');
+  stage='messenger Home: profile left, Companion right and buddy groups';
+  await visible(page,'.tavi-home-messenger .tavi-home-identity');
+  await visible(page,'.tavi-home-self-portrait[data-action="portrait"]');
+  await visible(page,'.tavi-home-companion .tavi-companion-portrait');
+  await visible(page,'.tavi-home-group-title[data-group="online"]');
+  await visible(page,'.tavi-home-group-title[data-group="offline"]');
+  await visible(page,'.tavi-home-buddy[data-peer="acct_2"]');
+  // Validate left/right placement in the painted layout, not just DOM existence.
+  const portraits=await page.evaluate(()=>{
+    const bounds=selector=>{const rect=document.querySelector(selector)?.getBoundingClientRect();return rect?{left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom}:null;};
+    return {own:bounds('.tavi-home-self-portrait'),companion:bounds('.tavi-home-companion .tavi-companion-portrait'),width:document.documentElement.clientWidth};
+  });
+  assert(portraits.own&&portraits.companion&&portraits.companion.left>=portraits.own.right&&portraits.companion.right<=portraits.width+2,
+    `${device.name} Home profile/Companion layout clipped or reversed: ${JSON.stringify(portraits)}`);
+  assert.equal(await page.locator('.tavi-home-messenger .tavi-message-inbox').count(),0,'Home must remain the buddy list, not the Messages inbox');
+  stage='Messages: independent inbox, no Companion or Wallet';
+  await page.locator('.tavi-unified-home .tavi-mobile-tabs [data-action="contacts"]').click();
+  await visible(page,'.tavi-message-inbox .tavi-message-search input');
+  await visible(page,'.tavi-message-threads [data-message-kind="lobby"]');
+  for(const filter of ['all','unread','friends'])await visible(page,`.tavi-message-filters [data-message-filter="${filter}"]`);
+  assert.equal(await page.locator('.tavi-contact-focus .tavi-home-companion, .tavi-contact-focus .tavi-gold-balance').count(),0,'Messages must contain no Companion or Wallet controls');
+  await page.locator('.tavi-contact-focus .tavi-mobile-tabs [data-action="home"]').click();
+  await visible(page,'.tavi-home-messenger .tavi-home-identity');
   assert.equal(await page.locator('.games-strip, .tavi-discovered-mini, .roster-toolbar, .roster-search').count(),0,'No legacy Games strip, duplicate action toolbar or search in the messenger Home');
   if(device.mobile){
    stage='mobile touch targets';
@@ -128,7 +150,7 @@ async function testViewport(browser,base,device){
   stage='core Wallet profile balance';
   await page.locator('.tavi-gold-balance').waitFor({state:'visible',timeout:6000});
   await page.waitForFunction(()=>document.querySelector('.tavi-gold-balance')?.textContent?.includes('100 Gold'),null,{timeout:6000});
-  assert.equal(await page.locator('.tavi-identity-text .personal-message').count(),0,'Profile must not show internal account/server IDs');
+  assert.equal(await page.locator('.tavi-home-self-details .personal-message').count(),0,'Home must not show internal account/server IDs');
   stage='open core Wallet directly';await page.locator('.tavi-gold-balance').click();
   await visible(page,'#tavi-extension-surface[data-extension-id="org.tavi.core.wallet"] iframe[sandbox="allow-scripts"]');
   assert.equal(await page.locator('.tavi-install-dialog').count(),0,'Core Wallet requires no install dialog');
@@ -188,7 +210,7 @@ async function testViewport(browser,base,device){
   await noOverflow(page,`${device.name} returned home`);
   assert.equal(errors.length,0,`${device.name} JavaScript errors: ${errors.join('; ')}`);
   if(process.env.TAVI_QA_CAPTURE==='1')await screenshot(page,`${device.name}-success`);
-  checks.push({device:device.name,result:'passed',stages:['login','home','gold-balance-in-profile','core-wallet-direct-open','life-discovered-in-games','life-nonplayable','life-withdrawn','main-menu','app-store','extension-install-approval-and-cancel','extension-launch','return-home','viewport-overflow','mobile-touch-targets','android-safe-insets-and-navigation','javascript-errors']});
+  checks.push({device:device.name,result:'passed',stages:['login','messenger-home','messages-inbox-isolated','gold-balance-in-profile','core-wallet-direct-open','life-discovered-in-games','life-nonplayable','life-withdrawn','main-menu','app-store','extension-install-approval-and-cancel','extension-launch','return-home','viewport-overflow','mobile-touch-targets','android-safe-insets-and-navigation','javascript-errors']});
   console.log(`PASS ${device.name}: sign-in, Life discover/withdraw, home, App Store, approve/open extension, return home, viewport, script errors`);
  }catch(error){
   const picture=await screenshot(page,`${device.name}-failure`);

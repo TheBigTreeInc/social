@@ -13,7 +13,7 @@ export function snapshotSafeLayout(doc) {
  return {
   viewport:{height:root.ownerDocument.defaultView.innerHeight,width:root.ownerDocument.defaultView.innerWidth},
   insets:{top:parseFloat(css.paddingTop)||0,bottom:parseFloat(css.paddingBottom)||0},
-  home:rect('.tavi-home'),roster:rect('.tavi-classic-home>.tavi-home-roster'),
+  home:rect('.tavi-home'),roster:rect('.tavi-home-messenger .tavi-home-roster-scroll'),
   dock:rect('.tavi-unified-home .tavi-mobile-tabs'),menu:rect('.tavi-unified-home .tavi-mobile-tabs [data-action="main-menu"]'),
   homeHeader:rect('.tavi-unified-home .tavi-ui-header'),
   toolbar:rect('.tavi-focus-toolbar'),back:rect('.tavi-shell-bar__back'),

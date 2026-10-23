@@ -1,8 +1,8 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.96",
-  "summary": "Tavi 0.3.96 separates the Home buddy-list/profile/Companion layout from the Messages-only inbox with search and filters. Centralized rectangular responsive styling; server and reviewed extensions unchanged.",
+  "version": "0.3.97",
+  "summary": "Repair 0.3.96 GitHub five-viewport browser QA contract for messenger-first Home and Messages; do not restore removed merged roster. No LoopRD, Wallet or Companion publisher source changes.",
   "implemented": [
     {
       "id": "LRS-004",
@@ -10,7 +10,7 @@
       "summary": "Social-owned password recovery and device management, optional email verification/invite controls, abuse prevention, security review and production readiness remain to be implemented. External OIDC not required.",
       "priority": "high",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-18T10:06:39",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -40,7 +40,7 @@
       "summary": "Operator-review candidate for server-gated developer diagnostics. Confirm developer-enabled account authorization, diagnostic read-only isolation and immediate revocation across existing sessions; keep current operator Review status and criteria.",
       "priority": "medium",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T15:17:24",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -70,7 +70,7 @@
       "summary": "Operator-review candidate for the compact classic Tavi messenger UI, collapsible buddy roster, separate chat and responsive Android/Web navigation. Requires real-device review; keep original operator Review status and criteria.",
       "priority": "medium",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T15:17:31",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -100,7 +100,7 @@
       "id": "SCL-021",
       "title": "Replace oversized Windows client with native buddy list and separate conversations",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T15:17:39",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -132,7 +132,7 @@
       "id": "SOC-GAME-02A",
       "title": "Game-turn notification transport and account-scoped consent",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-18T01:43:05",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -160,7 +160,7 @@
       "id": "TAVI-030",
       "title": "Server-promoted browser games and Windows companion lobby chat",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T16:17:16",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -190,7 +190,7 @@
       "id": "TAVI-041",
       "title": "Local client build and explicit descriptor deployment check",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T16:58:51",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -216,7 +216,7 @@
       "id": "TAVI-042",
       "title": "ZipRunner automatic local Tavi builds",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T17:18:41",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -244,7 +244,7 @@
       "id": "TAVI-043",
       "title": "Tavi visual identity and branded launcher assets",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T17:29:13",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -272,7 +272,7 @@
       "id": "TAVI-044",
       "title": "Windows native build environment and SQLite cleanup reliability",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T18:47:10",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -296,7 +296,7 @@
       "id": "TAVI-045",
       "title": "Bind native WebView2 network requests correctly",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T19:10:56",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -322,7 +322,7 @@
       "id": "TAVI-046",
       "title": "Remember Tavi login on Windows and Web",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T20:40:21",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -350,7 +350,7 @@
       "id": "TAVI-ADMIN-001",
       "title": "LoopRD operator-granted ecosystem admin notifications",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T11:26:27",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -384,7 +384,7 @@
       "id": "TAVI-AGENT-001",
       "title": "OpenClaw headless Tavi account bridge",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T15:42:45",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -414,7 +414,7 @@
       "id": "TAVI-AGENT-003",
       "title": "OpenClaw notification-to-agent bridge",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T22:57:58",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -440,7 +440,7 @@
       "id": "TAVI-AGENT-004",
       "title": "OpenClaw sender display identity",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T23:34:47",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -466,7 +466,7 @@
       "id": "TAVI-ANDROID-034",
       "title": "Repair Android signed APK GitHub artifact path",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T19:52:18",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -500,7 +500,7 @@
       "id": "TAVI-ANDROID-042-FIX",
       "title": "Android login network diagnostics and safe reporting (source)",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-18T09:28:08",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -524,7 +524,7 @@
       "id": "TAVI-ATRIUM-048",
       "title": "Expose Atrium as reviewed game hub in Tavi while preserving legacy challenges",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-18T18:21:32",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -554,7 +554,7 @@
       "id": "TAVI-ATRIUM-056",
       "title": "Read-only Atrium trusted discovery catalog in Tavi Home and Games",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-19T12:59:35",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -592,7 +592,7 @@
       "id": "TAVI-BUILD-LOCK-024",
       "title": "Close running build-directory Tavi before Windows NSIS compilation",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T13:36:12",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -624,7 +624,7 @@
       "id": "TAVI-CHAT-001",
       "title": "Readable chat inbox with Windows and Android foreground alerts",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T22:31:54",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -656,7 +656,7 @@
       "summary": "Specify and build server-side DM summaries and synchronized read state; later add authenticated mobile push enrollment, safe push payloads, Android FCM and proper delivery diagnostics. Do not claim closed-app mobile notifications.",
       "priority": "medium",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T11:26:27",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -684,7 +684,7 @@
       "id": "TAVI-CI-028",
       "title": "GitHub Actions desktop coverage and independent distributables",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T16:04:33",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -712,7 +712,7 @@
       "id": "TAVI-CI-RELEASE-076A",
       "title": "Require exact-commit browser UI QA before GitHub release",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-21T12:20:36",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -740,7 +740,7 @@
       "id": "TAVI-DEBUG-068",
       "title": "Help menu copyable privacy-safe diagnostic report",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-20T00:50:49",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -766,7 +766,7 @@
       "id": "TAVI-DEBUG-070",
       "title": "Actionable repository and extension diagnostics",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-20T01:01:48",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -794,7 +794,7 @@
       "id": "TAVI-EVENTS-001",
       "title": "Initial Tavi interactive event inbox",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T20:40:21",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -825,7 +825,7 @@
       "id": "TAVI-EVENTS-003",
       "title": "Actionable and historical inbox UX with recipient dismissal",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-16T22:31:54",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -853,7 +853,7 @@
       "id": "TAVI-EXT-059",
       "title": "Tavi optional extension host and App Store preview",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-19T21:45:09",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -885,7 +885,7 @@
       "id": "TAVI-EXT-060",
       "title": "Decentralized Tavi extension repositories",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-19T21:45:09",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -915,7 +915,7 @@
       "id": "TAVI-EXT-NESTED-072",
       "title": "Nested looprd.yaml publisher app discovery",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-20T16:30:36",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -940,7 +940,7 @@
       "id": "TAVI-EXT-UPDATES-072",
       "title": "Visible app update checks and revision-aware approval",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-20T16:30:36",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -965,7 +965,7 @@
       "id": "TAVI-GAME-002",
       "title": "Trusted game invitations and one-use account proof",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-18T09:28:08",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -993,7 +993,7 @@
       "id": "TAVI-LIFE-066",
       "title": "User-mediated first-party Atrium hosted Life launch handoff",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-19T23:40:58",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1021,7 +1021,7 @@
       "id": "TAVI-MULTI-044",
       "title": "Game-seat-scoped private multiplayer match conversations",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-18T14:07:54",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1049,7 +1049,7 @@
       "id": "TAVI-MULTI-045",
       "title": "Dedicated native game match chat next to active multiplayer game",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-18T14:53:19",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1077,7 +1077,7 @@
       "id": "TAVI-MULTI-046",
       "title": "Visible Tavi game library and OpenClaw account challenge response",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-18T16:34:50",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1105,7 +1105,7 @@
       "id": "TAVI-NEARBY-001",
       "title": "Transport-neutral offline game session journal",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T22:27:18",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1131,7 +1131,7 @@
       "id": "TAVI-OPENCLAW-027",
       "title": "GitHub-first cross-platform clients and Pages",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T15:42:45",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1157,7 +1157,7 @@
       "id": "TAVI-PET-049",
       "title": "Cross-platform optional 16-bit companion MVP and consent-first care engine",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-19T01:14:52",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1189,7 +1189,7 @@
       "id": "TAVI-PET-050",
       "title": "Native Windows desktop floating companion",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-19T01:14:52",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1220,7 +1220,7 @@
       "id": "TAVI-PUSH-001",
       "title": "Provider-independent push client preparation and resume UX",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T11:26:27",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1250,7 +1250,7 @@
       "id": "TAVI-PUSH-002",
       "title": "Verified LoopRD Social principals and actual UnifiedPush API integration",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T11:26:27",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1280,7 +1280,7 @@
       "id": "TAVI-RELEASE-001",
       "title": "Verified GitHub release gate and version tags",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T17:15:33",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1320,7 +1320,7 @@
       "id": "TAVI-RELEASE-022",
       "title": "Correct ZipRunner workboard and advance version after packaging fix",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T12:01:00",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1349,7 +1349,7 @@
       "id": "TAVI-REPORTS-035",
       "title": "Pre-login LoopRD bug report",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T21:10:15",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1377,7 +1377,7 @@
       "id": "TAVI-SESSION-002",
       "title": "OS-protected Windows remembered-device sessions and compact Settings UX",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T13:36:12",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1407,7 +1407,7 @@
       "id": "TAVI-SESSION-RECOVERY-025",
       "title": "Resilient session restore and automatic offline reconnection",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T14:44:31",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1437,7 +1437,7 @@
       "id": "TAVI-SHARED-061",
       "title": "Shared services and Ledger SDK foundation",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-19T21:45:09",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1465,7 +1465,7 @@
       "id": "TAVI-SYNC-037",
       "title": "DAPI-aligned notifications and reduced request load",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T22:27:18",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1493,7 +1493,7 @@
       "id": "TAVI-UI-CI-078",
       "title": "Fix exact-commit five-viewport UI QA regression",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-21T14:05:12",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1521,7 +1521,7 @@
       "id": "TAVI-UI-CI-079",
       "title": "Stable real-layout touch QA during asynchronous Tavi roster refresh",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-21T14:25:24",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1547,7 +1547,7 @@
       "id": "TAVI-UI-FOUNDATION-075A",
       "title": "Initial semantic host design tokens and shared focus toolbar",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-20T22:13:18",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1573,7 +1573,7 @@
       "id": "TAVI-UI-NATIVE-QA-075A",
       "title": "Opt-in real Windows WebView2 UI QA attachment and safe evidence",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-20T22:13:18",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1599,7 +1599,7 @@
       "id": "TAVI-UI-QA-062",
       "title": "Automated desktop/mobile browser UI smoke and ZipRunner QA integration",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-19T21:45:09",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1627,7 +1627,7 @@
       "id": "TAVI-UI-SHELL-074",
       "title": "Video-driven unified roster, menu and extension host navigation repair",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-20T19:11:33",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1657,7 +1657,7 @@
       "id": "TAVI-UI-TOUCH-076A",
       "title": "Responsive 44px contact targets and live native QA menu checks",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-21T12:20:36",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1685,7 +1685,7 @@
       "id": "TAVI-UPDATES-001",
       "title": "Safe in-client release update notifications",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T19:24:47",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1716,7 +1716,7 @@
       "id": "TAVI-UPDATES-003",
       "title": "Android-native in-app update download and installation handoff",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-17T19:24:47",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1742,7 +1742,7 @@
       "id": "TAVI-UX-053",
       "title": "Sketch-led Tavi Home and minimized chat/game surfaces",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-19T02:44:16",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1776,7 +1776,7 @@
       "id": "TAVI-UX-054",
       "title": "Sketch-accurate round Home Main Menu and icon navigation",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-19T08:37:32",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1807,7 +1807,7 @@
       "id": "TAVI-UX-055",
       "title": "Classic dense messenger roster Home with sketch dock",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-19T09:00:22",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1839,7 +1839,7 @@
       "id": "TAVI-UX-067",
       "title": "Icon-based messenger-first apps drawer and extension icons",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-20T00:18:24",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1869,7 +1869,7 @@
       "id": "TAVI-UX-071",
       "title": "Reviewable extension install dialog and immersive extension panel",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-20T01:48:26",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1897,7 +1897,7 @@
       "id": "TAVI-UX-ROSTER-072",
       "title": "Combine recent conversations and presence into compact Home roster",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-20T16:30:36",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1922,7 +1922,7 @@
       "id": "TAVI-ZR-WORKBOARD-077",
       "title": "Validate ZipRunner workboard summaries before packaging",
       "status": "review",
-      "updated_at": "2026-10-21T14:25:24",
+      "updated_at": "2026-10-23T18:44:07",
       "status_updated_at": "2026-10-21T12:20:36",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
@@ -1966,7 +1966,9 @@
         "Install and open first-party Wallet on Windows, Android and Web; verify ledger unavailable state before deployment, purchase confirmation, exchange, history, appearance, and easy return Home.",
         "Reject remote/untrusted extension wallet methods and stale rate/price changes; no credentials in extension UI; real-money rails, cash-out, gambling stakes and third-party mint remain excluded.",
         "Inspect new LoopRD schema, required secret mappings and merchant allowlists; source/CI success is not operator acceptance or permission to deploy."
-      ]
+      ],
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-21T21:10:37"
     },
     {
       "id": "TAVI-WALLET-081",
@@ -1990,7 +1992,9 @@
         "Authorize a game reward service explicitly with per-event and per-player limits; verify replay prevention, earned Gold shop purchases, full or partial game-entry charges, returns and order fulfillment.",
         "Verify UI clearly distinguishes free play Gold and earned Gold on Windows, Android and web; no trusted game publisher or remote extension receives account tokens.",
         "Operator approval and live merchant delivery acceptance required before Done; no deployment or Git push from this candidate."
-      ]
+      ],
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-21T21:10:37"
     },
     {
       "id": "TAVI-WALLET-CLEAN-082",
@@ -2011,7 +2015,9 @@
         "Run wallet ledger tests covering free-only Gold, shop denial, earned rewards, conversion, refunds and duplicate processing.",
         "Deploy only into approved empty or isolated prelaunch LoopRD staging; do not downgrade an existing schema-12 database in place.",
         "Operator approves staging and real game purchase/fulfillment separately before Done."
-      ]
+      ],
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-21T21:10:37"
     },
     {
       "id": "TAVI-MOBILE-SAFE-082",
@@ -2032,7 +2038,9 @@
         "Check focused Back action stays inside header with 44px touch target and safe top inset; embedded games and chat compose keep safe controls.",
         "Verify actual Android OEM devices with gesture/three-button navigation, display cutouts, software keyboard, light/dark theme and orientation change.",
         "Verify Windows 355x630 compact app remains usable; do not mark Done without device/operator acceptance."
-      ]
+      ],
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-21T21:10:37"
     },
     {
       "id": "TAVI-WALLET-CORE-083",
@@ -2051,7 +2059,9 @@
         "Use Wallet without manual installation and check Home navigation, Tavi safe areas and native client behavior.",
         "Verify exact-commit GitHub browser UI QA and physical Windows/Android acceptance before Done."
       ],
-      "implementation_summary": "0.3.83 candidate: core Wallet bypasses optional installation, requires reviewed bundled hashes and host-only API; profile shows live Gold link and returns Home; no Social schema change. Device/live server QA pending."
+      "implementation_summary": "0.3.83 candidate: core Wallet bypasses optional installation, requires reviewed bundled hashes and host-only API; profile shows live Gold link and returns Home; no Social schema change. Device/live server QA pending.",
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-22T12:41:37"
     },
     {
       "id": "TAVI-EXT-INTERNAL-084",
@@ -2060,11 +2070,10 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": [
-        "Verify root extensions/registry.json declares first-party Wallet as non-removable core, Private Notepad as optional and never registers Atrium from another repository.",
-        "Run npm run extensions:sync and extensions:check, npm run verify and package preflight; altering bundled public assets or remote publisher identity must fail validation.",
-        "Confirm Wallet still opens directly from the profile Gold button and Notepad still requires approval; confirm no token or backend source enters the public iframe asset bundle.",
-        "Verify existing LoopRD Wallet service and Social schema 11 unchanged; if standalone Ledger extraction is later approved, import a portable descriptor separately without hardcoded URL.",
-        "Operator test Windows, Android and web extension launch/navigation before marking Done; keep all 130 earlier statuses and criteria unchanged."
+        "Check Windows Main Menu has Wallet and optional app store Notepad; Wallet cannot be installed/disabled/removed and Gold click opens it directly.",
+        "Confirm installed Notepad notes persist and remain isolated per account/server; update and reinstall do not rewrite data.",
+        "Check no independent Atrium or Life source is copied to the Tavi internal extension folder; do not deploy LoopRD database or component without separate approval.",
+        "Check exact pushed Git commit and required Actions; build/source success alone is not operator acceptance."
       ],
       "operator_checks": [
         "Check Windows Main Menu has Wallet and optional app store Notepad; Wallet cannot be installed/disabled/removed and Gold click opens it directly.",
@@ -2072,7 +2081,9 @@
         "Check no independent Atrium or Life source is copied to the Tavi internal extension folder; do not deploy LoopRD database or component without separate approval.",
         "Check exact pushed Git commit and required Actions; build/source success alone is not operator acceptance."
       ],
-      "implementation_summary": "Source candidate: extensions registry, canonical Wallet/Notepad bundles, reproducible SHA256 catalog/mirror sync, build and test wiring, future LoopRD import boundary. No server schema or wallet accounting behavior changed."
+      "implementation_summary": "Source candidate: extensions registry, canonical Wallet/Notepad bundles, reproducible SHA256 catalog/mirror sync, build and test wiring, future LoopRD import boundary. No server schema or wallet accounting behavior changed.",
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-22T19:31:21"
     },
     {
       "id": "TAVI-EXT-PARTNER-085",
@@ -2094,7 +2105,9 @@
         "Verify Cat and Unicorn paint, scripts and CSS in a real opaque-origin sandbox frame, private saves, Home navigation and account/server isolation; no Social credentials reach the iframe.",
         "Verify no new LoopRD component/schema, no standalone runtime ZIP installer and no automatic Git push/release; exact-commit GitHub CI and operator acceptance remain separate."
       ],
-      "implementation_summary": "Offline source candidate: verified partner publisher and SHA256 bundle, source registry and deterministic static mirror, Tavi My pet/Tools conditional launch, documented host Home. Chromium and native execution still pending acceptance."
+      "implementation_summary": "Offline source candidate: verified partner publisher and SHA256 bundle, source registry and deterministic static mirror, Tavi My pet/Tools conditional launch, documented host Home. Chromium and native execution still pending acceptance.",
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-22T19:31:21"
     },
     {
       "id": "TAVI-EXT-COMPANION-PREVIEW-086",
@@ -2104,7 +2117,15 @@
         "Review registry digest and importer dry-run/apply/idempotence and hostile messages.",
         "Rebuild Windows/Android/Web clients; test install consent, home/back, 80px portrait and account separation.",
         "Confirm Wallet/Notepad intact and no unwanted data migration."
-      ]
+      ],
+      "status": "review",
+      "acceptance_criteria": [
+        "Review registry digest and importer dry-run/apply/idempotence and hostile messages.",
+        "Rebuild Windows/Android/Web clients; test install consent, home/back, 80px portrait and account separation.",
+        "Confirm Wallet/Notepad intact and no unwanted data migration."
+      ],
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-22T21:01:26"
     },
     {
       "id": "TAVI-EXT-COMPANION-WINPATH-087",
@@ -2124,7 +2145,9 @@
         "Confirm Windows build and App Store/My pet/painted Companion preview; repeat in Android client. Operator native approval is required before Done.",
         "Preserve all existing workboard statuses, private data and LoopRD descriptor; source-only repair, no automatic Git push or deployment."
       ],
-      "implementation_summary": "Importer normalizes file URLs with fileURLToPath and source regression compares URL/native paths. No extension data or source digests changed."
+      "implementation_summary": "Importer normalizes file URLs with fileURLToPath and source regression compares URL/native paths. No extension data or source digests changed.",
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-22T21:01:26"
     },
     {
       "id": "TAVI-EXT-NATIVE-HTML-088",
@@ -2134,11 +2157,10 @@
       "status": "review",
       "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
       "acceptance_criteria": [
-        "Confirm approved Companion 0.6.11 source manifest, publisher and reviewed sha256 are unchanged, and all catalog entries/asset digests match canonical source.",
-        "Run node --test client/tests/extension-native-html-integrity-088.test.mjs, npm run extensions:check and npm run verify; ensure malformed or altered .bytes is denied.",
-        "Build exact 0.3.88 native Windows NSIS in ZipRunner and install Companion and Notepad using App Store; no size mismatch for HTML; My pet painted UI loads and returns Home.",
-        "Confirm the native Tauri CSP security rewrite remains enabled, iframe sandbox stays allow-scripts without same-origin, and Wallet stays core.",
-        "Repeat on Android and web; test account separation, persistence and native extension navigation. Do not mark Done until operator/device approval."
+        "Confirm Companion 0.6.11 publisher digest remains unchanged.",
+        "Check ZipRunner npm run verify and extensions:check on exact ZIP.",
+        "Install Companion in actual Windows WebView2; verify no HTML size mismatch, painted pet, navigation and note storage.",
+        "Validate Android/Web client and approved UI/extension security acceptance."
       ],
       "operator_checks": [
         "Confirm Companion 0.6.11 publisher digest remains unchanged.",
@@ -2146,7 +2168,9 @@
         "Install Companion in actual Windows WebView2; verify no HTML size mismatch, painted pet, navigation and note storage.",
         "Validate Android/Web client and approved UI/extension security acceptance."
       ],
-      "implementation_summary": "Add generated byte-for-byte HTML mirrors for native verification, retain authored HTML for normal Tauri CSP processing, reject tampered or missing mirrors and preserve reviewed publisher source."
+      "implementation_summary": "Add generated byte-for-byte HTML mirrors for native verification, retain authored HTML for normal Tauri CSP processing, reject tampered or missing mirrors and preserve reviewed publisher source.",
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-22T21:17:46"
     },
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -2168,7 +2192,9 @@
         "On deployed main LoopRD, back up Social DB and verify schema/version; reconcile if required without DB reset or downgrade.",
         "Prove balance persistence, first grant idempotency, protected free Gold, merchant/reward ACLs, duplicate replay and cross-account isolation; Windows/Android/Web Wallet operator acceptance required.",
         "No auto-push, deploy, separate ledger component, new DB, or second issuer."
-      ]
+      ],
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-22T22:12:57"
     },
     {
       "id": "TAVI-CI-COMPANION-BYTES-089",
@@ -2188,7 +2214,9 @@
         "Check .gitattributes forces binary byte preservation for affected canonical and mirrored JavaScript assets, with regression test.",
         "On operator-approved next push, inspect GitHub exact SHA source and Android CI: source tests must pass before APK build.",
         "Do not mark Android updater device acceptance complete based on CI; TAVI-UPDATES-003 remains in Review."
-      ]
+      ],
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-22T22:12:57"
     },
     {
       "id": "TAVI-UI-STORE-QA-091",
@@ -2211,7 +2239,9 @@
         "Confirm Wallet remains core (no App Store install), Companion remains optional and its publisher digest is unchanged.",
         "Inspect exact pushed SHA GitHub browser UI QA, Android and release gate; retain Android TAVI-UPDATES-003 open until actual on-device update succeeds."
       ],
-      "implementation_summary": "Replace ambiguous .tavi-store-item wait / first-card assertion with unique Notepad install control and a card filtered by that control; add Node regression and retain five-viewport Chromium QA as independent CI gate. Native Android and Windows not accepted."
+      "implementation_summary": "Replace ambiguous .tavi-store-item wait / first-card assertion with unique Notepad install control and a card filtered by that control; add Node regression and retain five-viewport Chromium QA as independent CI gate. Native Android and Windows not accepted.",
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-22T22:55:22"
     },
     {
       "id": "TAVI-ANDROID-BACK-092",
@@ -2233,7 +2263,9 @@
         "Inspect GitHub exact-commit Android, browser UI and source verification workflows; run physical-device QA before operator acceptance.",
         "Verify LoopRD descriptor, Ledger, Companion 0.6.11 publisher bytes and local saved sessions remain unchanged."
       ],
-      "implementation_summary": "Tauri 2.9.1 app onBackButtonPress listener and deterministic host navigation policy; inline SVG host glyphs; no server/database changes. Real APK acceptance pending."
+      "implementation_summary": "Tauri 2.9.1 app onBackButtonPress listener and deterministic host navigation policy; inline SVG host glyphs; no server/database changes. Real APK acceptance pending.",
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-23T12:36:41"
     },
     {
       "id": "TAVI-UX-MOBILE-093",
@@ -2242,11 +2274,11 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": [
-        "On Android and compact Windows, only one host toolbar is visible; swipe and tap between app categories and main tabs, preserving account and chats.",
-        "Back/Android gesture and Home always return to messenger without quitting; check 320/355/390/tablet widths, OS insets, keyboard and accessibility labels.",
-        "Open installed Companion 0.6.11 and confirm its painted world canvas is initially visible without scrolling past hero; partner asset pins and publisher digest are byte-identical.",
-        "Verify scroll overshoot recovers without trapping touches; keyboard/reduced-motion and iframe interactions continue to work.",
-        "Run exact-ZIP source/extension checks, Chromium UI QA and native Windows/Android acceptance; no change to Social release 0.3.83 or schema 11."
+        "Test Android 3-button and gesture Back and main icon tabs without process exit or draft loss.",
+        "Open Companion on Windows compact and Android; ensure world is on-screen immediately, observe publisher settings still available below.",
+        "Verify screen reader button labels, 44px targets, reduced-motion and swipe/elastic behavior at short and long scroll lengths.",
+        "Confirm reviewed Companion 0.6.11 digest and Wallet integrity unchanged; deploy no server migration.",
+        "Check GitHub exact-commit Android/Web/Windows and five-viewport browser UI QA before operator approval."
       ],
       "operator_checks": [
         "Test Android 3-button and gesture Back and main icon tabs without process exit or draft loss.",
@@ -2254,7 +2286,9 @@
         "Verify screen reader button labels, 44px targets, reduced-motion and swipe/elastic behavior at short and long scroll lengths.",
         "Confirm reviewed Companion 0.6.11 digest and Wallet integrity unchanged; deploy no server migration.",
         "Check GitHub exact-commit Android/Web/Windows and five-viewport browser UI QA before operator approval."
-      ]
+      ],
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-23T13:14:38"
     },
     {
       "id": "TAVI-UI-CORE-094",
@@ -2275,7 +2309,9 @@
         "On Android and Web, test 320px/390px and tablet viewports, device system Back, bottom tabs, dialogs, scroll, keyboard/safe areas, light/dark contrast and reduced-motion.",
         "Install Companion 0.6.11 and confirm its published iframe remains independently styled, sandboxed and byte-for-byte content-digest identical; Tavi host toolbar, Back and Home stay accessible.",
         "Check exact ZIP workboard preflight, npm run verify, Python tests, generated LoopRD descriptor, exact-push GitHub Android/Windows/Web and Chromium UI QA; operator acceptance before Done."
-      ]
+      ],
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-23T17:24:40"
     },
     {
       "id": "TAVI-UI-HOME-095",
@@ -2284,11 +2320,12 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": [
-        "Import 0.3.96 with ZipRunner; confirm new package/workboard metadata is valid and prior 142 ticket IDs and operator decisions remain unchanged.",
+        "Import 0.3.95 with ZipRunner; confirm new package/workboard metadata is valid and prior 142 ticket IDs and operator decisions remain unchanged.",
         "On compact Windows at 355x630, confirm Home, Contacts, Games, Settings and App Store use one shared header and four-tab navigation; the File/Contacts/Actions/Tools/Help bar and raised Home dock no longer render.",
         "Send and receive DMs; confirm unread counts, lobby, roster groups, friend requests, Gold and Companion shortcut still work, and separate native chat windows remain usable.",
         "On Android 320/390px and web 768px/desktop, test Home/Chats/Games/Apps tabs, system Back, scroll/safe insets, dark/light theme, large touch targets, keyboard, rotation and resize.",
-        "Verify browser five-viewport QA and actual Android/Windows screenshots; extension sandbox, Wallet/Companion integrity and LoopRD descriptor unchanged; do not mark Done before operator approval."
+        "Verify browser five-viewport QA and actual Android/Windows screenshots; extension sandbox, Wallet/Companion integrity and LoopRD descriptor unchanged; do not mark Done before operator approval.",
+        "Import 0.3.96 with ZipRunner; confirm new package/workboard metadata is valid and prior 142 ticket IDs and operator decisions remain unchanged."
       ],
       "operator_checks": [
         "Import 0.3.96 with ZipRunner; confirm new package/workboard metadata is valid and prior 142 ticket IDs and operator decisions remain unchanged.",
@@ -2297,7 +2334,9 @@
         "On Android 320/390px and web 768px/desktop, test Home/Chats/Games/Apps tabs, system Back, scroll/safe insets, dark/light theme, large touch targets, keyboard, rotation and resize.",
         "Verify browser five-viewport QA and actual Android/Windows screenshots; extension sandbox, Wallet/Companion integrity and LoopRD descriptor unchanged; do not mark Done before operator approval."
       ],
-      "implementation_summary": "Source candidate moves Home, Contacts and sign-in to shared host headers, bottom nav and tokenized roster styling. Live Windows/Android/browser acceptance pending."
+      "implementation_summary": "Source candidate moves Home, Contacts and sign-in to shared host headers, bottom nav and tokenized roster styling. Live Windows/Android/browser acceptance pending.",
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-23T17:53:06"
     },
     {
       "id": "TAVI-UI-MESSENGER-096",
@@ -2319,7 +2358,30 @@
         "Test 320px/390px Android and desktop/web widths: touch targets, keyboard, Android Back, bottom navigation, light/dark themes, square edges and no clipping of profiles or Companion.",
         "Verify npm run verify, descriptor check, Companion publisher digest, Windows/Android native builds and screenshots; keep in Review until operator device acceptance."
       ],
-      "implementation_summary": "Implemented two independent Tavi-owned presentation surfaces with shared semantic tokens and a pure mailbox view model. No server, Wallet or Companion bundle mutation; Android/Windows device visuals awaiting operator review."
+      "implementation_summary": "Implemented two independent Tavi-owned presentation surfaces with shared semantic tokens and a pure mailbox view model. No server, Wallet or Companion bundle mutation; Android/Windows device visuals awaiting operator review.",
+      "updated_at": "2026-10-23T18:44:07",
+      "status_updated_at": "2026-10-23T18:44:07"
+    },
+    {
+      "id": "TAVI-UI-CI-097",
+      "title": "Five-viewport browser QA adoption for messenger-first Home and Messages",
+      "priority": "high",
+      "status": "review",
+      "summary": "0.3.96 exact-SHA GitHub browser QA failed on all five viewports waiting for removed .tavi-roster-merged. Adapt real browser QA to verify separate Home and Messages, left/right portraits, 44px touch groups, safe insets and unchanged extension isolation. Current author environment passed source tests; CI/native review is pending.",
+      "acceptance_criteria": [
+        "Import exact 0.3.97 ZIP and verify all previous 144 workboard items, statuses and criteria are preserved without changing private local data.",
+        "Run npm run verify and npm --prefix client run ui:ci with Playwright Chromium; each of five supported viewports must pass without waiting for the obsolete merged roster.",
+        "Browser QA verifies profile left, Companion right, buddy group presence, Messages search/filter/lobby and absence of Wallet/Companion widgets there; preserve actual 44px touch and simulated Android safe-area checks.",
+        "Verify trusted Wallet and Companion 0.6.11 digest, isolated extension installation/launch, source-only LoopRD descriptor SHA and account privacy are unchanged.",
+        "After operator-authorized Git push, verify all eight GitHub push workflows including browser UI QA succeed on one exact new SHA; release must remain blocked if any required workflow is failed, missing or pending.",
+        "Confirm Windows WebView2 and physical Android display and navigation with operator screenshots; keep this ticket in Review until operator acceptance."
+      ],
+      "operator_checks": [
+        "Check exact ZIP hash and source version in ZipRunner, rerun and retain actual Windows post-update test evidence.",
+        "Inspect five-viewport browser report and exact new-SHA GitHub UI workflow; do not use success from 0.3.91.",
+        "Review 355x630 Windows and 320/390px Android Home vs Messages and keyboard/back interactions before Done."
+      ],
+      "implementation_summary": "Replaced obsolete .tavi-roster-merged browser selectors with current Home/Inbox, introduced photo placement check and touch/safe-area snapshots for real Home structure, and updated regression guard tests. No publisher or server changes."
     }
   ],
   "remaining": [
@@ -3162,7 +3224,9 @@
     {
       "id": "TAVI-EXT-COMPANION-NATIVE-QA-086",
       "title": "Operator approve installed Windows and Android Companion host experience",
-      "summary": "Native device checks for install, appearance, scope separation, closed/reopened saving, accessibility and shell navigation remain unverified."
+      "summary": "Native device checks for install, appearance, scope separation, closed/reopened saving, accessibility and shell navigation remain unverified.",
+      "priority": "medium",
+      "status": "planned"
     }
   ]
 }

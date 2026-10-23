@@ -43,7 +43,7 @@ test('native QA targets disposable Windows WebView2 and never the operator accou
 });
 test('browser fixture QA keeps game discovery in Games, tests all representative widths and uses shared back button',async()=>{
  const tool=await read('../tools/ui-qa.mjs');
- for(const frag of ['mobile-320','compact-355','mobile-390','tablet','desktop','tavi-roster-merged','tavi-shell-bar__back'])assert.ok(tool.includes(frag),frag);
+ for(const frag of ['mobile-320','compact-355','mobile-390','tablet','desktop','tavi-home-group-title','tavi-shell-bar__back'])assert.ok(tool.includes(frag),frag);
  assert.doesNotMatch(tool,/visible\(page,'\.tavi-discovered-mini'\)/);
  assert.doesNotMatch(tool,/tavi-extension-toolbar \[data-action="home"\]/);
 });

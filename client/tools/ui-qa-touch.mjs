@@ -3,8 +3,8 @@
 // Playwright runs this function in the page; Node tests pass a fake document.
 export function snapshotTouchTargets(doc) {
   const documentRef = doc || document;
-  const section = documentRef.querySelector('.tavi-roster-merged > .group-title');
-  const peers = [...documentRef.querySelectorAll('.tavi-roster-merged .buddy')];
+  const section = documentRef.querySelector('.tavi-home-messenger .tavi-home-group-title[data-group="online"]');
+  const peers = [...documentRef.querySelectorAll('.tavi-home-messenger .tavi-home-buddy')];
   if (!section || !peers.length) return null;
   const measure = element => {
     if (!element.isConnected) return null;

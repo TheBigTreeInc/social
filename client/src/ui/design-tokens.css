@@ -177,3 +177,14 @@
  display:flex;
  align-items:center;
 }
+
+/* v0.3.97: real messenger Home touch targets; legacy merged-roster selectors
+   remain only for backwards-compatible standalone contact-window markup. */
+:root[data-touch='true'] .tavi-home-messenger .tavi-home-group-title,
+:root[data-touch='true'] .tavi-home-messenger .tavi-home-buddy {
+  min-height:var(--tavi-hit-target-touch);
+}
+@media(pointer:coarse){
+ .tavi-home-messenger .tavi-home-group-title,
+ .tavi-home-messenger .tavi-home-buddy {min-height:var(--tavi-hit-target-touch);}
+}

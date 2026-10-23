@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.96",
-    "base_version": "0.3.95"
+    "version": "0.3.97",
+    "base_version": "0.3.96"
   },
   "update": {
-    "id": "TAVI-20261023-MESSENGER-HOME-0396",
+    "id": "TAVI-20261023-BROWSER-QA-0397",
     "kind": "source_update",
-    "created_at": "2026-10-23T18:00:00+02:00",
-    "summary": "UI-only: messenger Home with own profile top-left and Companion top-right; separate Messages inbox with search, unread filters and no Wallet/Companion chrome. Classic block styling using shared UI system."
+    "created_at": "2026-10-23T19:29:48+02:00",
+    "summary": "Client/browser QA repair: stop testing removed Home merged roster; test current messenger-first Home, distinct Messages inbox, portrait positions, touch/safe-area geometry. No LoopRD or reviewed extension changes."
   },
   "planned_work": [
     {
@@ -1531,6 +1531,27 @@
           "description": "Windows failure reproduction and operator acceptance instructions"
         }
       ]
+    },
+    {
+      "id": "TAVI-UI-CI-097",
+      "summary": "Replaced obsolete .tavi-roster-merged browser selectors with current Home/Inbox, introduced photo placement check and touch/safe-area snapshots for real Home structure, and updated regression guard tests. No publisher or server changes.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/tools/ui-qa.mjs",
+          "description": "Real browser fixture checks Home, Messages, touch, safe area, Wallet, Life and extensions"
+        },
+        {
+          "kind": "source",
+          "ref": "client/tools/ui-qa-touch.mjs",
+          "description": "Actual Home control geometry and no false zero-size acceptance"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/ui-qa-next-pass-076.test.mjs",
+          "description": "Regression rejects obsolete merged roster expectation"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -1863,6 +1884,11 @@
       "id": "TAVI-UI-MESSENGER-096",
       "status": "review",
       "reason": "Implementation source verified; actual compact Windows, Android, browser visual and native acceptance pending."
+    },
+    {
+      "id": "TAVI-UI-CI-097",
+      "status": "review",
+      "reason": "Exact .97 SHA GitHub UI QA, physical Android and Windows checks are not yet verified."
     }
   ],
   "validation": {
@@ -2093,11 +2119,44 @@
         "command": "node --test client/tests/extension-native-html-integrity-088.test.mjs && npm run extensions:check",
         "environment": "Node.js Linux; native Windows acceptance pending",
         "evidence_ref": "ZIPRUNNER_HANDOFF_COMPANION_NATIVE_HTML_0388.md"
+      },
+      {
+        "id": "TAVI-UI-CI-097-SOURCE",
+        "description": "Tavi v0.3.97 source verification on exact working tree",
+        "status": "passed",
+        "command": "npm run verify",
+        "environment": "Node 22 Linux; 11 server, 249 client, 20 OpenClaw tests"
+      },
+      {
+        "id": "TAVI-UI-CI-097-PY",
+        "description": "LoopRD Social Python unit regression",
+        "status": "passed",
+        "command": "python -m unittest discover -s tests -q",
+        "environment": "Python; 172 tests"
+      },
+      {
+        "id": "TAVI-UI-CI-097-LOOPRD",
+        "description": "Unmodified descriptor and reviewed extension integrity",
+        "status": "passed",
+        "command": "python tools/generate-looprd.py --check && node tools/sync-internal-extensions.mjs --check",
+        "environment": "Linux; source check only"
+      },
+      {
+        "id": "TAVI-UI-CI-097-BROWSER",
+        "description": "Actual Chromium five-viewport browser UI QA",
+        "status": "not_run",
+        "reason": "npm client dependencies could not be installed in author container; operator ZipRunner/GitHub exact new SHA required"
+      },
+      {
+        "id": "TAVI-UI-CI-097-NATIVE",
+        "description": "Real Android and Windows messenger navigation/safe insets",
+        "status": "not_run",
+        "reason": "Requires operator native device approval"
       }
     ]
   },
   "handover": {
-    "next_pass": "Import 0.3.96 via ZipRunner and verify Home profile/Companion positions, messenger buddy groups, Messages-only inbox and filters on Android/Windows; collect real screenshots before accepting UI work. Do not change LoopRD server or publisher bundles.",
+    "next_pass": "Import 0.3.97 into ZipRunner, capture exact installed ZIP hash and post-update checks. Push only with operator approval; verify new exact GitHub SHA all eight workflows, especially five-viewport UI QA. Keep TAVI-UI-CI-097, TAVI-UI-MESSENGER-096 and TAVI-QA-047 open for device/evidence reconciliation.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -2135,12 +2194,7 @@
       "Life v0.5.87 has internal async command architecture but no public /play; source-only native match chat cannot establish hostless multiplayer.",
       "Life hostless authenticated create/join and legal action endpoints are not deployed; v0.3.46 only provides the Tavi-to-agent challenge handshake."
     ],
-    "notes": [
-      "Client-side resume logic and minimal login UI only; Social database schema 6 unchanged.",
-      "Neither the build scripts nor the ZIP push Git or alter local runtime/private state.",
-      "New Social schema 7 is additive, requires backup/migration and operator approval; no automatic Git push.",
-      "Exact 0.3.74 release and CI observed independently through GitHub; source 0.3.76 tests do not imply a new GitHub release."
-    ]
+    "notes": "0.3.97 changes client UI QA/tests and touch group-target CSS, not messenger business logic, LoopRD descriptor or reviewed Companion publisher. No automated release/deployment."
   },
   "operator_actions": [
     {
@@ -2212,17 +2266,23 @@
       "id": "TAVI-WALLET-CORE-083-OP",
       "description": "Review Gold link/Wallet core on Windows and Android (no App Store install) against a compatible staging LoopRD schema-11 server and unavailable state; approve after exact CI evidence.",
       "status": "required"
+    },
+    {
+      "id": "TAVI-UI-CI-097-OP",
+      "description": "Import 0.3.97 ZIP, run npm --prefix client run ui:ci, inspect five viewport screenshots/reports and exact next push-SHA workflows; physical Android/Windows approval separately.",
+      "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Tavi 0.3.96 source candidate; Home and Messages separation only. No Git push, deployment or operator/device approval."
+    "notes": "0.3.97 source candidate only; no automatic push, release, server publication or device approval."
   },
   "release_notes": {
-    "version": "0.3.96",
-    "summary": "Messenger-first Home profile left, Companion right, buddy roster; Messages-only inbox with search, filters and block-style shared shell.",
+    "version": "0.3.97",
+    "summary": "Repair exact-commit browser UI QA for 0.3.96 messenger Home / Messages layout; preserve 0.3.96 interface and publisher integrity.",
     "server_unchanged": "looprd-social release 0.3.83/schema 11",
-    "native_qa": "pending"
+    "native_qa": "pending",
+    "browser_qa": "requires real Chromium run on exact 0.3.97 SHA"
   }
 }

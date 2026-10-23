@@ -7,6 +7,12 @@ function el(height,{connected=true,width=320}={}){
 function fixture(section,rows){
  return {querySelector:()=>section,querySelectorAll:()=>rows,defaultView:{getComputedStyle:e=>e.style}};
 }
+test('new Home touch snapshot measures the online group and buddy rows, not the removed merged roster',()=>{
+ const s=String(snapshotTouchTargets);
+ assert.match(s,/\.tavi-home-messenger \.tavi-home-group-title/);
+ assert.match(s,/\.tavi-home-messenger \.tavi-home-buddy/);
+ assert.doesNotMatch(s,/tavi-roster-merged/);
+});
 test('browser touch QA retries an unpainted or detached roster instead of reading 0px',()=>{
  assert.equal(snapshotTouchTargets(fixture(el(0),[el(44)])),null);
  assert.equal(snapshotTouchTargets(fixture(el(44),[el(0)])),null);

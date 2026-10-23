@@ -17,7 +17,7 @@ test('Touch devices use an explicit host capability flag without widening mouse-
  const [main,styles,qa]=await Promise.all([file('../src/main.js'),file('../src/ui/design-tokens.css'),file('../tools/ui-qa.mjs')]);
  assert.match(main,/navigator\.maxTouchPoints/);
  assert.match(main,/document\.documentElement\.dataset\.touch/);
- assert.match(styles,/:root\[data-touch='true'\] \.tavi-classic-home \.tavi-roster-merged \.buddy/);
+ assert.match(styles,/:root\[data-touch='true'\] \.tavi-home-messenger \.tavi-home-group-title/);
  assert.match(styles,/min-height:var\(--tavi-hit-target-touch\)/);
  assert.match(qa,/touch input not recognized/);
  assert.match(qa,/buddy rows too small for touch/);
