@@ -1,17 +1,32 @@
 {
-  "schema": "tavi.embedded-looprd-backend/v1",
+  "schema": "tavi.looprd-wallet-backend/v2",
   "extensionId": "org.tavi.core.wallet",
-  "component": "looprd-social",
-  "authRealm": "tavi-social",
-  "source": "wallet_ledger.py",
   "apiSchema": "tavi.wallet/v1",
-  "databaseSchemaVersion": 12,
-  "databaseOwnership": "looprd-social",
-  "handlers": {
-    "user": "/wallet",
-    "merchant": "/ecosystem/wallet-merchant",
-    "reward": "/ecosystem/wallet-reward"
+  "uiBroker": {
+    "component": "looprd-social",
+    "authRealm": "tavi-social",
+    "userHandler": "/wallet"
   },
-  "deployment": "embed-in-existing-component",
-  "migration": "none-no-secondary-database"
+  "serviceComponent": {
+    "component": "tavi-wallet",
+    "source": "looprd.yaml",
+    "auth": "database",
+    "contracts": {
+      "merchant": "tavi-wallet-merchant",
+      "reward": "tavi-wallet-reward"
+    },
+    "parentBroker": {
+      "component": "looprd-social",
+      "contract": "tavi-wallet-ledger-broker",
+      "version": 1,
+      "credentialSecret": "tavi-wallet-social-service-key"
+    }
+  },
+  "ledger": {
+    "component": "looprd-social",
+    "databaseSchemaVersion": 12,
+    "storageOwnership": "looprd-social",
+    "migration": "planned-explicit-storage-split"
+  },
+  "deployment": "looprd-0.4-subcomponent-service-facade"
 }

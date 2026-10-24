@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.103
+release: 0.3.107
 api:
   version: v1
 cors:
@@ -15,7 +15,10 @@ requires:
 - push.unifiedpush
 - management.data
 - service.contracts
+- spec.subcomponents
 - reports.bugs
+subcomponents:
+- source: extensions/org.tavi.core.wallet/looprd/looprd.yaml
 auth:
   mode: verified
   realm: tavi-social
@@ -1783,7 +1786,18 @@ handlers:
     \    return await run_in_threadpool(_run_service,ctx)\n\n\ndef _run_reward(ctx):\n    if getattr(ctx.principal,'kind',None)!='service':\n\
     \        return {'accepted':False,'reason':'service_identity_required'}\n    with ctx.transaction() as db:\n\
     \        return execute_reward(db,getattr(ctx.principal,'subject',None),ctx.body)\n\n\nasync def handle_reward(ctx):\n\
-    \    return await run_in_threadpool(_run_reward,ctx)\n"
+    \    return await run_in_threadpool(_run_reward,ctx)\n\n\ndef _run_service_broker(ctx):\n    \"\"\"Accept only\
+    \ the LoopRD 0.4 tavi-wallet child as a ledger service broker.\n\n    The child authenticates the original game/service\
+    \ with a service-bound LoopRD\n    key and forwards that stable component ID in ``actor``. Social remains the\n\
+    \    authoritative ledger database until the explicit storage migration pass.\n    \"\"\"\n    principal=getattr(ctx,'principal',None)\n\
+    \    if getattr(principal,'kind',None)!='service' or getattr(principal,'subject',None)!='tavi-wallet':\n   \
+    \     return {'accepted':False,'reason':'wallet_broker_identity_required'}\n    body=ctx.body if isinstance(ctx.body,dict)\
+    \ else {}\n    if body.get('schema')!='tavi.wallet-broker/v1':\n        return {'accepted':False,'reason':'invalid_request'}\n\
+    \    channel=body.get('channel');actor=body.get('actor');command=body.get('command')\n    if channel not in\
+    \ ('merchant','reward') or not isinstance(actor,str) or not CALLER.fullmatch(actor) or not isinstance(command,dict):\n\
+    \        return {'accepted':False,'reason':'invalid_request'}\n    with ctx.transaction() as db:\n        if\
+    \ channel=='merchant':\n            return execute_merchant(db,actor,command.get('op'),command)\n        return\
+    \ execute_reward(db,actor,command)\n\n\nasync def handle_service_broker(ctx):\n    return await run_in_threadpool(_run_service_broker,ctx)\n"
 - path: /ecosystem/wallet-merchant
   method: POST
   kind: python
@@ -2004,7 +2018,19 @@ handlers:
     \    return await run_in_threadpool(_run_service,ctx)\n\n\ndef _run_reward(ctx):\n    if getattr(ctx.principal,'kind',None)!='service':\n\
     \        return {'accepted':False,'reason':'service_identity_required'}\n    with ctx.transaction() as db:\n\
     \        return execute_reward(db,getattr(ctx.principal,'subject',None),ctx.body)\n\n\nasync def handle_reward(ctx):\n\
-    \    return await run_in_threadpool(_run_reward,ctx)\n\n\nasync def handle(ctx):\n    return await handle_merchant(ctx)\n"
+    \    return await run_in_threadpool(_run_reward,ctx)\n\n\ndef _run_service_broker(ctx):\n    \"\"\"Accept only\
+    \ the LoopRD 0.4 tavi-wallet child as a ledger service broker.\n\n    The child authenticates the original game/service\
+    \ with a service-bound LoopRD\n    key and forwards that stable component ID in ``actor``. Social remains the\n\
+    \    authoritative ledger database until the explicit storage migration pass.\n    \"\"\"\n    principal=getattr(ctx,'principal',None)\n\
+    \    if getattr(principal,'kind',None)!='service' or getattr(principal,'subject',None)!='tavi-wallet':\n   \
+    \     return {'accepted':False,'reason':'wallet_broker_identity_required'}\n    body=ctx.body if isinstance(ctx.body,dict)\
+    \ else {}\n    if body.get('schema')!='tavi.wallet-broker/v1':\n        return {'accepted':False,'reason':'invalid_request'}\n\
+    \    channel=body.get('channel');actor=body.get('actor');command=body.get('command')\n    if channel not in\
+    \ ('merchant','reward') or not isinstance(actor,str) or not CALLER.fullmatch(actor) or not isinstance(command,dict):\n\
+    \        return {'accepted':False,'reason':'invalid_request'}\n    with ctx.transaction() as db:\n        if\
+    \ channel=='merchant':\n            return execute_merchant(db,actor,command.get('op'),command)\n        return\
+    \ execute_reward(db,actor,command)\n\n\nasync def handle_service_broker(ctx):\n    return await run_in_threadpool(_run_service_broker,ctx)\n\
+    \n\nasync def handle(ctx):\n    return await handle_merchant(ctx)\n"
   contract:
     name: tavi-wallet-merchant
     version: 1
@@ -2268,7 +2294,19 @@ handlers:
     \    return await run_in_threadpool(_run_service,ctx)\n\n\ndef _run_reward(ctx):\n    if getattr(ctx.principal,'kind',None)!='service':\n\
     \        return {'accepted':False,'reason':'service_identity_required'}\n    with ctx.transaction() as db:\n\
     \        return execute_reward(db,getattr(ctx.principal,'subject',None),ctx.body)\n\n\nasync def handle_reward(ctx):\n\
-    \    return await run_in_threadpool(_run_reward,ctx)\n\n\nasync def handle(ctx):\n    return await handle_reward(ctx)\n"
+    \    return await run_in_threadpool(_run_reward,ctx)\n\n\ndef _run_service_broker(ctx):\n    \"\"\"Accept only\
+    \ the LoopRD 0.4 tavi-wallet child as a ledger service broker.\n\n    The child authenticates the original game/service\
+    \ with a service-bound LoopRD\n    key and forwards that stable component ID in ``actor``. Social remains the\n\
+    \    authoritative ledger database until the explicit storage migration pass.\n    \"\"\"\n    principal=getattr(ctx,'principal',None)\n\
+    \    if getattr(principal,'kind',None)!='service' or getattr(principal,'subject',None)!='tavi-wallet':\n   \
+    \     return {'accepted':False,'reason':'wallet_broker_identity_required'}\n    body=ctx.body if isinstance(ctx.body,dict)\
+    \ else {}\n    if body.get('schema')!='tavi.wallet-broker/v1':\n        return {'accepted':False,'reason':'invalid_request'}\n\
+    \    channel=body.get('channel');actor=body.get('actor');command=body.get('command')\n    if channel not in\
+    \ ('merchant','reward') or not isinstance(actor,str) or not CALLER.fullmatch(actor) or not isinstance(command,dict):\n\
+    \        return {'accepted':False,'reason':'invalid_request'}\n    with ctx.transaction() as db:\n        if\
+    \ channel=='merchant':\n            return execute_merchant(db,actor,command.get('op'),command)\n        return\
+    \ execute_reward(db,actor,command)\n\n\nasync def handle_service_broker(ctx):\n    return await run_in_threadpool(_run_service_broker,ctx)\n\
+    \n\nasync def handle(ctx):\n    return await handle_reward(ctx)\n"
   contract:
     name: tavi-wallet-reward
     version: 1
@@ -2306,7 +2344,8 @@ handlers:
           maxLength: 48
         amount:
           type: string
-          pattern: ^[1-9][0-9]{0,12}$
+          minLength: 1
+          maxLength: 13
     response:
       type: object
       required:
@@ -2324,6 +2363,273 @@ handlers:
         transactionId:
           type: integer
           minimum: 1
+- path: /ecosystem/wallet-ledger-broker
+  method: POST
+  kind: python
+  scopes:
+  - social:service
+  source: "\"\"\"First-party virtual wallet inside the Social home-realm database.\n\nSeparately owned ledger tables\
+    \ and narrow commands permit later extraction into a\nstandalone LoopRD Ledger component without changing currency\
+    \ or receipt IDs.\nNo fiat, cash-out, paid tokens, credit, gambling stakes or client-side minting.\n\"\"\"\n\
+    import hashlib\nimport json\nimport os\nimport re\nimport time\nimport sqlalchemy as sa\nfrom starlette.concurrency\
+    \ import run_in_threadpool\n\nWALLET_SCHEMA = 'tavi.wallet/v1'\nGOLD = 'gold'\nTREASURY = 'system:treasury'\n\
+    ACCOUNT = re.compile(r'^acct_[1-9][0-9]{0,18}$')\nCURRENCY = re.compile(r'^[a-z][a-z0-9._:-]{0,47}$')\nSKU =\
+    \ re.compile(r'^[a-z][a-z0-9._:-]{1,95}$')\nREQUEST = re.compile(r'^[A-Za-z0-9_-]{8,96}$')\nCALLER = re.compile(r'^[a-z][a-z0-9-]{1,47}$')\n\
+    MAX_AMOUNT = 10**12\nBALANCE = sa.table('WalletBalance',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n\
+    \    sa.column('currencyId',sa.String),sa.column('amount',sa.BigInteger))\nTX = sa.table('WalletTransaction',sa.column('id',sa.Integer),sa.column('actor',sa.String),\n\
+    \    sa.column('requestId',sa.String),sa.column('digest',sa.String),sa.column('kind',sa.String),\n    sa.column('data',sa.JSON),sa.column('created',sa.Integer))\n\
+    ENTRY = sa.table('WalletEntry',sa.column('id',sa.Integer),sa.column('transactionId',sa.Integer),\n    sa.column('accountId',sa.String),sa.column('currencyId',sa.String),sa.column('delta',sa.BigInteger))\n\
+    RESERVE = sa.table('WalletRestrictedBalance',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n\
+    \    sa.column('currencyId',sa.String),sa.column('amount',sa.BigInteger))\nREWARD = sa.table('WalletRewardIssue',sa.column('id',sa.Integer),sa.column('merchant',sa.String),\n\
+    \    sa.column('eventId',sa.String),sa.column('recipient',sa.String),sa.column('currencyId',sa.String),\n  \
+    \  sa.column('amount',sa.BigInteger),sa.column('transactionId',sa.Integer),sa.column('created',sa.Integer))\n\
+    ORDER = sa.table('WalletOrder',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n    sa.column('sku',sa.String),sa.column('currencyId',sa.String),sa.column('price',sa.BigInteger),\n\
+    \    sa.column('merchant',sa.String),sa.column('state',sa.String),sa.column('transactionId',sa.Integer),\n \
+    \   sa.column('created',sa.Integer))\n\n\ndef failure(code):\n    return {'ok':False,'code':code,'error':code.replace('_','\
+    \ ')}\n\n\ndef amount(value, *, positive=True):\n    if not isinstance(value,str) or not re.fullmatch(r'(?:0|[1-9][0-9]{0,12})',value):\n\
+    \        raise ValueError('invalid_amount')\n    n=int(value)\n    if n>MAX_AMOUNT or (positive and n<=0):raise\
+    \ ValueError('invalid_amount')\n    return n\n\n\ndef valid_request(value):\n    if not isinstance(value,str)\
+    \ or not REQUEST.fullmatch(value):raise ValueError('invalid_request_id')\n    return value\n\n\ndef currency_catalog():\n\
+    \    # Operator-approved metadata only. No exchange routes or prices from the UI.\n    result={'gold':{'id':'gold','name':'Gold','decimals':0,'symbol':'✦','scope':'realm'}}\n\
+    \    try: data=json.loads(os.environ.get('LOOPRD_TAVI_WALLET_CURRENCIES_JSON','[]'))\n    except (ValueError,TypeError):return\
+    \ result\n    if not isinstance(data,list) or len(data)>24:return result\n    for item in data:\n        if\
+    \ not isinstance(item,dict) or set(item)!={'id','name','symbol','decimals','scope'}:continue\n        id_=item['id']\n\
+    \        if id_=='gold' or not isinstance(id_,str) or not CURRENCY.fullmatch(id_):continue\n        if (not\
+    \ isinstance(item['name'],str) or not 1<=len(item['name'])<=50 or\n            not isinstance(item['symbol'],str)\
+    \ or not 1<=len(item['symbol'])<=4 or\n            type(item['decimals']) is not int or not 0<=item['decimals']<=6\
+    \ or\n            item['scope'] not in ('realm','game')):continue\n        result[id_]=item\n    return result\n\
+    \n\ndef offers():\n    \"\"\"Static operator-approved SKUs; offer state never comes from publisher iframe.\"\
+    \"\"\n    try: data=json.loads(os.environ.get('LOOPRD_TAVI_WALLET_OFFERS_JSON','[]'))\n    except (ValueError,TypeError):return\
+    \ {}\n    if not isinstance(data,list) or len(data)>150:return {}\n    currency_ids=currency_catalog()\n   \
+    \ result={}\n    for x in data:\n        if not isinstance(x,dict) or set(x)!={'sku','title','merchant','type','currencyId','price'}:continue\n\
+    \        try:\n            if (not isinstance(x['sku'],str) or not SKU.fullmatch(x['sku']) or\n            \
+    \    not isinstance(x['merchant'],str) or not CALLER.fullmatch(x['merchant']) or\n                not isinstance(x['title'],str)\
+    \ or not 1<=len(x['title'])<=90 or\n                any(ord(c)<32 for c in x['title']) or x['type'] not in ('entry','item')\
+    \ or\n                x['currencyId'] not in currency_ids):continue\n            amount(x['price'],positive=False)\n\
+    \        except (ValueError,TypeError,KeyError):continue\n        result[x['sku']]=x\n    return result\n\n\n\
+    def conversion_rates():\n    \"\"\"Exact rational quotes, operator supplied; reverse requires another explicit\
+    \ rule.\"\"\"\n    try: data=json.loads(os.environ.get('LOOPRD_TAVI_WALLET_RATES_JSON','[]'))\n    except (ValueError,TypeError):return\
+    \ []\n    if not isinstance(data,list) or len(data)>40:return []\n    known=currency_catalog(); result=[];seen=set()\n\
+    \    for item in data:\n        if not isinstance(item,dict) or set(item)!={'from','to','numerator','denominator'}:continue\n\
+    \        try:\n            a,b=item['from'],item['to']\n            if a not in known or b not in known or a==b\
+    \ or (a,b) in seen:continue\n            n=amount(item['numerator']);d=amount(item['denominator'])\n       \
+    \     if n>1000000 or d>1000000:continue\n        except (KeyError,TypeError,ValueError):continue\n        seen.add((a,b));result.append({'from':a,'to':b,'numerator':str(n),'denominator':str(d)})\n\
+    \    return result\n\n\ndef merchants():\n    try: data=json.loads(os.environ.get('LOOPRD_TAVI_WALLET_MERCHANTS_JSON','{}'))\n\
+    \    except (ValueError,TypeError):return {}\n    if not isinstance(data,dict) or len(data)>32:return {}\n \
+    \   return {key:set(values) for key,values in data.items()\n        if isinstance(key,str) and CALLER.fullmatch(key)\
+    \ and isinstance(values,list)\n        and len(values)<=100 and all(isinstance(v,str) and SKU.fullmatch(v) for\
+    \ v in values)}\n\n\ndef reward_policy():\n    \"\"\"Explicit trusted merchant limits. Absent config means no\
+    \ reward minting.\"\"\"\n    try: raw=json.loads(os.environ.get('LOOPRD_TAVI_WALLET_REWARDS_JSON','{}'))\n \
+    \   except (ValueError,TypeError):return {}\n    if not isinstance(raw,dict) or len(raw)>32:return {}\n    catalog=currency_catalog();result={}\n\
+    \    for merchant,limits in raw.items():\n        if (not isinstance(merchant,str) or not CALLER.fullmatch(merchant)\n\
+    \            or not isinstance(limits,dict) or set(limits)!={'currencyId','maxPerEvent','dailyPerPlayer'}):continue\n\
+    \        try:\n            if limits['currencyId'] not in catalog:continue\n            maximum=amount(limits['maxPerEvent']);daily=amount(limits['dailyPerPlayer'])\n\
+    \            if maximum>10000 or daily>100000 or daily<maximum:continue\n        except (TypeError,ValueError,KeyError):continue\n\
+    \        result[merchant]={'currencyId':limits['currencyId'], 'maxPerEvent':maximum,\n            'dailyPerPlayer':daily}\n\
+    \    return result\n\n\ndef wallet_amount(db,subject,currency):\n    row=db.execute(sa.select(BALANCE.c.amount).where(BALANCE.c.subjectId==subject,\n\
+    \        BALANCE.c.currencyId==currency)).scalar_one_or_none()\n    return int(row or 0)\n\n\ndef restricted_amount(db,subject,currency):\n\
+    \    value=db.execute(sa.select(RESERVE.c.amount).where(RESERVE.c.subjectId==subject,\n        RESERVE.c.currencyId==currency)).scalar_one_or_none()\n\
+    \    return int(value or 0)\n\n\ndef shopping_amount(db,subject,currency):\n    total=wallet_amount(db,subject,currency)\n\
+    \    protected=restricted_amount(db,subject,currency)\n    if protected<0 or protected>total:raise ValueError('wallet_restricted_balance_corrupt')\n\
+    \    return total-protected\n\n\ndef _apply_restriction(db,subject,currency,delta):\n    if not ACCOUNT.fullmatch(str(subject)):raise\
+    \ ValueError('invalid_restriction_subject')\n    db.execute(sa.text('''INSERT INTO \"WalletRestrictedBalance\"\
+    \ (subjectId,currencyId,amount)\n        VALUES (:subject,:currency,0) ON CONFLICT(subjectId,currencyId) DO\
+    \ NOTHING'''),\n        {'subject':subject,'currency':currency})\n    result=db.execute(sa.text('''UPDATE \"\
+    WalletRestrictedBalance\"\n        SET amount=amount+:delta WHERE subjectId=:subject AND currencyId=:currency\n\
+    \        AND amount+:delta>=0 AND amount+:delta <=\n            (SELECT amount FROM \"WalletBalance\" WHERE\
+    \ subjectId=:subject AND currencyId=:currency)'''),\n        {'subject':subject,'currency':currency,'delta':delta})\n\
+    \    if result.rowcount!=1:raise ValueError('restricted_balance_violation')\n\n\ndef _apply_entry(db,account,currency,delta):\n\
+    \    db.execute(sa.text('''INSERT INTO \"WalletBalance\" (subjectId,currencyId,amount)\n        VALUES (:subject,:currency,0)\
+    \ ON CONFLICT(subjectId,currencyId) DO NOTHING'''),\n        {'subject':account,'currency':currency})\n    stmt='''UPDATE\
+    \ \"WalletBalance\" SET amount=amount+:delta\n        WHERE subjectId=:subject AND currencyId=:currency'''\n\
+    \    if account!=TREASURY:stmt+=' AND amount+:delta>=0'\n    updated=db.execute(sa.text(stmt),{'subject':account,'currency':currency,'delta':delta})\n\
+    \    if updated.rowcount!=1:raise ValueError('insufficient_funds')\n\n\ndef _receipt(db,actor,request_id,digest):\n\
+    \    row=db.execute(sa.select(TX).where(TX.c.actor==actor,TX.c.requestId==request_id)).mappings().first()\n\
+    \    if not row:return None\n    if row['digest']!=digest:raise ValueError('request_conflict')\n    return row['data']\n\
+    \n\ndef _post(db,actor,request_id,kind,payload,changes,now,restricted_changes=()):\n    valid_request(request_id)\n\
+    \    if not isinstance(changes,list) or len(changes)>8:raise ValueError('invalid_entries')\n    by_currency={}\n\
+    \    for account,currency,delta in changes:\n        if not isinstance(account,str) or not CURRENCY.fullmatch(currency)\
+    \ or type(delta) is not int:\n            raise ValueError('invalid_entries')\n        by_currency[currency]=by_currency.get(currency,0)+delta\n\
+    \    if any(v!=0 for v in by_currency.values()):raise ValueError('unbalanced_journal')\n    if not isinstance(restricted_changes,(list,tuple))\
+    \ or len(restricted_changes)>4:\n        raise ValueError('invalid_restrictions')\n    for account,currency,delta\
+    \ in restricted_changes:\n        if not ACCOUNT.fullmatch(str(account)) or not CURRENCY.fullmatch(currency)\
+    \ or type(delta) is not int:\n            raise ValueError('invalid_restrictions')\n    digest=hashlib.sha256(json.dumps({'kind':kind,'payload':payload,'entries':changes,'restrictions':restricted_changes},\n\
+    \        sort_keys=True,separators=(',',':')).encode()).hexdigest()\n    prior=_receipt(db,actor,request_id,digest)\n\
+    \    if prior is not None:return prior,False\n    for account,currency,delta in changes:_apply_entry(db,account,currency,delta)\n\
+    \    for account,currency,delta in restricted_changes:_apply_restriction(db,account,currency,delta)\n    tx_id=db.execute(sa.insert(TX).values(actor=actor,requestId=request_id,digest=digest,\n\
+    \        kind=kind,data={},created=now).returning(TX.c.id)).scalar_one()\n    for account,currency,delta in\
+    \ changes:\n        db.execute(sa.insert(ENTRY).values(transactionId=tx_id,accountId=account,\n            currencyId=currency,delta=delta))\n\
+    \    result={'ok':True,'schema':'tavi.wallet-receipt/v1','transactionId':tx_id,\n        'kind':kind,'created':now,**payload}\n\
+    \    db.execute(sa.update(TX).where(TX.c.id==tx_id).values(data=result))\n    return result,True\n\n\ndef ensure_welcome(db,actor,now):\n\
+    \    # The initial 100 Gold grant is intrinsically restricted; no legacy funds.\n    previous=db.execute(sa.select(TX.c.id).where(TX.c.actor==actor,\n\
+    \        TX.c.requestId=='wallet-welcome-v1')).scalar_one_or_none()\n    if previous is not None:return\n  \
+    \  _post(db,actor,'wallet-welcome-v1','welcome',\n        {'currencyId':GOLD,'amount':'100','restricted':'100'},\n\
+    \        [(TREASURY,GOLD,-100),(actor,GOLD,100)],now,\n        [(actor,GOLD,100)])\n\n\ndef snapshot(db,actor):\n\
+    \    def view(cid):\n        total=wallet_amount(db,actor,cid)\n        protected=restricted_amount(db,actor,cid)\n\
+    \        if protected>total:raise ValueError('wallet_restricted_balance_corrupt')\n        return {'currencyId':cid,'amount':str(total),'playOnly':str(protected),\n\
+    \                'availableForShopping':str(total-protected)}\n    return {'ok':True,'schema':WALLET_SCHEMA,'balances':[\n\
+    \        view(cid) for cid in currency_catalog()], 'currencies':list(currency_catalog().values()),\n       \
+    \ 'rates':conversion_rates(),'offers':list(offers().values()),'faucet':{'currencyId':GOLD,\n        'target':'100','claimable':restricted_amount(db,actor,GOLD)<100,\n\
+    \        'purpose':'game_entries_only'}}\n\n\ndef execute_wallet(db,actor,body,now=None):\n    now=int(time.time())\
+    \ if now is None else int(now)\n    if not ACCOUNT.fullmatch(str(actor)):return failure('auth_required')\n \
+    \   if not isinstance(body,dict):return failure('invalid_request')\n    op=body.get('op')\n    if op not in\
+    \ ('balance','transactions','claim','convert','purchase','order_status'):\n        return failure('unsupported_wallet_operation')\n\
+    \    try:\n        ensure_welcome(db,actor,now)\n        if op=='balance':return snapshot(db,actor)\n      \
+    \  if op=='transactions':\n            limit=body.get('limit',40)\n            if type(limit) is not int or\
+    \ not 1<=limit<=100:raise ValueError('invalid_limit')\n            records=db.execute(sa.select(TX).where(TX.c.actor==actor)\n\
+    \                .order_by(TX.c.id.desc()).limit(limit)).mappings().all()\n            receipts=[]\n       \
+    \     for r in records:\n                item=dict(r['data'])\n                if r['kind']=='purchase':\n \
+    \                   order=db.execute(sa.select(ORDER.c.state,ORDER.c.id).where(\n                        ORDER.c.transactionId==r['id'],ORDER.c.subjectId==actor)).first()\n\
+    \                    if order:item.update(fulfillment=order.state,orderId=order.id)\n                receipts.append(item)\n\
+    \            return {'ok':True,'schema':'tavi.wallet-history/v1','transactions':receipts}\n        if op=='order_status':\n\
+    \            order_id=body.get('orderId')\n            if type(order_id) is not int or order_id<1:raise ValueError('invalid_order')\n\
+    \            row=db.execute(sa.select(ORDER).where(ORDER.c.id==order_id,\n                ORDER.c.subjectId==actor)).mappings().first()\n\
+    \            if not row:return failure('order_not_found')\n            return {'ok':True,'schema':'tavi.wallet-order/v1','orderId':row['id'],\n\
+    \                'sku':row['sku'],'state':row['state'],'transactionId':row['transactionId']}\n        request_id=valid_request(body.get('requestId'))\n\
+    \        prior=db.execute(sa.select(TX.c.kind,TX.c.data).where(\n            TX.c.actor==actor,TX.c.requestId==request_id)).mappings().first()\n\
+    \        if prior:\n            receipt=prior['data']\n            valid=(op=='claim' and prior['kind']=='refill'\
+    \ or\n                op=='convert' and prior['kind']=='conversion' and\n                receipt.get('from')==body.get('from')\
+    \ and receipt.get('to')==body.get('to') and\n                receipt.get('debited')==body.get('amount') and\n\
+    \                receipt.get('numerator')==body.get('expectedNumerator') and\n                receipt.get('denominator')==body.get('expectedDenominator')\
+    \ or\n                op=='purchase' and prior['kind']=='purchase' and receipt.get('sku')==body.get('sku'))\n\
+    \            return receipt if valid else failure('request_conflict')\n        if op=='claim':\n           \
+    \ protected=restricted_amount(db,actor,GOLD)\n            if protected>=100:return failure('refill_not_needed')\n\
+    \            difference=100-protected\n            result,_=_post(db,actor,request_id,'refill',\n          \
+    \      {'currencyId':GOLD,'amount':str(difference),'restricted':str(difference),\n                 'purpose':'game_entries_only'},\n\
+    \                [(TREASURY,GOLD,-difference),(actor,GOLD,difference)],now,\n                [(actor,GOLD,difference)])\n\
+    \            return result\n        if op=='convert':\n            src=body.get('from');dst=body.get('to');units=amount(body.get('amount'))\n\
+    \            rule=next((r for r in conversion_rates() if r['from']==src and r['to']==dst),None)\n          \
+    \  if rule is None:raise ValueError('conversion_unavailable')\n            numerator,denominator=int(rule['numerator']),int(rule['denominator'])\n\
+    \            if body.get('expectedNumerator')!=rule['numerator'] or body.get('expectedDenominator')!=rule['denominator']:\n\
+    \                raise ValueError('conversion_rate_changed')\n            if (units*numerator)%denominator:raise\
+    \ ValueError('fractional_conversion')\n            obtained=units*numerator//denominator\n            if not\
+    \ 0<obtained<=MAX_AMOUNT:raise ValueError('invalid_conversion_amount')\n            if shopping_amount(db,actor,src)<units:\n\
+    \                raise ValueError('conversion_requires_earned_currency')\n            result,_=_post(db,actor,request_id,'conversion',\n\
+    \                {'from':src,'to':dst,'debited':str(units),'credited':str(obtained),\n                 'numerator':str(numerator),'denominator':str(denominator)},\n\
+    \                [(actor,src,-units),(TREASURY,src,units),\n                 (TREASURY,dst,-obtained),(actor,dst,obtained)],now)\n\
+    \            return result\n        if op=='purchase':\n            sku=body.get('sku');offer=offers().get(sku)\n\
+    \            if offer is None:raise ValueError('offer_unavailable')\n            cost=amount(offer['price'],positive=False);currency=offer['currencyId']\n\
+    \            if (body.get('expectedPrice')!=offer['price'] or body.get('expectedCurrency')!=currency\n     \
+    \               or body.get('expectedMerchant')!=offer['merchant']):\n                raise ValueError('offer_changed_review_again')\n\
+    \            protected=restricted_amount(db,actor,currency)\n            available=shopping_amount(db,actor,currency)\n\
+    \            if offer['type']=='item' and cost>available:\n                raise ValueError('shop_requires_earned_currency')\n\
+    \            if cost>wallet_amount(db,actor,currency):raise ValueError('insufficient_funds')\n            restricted_spend=min(cost,protected)\
+    \ if offer['type']=='entry' else 0\n            result,created=_post(db,actor,request_id,'purchase',\n     \
+    \           {'sku':sku,'title':offer['title'],'offerType':offer['type'],\n                 'currencyId':currency,'amount':str(cost),'merchant':offer['merchant'],\n\
+    \                 'restrictedSpent':str(restricted_spend),'fulfillment':'pending'},\n                ([(actor,currency,-cost),(TREASURY,currency,cost)]\
+    \ if cost else []),now,\n                ([(actor,currency,-restricted_spend)] if restricted_spend else []))\n\
+    \            if created:\n                order_id=db.execute(sa.insert(ORDER).values(subjectId=actor,sku=sku,\n\
+    \                    currencyId=currency,price=cost,merchant=offer['merchant'],\n                    state='pending',transactionId=result['transactionId'],created=now)\n\
+    \                    .returning(ORDER.c.id)).scalar_one()\n                result={**result,'orderId':order_id}\n\
+    \                db.execute(sa.update(TX).where(TX.c.id==result['transactionId']).values(data=result))\n   \
+    \         return result\n    except (ValueError,KeyError,TypeError) as ex:\n        return failure(str(ex)[:70])\n\
+    \    return failure('unsupported_wallet_operation')\n\n\ndef execute_merchant(db,actor,kind,body,now=None):\n\
+    \    # Actor is the independently authenticated service principal, never a body field.\n    if not CALLER.fullmatch(str(actor))\
+    \ or actor not in merchants():\n        return {'accepted':False,'reason':'merchant_not_authorized'}\n    if\
+    \ not isinstance(body,dict) or body.get('schema')!='tavi.wallet-fulfillment/v1':\n        return {'accepted':False,'reason':'invalid_request'}\n\
+    \    order_id=body.get('orderId');sku=body.get('sku')\n    if type(order_id) is not int or order_id<1 or not\
+    \ isinstance(sku,str):\n        return {'accepted':False,'reason':'invalid_order'}\n    if sku not in merchants()[actor]:return\
+    \ {'accepted':False,'reason':'merchant_not_authorized'}\n    row=db.execute(sa.select(ORDER).where(ORDER.c.id==order_id,\n\
+    \        ORDER.c.sku==sku,ORDER.c.merchant==actor)).mappings().first()\n    if not row:return {'accepted':False,'reason':'order_not_found'}\n\
+    \    if kind=='fulfill':\n        if row['state']=='fulfilled':return {'accepted':True,'delivery':'duplicate'}\n\
+    \        if row['state']!='pending':return {'accepted':False,'reason':'order_not_pending'}\n        updated=db.execute(sa.update(ORDER).where(ORDER.c.id==order_id,ORDER.c.state=='pending')\n\
+    \            .values(state='fulfilled'))\n        return {'accepted':updated.rowcount==1,'delivery':'fulfilled'\
+    \ if updated.rowcount==1 else 'duplicate'}\n    if kind=='refund':\n        if row['state']=='refunded':return\
+    \ {'accepted':True,'delivery':'duplicate'}\n        if row['state']!='pending':return {'accepted':False,'reason':'order_not_pending'}\n\
+    \        cost=int(row['price']);currency=row['currencyId'];recipient=row['subjectId']\n        if cost:\n  \
+    \          original=db.execute(sa.select(TX.c.data).where(TX.c.id==row['transactionId'])).scalar_one()\n   \
+    \         # Every purchase in the clean ledger records its source. A missing\n            # provenance record\
+    \ is corruption, never an excuse to mint credit.\n            raw=original.get('restrictedSpent') if isinstance(original,dict)\
+    \ else None\n            if not isinstance(raw,str) or not raw.isdecimal():\n                raise ValueError('missing_refund_provenance')\n\
+    \            protected=int(raw)\n            if not 0<=protected<=cost:raise ValueError('invalid_refund_provenance')\n\
+    \            _post(db,recipient,f'wallet-refund-{order_id}','refund',\n                {'sku':sku,'orderId':order_id,'currencyId':currency,\n\
+    \                 'amount':str(cost),'restrictedRefund':str(protected)},\n                [(TREASURY,currency,-cost),(recipient,currency,cost)],\n\
+    \                int(time.time()) if now is None else int(now),\n                ([(recipient,currency,protected)]\
+    \ if protected else []))\n        db.execute(sa.update(ORDER).where(ORDER.c.id==order_id,ORDER.c.state=='pending')\n\
+    \            .values(state='refunded'))\n        return {'accepted':True,'delivery':'refunded'}\n    return\
+    \ {'accepted':False,'reason':'unsupported_operation'}\n\n\ndef execute_reward(db,actor,body,now=None):\n   \
+    \ \"\"\"Award *earned* shopping-eligible currency from a tightly configured service.\n\n    Operator admission\
+    \ is separate from ordinary merchant fulfillment. Replays\n    are stable per publisher event ID and there is\
+    \ a hard daily player cap.\n    \"\"\"\n    now=int(time.time()) if now is None else int(now)\n    if not isinstance(body,dict)\
+    \ or body.get('schema')!='tavi.wallet-reward/v1' or body.get('op')!='reward':\n        return {'accepted':False,'reason':'invalid_request'}\n\
+    \    policy=reward_policy().get(str(actor))\n    if not policy or actor not in merchants():return {'accepted':False,'reason':'reward_not_authorized'}\n\
+    \    recipient=body.get('recipient');event_id=body.get('eventId');currency=body.get('currencyId')\n    try:\n\
+    \        if not ACCOUNT.fullmatch(str(recipient)) or currency!=policy['currencyId']:\n            raise ValueError('invalid_recipient_or_currency')\n\
+    \        event_id=valid_request(event_id);units=amount(body.get('amount'))\n        if units>policy['maxPerEvent']:raise\
+    \ ValueError('reward_limit_exceeded')\n        previous=db.execute(sa.select(REWARD).where(REWARD.c.merchant==actor,\n\
+    \            REWARD.c.eventId==event_id)).mappings().first()\n        if previous:\n            same=(previous['recipient']==recipient\
+    \ and previous['currencyId']==currency and\n                int(previous['amount'])==units)\n            return\
+    \ ({'accepted':True,'delivery':'duplicate','transactionId':previous['transactionId']}\n                if same\
+    \ else {'accepted':False,'reason':'reward_event_conflict'})\n        since=now-now%86400\n        today=db.execute(sa.select(sa.func.coalesce(sa.func.sum(REWARD.c.amount),0)).where(\n\
+    \            REWARD.c.merchant==actor,REWARD.c.recipient==recipient,\n            REWARD.c.currencyId==currency,REWARD.c.created>=since)).scalar_one()\n\
+    \        if int(today)+units>policy['dailyPerPlayer']:\n            raise ValueError('daily_reward_limit_exceeded')\n\
+    \        ensure_welcome(db,recipient,now)\n        request_id='wallet-reward-'+hashlib.sha256((actor+':'+event_id).encode()).hexdigest()[:48]\n\
+    \        receipt,_=_post(db,recipient,request_id,'reward',\n            {'currencyId':currency,'amount':str(units),'merchant':actor,'eventId':event_id,\n\
+    \             'restricted':'0'},\n            [(TREASURY,currency,-units),(recipient,currency,units)],now)\n\
+    \        db.execute(sa.insert(REWARD).values(merchant=actor,eventId=event_id,\n            recipient=recipient,currencyId=currency,amount=units,\n\
+    \            transactionId=receipt['transactionId'],created=now))\n        return {'accepted':True,'delivery':'created','transactionId':receipt['transactionId']}\n\
+    \    except (ValueError,KeyError,TypeError) as e:\n        return {'accepted':False,'reason':str(e)[:80]}\n\n\
+    \ndef _valid_session(db,subject,token):\n    if not isinstance(token,str) or not 32<=len(token)<=256:return\
+    \ False\n    found=db.execute(sa.text('''SELECT subjectId FROM \"SocialSession\"\n        WHERE tokenHash=:hash\
+    \ AND revoked=0 AND expires>:now'''),\n        {'hash':hashlib.sha256(token.encode()).hexdigest(),'now':time.time()}).scalar_one_or_none()\n\
+    \    return found==subject\n\n\ndef _run_user(ctx):\n    subject=getattr(ctx.principal,'subject',None)\n   \
+    \ if getattr(ctx.principal,'kind',None)!='user' or not ACCOUNT.fullmatch(str(subject)):\n        return failure('auth_required')\n\
+    \    with ctx.transaction() as db:\n        if not _valid_session(db,subject,ctx.body.get('token') if isinstance(ctx.body,dict)\
+    \ else None):\n            return failure('session_mismatch')\n        return execute_wallet(db,subject,ctx.body)\n\
+    \n\nasync def handle(ctx):\n    return await run_in_threadpool(_run_user,ctx)\n\n\ndef _run_service(ctx):\n\
+    \    if getattr(ctx.principal,'kind',None)!='service':return {'accepted':False,'reason':'service_identity_required'}\n\
+    \    with ctx.transaction() as db:\n        return execute_merchant(db,getattr(ctx.principal,'subject',None),\n\
+    \            ctx.body.get('op') if isinstance(ctx.body,dict) else None,ctx.body)\n\n\nasync def handle_merchant(ctx):\n\
+    \    return await run_in_threadpool(_run_service,ctx)\n\n\ndef _run_reward(ctx):\n    if getattr(ctx.principal,'kind',None)!='service':\n\
+    \        return {'accepted':False,'reason':'service_identity_required'}\n    with ctx.transaction() as db:\n\
+    \        return execute_reward(db,getattr(ctx.principal,'subject',None),ctx.body)\n\n\nasync def handle_reward(ctx):\n\
+    \    return await run_in_threadpool(_run_reward,ctx)\n\n\ndef _run_service_broker(ctx):\n    \"\"\"Accept only\
+    \ the LoopRD 0.4 tavi-wallet child as a ledger service broker.\n\n    The child authenticates the original game/service\
+    \ with a service-bound LoopRD\n    key and forwards that stable component ID in ``actor``. Social remains the\n\
+    \    authoritative ledger database until the explicit storage migration pass.\n    \"\"\"\n    principal=getattr(ctx,'principal',None)\n\
+    \    if getattr(principal,'kind',None)!='service' or getattr(principal,'subject',None)!='tavi-wallet':\n   \
+    \     return {'accepted':False,'reason':'wallet_broker_identity_required'}\n    body=ctx.body if isinstance(ctx.body,dict)\
+    \ else {}\n    if body.get('schema')!='tavi.wallet-broker/v1':\n        return {'accepted':False,'reason':'invalid_request'}\n\
+    \    channel=body.get('channel');actor=body.get('actor');command=body.get('command')\n    if channel not in\
+    \ ('merchant','reward') or not isinstance(actor,str) or not CALLER.fullmatch(actor) or not isinstance(command,dict):\n\
+    \        return {'accepted':False,'reason':'invalid_request'}\n    with ctx.transaction() as db:\n        if\
+    \ channel=='merchant':\n            return execute_merchant(db,actor,command.get('op'),command)\n        return\
+    \ execute_reward(db,actor,command)\n\n\nasync def handle_service_broker(ctx):\n    return await run_in_threadpool(_run_service_broker,ctx)\n\
+    \n\nasync def handle(ctx):\n    return await handle_service_broker(ctx)\n"
+  contract:
+    name: tavi-wallet-ledger-broker
+    version: 1
+    serviceOnly: true
+    allowedCallers:
+    - tavi-wallet
+    request:
+      type: object
+      required:
+      - schema
+      - channel
+      - actor
+      - command
+      additionalProperties: false
+      properties:
+        schema:
+          type: string
+          enum:
+          - tavi.wallet-broker/v1
+        channel:
+          type: string
+          enum:
+          - merchant
+          - reward
+        actor:
+          type: string
+          minLength: 1
+          maxLength: 48
+        command:
+          type: object
+          additionalProperties: true
+    response:
+      type: object
+      additionalProperties: true
 - path: /ecosystem/admin-notify
   method: POST
   kind: python
@@ -2876,4 +3182,4 @@ handlers:
     - recovery-codes-v1
     - game-session-rooms-v1
     - wallet-v1
-    release: 0.3.103
+    release: 0.3.107

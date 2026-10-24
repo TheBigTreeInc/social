@@ -10,7 +10,7 @@ import yaml
 from sqlalchemy.orm import sessionmaker
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'extensions/org.tavi.core.wallet/looprd'))
-from wallet_ledger import execute_wallet,execute_merchant,execute_reward,snapshot,amount,wallet_amount,restricted_amount,shopping_amount
+from wallet_ledger import execute_wallet,execute_merchant,execute_reward,snapshot,amount,wallet_amount,restricted_amount,shopping_amount,_run_service_broker
 
 OFFERS=[
  {'sku':'test.game.entry','title':'Play test game','merchant':'test-game','type':'entry','currencyId':'gold','price':'80'},
@@ -193,6 +193,20 @@ class LedgerTest(unittest.TestCase):
   self.assertTrue(self.merchant(kind='refund',sku='test.game.entry',orderId=again['orderId'])['accepted'])
   after=self.call(op='balance')['balances'][0]
   self.assertEqual(after['playOnly'],'20');self.assertEqual(after['availableForShopping'],'100')
+ def test_looprd04_wallet_broker_accepts_only_child_and_preserves_original_service_actor(self):
+  from types import SimpleNamespace
+  reward={'schema':'tavi.wallet-reward/v1','op':'reward','recipient':'acct_1',
+          'eventId':'broker-reward-001','currencyId':'gold','amount':'40'}
+  good=SimpleNamespace(principal=SimpleNamespace(kind='service',subject='tavi-wallet'),
+       body={'schema':'tavi.wallet-broker/v1','channel':'reward','actor':'test-game','command':reward},
+       transaction=self.sessions.begin)
+  result=_run_service_broker(good)
+  self.assertTrue(result['accepted']);self.assertEqual(result['delivery'],'created')
+  self.assertEqual(self.call(op='balance')['balances'][0]['availableForShopping'],'40')
+  bad=SimpleNamespace(principal=SimpleNamespace(kind='service',subject='other-child'),
+       body=good.body,transaction=self.sessions.begin)
+  self.assertEqual(_run_service_broker(bad),{'accepted':False,'reason':'wallet_broker_identity_required'})
+
  def test_rewards_default_denied_limits_and_daily_cap(self):
   with patch.dict(os.environ,{'LOOPRD_TAVI_WALLET_REWARDS_JSON':'{}'}):
    self.assertEqual(self.reward()['reason'],'reward_not_authorized')

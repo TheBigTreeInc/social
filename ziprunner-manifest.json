@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.106",
-    "base_version": "0.3.103"
+    "version": "0.3.107",
+    "base_version": "0.3.106"
   },
   "update": {
-    "id": "TAVI-20261024-COMPANION-0104",
+    "id": "TAVI-20261024-WALLET-LOOPRD04-0107",
     "kind": "source_update",
-    "created_at": "2026-10-24T14:56:00+02:00",
-    "summary": "Refresh reviewed bundled Companion from 0.6.11 to 0.6.27 through canonical importer while preserving messenger receipts, Social 0.3.103/schema 12 and Android PackageInstaller updater."
+    "created_at": "2026-10-24T18:43:37+02:00",
+    "summary": "Add independent LoopRD 0.4 tavi-wallet child service contracts while retaining the Social schema-12 ledger and existing Tavi user Wallet route."
   },
   "planned_work": [
     {
@@ -39,7 +39,7 @@
       "title": "First-party Gold Wallet, purchase and exchange ledger",
       "priority": "high",
       "status": "review",
-      "acceptance_criteria": "Source and ZipRunner build verification, staging schema 10\u219211 migration, tested exact receipts, first-party host grant isolation, Android/Windows/Web native Wallet acceptance, merchant fulfillment proof and operator approval."
+      "acceptance_criteria": "Source and ZipRunner build verification, staging schema 10→11 migration, tested exact receipts, first-party host grant isolation, Android/Windows/Web native Wallet acceptance, merchant fulfillment proof and operator approval."
     },
     {
       "id": "TAVI-EXT-UPDATES-072",
@@ -651,6 +651,20 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": "Exact Tavi source pins org.tavi.community.companion 0.6.27 from publisher tavi-community with reviewed digest f1bf1db6276641f7b19c8ca6bcfd814e8aedc8a903d022bff6fbd0662d280844 and unchanged ui.panel/ui.toast/storage.private permissions.; Run Companion 0.6.27 source tests and official tavi:bundle verification, then Tavi reviewed importer dry-run/apply, extensions:check and full npm run verify on the exact package.; On Windows and Android, update/install Companion from Tavi App Store, verify top-right Companion portrait, continuous cave/scale visuals, Back/Home navigation, account isolation and existing messenger Sent/Delivered/Seen behavior.; Do not claim cross-device/server-owned Companion persistence until Tavi exposes reviewed companion.get/companion.put, Social compare-and-swap storage and operator reset; local/private host behavior must fail safely.; Build signed Android 0.3.106 and verify the retained PackageInstaller updater/self-test. Perform in-app update from the previously accepted signed Tavi version without losing remembered account/session data."
+    },
+    {
+      "id": "TAVI-WALLET-LOOPRD-107",
+      "title": "Expose Wallet as a LoopRD 0.4 independent subcomponent service",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "LoopRD root requires spec.subcomponents and declares exactly extensions/org.tavi.core.wallet/looprd/looprd.yaml; child identity is tavi-wallet with independent database auth/scopes/lifecycle.; New tavi-wallet merchant/reward contracts preserve caller-bound service identity and forward only through the Social tavi-wallet-ledger-broker contract restricted to caller tavi-wallet.; Existing Tavi /wallet and legacy Social merchant/reward routes remain functional; schema stays 12 and no Wallet balances/history are silently copied to child storage.; Validate parent and child descriptors against the pinned LoopRD 0.4 contract, full source tests, extensions and ZipRunner non-destructive overlay; keep Android updater implementation unchanged.; Operator upgrades LoopRD/DAPI to 0.4+, backs up Social/LoopRD state, trusts both Python components, provisions private child-to-parent credential and performs live user/reward/merchant acceptance before promotion."
+    },
+    {
+      "id": "TAVI-CHAT-004",
+      "title": "Explicit DM length feedback and truthful delivery/read receipts",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "On Windows, Android and Web, paste/type 1001+ characters into a private DM; Tavi must show the exact length and 1000 maximum, keep the draft, disable/refuse Send, and never silently truncate or clear it.; With two accepted accounts, send a DM and confirm sender shows Sent after Social persists it; do not show Delivered merely because the server stored it.; Fetch/open the conversation on the recipient client and confirm sender advances to Delivered; then focus/read it and confirm sender advances to Seen. Cursors must never move backwards across devices or restart.; Back up Social DB and deploy additive schema 12; verify existing SocialConversationRead rows, direct messages, accounts, contacts and Wallet data remain intact and deliveredId defaults to 0.; Run exact-ZIP Windows build plus Android signed build. Confirm the PackageInstaller updater still passes source/CI tests and use installed 0.3.102 to perform the intended in-app update to signed 0.3.103 without losing account/session data."
     }
   ],
   "done_work": [
@@ -1942,6 +1956,16 @@
       "id": "TAVI-UI-CI-098",
       "status": "review",
       "reason": "Review pending: source implementation and actual operator device/CI acceptance are separate."
+    },
+    {
+      "id": "TAVI-WALLET-LOOPRD-107",
+      "status": "review",
+      "reason": "LoopRD 0.4 live activation, credential binding, Windows/Android and operator acceptance remain pending."
+    },
+    {
+      "id": "TAVI-EXT-COMPANION-104",
+      "status": "review",
+      "reason": "Companion 0.6.27 native/cloud-backend operator acceptance remains pending."
     }
   ],
   "validation": {
@@ -2114,7 +2138,7 @@
       },
       {
         "id": "TAVI-MULTI-044-PY",
-        "description": "Game room seat roster, revocation, migration 9\u219210, private messages and push content-free wake",
+        "description": "Game room seat roster, revocation, migration 9→10, private messages and push content-free wake",
         "status": "passed_source_only",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Linux Python 3.13",
@@ -2243,7 +2267,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Import exact v0.3.106 ZIP into ZipRunner and require npm run verify plus normal Windows NSIS build/launch. Review Companion 0.6.27 in App Store/top-right portrait on Windows and Android. Keep Social 0.3.103/schema 12. After operator-approved push, require Android CI and perform signed in-app update to 0.3.106 using the retained PackageInstaller path.",
+    "next_pass": "Import exact v0.3.107 ZIP into ZipRunner and require source verification plus normal Windows NSIS build/launch. Before server rollout, upgrade LoopRD/DAPI to 0.4+, back up Social/LoopRD state, trust looprd-social and tavi-wallet, provision the private caller-bound service credential, then verify existing Tavi Gold plus one reward/merchant flow. After operator-approved push, require exact-SHA CI and signed Android updater acceptance.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -2273,7 +2297,8 @@
       "Generated public static extension assets are committed for deterministic Git/ZipRunner delivery; extensions/ is canonical source. Run extensions:sync before any source changes. Do not hand-edit client/public/tavi-extensions/.",
       "Client-only Android updater 0.3.102 fixes both the known Kotlin import failure and the ZipRunner stale-test overlay failure. Physical Android installation/update remains unverified; source tests are not signed native acceptance.",
       "Sent/Delivered/Seen requires deployed Social release 0.3.103/schema 12; older 0.3.99/schema 11 servers do not expose peer delivery/read receipt metadata.",
-      "Companion 0.6.27 source supports a future server-owned cloud save contract, but Tavi 0.3.106 does not yet implement companion.get/companion.put, CAS storage or operator reset; do not claim cross-device Companion persistence."
+      "Companion 0.6.27 source supports a future server-owned cloud save contract, but Tavi 0.3.106 does not yet implement companion.get/companion.put, CAS storage or operator reset; do not claim cross-device Companion persistence.",
+      "LoopRD 0.4 tavi-wallet is a service-authentication façade in 0.3.107; Gold balances/history remain in Social schema 12. Do not treat the child SQLite file as migrated ledger storage or delete the Social wallet tables."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -2319,7 +2344,7 @@
     },
     {
       "id": "TAVI-MULTI-044-OP",
-      "description": "Backup and test schema 9\u219210 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
+      "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
       "status": "required"
     },
     {
@@ -2376,25 +2401,25 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.106 is a source/client candidate only. No Git push, release, server deployment or device acceptance performed. Publish only after ZipRunner Windows acceptance, exact-SHA CI, Companion 0.6.27 native review and signed Android updater test."
+    "notes": "0.3.107 changes the LoopRD server descriptor by adding the tavi-wallet 0.4 subcomponent. No production deployment, credential provisioning, database migration or release is authorized by this package."
   },
   "release_notes": {
-    "version": "0.3.106",
-    "summary": "Reviewed bundled Companion 0.6.27 refresh with unchanged publisher/permissions and retained messenger receipts/updater.",
-    "server_unchanged": true,
-    "server_release": "0.3.103",
+    "version": "0.3.107",
+    "summary": "LoopRD 0.4 Wallet subcomponent service façade with caller-bound merchant/reward contracts; Material settings, Companion 0.6.27, receipts and updater retained.",
+    "server_unchanged": false,
+    "server_release": "0.3.107",
     "database_schema_version": 12,
-    "database_migration": "none in 0.3.106; existing deployed Social 0.3.103 schema 12 remains required for receipts",
-    "native_qa": "pending Windows/Android Companion 0.6.27 and signed updater acceptance",
+    "database_migration": "none; Wallet storage remains in existing Social schema-12 tables pending explicit TAVI-WALLET-SPLIT-082 migration",
+    "native_qa": "pending Windows/Android and signed updater acceptance",
     "browser_qa": "pending exact-commit run"
   },
   "verification_summary": {
-    "source_candidate": "0.3.106",
-    "browser_qa": "pending exact-commit GitHub five-viewport run",
-    "native_acceptance": "pending Windows/Android Companion 0.6.27 plus signed Android in-app update to 0.3.106",
+    "source_candidate": "0.3.107",
+    "browser_qa": "pending exact-commit GitHub run",
+    "native_acceptance": "pending Windows/Android Wallet subcomponent plus signed Android in-app update",
     "git_push": "not performed by source author",
-    "server_deploy": "no new server change; retain Social 0.3.103/schema 12 from messenger receipts",
-    "database_schema": "12; unchanged by 0.3.106 Companion refresh",
-    "operator_review": "TAVI-EXT-COMPANION-104, TAVI-CHAT-004 and TAVI-UPDATES-003 remain Review; no Done promotion"
+    "server_deploy": "pending LoopRD/DAPI 0.4+ operator rollout; Social release 0.3.107/schema 12",
+    "database_schema": "12; unchanged, no ledger storage move",
+    "operator_review": "TAVI-WALLET-LOOPRD-107 remains Review; no Done promotion"
   }
 }

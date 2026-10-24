@@ -1,0 +1,85 @@
+= Tavi Wallet on LoopRD 0.4 subcomponents
+:revdate: 2026-10-24
+:revnumber: 0.3.107
+:toc:
+
+== Scope
+
+Tavi 0.3.107 adopts the LoopRD 0.4 independent `subcomponents` contract for the first-party Wallet service.
+The implementation is intentionally transitional: service authentication and service contracts move behind an
+independent `tavi-wallet` child component, while the existing Social schema-12 database remains the authoritative
+home-realm ledger. Existing Gold balances, journal entries, restricted balances, orders and reward receipts are not
+copied or migrated in this pass.
+
+The upstream LoopRD contract used for this pass is `pac-labs/dapi` commit
+`c2b486bc7f526e71d8c26d77cb56bff9270d3347`, whose `docs/subcomponents.adoc` documents LoopRD 0.4.0 independent
+children and whose platform service contract supports caller-bound local `ctx.call(...)` dependencies.
+
+== Component tree
+
+[source,text]
+----
+looprd-social                 /looprd/looprd-social/v1
+└── tavi-wallet               /looprd/looprd-social/tavi-wallet/v1
+----
+
+Only `looprd-social` is registered as the root source. The child is declared from the root `looprd.yaml` as:
+
+[source,yaml]
+----
+requires:
+  - spec.subcomponents
+subcomponents:
+  - source: extensions/org.tavi.core.wallet/looprd/looprd.yaml
+----
+
+The child has its own LoopRD database-auth identity, API keys, scopes, limits and lifecycle. Its SQLite database is
+for LoopRD-owned child authentication state only in this pass; it does not contain the Gold journal.
+
+== Service authorization
+
+A game or trusted service that needs Wallet settlement receives a `tavi-wallet` component key that is explicitly
+bound to that calling component and to the minimum required scope (`wallet:merchant` or `wallet:reward`). Ordinary
+API keys cannot call the service-only contracts.
+
+The child forwards the authenticated caller component ID to one parent-only contract:
+`tavi-wallet-ledger-broker/v1`. The Social broker permits only the `tavi-wallet` child as its immediate caller and
+executes the existing authoritative ledger operation using the original verified service ID. The child does not
+receive a user's Social bearer token and callers never receive the Social ledger service credential.
+
+The child-to-parent dependency uses the local secret reference `tavi-wallet-social-service-key`. On the Social
+verified-auth side, the operator maps the same private credential to service identity `tavi-wallet` through the
+existing `LOOPRD_SOCIAL_SERVICE_SECRETS_JSON` mechanism. The secret value is never committed to source.
+
+The dependency is declared optional so a missing private credential does not prevent Social or the Wallet child from
+activating. In that condition service settlement returns a stable `ledger_unavailable` failure; normal Tavi user
+Wallet access through Social remains available.
+
+== Compatibility
+
+Tavi's current user-facing Wallet calls continue to use `/looprd/looprd-social/v1/wallet`, because Tavi sessions are
+verified Social user identities. Existing legacy `/ecosystem/wallet-merchant` and `/ecosystem/wallet-reward` service
+contracts also remain during migration so current games are not broken immediately.
+
+New or updated LoopRD components should depend on `component: tavi-wallet` and its typed contracts instead of adding a
+new direct Social settlement integration. This pass does not authorize a game merely because it has an Atrium entry;
+Wallet service keys remain an operator/security decision.
+
+== Storage split remains explicit future work
+
+Moving `WalletBalance`, `WalletTransaction`, `WalletEntry`, `WalletOrder`, `WalletRestrictedBalance`, and
+`WalletRewardIssue` into the child's independent database remains `TAVI-WALLET-SPLIT-082`. That migration requires a
+backed-up, lossless journal move, identity/grant reconciliation, cut-over and rollback plan. Reparenting or changing a
+LoopRD child identity is not a storage migration.
+
+== Deployment requirements
+
+. Upgrade the LoopRD/DAPI host to a release supporting LoopRD 0.4 `spec.subcomponents` before activating this descriptor.
+. Back up the Social database and LoopRD data/checkpoints before deployment.
+. With trusted Python enabled, trust both `looprd-social` and `tavi-wallet`; parent trust does not imply child trust.
+. Provision the child-to-parent service credential privately and bind it to caller component `tavi-wallet` on Social.
+. Provision game/service Wallet keys on `tavi-wallet` with only the required scope and service binding.
+. Verify the parent remains healthy when the child is blocked/unavailable, and verify a failed child reload preserves its previous generation.
+. Verify existing Tavi user balance/history and at least one service reward/merchant flow against the live LoopRD 0.4 deployment before promotion.
+
+No Git push, production deployment, secret provisioning or live database migration is performed by the source package.

@@ -14,29 +14,37 @@ admin_role=(root/'server/admin_role_service.py').read_text(encoding='utf8')
 game_events=(root/'server/game_event_service.py').read_text(encoding='utf8')
 game_grants=(root/'server/game_grant_service.py').read_text(encoding='utf8')
 game_rooms=(root/'server/game_room_service.py').read_text(encoding='utf8')
-# Canonical Wallet backend belongs to the first-party extension; the existing
-# looprd-social component embeds it at build time to keep the same identity,
-# database, schema, routes, and transaction IDs. No secondary ledger is created.
-wallet_source=(root/'extensions/org.tavi.core.wallet/looprd/wallet_ledger.py').read_text(encoding='utf8')
-wallet_contract=json.loads((root/'extensions/org.tavi.core.wallet/looprd/backend.json').read_text(encoding='utf8'))
+# Wallet storage remains in the Social home-realm database during the LoopRD 0.4
+# transition. A separate child component owns service authentication/contracts and
+# forwards only verified service identities through a Social-only broker contract.
+wallet_root=root/'extensions/org.tavi.core.wallet/looprd'
+wallet_source=(wallet_root/'wallet_ledger.py').read_text(encoding='utf8')
+wallet_facade_source=(wallet_root/'service_facade.py').read_text(encoding='utf8')
+wallet_contract=json.loads((wallet_root/'backend.json').read_text(encoding='utf8'))
 registry=json.loads((root/'extensions/registry.json').read_text(encoding='utf8'))
 wallet_entry=next((item for item in registry['extensions'] if item.get('id')=='org.tavi.core.wallet'),None)
-if (wallet_contract.get('schema')!='tavi.embedded-looprd-backend/v1' or
+expected_parent={'component':'looprd-social','authRealm':'tavi-social','userHandler':'/wallet'}
+expected_service={'component':'tavi-wallet','source':'looprd.yaml','auth':'database',
+    'contracts':{'merchant':'tavi-wallet-merchant','reward':'tavi-wallet-reward'},
+    'parentBroker':{'component':'looprd-social','contract':'tavi-wallet-ledger-broker','version':1,
+                    'credentialSecret':'tavi-wallet-social-service-key'}}
+expected_ledger={'component':'looprd-social','databaseSchemaVersion':12,'storageOwnership':'looprd-social',
+                 'migration':'planned-explicit-storage-split'}
+if (wallet_contract.get('schema')!='tavi.looprd-wallet-backend/v2' or
     wallet_contract.get('extensionId')!='org.tavi.core.wallet' or
-    wallet_contract.get('component')!='looprd-social' or
-    wallet_contract.get('authRealm')!='tavi-social' or
-    wallet_contract.get('source')!='wallet_ledger.py' or
     wallet_contract.get('apiSchema')!='tavi.wallet/v1' or
-    wallet_contract.get('databaseSchemaVersion')!=12 or
-    wallet_contract.get('databaseOwnership')!='looprd-social' or
-    wallet_contract.get('deployment')!='embed-in-existing-component' or
-    wallet_contract.get('migration')!='none-no-secondary-database' or
-    wallet_contract.get('handlers')!={'user':'/wallet','merchant':'/ecosystem/wallet-merchant','reward':'/ecosystem/wallet-reward'} or
+    wallet_contract.get('uiBroker')!=expected_parent or
+    wallet_contract.get('serviceComponent')!=expected_service or
+    wallet_contract.get('ledger')!=expected_ledger or
+    wallet_contract.get('deployment')!='looprd-0.4-subcomponent-service-facade' or
     wallet_entry is None or wallet_entry.get('mode')!='core' or
     wallet_entry.get('backend')!={'kind':'looprd-component','component':'looprd-social'}):
-    raise SystemExit('Wallet extension backend ownership mismatch: refuse to generate LoopRD descriptor')
+    raise SystemExit('Wallet LoopRD 0.4 ownership mismatch: refuse to generate descriptors')
 wallet_merchant_source=wallet_source+'\n\nasync def handle(ctx):\n    return await handle_merchant(ctx)\n'
 wallet_reward_source=wallet_source+'\n\nasync def handle(ctx):\n    return await handle_reward(ctx)\n'
+wallet_broker_source=wallet_source+'\n\nasync def handle(ctx):\n    return await handle_service_broker(ctx)\n'
+wallet_facade_merchant=wallet_facade_source+'\n\nasync def handle(ctx):\n    return await handle_merchant(ctx)\n'
+wallet_facade_reward=wallet_facade_source+'\n\nasync def handle(ctx):\n    return await handle_reward(ctx)\n'
 def string(max_len,required=False,unique=False):
     return dict(type='string',maxLength=max_len,**({'required':True} if required else {}),**({'unique':True} if unique else {}))
 def integer(required=False,primary=False,generated=False):
@@ -44,7 +52,8 @@ def integer(required=False,primary=False,generated=False):
 spec={
  'apiVersion':'looprd/v1','component':'looprd-social','release':version,'api':{'version':'v1'},
  'cors':{'allowedOrigins':['https://thebigtreeinc.github.io','http://tauri.localhost']},
- 'requires':['auth.verified','events.transactional','events.replay','push.unifiedpush','management.data','service.contracts','reports.bugs'],
+ 'requires':['auth.verified','events.transactional','events.replay','push.unifiedpush','management.data','service.contracts','spec.subcomponents','reports.bugs'],
+ 'subcomponents':[{'source':'extensions/org.tavi.core.wallet/looprd/looprd.yaml'}],
  'auth':{'mode':'verified','realm':'tavi-social',
          'scopes':['social:api','events:read','push:manage','social:service','social:operator'],
          'verifier':{'kind':'python','source':verifier}},
@@ -180,11 +189,20 @@ spec={
                'eventId':{'type':'string','minLength':8,'maxLength':96},
                'recipient':{'type':'string','minLength':6,'maxLength':72},
                'currencyId':{'type':'string','minLength':1,'maxLength':48},
-               'amount':{'type':'string','pattern':'^[1-9][0-9]{0,12}$'}}},
+               'amount':{'type':'string','minLength':1,'maxLength':13}}},
        'response':{'type':'object','required':['accepted'],'additionalProperties':False,
            'properties':{'accepted':{'type':'boolean'},
                'delivery':{'type':'string','maxLength':32},'reason':{'type':'string','maxLength':80},
                'transactionId':{'type':'integer','minimum':1}}}}},
+    {'path':'/ecosystem/wallet-ledger-broker','method':'POST','kind':'python','scopes':['social:service'],
+     'source':wallet_broker_source,'contract':{
+       'name':'tavi-wallet-ledger-broker','version':1,'serviceOnly':True,'allowedCallers':['tavi-wallet'],
+       'request':{'type':'object','required':['schema','channel','actor','command'],'additionalProperties':False,
+           'properties':{'schema':{'type':'string','enum':['tavi.wallet-broker/v1']},
+               'channel':{'type':'string','enum':['merchant','reward']},
+               'actor':{'type':'string','minLength':1,'maxLength':48},
+               'command':{'type':'object','additionalProperties':True}}},
+       'response':{'type':'object','additionalProperties':True}}},
     {'path':'/ecosystem/admin-notify','method':'POST','kind':'python','scopes':['social:service'],
      'source':admin_events,'contract':{
        'name':'tavi-admin-notify','version':1,'serviceOnly':True,
@@ -257,11 +275,48 @@ spec={
            'properties':{'admin':{'type':'boolean'}}}}},
     {'path':'/info','kind':'response','scopes':['social:api'],'response':{'protocol':'looprd.social/1','auth':'social-accounts','registration':'see-capabilities','features':['contacts','direct-messages','lobby','portraits','server-gated-developer-tools','game-event-inbox-v1','game-invites-v1','game-grants-v1','recovery-codes-v1','game-session-rooms-v1','wallet-v1'],'release':version}},
  ]}
+wallet_child={
+ 'apiVersion':'looprd/v1','component':'tavi-wallet','release':version,'api':{'version':'v1'},
+ 'requires':['service.contracts','reports.bugs'],
+ 'auth':{'mode':'database','scopes':['wallet:merchant','wallet:reward']},
+ 'database':{'backend':'sqlite'},
+ 'limits':{'requestsPerMinute':120,'burstPerSecond':10,'maxInFlight':20},
+ 'dependencies':[{'component':'looprd-social','contract':'tavi-wallet-ledger-broker','version':1,
+                  'credentialSecret':'tavi-wallet-social-service-key','optional':True}],
+ 'handlers':[
+   {'path':'/merchant','method':'POST','kind':'python','scopes':['wallet:merchant'],'source':wallet_facade_merchant,
+    'contract':{'name':'tavi-wallet-merchant','version':1,'serviceOnly':True,
+      'request':{'type':'object','required':['schema','op','orderId','sku'],'additionalProperties':False,
+        'properties':{'schema':{'type':'string','enum':['tavi.wallet-fulfillment/v1']},
+          'op':{'type':'string','enum':['fulfill','refund']},'orderId':{'type':'integer','minimum':1},
+          'sku':{'type':'string','minLength':2,'maxLength':96}}},
+      'response':{'type':'object','required':['accepted'],'additionalProperties':False,
+        'properties':{'accepted':{'type':'boolean'},'delivery':{'type':'string','maxLength':32},
+          'reason':{'type':'string','maxLength':80}}}}},
+   {'path':'/reward','method':'POST','kind':'python','scopes':['wallet:reward'],'source':wallet_facade_reward,
+    'contract':{'name':'tavi-wallet-reward','version':1,'serviceOnly':True,
+      'request':{'type':'object','required':['schema','op','eventId','recipient','currencyId','amount'],'additionalProperties':False,
+        'properties':{'schema':{'type':'string','enum':['tavi.wallet-reward/v1']},
+          'op':{'type':'string','enum':['reward']},'eventId':{'type':'string','minLength':8,'maxLength':96},
+          'recipient':{'type':'string','minLength':6,'maxLength':72},
+          'currencyId':{'type':'string','minLength':1,'maxLength':48},
+          'amount':{'type':'string','minLength':1,'maxLength':13}}},
+      'response':{'type':'object','required':['accepted'],'additionalProperties':False,
+        'properties':{'accepted':{'type':'boolean'},'delivery':{'type':'string','maxLength':32},
+          'reason':{'type':'string','maxLength':80},'transactionId':{'type':'integer','minimum':1}}}}},
+ ]
+}
 output='# Generated from server/looprd_handler.py. Do not edit by hand.\n'+yaml.safe_dump(spec,sort_keys=False,allow_unicode=True,width=110)
+child_output='# Generated by tools/generate-looprd.py for LoopRD 0.4. Do not edit by hand.\n'+yaml.safe_dump(wallet_child,sort_keys=False,allow_unicode=True,width=110)
+child_path=wallet_root/'looprd.yaml'
 if '--check' in sys.argv:
-    if (root/'looprd.yaml').read_text(encoding='utf8')!=output:
-        raise SystemExit('looprd.yaml is stale: run python tools/generate-looprd.py')
-    print('Looprd descriptor and handler in sync')
+    stale=[]
+    if (root/'looprd.yaml').read_text(encoding='utf8')!=output: stale.append('looprd.yaml')
+    if not child_path.exists() or child_path.read_text(encoding='utf8')!=child_output: stale.append(str(child_path.relative_to(root)))
+    if stale:
+        raise SystemExit('Looprd descriptor is stale: '+', '.join(stale)+'; run python tools/generate-looprd.py')
+    print('Looprd parent/Wallet subcomponent descriptors and handlers in sync')
 else:
     (root/'looprd.yaml').write_text(output,encoding='utf8')
-    print('Generated native Looprd social component',version)
+    child_path.write_text(child_output,encoding='utf8')
+    print('Generated Looprd Social parent and tavi-wallet 0.4 subcomponent',version)

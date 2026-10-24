@@ -482,3 +482,29 @@ def _run_reward(ctx):
 
 async def handle_reward(ctx):
     return await run_in_threadpool(_run_reward,ctx)
+
+
+def _run_service_broker(ctx):
+    """Accept only the LoopRD 0.4 tavi-wallet child as a ledger service broker.
+
+    The child authenticates the original game/service with a service-bound LoopRD
+    key and forwards that stable component ID in ``actor``. Social remains the
+    authoritative ledger database until the explicit storage migration pass.
+    """
+    principal=getattr(ctx,'principal',None)
+    if getattr(principal,'kind',None)!='service' or getattr(principal,'subject',None)!='tavi-wallet':
+        return {'accepted':False,'reason':'wallet_broker_identity_required'}
+    body=ctx.body if isinstance(ctx.body,dict) else {}
+    if body.get('schema')!='tavi.wallet-broker/v1':
+        return {'accepted':False,'reason':'invalid_request'}
+    channel=body.get('channel');actor=body.get('actor');command=body.get('command')
+    if channel not in ('merchant','reward') or not isinstance(actor,str) or not CALLER.fullmatch(actor) or not isinstance(command,dict):
+        return {'accepted':False,'reason':'invalid_request'}
+    with ctx.transaction() as db:
+        if channel=='merchant':
+            return execute_merchant(db,actor,command.get('op'),command)
+        return execute_reward(db,actor,command)
+
+
+async def handle_service_broker(ctx):
+    return await run_in_threadpool(_run_service_broker,ctx)

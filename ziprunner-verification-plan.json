@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.106",
+  "version": "0.3.107",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -820,7 +820,7 @@
         },
         {
           "id": "LRS-004-AC-3",
-          "description": "Social SQL schema 8\u21929 and Android/Windows actual recovery flow independently verified by operator.",
+          "description": "Social SQL schema 8→9 and Android/Windows actual recovery flow independently verified by operator.",
           "mode": "manual",
           "checks": [
             "LRS-004-DEVICE"
@@ -1656,6 +1656,29 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-WALLET-LOOPRD-107",
+      "criteria": [
+        {
+          "id": "TAVI-WALLET-LOOPRD-107-SOURCE",
+          "description": "LoopRD 0.4 parent/child descriptor, caller-bound Wallet service façade and unchanged Social schema-12 ledger",
+          "mode": "automated",
+          "checks": [
+            "python tools/generate-looprd.py --check",
+            "python -m unittest tests.test_wallet_looprd04_subcomponent tests.test_wallet_extension_embedding tests.test_wallet_ledger -v",
+            "npm run verify"
+          ]
+        },
+        {
+          "id": "TAVI-WALLET-LOOPRD-107-LIVE",
+          "description": "LoopRD 0.4 activation, private service credential binding and real user/reward/merchant acceptance",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -1863,7 +1886,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"
@@ -2415,9 +2438,24 @@
         "Publisher remains tavi-community with exact reviewed digest",
         "Permissions remain ui.panel/ui.toast/storage.private",
         "Public catalog matches canonical extension source",
-        "No false claim of Companion cloud broker in Tavi 0.3.106"
+        "No false claim of Companion cloud broker in Tavi 0.3.107"
       ],
       "test_ref": "client/tests/companion-027-integration-104.test.mjs"
+    },
+    {
+      "id": "TAVI-WALLET-LOOPRD-107-SOURCE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Independent LoopRD 0.4 Wallet child with Social ledger compatibility",
+      "runner_ref": "tavi-looprd-generated-0356",
+      "assertions": [
+        "Parent declares spec.subcomponents and tavi-wallet child",
+        "Child database auth requires service-bound merchant/reward scopes",
+        "Social broker accepts only tavi-wallet child and forwards original component actor",
+        "Social schema remains 12 with existing wallet data authority",
+        "No unsupported LoopRD 0.4 service-contract shape keys"
+      ],
+      "test_ref": "tests/test_wallet_looprd04_subcomponent.py"
     }
   ]
 }

@@ -30,7 +30,7 @@ test('published catalog matches the reviewed Companion source digest and cave bu
  assert.match(index,/world-main\.js/);
 });
 
-test('0.3.106 does not pretend the newer Companion cloud backend already exists',async()=>{
+test('0.3.107 does not pretend the newer Companion cloud backend already exists',async()=>{
  const host=await read('../src/extensions/host.js');
  const sdk=await read('../sdk/looprd-social.js');
  assert.doesNotMatch(host,/case\s+['"]companion\.get['"]/);
