@@ -1,29 +1,45 @@
-# Tavi Extension SDK (source preview)
+# TaviX SDK 1.0
 
-Small ESM/TypeScript declarations for isolated Tavi panels and authorized LoopRD service components.
+This directory is the source-distributed JavaScript/TypeScript SDK for the **TaviX 1.0** application standard.
 
 ```js
-import {createTaviExtensionSDK} from '@tavi/extension-sdk';
-const tavi = createTaviExtensionSDK();
-const supported = await tavi.capabilities();
-if (supported.includes('wallet.read')) {
-  const balance = await tavi.wallet.balance({currencyId:'tavi:cash'});
+import {createTaviXSDK} from '@tavi/tavix-sdk';
+
+const tavi = createTaviXSDK();
+const host = await tavi.conformance();
+const grants = await tavi.capabilities();
+
+if (grants.includes('ui.toast')) await tavi.ui.toast('Hello from TaviX');
+```
+
+Host-owned navigation is portable across Windows, Android and web:
+
+```js
+await tavi.navigation.back();
+```
+
+Existing source using `createTaviExtensionSDK()` remains supported; it is an alias of `createTaviXSDK()`.
+
+## Optional modules
+
+The SDK can expose typed facades before a host implements a module. **Always use feature/capability discovery.** Unsupported methods fail closed.
+
+```js
+const info = await tavi.info();
+if (info.features.includes('tavix.surface/v1')) {
+  await tavi.surfaces.requestOpen({
+    schema: 'tavix.surface/v1',
+    id: 'life.loop',
+    kind: 'game',
+    target: 'https://approved.example/life/',
+    context: {matchId: 'opaque-match-id'},
+    presentation: 'auto'
+  });
 }
 ```
 
-For a trusted backend (not from an iframe):
+Tavi 0.3.108 defines the generic surface contract but intentionally does **not** advertise it yet. The existing Atrium/Life launch bridge remains compatibility-only until the coordinated Atrium migration.
 
-```js
-import {createTaviServiceSDK} from '@tavi/extension-sdk/service';
-const sdk = createTaviServiceSDK({call: ({capability,operation,args}) => approvedLooprdTransport(capability,operation,args)});
-```
+For trusted backend/service code, use `./service`; that facade is transport-neutral and never creates authorization itself.
 
-**Feature status:** Tavi 0.3.61 only implements UI, storage and `host.capabilities`. Wallet, pets, contacts, messaging and cross-server service facades are *contracts* and will reject until the corresponding host and LoopRD adapters exist. The service client is transport-neutral and cannot create authorization on its own.
-
-Run `npm pack` in this directory to produce a distributable npm tarball. The repository owner must choose/declare an open-source license and own the npm scope before publishing to a public npm registry. A source-only repository or GitHub/Forgejo release may distribute it independently of npm.
-
-Complete design: [`../../docs/TAVI_SHARED_SERVICES_LEDGER_SDK_V2.adoc`](../../docs/TAVI_SHARED_SERVICES_LEDGER_SDK_V2.adoc).
-
-## First-party Atrium hosted Life launch (Tavi 0.3.66+)
-
-The first-party `inc.thebigtree.tavi.atrium` extension, installed from the built-in official Atrium repository, may call `sdk.ui.requestGameLaunch({schema:'atrium.tavi-launch/v1', gameId:'life.loop', target:approvedPublicHttpsLifeUrl, matchContext:{matchId:opaqueMatchId}})` after checking `sdk.info().features`. The host validates the context and displays user-operated **Open Life** and **Cancel** in Tavi. The response `awaitingApproval:true` does **not** assert the player approved or opened Life. All other extensions are denied. The iframe cannot navigate or launch popups itself. Identity proofs, credentials and invitations are forbidden in URLs and messages; Life still requires its own authenticated seat proof.
+Normative specification: [`../../docs/TAVIX_1_0_SPEC.adoc`](../../docs/TAVIX_1_0_SPEC.adoc).

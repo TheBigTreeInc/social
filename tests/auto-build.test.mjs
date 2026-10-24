@@ -14,12 +14,12 @@ test('ZipRunner gates auto-build after verification and enables Windows by defau
   assert.match(script,/tavi-last-good-nsis/);
   assert.doesNotMatch(script,/git push|git commit|push origin/);
 });
-test('Tavi 0.3.107 advances Social for LoopRD 0.4 Wallet child while retaining schema 12 receipts',async()=>{
+test('Tavi 0.3.108 formalizes TaviX while retaining Social 0.3.107/schema 12',async()=>{
   const pkg=JSON.parse(await read('package.json'));
   const server=JSON.parse(await read('server/looprd-release.json'));
   const spec=await read('looprd.yaml');
   // Wallet subcomponent changes the server descriptor/release but does not change Social schema 12.
-  assert.equal(pkg.version,'0.3.107');
+  assert.equal(pkg.version,'0.3.108');
   assert.equal(server.release,'0.3.107');
   assert.match(spec,/release: 0\.3\.107/);
   assert.match(spec,/spec\.subcomponents/);

@@ -1,6 +1,6 @@
 {
   "name": "looprd-social",
-  "version": "0.3.107",
+  "version": "0.3.108",
   "private": true,
   "type": "module",
   "scripts": {
@@ -18,7 +18,9 @@
     "client:web-verify": "cd client && npm run web:verify",
     "test:openclaw": "node --test integrations/openclaw/tests/*.test.mjs",
     "extensions:sync": "node tools/sync-internal-extensions.mjs",
-    "extensions:check": "node tools/sync-internal-extensions.mjs --check"
+    "extensions:check": "node tools/sync-internal-extensions.mjs --check",
+    "tavix:validate": "node tools/tavix-validate.mjs",
+    "tavix:conformance": "node --test client/tests/tavix-100.test.mjs"
   },
   "description": "Social-owned accounts, buddies, direct messages and game alerts on LoopRD with Windows/Android clients"
 }

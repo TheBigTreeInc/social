@@ -1,0 +1,170 @@
+= TaviX 1.0 application standard
+:revnumber: 1.0.0
+:revdate: 2026-10-24
+:toc: left
+
+== Status
+
+TaviX 1.0 is the normative application/extension standard extracted from the already deployed Tavi extension implementation. It standardizes the existing safe behavior instead of replacing it. Tavi 0.3.108 is the first source candidate that identifies the host as `tavix/1.0`.
+
+The existing wire identifiers remain unchanged for compatibility:
+
+* application manifest schema: `tavi.extension/v1`
+* host RPC channel: `tavi.extension/v1`
+* host API version: `1.0.0`
+
+An existing v1 application does not need a manifest rewrite merely because the implementation is now called TaviX.
+
+== Product boundary
+
+TaviX is an application-host contract. It is not a game engine, a LoopRD component format, an identity provider, a browser runtime requirement, or a marketplace approval system.
+
+Tavi owns the host shell, user navigation, application isolation, permission grants, installation state, and platform integration. An application owns its own UI and domain behavior. Atrium may use TaviX as the Games application, while games such as Life remain independently owned applications/services. LoopRD remains a separate backend specification and may be used by a TaviX application without becoming part of TaviX.
+
+== Core conformance profile
+
+A TaviX 1.0 host conforming to the core profile MUST:
+
+. accept only manifests valid under `schemas/tavi.extension.v1.schema.json`;
+. isolate hosted application panels in a sandbox that does not implicitly grant Tavi/native/Social authority;
+. expose `host.info`, `host.capabilities`, host-owned navigation, and only explicitly granted operations;
+. isolate `storage.private` by connected server/account/application scope;
+. fail unknown methods and unknown permissions closed;
+. preserve host-owned Home/Back access so an application cannot trap the user;
+. never expose a Social session token through the TaviX frame protocol;
+. keep platform-specific implementation details behind the host API.
+
+A core-conforming application MUST use feature discovery for optional modules and MUST NOT assume that a TaviX host implements game launch, Wallet, contacts, messaging, pets, or other shared services merely because the SDK contains typed facades for them.
+
+== Manifest
+
+The normative TaviX 1.0 application manifest is the deployed `tavi.extension/v1` format. The machine-readable schema is `schemas/tavi.extension.v1.schema.json`.
+
+Required identity and compatibility fields are:
+
+[source,json]
+----
+{
+  "schema": "tavi.extension/v1",
+  "id": "org.example.application",
+  "version": "1.0.0",
+  "name": "Example",
+  "summary": "Example TaviX application",
+  "publisher": "example",
+  "kind": "app",
+  "hostApi": {"min":"1.0.0","maxExclusive":"2.0.0"},
+  "entrypoints": {"panel":"ui/index.html"},
+  "contributions": [{"slot":"app.launcher","id":"example","label":"Example","action":"openPanel"}],
+  "permissions": ["ui.panel"],
+  "platforms": ["web","windows","android"]
+}
+----
+
+The v1 permissions are deliberately narrow: `ui.panel`, `ui.toast`, and `storage.private`. Writing a future permission name into a manifest does not create that permission.
+
+== Host protocol
+
+Applications communicate with their host using `postMessage` envelopes on the `tavi.extension/v1` channel. Request and response IDs are positive safe integers. Applications MUST treat the parent as a broker, not as a source of arbitrary ambient authority.
+
+`host.info` on a TaviX 1.0 host returns at least:
+
+[source,json]
+----
+{
+  "standard": "tavix/1.0",
+  "channel": "tavi.extension/v1",
+  "api": "1.0.0",
+  "extensionId": "org.example.application",
+  "mode": "embedded",
+  "navigation": "host",
+  "features": ["tavix.navigation/v1"]
+}
+----
+
+Existing callers that only inspect `api`, `extensionId`, `mode`, `navigation`, or prior feature names remain compatible.
+
+== Navigation
+
+`tavix.navigation/v1` is part of the TaviX 1.0 core host profile.
+
+* `navigation.back` asks the host to leave the current application surface according to host navigation policy.
+* `navigation.close` asks the host to close the current application surface.
+* `ui.close` remains a compatibility alias for pre-standard applications.
+
+The application MUST NOT implement Tavi Home navigation by top-frame navigation, popup, native invocation, or assumptions about Android/Windows window structure. Android system Back, browser Back, and desktop shell controls remain host policy.
+
+In Tavi 0.3.108 a root application panel has no deeper TaviX navigation stack, so `navigation.back` and `navigation.close` both return to the owning Tavi surface. Nested surfaces are standardized separately below and are not claimed implemented by this host version.
+
+== Storage
+
+`storage.private` is a per-application private host store. Keys are bounded and the host scopes values by the connected Tavi server/account/application identity. Applications MUST NOT use private storage as an authentication credential exchange, a substitute for authoritative server state, or an assumption of cross-device synchronization.
+
+== UI operations
+
+`ui.toast` is optional and requires the explicit `ui.toast` manifest permission. Content is bounded by the host. Tavi owns visual presentation.
+
+== Optional TaviX modules
+
+TaviX uses feature negotiation for modules that are not required by the core profile. An SDK method may exist before a host advertises the matching module; callers MUST check `host.info().features` and an unsupported call MUST fail closed.
+
+=== `tavix.surface/v1`
+
+This module defines a generic request to open a reviewed nested application/game surface. It is intentionally generic so Tavi does not need Life-, Atrium-, or game-specific code in the long term.
+
+[source,json]
+----
+{
+  "schema": "tavix.surface/v1",
+  "id": "life.loop",
+  "kind": "game",
+  "target": "https://approved.example/game/",
+  "context": {"matchId":"opaque-id"},
+  "presentation": "auto"
+}
+----
+
+The request is a launch request, not authorization. The source provider remains responsible for reviewing the target. The target service remains responsible for user/session/seat authorization. Credentials, bearer tokens, invitation secrets and private proofs MUST NOT be placed in `target` or ordinary surface context.
+
+Tavi 0.3.108 defines this module in the SDK/spec but does NOT advertise `tavix.surface/v1`; `surface.requestOpen` therefore fails closed. The existing first-party `atrium.tavi-launch/v1` / `ui.requestGameLaunch` behavior remains a temporary compatibility API until Atrium migrates.
+
+== Host events and lifecycle
+
+TaviX reserves host-to-application `direction: "event"` envelopes. The 1.0 SDK can subscribe with `sdk.on(event, handler)`. Event names and payloads are not core-conformance requirements until their feature module is advertised. Applications MUST tolerate receiving no lifecycle events.
+
+Future lifecycle work may standardize suspend/resume/theme/account-change without changing the core request envelope.
+
+== Shared services
+
+Wallet, contacts, messages, pets, events and other shared services are not implicit TaviX privileges. Their SDK facades are capability-oriented and MUST fail closed unless an authoritative host/server adapter and grant exist. LoopRD authentication, scopes, caller-bound service identities and persistence remain outside TaviX.
+
+== `.tavix` package format
+
+TaviX 1.0 defines an optional deterministic offline package for applications that are distributed as local assets. Remote hosted applications remain valid and are not required to use `.tavix`.
+
+A `.tavix` file is a ZIP archive containing:
+
+* `manifest.json` — a valid `tavi.extension/v1` manifest;
+* the application files referenced by the manifest and used by the package;
+* `tavix.lock.json` — generated package integrity metadata with schema `tavix.package/v1`, SHA-256 and byte size for every payload file.
+
+Archive paths MUST be relative, normalized, traversal-free, duplicate-free and use `/`. Symlinks and runtime/private files are forbidden. The lock file is integrity metadata, not a publisher signature or trust grant. Publisher signing can be added independently without changing package layout.
+
+`python tools/tavix-package.py validate <directory>` validates an unpacked package. `python tools/tavix-package.py pack <directory> <output.tavix>` builds a deterministic archive. Two builds from identical bytes produce identical archive bytes.
+
+== SDK
+
+`client/extension-sdk/` is the source distribution of the TaviX 1.0 SDK. Its canonical package name is `@tavi/tavix-sdk`, version `1.0.0`.
+
+The SDK exports `createTaviXSDK`, `TAVIX_STANDARD`, `TAVIX_CHANNEL`, `TAVIX_HOST_API`, and `assertTaviXHostInfo`. `createTaviExtensionSDK` remains an alias so existing applications can migrate without a source rewrite.
+
+The SDK contains no Social bearer, admin key, LoopRD management key, application publisher secret or endpoint discovery magic.
+
+== Compatibility and migration
+
+Companion 0.6.27, the first-party Wallet, Notepad example, and current Atrium `tavi.extension/v1` manifest continue to use the same wire schema. TaviX naming does not invalidate their manifests.
+
+The next Atrium pass should consume `createTaviXSDK`, `navigation.*`, and the generic `tavix.surface/v1` module once Tavi implements/advertises that module. The Life-specific compatibility broker can then be removed only after real Windows/Android/browser migration and rollback acceptance.
+
+== Conformance and acceptance
+
+Source conformance is checked by `tools/tavix-validate.mjs` and `client/tests/tavix-100.test.mjs`. A production release still requires native Windows/Android/browser acceptance; source tests do not prove WebView or Android Back behavior.

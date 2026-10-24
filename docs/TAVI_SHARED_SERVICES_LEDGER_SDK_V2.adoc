@@ -4,6 +4,9 @@
 :toc: left
 :toclevels: 3
 
+
+NOTE: The former `@tavi/extension-sdk` preview has been standardized as `@tavi/tavix-sdk` 1.0.0 in Tavi 0.3.108. See link:TAVIX_1_0_SPEC.adoc[TaviX 1.0]. The service-side authority boundaries in this document remain applicable.
+
 == Status and intent
 
 *Status*: specification plus publishable SDK source foundation. This is **not** a claim that the Ledger, shared Pet service, service-to-service federation, or wallet UI have been deployed. The shipping Tavi 0.3.60 extension host supports only a few sandboxed host calls. Source candidate 0.3.61 adds versioned documentation, SDK facades and a feature-discovery handshake; every shared-data operation remains disabled until its corresponding LoopRD service and host bridge are implemented and verified.

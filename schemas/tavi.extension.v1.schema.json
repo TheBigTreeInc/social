@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://tavi.example/spec/tavi.extension.v1.schema.json",
-  "title": "Tavi Extension Manifest v1",
+  "title": "TaviX 1.0 Application Manifest (wire schema tavi.extension/v1)",
   "type": "object",
   "additionalProperties": false,
   "required": [

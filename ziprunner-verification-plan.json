@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.107",
+  "version": "0.3.108",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -820,7 +820,7 @@
         },
         {
           "id": "LRS-004-AC-3",
-          "description": "Social SQL schema 8→9 and Android/Windows actual recovery flow independently verified by operator.",
+          "description": "Social SQL schema 8\u21929 and Android/Windows actual recovery flow independently verified by operator.",
           "mode": "manual",
           "checks": [
             "LRS-004-DEVICE"
@@ -1662,7 +1662,7 @@
       "criteria": [
         {
           "id": "TAVI-WALLET-LOOPRD-107-SOURCE",
-          "description": "LoopRD 0.4 parent/child descriptor, caller-bound Wallet service façade and unchanged Social schema-12 ledger",
+          "description": "LoopRD 0.4 parent/child descriptor, caller-bound Wallet service fa\u00e7ade and unchanged Social schema-12 ledger",
           "mode": "automated",
           "checks": [
             "python tools/generate-looprd.py --check",
@@ -1673,6 +1673,29 @@
         {
           "id": "TAVI-WALLET-LOOPRD-107-LIVE",
           "description": "LoopRD 0.4 activation, private service credential binding and real user/reward/merchant acceptance",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-TAVIX-108",
+      "criteria": [
+        {
+          "id": "TAVI-TAVIX-108-SOURCE",
+          "description": "TaviX 1.0 wire compatibility, SDK, navigation, validator and deterministic package conformance.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/tavix-100.test.mjs",
+            "python -m unittest tests.test_tavix_package -v",
+            "npm run verify"
+          ]
+        },
+        {
+          "id": "TAVI-TAVIX-108-NATIVE",
+          "description": "Existing extensions, host Back/navigation and signed Android updater on real Windows/Android clients.",
           "mode": "manual",
           "checks": [
             "OPERATOR-APPROVAL-REQUIRED"
@@ -1886,7 +1909,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"

@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.zr/v1",
   "project_key": "looprd-social",
-  "label": "Tavi — The Big Tree Inc",
+  "label": "Tavi \u2014 The Big Tree Inc",
   "match": [
     "tavi-*-ziprunner.zip",
     "looprd-social-*-ziprunner.zip"
@@ -42,5 +42,5 @@
   "require_clean_git_before_overlay": false,
   "mechanisms_require_build_success": true,
   "post_build_mechanisms": [],
-  "version": "0.3.107"
+  "version": "0.3.108"
 }

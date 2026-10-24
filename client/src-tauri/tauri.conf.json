@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Tavi",
-  "version": "0.3.107",
+  "version": "0.3.108",
   "identifier": "inc.thebigtree.looprdsocial",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -35,6 +35,6 @@
       "icons/icon.png",
       "icons/icon.ico"
     ],
-    "shortDescription": "Tavi — Games. Friends. Together."
+    "shortDescription": "Tavi \u2014 Games. Friends. Together."
   }
 }

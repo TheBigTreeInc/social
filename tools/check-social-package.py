@@ -14,7 +14,8 @@ EXPECTED='looprd-social'
 REQUIRED={'.ziprunner-workboard-update.json','project.zr','looprd-social.zr','ziprunner-manifest.json',
           'ziprunner.looprd.json','looprd.yaml','server/looprd_handler.py','tools/generate-looprd.py',
           'client/package.json','client/src/main.js','client/sdk/looprd-social.js','docs/DESIGN.adoc','docs/JAVASCRIPT_CLIENT.adoc','.github/workflows/web.yml','client/src-tauri/tauri.conf.json',
-          '.github/workflows/windows.yml','.github/workflows/android.yml','.github/workflows/portrait-updates.yml'}
+          '.github/workflows/windows.yml','.github/workflows/android.yml','.github/workflows/portrait-updates.yml',
+          'docs/TAVIX_1_0_SPEC.adoc','schemas/tavix.package.v1.schema.json','tools/tavix-package.py','tools/tavix-validate.mjs','client/extension-sdk/package.json','client/tests/tavix-100.test.mjs'}
 
 def verify(path):
     with zipfile.ZipFile(path) as arc:

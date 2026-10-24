@@ -1,13 +1,29 @@
 {
-  "name": "@tavi/extension-sdk",
-  "version": "1.1.0-preview.1",
-  "description": "Source-distributed, tokenless Tavi extension and LoopRD service contract SDK",
+  "name": "@tavi/tavix-sdk",
+  "version": "1.0.0",
+  "description": "TaviX 1.0 SDK for isolated Tavi applications and typed service adapters",
   "type": "module",
-  "files": ["index.js", "index.d.ts", "service.js", "service.d.ts", "README.md"],
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "service.js",
+    "service.d.ts",
+    "README.md"
+  ],
   "exports": {
-    ".": {"types": "./index.d.ts", "default": "./index.js"},
-    "./service": {"types": "./service.d.ts", "default": "./service.js"}
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./service": {
+      "types": "./service.d.ts",
+      "default": "./service.js"
+    }
   },
-  "repository": {"type": "git", "url": "https://github.com/TheBigTreeInc/social.git", "directory": "client/extension-sdk"},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheBigTreeInc/social.git",
+    "directory": "client/extension-sdk"
+  },
   "sideEffects": false
 }
