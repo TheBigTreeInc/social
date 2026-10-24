@@ -1,11 +1,46 @@
-# Android in-app APK update flow — 0.3.39
+# Android in-app APK update flow — Tavi 0.3.100
 
-The Android release build is signed with the persistent GitHub Secrets keystore, and the official published APK asset is named `tavi-android-arm64-vX.Y.Z.apk`.
+The Android build uses the persistent GitHub Release signing identity.
+The **only accepted download URL** is the canonical version-matched APK from
+`TheBigTreeInc/social`. Rust restricts invocation to the native Tavi main
+window and the Android Kotlin plugin validates the URL again before downloads.
 
-On launch / periodic check, the shared webview discovers the GitHub Release metadata. The UI passes only the **exact validated** official asset URL to an Android-specific Rust command and Kotlin plugin. The plugin independently validates the repository, tag and filename. It uses Android `DownloadManager` to download to app-owned external files, observes download completion and hands the resulting APK to Android's package installer via a scoped `FileProvider` URI. Android owns user approval and signing-certificate checks. The application neither silently installs nor bypasses platform permissions.
+`DownloadManager` downloads the official APK to Tavi-owned storage; the updater
+parses its package ID, version, and signing identity against installed Tavi.
+Real updates require a greater Android `versionCode`. The verified APK is
+staged using Android `PackageInstaller.Session`, **not** `ACTION_VIEW`.
+Android shows its required install-permission and user-approval steps; no
+silent installation occurs. The callback is an explicit, non-exported Android
+BroadcastReceiver so it works with Android 14+ and can persist status after
+activity recreation. Version 0.3.100 retains the same app ID and automatically
+increasing semver-derived Android versionCode as 0.3.99.
 
-First installation from external sources may require enabling permission for Tavi to request package installations; if prompted to enable it, return to Tavi and select Update again. **Do not uninstall existing release-signed Tavi when applying a signed update.** Older debug-signed builds require a one-time migration to the persistent signing identity.
+## Fast non-installing phone test
 
-Security boundaries: no URL chosen outside the canonical GitHub Tavi release namespace; no arbitrary file paths; no credentials in the updater; no in-app APK execution; installation confirmation is mandatory. The release gate checks the signed artifact. The Android build fails if `tools/configure-android-updater.py` cannot patch its generated native project.
+In Android Tavi go to **Settings → Android updater & self-test → Test updater**.
+The test downloads and checks the latest official signed APK, then discards
+it **without installing**, even when its version is equal to/older than the
+installed version. Check status or copy sanitized diagnostics. This is a
+metadata/signing identity preflight, not an on-device installation guarantee.
+Run after installing 0.3.100 manually once. Then publish a later signed
+0.3.101 to test actual in-app 0.3.100→0.3.101 updating.
 
-Required on-device acceptance: release-signed APK installation; version A -> B update with data preserved; first-time install permission flow; cancellation; offline / download failure; stale release; non-Tavi URL rejection; Android 13/14/15 notification and download receiver; certificate mismatch is rejected by Android. **CI source checks are not an on-device installation test.**
+An app using a different signing identity (for example a debug APK) cannot
+replace a release-signed version. **Never uninstall the installed Tavi app as
+a test shortcut**, as app data may be lost. Back up data before any intentional
+signing-key migration.
+
+## Limitations and operator acceptance
+
+A dynamically registered DownloadManager completion listener expects Tavi to
+remain alive for the download; a future persistent download receiver is
+appropriate if background process-death recovery is required. The OS installer
+itself uses a persistent explicit callback. Settings provides **Refresh status**
+if Tauri native plugin events are unavailable on a device. The operator must
+validate permission denied/enabled, user cancellation, network failure, missing
+storage, signed consecutive versions, data persistence, and device Android
+version compatibility. Source tests and GitHub-signed build success are not
+physical-device acceptance.
+
+No LoopRD descriptor, wallet or Companion publisher change is necessary.
+Further acceptance and instructions: `docs/ANDROID_UPDATER_SELF_TEST_0100.md`.

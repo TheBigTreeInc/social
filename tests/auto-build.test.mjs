@@ -18,8 +18,8 @@ test('Social multiplayer match rooms add schema 10 without losing game-event cap
   const pkg=JSON.parse(await read('package.json'));
   const server=JSON.parse(await read('server/looprd-release.json'));
   const spec=await read('looprd.yaml');
-  // Server hardening pass advances its descriptor independently of client packaging.
-  assert.equal(pkg.version,'0.3.99');
+  // Client-only updater pass advances its package while keeping the deployed Social descriptor unchanged.
+  assert.equal(pkg.version,'0.3.100');
   assert.equal(server.release,'0.3.99');
   assert.match(spec,/release: 0\.3\.99/);
   assert.match(spec,/mode: verified/);

@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.96",
+  "version": "0.3.100",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -1573,6 +1573,30 @@
             "Messages has no own profile/Gold/Companion widgets; it shows Community Lobby, direct conversations, live search and All/Unread/Friends filters; selecting conversation still works on Android and Windows native chat windows.",
             "Test 320px/390px Android and desktop/web widths: touch targets, keyboard, Android Back, bottom navigation, light/dark themes, square edges and no clipping of profiles or Companion.",
             "Verify npm run verify, descriptor check, Companion publisher digest, Windows/Android native builds and screenshots; keep in Review until operator device acceptance."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-UPDATES-003",
+      "criteria": [
+        {
+          "id": "TAVI-UPDATES-003-SOURCE",
+          "description": "Native PackageInstaller Session and signed Android APK preflight without ACTION_VIEW",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/android-updater-100.test.mjs",
+            "python -m unittest discover -s tests -p test_android_updater.py -v"
+          ]
+        },
+        {
+          "id": "TAVI-UPDATES-003-DEVICE",
+          "description": "On-phone non-installing self-test, then signed v0.3.100 to v0.3.101 Android update with existing app data preserved",
+          "mode": "operator",
+          "checks": [
+            "Run self-test using latest official APK on Android 13+/14+/15+",
+            "Install later signed version using Tavi update and approve through Android system installer",
+            "Check cancellation, unknown-source permission and signature mismatch reporting"
           ]
         }
       ]

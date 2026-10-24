@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.99",
-    "base_version": "0.3.98"
+    "version": "0.3.100",
+    "base_version": "0.3.99"
   },
   "update": {
-    "id": "TAVI-20261023-RECOVERY-HARDENING-0399",
+    "id": "TAVI-20261023-ANDROID-INTERNAL-UPDATER-0100",
     "kind": "source_update",
-    "created_at": "2026-10-23T22:23:34+02:00",
-    "summary": "Harden schema-9 account recovery in current schema-11 Social server: count malformed account-specific attempts toward lockout; correct diagnostic schema reporting. No DB migration. No operator approval or deployment inferred."
+    "created_at": "2026-10-23T22:45:00+02:00",
+    "summary": "Client-only Android APK updater: explicit PackageInstaller callback, signed asset/package/version preflight and non-installing self-test. Preserve server 0.3.99 and Social schema 11. Native compilation/device acceptance pending."
   },
   "planned_work": [
     {
@@ -2172,11 +2172,23 @@
         "description": "Real Android and Windows messenger navigation/safe insets",
         "status": "not_run",
         "reason": "Requires operator native device approval"
+      },
+      {
+        "id": "TAVI-UPDATES-003-SELFTEST-SOURCE",
+        "description": "Android session/install callback, package/version/signature guard, no-install self-test and Tauri bridge",
+        "status": "requires_exact_zip_rerun",
+        "command": "node --test client/tests/android-updater-100.test.mjs && python -m unittest discover -s tests -p test_android_updater.py -v"
+      },
+      {
+        "id": "TAVI-UPDATES-003-ANDROID-DEVICE",
+        "description": "Real signed APK 0.3.100->0.3.101, permission/cancel failure and account preservation",
+        "status": "not_run",
+        "reason": "Requires operator-provided physical Android device and sequential releases"
       }
     ]
   },
   "handover": {
-    "next_pass": "Install Tavi 0.3.99 as operator-reviewed ZipRunner source. Run source and exact ZIP tests. Before any server publication, back up the current Social DB and validate deployed schema 11, session and recovery behavior on staging. Check generated looprd.yaml diff: release advances 0.3.83 -> 0.3.99 but schema remains 11. Test recovery using disposable accounts on Windows/Android. Push/release/deploy only with separate approval. Keep TAVI-QA-047 and TAVI-UPDATES-003 open.",
+    "next_pass": "Import exact v0.3.100 ZIP into ZipRunner; run Node/Python/Android CI. Android 14+ PackageInstaller callback requires real device proof. Manually install signed v0.3.100 once, run Settings -> Android updater self-test against latest official release (no installation), then after v0.3.101 signed publication run actual in-app 0.3.100->0.3.101 update. Preserve installed data. No LoopRD release/schema migration.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -2203,7 +2215,8 @@
       "Never enable WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS remote debugging on ordinary Tavi; native QA requires explicitly disposable account and loopback port.",
       "Historical v0.3.74 GitHub Release was published despite a failed browser UI QA; release gate in that historical commit omitted UI QA. 0.3.76 fixes future gate only, does not rewrite existing immutable release. New exact-SHA checks must be validated on operator-approved push.",
       "Latest local operator board has 118 tickets and reported not_github; independent public GitHub observation identified 8/9 exact-push checks passing, one UI QA failure on 0.3.74. The collector itself is not modified by this Tavi package.",
-      "Generated public static extension assets are committed for deterministic Git/ZipRunner delivery; extensions/ is canonical source. Run extensions:sync before any source changes. Do not hand-edit client/public/tavi-extensions/."
+      "Generated public static extension assets are committed for deterministic Git/ZipRunner delivery; extensions/ is canonical source. Run extensions:sync before any source changes. Do not hand-edit client/public/tavi-extensions/.",
+      "Client-only Android updater 0.3.100 Kotlin code has no physical device test in this author environment; avoid treating source tests as signed native install acceptance."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -2301,25 +2314,25 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.99 source candidate only; this pass changes the Social handler and descriptor release but does not migrate live data. No push, release, publication, or physical device acceptance."
+    "notes": "Client-only 0.3.100 source candidate. No Git push, release, device acceptance, or server publication performed. Publish only with operator-reviewed source and CI."
   },
   "release_notes": {
-    "version": "0.3.99",
-    "summary": "LRS-004 account recovery lockout bypass correction and Social schema-11 diagnostic alignment.",
-    "server_unchanged": false,
+    "version": "0.3.100",
+    "summary": "TAVI-UPDATES-003 Android installer chooser replacement, signed update self-test and diagnostics.",
+    "server_unchanged": true,
     "server_release": "0.3.99",
     "database_schema_version": 11,
     "database_migration": "none",
-    "native_qa": "pending operator Windows/Android test",
-    "browser_qa": "pending 0.3.99 exact-commit five-viewport run"
+    "native_qa": "pending Android CI compile and physical-device update",
+    "browser_qa": "pending new exact-commit run"
   },
   "verification_summary": {
-    "source_candidate": "0.3.99",
-    "browser_qa": "pending new exact-commit run",
-    "native_acceptance": "pending physical Windows/Android devices",
+    "source_candidate": "0.3.100",
+    "browser_qa": "pending exact-commit GitHub five-viewport run",
+    "native_acceptance": "pending Android 0.3.100->0.3.101 update on physical phone",
     "git_push": "not performed by source author",
-    "server_deploy": "not performed",
+    "server_deploy": "not required; 0.3.99 descriptor and schema 11 retained",
     "database_schema": "11 unchanged",
-    "operator_review": "LRS-004 remains Review"
+    "operator_review": "TAVI-UPDATES-003 remains Review; no Done promotion"
   }
 }

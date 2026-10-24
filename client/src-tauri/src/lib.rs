@@ -135,16 +135,37 @@ fn tavi_session_clear(window: WebviewWindow, app: AppHandle) -> Result<(), Strin
 // The native Android plugin validates the GitHub Release URL again, independently
 // of any client-side JavaScript input, before starting DownloadManager.
 #[tauri::command]
-fn tavi_android_install_update(window: WebviewWindow, app: AppHandle, url: String) -> Result<(), String> {
+fn tavi_android_install_update(window: WebviewWindow, app: AppHandle, url: String) -> Result<serde_json::Value, String> {
     main_window_only(&window)?;
     #[cfg(target_os = "android")]
     {
         let plugin = app.state::<AndroidUpdater>();
-        plugin.0.run_mobile_plugin::<()>("installRelease", serde_json::json!({"url": url}))
+        plugin.0.run_mobile_plugin::<serde_json::Value>("installRelease", serde_json::json!({"url": url}))
             .map_err(|e| format!("Android installer unavailable: {e}"))
     }
     #[cfg(not(target_os = "android"))]
     { let _ = (app, url); Err("Only Android supports this installer".into()) }
+}
+
+
+#[tauri::command]
+fn tavi_android_test_update(window: WebviewWindow, app: AppHandle, url: String) -> Result<serde_json::Value, String> {
+    main_window_only(&window)?;
+    #[cfg(target_os = "android")]
+    { app.state::<AndroidUpdater>().0.run_mobile_plugin::<serde_json::Value>("testRelease", serde_json::json!({"url": url}))
+        .map_err(|_| "Android updater self-test unavailable".to_string()) }
+    #[cfg(not(target_os = "android"))]
+    { let _ = (app, url); Err("Only Android supports the updater self-test".into()) }
+}
+
+#[tauri::command]
+fn tavi_android_update_status(window: WebviewWindow, app: AppHandle) -> Result<serde_json::Value, String> {
+    main_window_only(&window)?;
+    #[cfg(target_os = "android")]
+    { app.state::<AndroidUpdater>().0.run_mobile_plugin::<serde_json::Value>("updateStatus", serde_json::json!({}))
+        .map_err(|_| "Android updater status unavailable".to_string()) }
+    #[cfg(not(target_os = "android"))]
+    { let _ = app; Err("Only Android supports updater status".into()) }
 }
 
 #[cfg(target_os = "android")]
@@ -168,7 +189,7 @@ fn android_updater_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![tavi_session_load, tavi_session_save, tavi_session_clear, tavi_android_install_update])
+        .invoke_handler(tauri::generate_handler![tavi_session_load, tavi_session_save, tavi_session_clear, tavi_android_install_update, tavi_android_test_update, tavi_android_update_status])
         .plugin(android_updater_plugin())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
