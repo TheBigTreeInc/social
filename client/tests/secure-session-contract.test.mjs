@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {renderSettings} from '../src/ui/settings-view.js';
 const rust=readFileSync(new URL('../src-tauri/src/lib.rs',import.meta.url),'utf8');
 const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 test('Windows session vault is OS-protected, main-window-only and user-scoped',()=>{
@@ -23,5 +24,7 @@ test('Tavi login opts into vault and transient server outages do not delete cred
  assert.match(main,/state\.retryAvailable/);
  assert.match(main,/if\(category==='rejected'\)/);
  assert.match(main,/saved sign-in is safe/);
- assert.match(main,/settings-disclosure/);
+ const settings=renderSettings({page:'account',profile:{displayName:'Test'},sessionRemembered:true,notifyPrefs:{},pushPrefs:{}});
+ assert.match(settings,/data-action="remember-device"/);
+ assert.match(settings,/data-action="signout"/);
 });

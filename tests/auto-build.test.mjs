@@ -14,12 +14,12 @@ test('ZipRunner gates auto-build after verification and enables Windows by defau
   assert.match(script,/tavi-last-good-nsis/);
   assert.doesNotMatch(script,/git push|git commit|push origin/);
 });
-test('Tavi 0.3.105 keeps Social messenger receipts on deployed release 0.3.103/schema 12',async()=>{
+test('Tavi 0.3.106 keeps Social messenger receipts on deployed release 0.3.103/schema 12',async()=>{
   const pkg=JSON.parse(await read('package.json'));
   const server=JSON.parse(await read('server/looprd-release.json'));
   const spec=await read('looprd.yaml');
   // Companion refresh is client/source packaging only; Social stays on the receipt-capable 0.3.103/schema 12 server.
-  assert.equal(pkg.version,'0.3.105');
+  assert.equal(pkg.version,'0.3.106');
   assert.equal(server.release,'0.3.103');
   assert.match(spec,/release: 0\.3\.103/);
   assert.match(spec,/mode: verified/);

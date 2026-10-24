@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.105",
+  "version": "0.3.106",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -2415,7 +2415,7 @@
         "Publisher remains tavi-community with exact reviewed digest",
         "Permissions remain ui.panel/ui.toast/storage.private",
         "Public catalog matches canonical extension source",
-        "No false claim of Companion cloud broker in Tavi 0.3.105"
+        "No false claim of Companion cloud broker in Tavi 0.3.106"
       ],
       "test_ref": "client/tests/companion-027-integration-104.test.mjs"
     }

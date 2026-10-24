@@ -1,6 +1,21 @@
 /** First-party, font-independent icon registry, used in all host windows. */
 // All paths are fixed markup literals: no source-derived SVG attributes.
 const SHAPES=Object.freeze({
+  'chevron':'<path d="m12 7 9 9-9 9"/>',
+ 'search':'<circle cx="14" cy="14" r="8"/><path d="m20 20 7 7"/>',
+ 'account':'<circle cx="16" cy="11" r="5"/><path d="M6 28c1-7 5-10 10-10s9 3 10 10"/>',
+ 'device':'<rect x="5" y="7" width="22" height="16" rx="2"/><path d="M10 27h12M16 23v4"/>',
+ 'palette':'<path d="M16 4a12 12 0 1 0 0 24h2a3 3 0 0 0 0-6h-1a2 2 0 0 1-2-2c0-1 1-2 2-2h5a6 6 0 0 0 6-6C28 7 22 4 16 4z"/><circle cx="10" cy="12" r="1"/><circle cx="15" cy="9" r="1"/><circle cx="21" cy="11" r="1"/>',
+ 'shield':'<path d="M16 3 27 7v8c0 7-4.5 12-11 15C9.5 27 5 22 5 15V7z"/>',
+ 'storage':'<ellipse cx="16" cy="7" rx="10" ry="4"/><path d="M6 7v9c0 2 4.5 4 10 4s10-2 10-4V7M6 16v9c0 2 4.5 4 10 4s10-2 10-4v-9"/>',
+ 'info':'<circle cx="16" cy="16" r="12"/><path d="M16 14v8M16 9h.01"/>',
+ 'eye':'<path d="M3 16s5-8 13-8 13 8 13 8-5 8-13 8S3 16 3 16z"/><circle cx="16" cy="16" r="3"/>',
+ 'volume':'<path d="M5 13h5l7-6v18l-7-6H5zM22 12a6 6 0 0 1 0 8M25 9a10 10 0 0 1 0 14"/>',
+ 'sync':'<path d="M26 11a11 11 0 0 0-19-3L4 11m0 0V4m0 7h7M6 21a11 11 0 0 0 19 3l3-3m0 0v7m0-7h-7"/>',
+ 'key':'<circle cx="11" cy="16" r="6"/><path d="M17 16h12M24 16v4M28 16v3"/>',
+ 'logout':'<path d="M13 6H6v20h7M19 10l6 6-6 6M11 16h14"/>',
+ 'download':'<path d="M16 4v17m-6-6 6 6 6-6M6 27h20"/>',
+ 'diagnostics':'<path d="M5 25V15M11 25V9M17 25V18M23 25V5M29 25V12"/>',
  'back':'<path d="M19 6 9 16l10 10"/>',
  'home':'<path d="M3 15 16 4l13 11M7 13v15h18V13M12 28v-9h8v9"/>',
  'send':'<path d="m3 16 26-12-7 24-6-9-13-3 13-3"/>',

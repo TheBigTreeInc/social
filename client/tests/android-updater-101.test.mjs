@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {resolve,dirname} from 'node:path';
 import {androidApkAsset,checkTaviRelease} from '../src/release-updates.js';
+import {renderSettings} from '../src/ui/settings-view.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const native=readFileSync(resolve(root,'tools/android-update/TaviUpdaterPlugin.kt'),'utf8');
 const callback=readFileSync(resolve(root,'tools/android-update/TaviInstallResultReceiver.kt'),'utf8');
@@ -44,14 +45,15 @@ test('Self-test consumes same signed release but never creates install session',
  assert.match(native,/if \(!dryRun && versionCode/);
  assert.match(rust,/fn tavi_android_test_update\(/);
  assert.match(rust,/main_window_only\(&window\)/);
- assert.match(main,/data-action="android-update-self-test"/);
- assert.match(main,/data-action="android-update-copy-diagnostics"/);
+ const settingsHtml=renderSettings({page:'about',platform:'android',nativeApp:true,clientVersion:'0.3.106',notifyPrefs:{},pushPrefs:{},androidStatus:{stage:'idle'}});
+ assert.match(settingsHtml,/data-action="android-update-self-test"/);
+ assert.match(settingsHtml,/data-action="android-update-copy-diagnostics"/);
  assert.match(main,/tavi_android_update_status/);
  const release={tag_name:'v0.3.99',assets:[{name:'tavi-android-arm64-v0.3.99.apk',size:12345678,browser_download_url:'https://github.com/TheBigTreeInc/social/releases/download/v0.3.99/tavi-android-arm64-v0.3.99.apk'}]};
  assert.equal((await checkTaviRelease('0.0.0',{fetcher:async()=>({ok:true,json:async()=>release})})).androidUrl,androidApkAsset(release));
 });
-test('Target app identity remains stable through 0.3.105',()=>{
+test('Target app identity remains stable through 0.3.106',()=>{
  assert.equal(config.identifier,'inc.thebigtree.looprdsocial');
- assert.equal(config.version,'0.3.105');
+ assert.equal(config.version,'0.3.106');
  assert.equal(config.bundle?.android?.versionCode,undefined);
 });

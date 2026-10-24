@@ -60,11 +60,12 @@ test('foreground recovery is throttled and only runs with visible authenticated 
 });
 test('Android push prep is visibly off until LoopRD and adapter support it',()=>{
  const src=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ const settings=readFileSync(new URL('../src/ui/settings-view.js',import.meta.url),'utf8');
  assert.match(src,/pushPreferencesKey/);
  assert.match(src,/parsePushCapabilities/);
  assert.match(src,/pushReadiness/);
  assert.match(src,/nativeAdapter:false/);
- assert.match(src,/No endpoint is registered until a distributor/);
+ assert.match(settings,/No endpoint is registered until a distributor/);
  assert.match(src,/visibilitychange/);
  assert.match(src,/test-notification/);
 });

@@ -3,7 +3,7 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.105",
+    "version": "0.3.106",
     "base_version": "0.3.103"
   },
   "update": {
@@ -650,7 +650,7 @@
       "title": "Bundle reviewed Companion 0.6.27 without regressing messenger or Android updater",
       "priority": "high",
       "status": "review",
-      "acceptance_criteria": "Exact Tavi source pins org.tavi.community.companion 0.6.27 from publisher tavi-community with reviewed digest f1bf1db6276641f7b19c8ca6bcfd814e8aedc8a903d022bff6fbd0662d280844 and unchanged ui.panel/ui.toast/storage.private permissions.; Run Companion 0.6.27 source tests and official tavi:bundle verification, then Tavi reviewed importer dry-run/apply, extensions:check and full npm run verify on the exact package.; On Windows and Android, update/install Companion from Tavi App Store, verify top-right Companion portrait, continuous cave/scale visuals, Back/Home navigation, account isolation and existing messenger Sent/Delivered/Seen behavior.; Do not claim cross-device/server-owned Companion persistence until Tavi exposes reviewed companion.get/companion.put, Social compare-and-swap storage and operator reset; local/private host behavior must fail safely.; Build signed Android 0.3.105 and verify the retained PackageInstaller updater/self-test. Perform in-app update from the previously accepted signed Tavi version without losing remembered account/session data."
+      "acceptance_criteria": "Exact Tavi source pins org.tavi.community.companion 0.6.27 from publisher tavi-community with reviewed digest f1bf1db6276641f7b19c8ca6bcfd814e8aedc8a903d022bff6fbd0662d280844 and unchanged ui.panel/ui.toast/storage.private permissions.; Run Companion 0.6.27 source tests and official tavi:bundle verification, then Tavi reviewed importer dry-run/apply, extensions:check and full npm run verify on the exact package.; On Windows and Android, update/install Companion from Tavi App Store, verify top-right Companion portrait, continuous cave/scale visuals, Back/Home navigation, account isolation and existing messenger Sent/Delivered/Seen behavior.; Do not claim cross-device/server-owned Companion persistence until Tavi exposes reviewed companion.get/companion.put, Social compare-and-swap storage and operator reset; local/private host behavior must fail safely.; Build signed Android 0.3.106 and verify the retained PackageInstaller updater/self-test. Perform in-app update from the previously accepted signed Tavi version without losing remembered account/session data."
     }
   ],
   "done_work": [
@@ -2243,7 +2243,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Import exact v0.3.105 ZIP into ZipRunner and require npm run verify plus normal Windows NSIS build/launch. Review Companion 0.6.27 in App Store/top-right portrait on Windows and Android. Keep Social 0.3.103/schema 12. After operator-approved push, require Android CI and perform signed in-app update to 0.3.105 using the retained PackageInstaller path.",
+    "next_pass": "Import exact v0.3.106 ZIP into ZipRunner and require npm run verify plus normal Windows NSIS build/launch. Review Companion 0.6.27 in App Store/top-right portrait on Windows and Android. Keep Social 0.3.103/schema 12. After operator-approved push, require Android CI and perform signed in-app update to 0.3.106 using the retained PackageInstaller path.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -2273,7 +2273,7 @@
       "Generated public static extension assets are committed for deterministic Git/ZipRunner delivery; extensions/ is canonical source. Run extensions:sync before any source changes. Do not hand-edit client/public/tavi-extensions/.",
       "Client-only Android updater 0.3.102 fixes both the known Kotlin import failure and the ZipRunner stale-test overlay failure. Physical Android installation/update remains unverified; source tests are not signed native acceptance.",
       "Sent/Delivered/Seen requires deployed Social release 0.3.103/schema 12; older 0.3.99/schema 11 servers do not expose peer delivery/read receipt metadata.",
-      "Companion 0.6.27 source supports a future server-owned cloud save contract, but Tavi 0.3.105 does not yet implement companion.get/companion.put, CAS storage or operator reset; do not claim cross-device Companion persistence."
+      "Companion 0.6.27 source supports a future server-owned cloud save contract, but Tavi 0.3.106 does not yet implement companion.get/companion.put, CAS storage or operator reset; do not claim cross-device Companion persistence."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -2284,7 +2284,7 @@
       "Life v0.5.87 has internal async command architecture but no public /play; source-only native match chat cannot establish hostless multiplayer.",
       "Life hostless authenticated create/join and legal action endpoints are not deployed; v0.3.46 only provides the Tavi-to-agent challenge handshake."
     ],
-    "notes": "0.3.105 is a client/source packaging refresh over Social 0.3.103/schema 12. Companion 0.6.27 is pinned by publisher/version/digest and retains the existing sandbox permissions. Android PackageInstaller implementation is unchanged from 0.3.103."
+    "notes": "0.3.106 is a client/source packaging refresh over Social 0.3.103/schema 12. Companion 0.6.27 is pinned by publisher/version/digest and retains the existing sandbox permissions. Android PackageInstaller implementation is unchanged from 0.3.103."
   },
   "operator_actions": [
     {
@@ -2369,32 +2369,32 @@
     },
     {
       "id": "TAVI-EXT-COMPANION-104-OP",
-      "description": "Install/update reviewed Companion 0.6.27 on Windows and Android, verify top-right portrait, continuous cave visuals, Home/Back, account isolation and no cloud-save claim; separately verify signed Android 0.3.105 updater path preserves account/session data.",
+      "description": "Install/update reviewed Companion 0.6.27 on Windows and Android, verify top-right portrait, continuous cave visuals, Home/Back, account isolation and no cloud-save claim; separately verify signed Android 0.3.106 updater path preserves account/session data.",
       "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.105 is a source/client candidate only. No Git push, release, server deployment or device acceptance performed. Publish only after ZipRunner Windows acceptance, exact-SHA CI, Companion 0.6.27 native review and signed Android updater test."
+    "notes": "0.3.106 is a source/client candidate only. No Git push, release, server deployment or device acceptance performed. Publish only after ZipRunner Windows acceptance, exact-SHA CI, Companion 0.6.27 native review and signed Android updater test."
   },
   "release_notes": {
-    "version": "0.3.105",
+    "version": "0.3.106",
     "summary": "Reviewed bundled Companion 0.6.27 refresh with unchanged publisher/permissions and retained messenger receipts/updater.",
     "server_unchanged": true,
     "server_release": "0.3.103",
     "database_schema_version": 12,
-    "database_migration": "none in 0.3.105; existing deployed Social 0.3.103 schema 12 remains required for receipts",
+    "database_migration": "none in 0.3.106; existing deployed Social 0.3.103 schema 12 remains required for receipts",
     "native_qa": "pending Windows/Android Companion 0.6.27 and signed updater acceptance",
     "browser_qa": "pending exact-commit run"
   },
   "verification_summary": {
-    "source_candidate": "0.3.105",
+    "source_candidate": "0.3.106",
     "browser_qa": "pending exact-commit GitHub five-viewport run",
-    "native_acceptance": "pending Windows/Android Companion 0.6.27 plus signed Android in-app update to 0.3.105",
+    "native_acceptance": "pending Windows/Android Companion 0.6.27 plus signed Android in-app update to 0.3.106",
     "git_push": "not performed by source author",
     "server_deploy": "no new server change; retain Social 0.3.103/schema 12 from messenger receipts",
-    "database_schema": "12; unchanged by 0.3.105 Companion refresh",
+    "database_schema": "12; unchanged by 0.3.106 Companion refresh",
     "operator_review": "TAVI-EXT-COMPANION-104, TAVI-CHAT-004 and TAVI-UPDATES-003 remain Review; no Done promotion"
   }
 }

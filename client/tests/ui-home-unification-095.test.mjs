@@ -43,5 +43,5 @@ test('central roster styles cover light/dark, desktop and touch without changing
  assert.doesNotMatch(css,/\.tavi-extension-frame iframe|iframe\.contentDocument|\.tavi-community-companion/);
  const main=await read('../src/main.js');
  assert.match(main,/frame\.setAttribute\('sandbox','allow-scripts'\)/);
- assert.match(main,/const CLIENT_VERSION='0.3.105'/);
+ assert.match(main,/const CLIENT_VERSION='0.3.106'/);
 });
