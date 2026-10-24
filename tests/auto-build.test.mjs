@@ -19,7 +19,7 @@ test('Social multiplayer match rooms add schema 10 without losing game-event cap
   const server=JSON.parse(await read('server/looprd-release.json'));
   const spec=await read('looprd.yaml');
   // Client-only updater pass advances its package while keeping the deployed Social descriptor unchanged.
-  assert.equal(pkg.version,'0.3.100');
+  assert.equal(pkg.version,'0.3.102');
   assert.equal(server.release,'0.3.99');
   assert.match(spec,/release: 0\.3\.99/);
   assert.match(spec,/mode: verified/);

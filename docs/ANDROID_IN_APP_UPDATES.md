@@ -1,4 +1,4 @@
-# Android in-app APK update flow — Tavi 0.3.100
+# Android in-app APK update flow — Tavi 0.3.102
 
 The Android build uses the persistent GitHub Release signing identity.
 The **only accepted download URL** is the canonical version-matched APK from
@@ -12,8 +12,9 @@ staged using Android `PackageInstaller.Session`, **not** `ACTION_VIEW`.
 Android shows its required install-permission and user-approval steps; no
 silent installation occurs. The callback is an explicit, non-exported Android
 BroadcastReceiver so it works with Android 14+ and can persist status after
-activity recreation. Version 0.3.100 retains the same app ID and automatically
-increasing semver-derived Android versionCode as 0.3.99.
+activity recreation. Version 0.3.102 retains the same app ID and automatically
+increasing semver-derived Android versionCode as 0.3.99. It also fixes the
+Tauri Android Kotlin `JSObject` import that blocked the 0.3.100 native build.
 
 ## Fast non-installing phone test
 
@@ -22,8 +23,8 @@ The test downloads and checks the latest official signed APK, then discards
 it **without installing**, even when its version is equal to/older than the
 installed version. Check status or copy sanitized diagnostics. This is a
 metadata/signing identity preflight, not an on-device installation guarantee.
-Run after installing 0.3.100 manually once. Then publish a later signed
-0.3.101 to test actual in-app 0.3.100→0.3.101 updating.
+Run after installing 0.3.102 manually once. Then publish a later signed
+0.3.103 to test actual in-app 0.3.102→0.3.103 updating.
 
 An app using a different signing identity (for example a debug APK) cannot
 replace a release-signed version. **Never uninstall the installed Tavi app as

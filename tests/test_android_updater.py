@@ -30,6 +30,8 @@ class AndroidUpdaterOverlayTests(unittest.TestCase):
             self.assertNotIn('${applicationId}.taviupdates',manifest)
             plugin=(app/'TaviUpdaterPlugin.kt').read_text()
             self.assertIn('package inc.thebigtree.looprdsocial',plugin)
+            self.assertIn('import app.tauri.plugin.JSObject',plugin)
+            self.assertNotIn('import app.tauri.JSObject',plugin)
             self.assertIn('DownloadManager.Request',plugin)
             self.assertIn('PackageInstaller.SessionParams',plugin)
             self.assertIn('TaviInstallResultReceiver::class.java',plugin)

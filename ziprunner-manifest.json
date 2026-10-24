@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.100",
-    "base_version": "0.3.99"
+    "version": "0.3.102",
+    "base_version": "0.3.100"
   },
   "update": {
-    "id": "TAVI-20261023-ANDROID-INTERNAL-UPDATER-0100",
+    "id": "TAVI-20261024-ANDROID-UPDATER-OVERLAY-0102",
     "kind": "source_update",
-    "created_at": "2026-10-23T22:45:00+02:00",
-    "summary": "Client-only Android APK updater: explicit PackageInstaller callback, signed asset/package/version preflight and non-installing self-test. Preserve server 0.3.99 and Social schema 11. Native compilation/device acceptance pending."
+    "created_at": "2026-10-24T13:10:00+02:00",
+    "summary": "Repair ZipRunner overlay compatibility after 0.3.101 build failure: overwrite stale android-updater-100 test path, retain corrected app.tauri.plugin.JSObject import, and add overlay regression coverage. Social remains 0.3.99/schema 11."
   },
   "planned_work": [
     {
@@ -2177,18 +2177,18 @@
         "id": "TAVI-UPDATES-003-SELFTEST-SOURCE",
         "description": "Android session/install callback, package/version/signature guard, no-install self-test and Tauri bridge",
         "status": "requires_exact_zip_rerun",
-        "command": "node --test client/tests/android-updater-100.test.mjs && python -m unittest discover -s tests -p test_android_updater.py -v"
+        "command": "node --test client/tests/android-updater-100.test.mjs client/tests/android-updater-101.test.mjs && node --test tests/ziprunner-overlay-compat.test.mjs && python -m unittest discover -s tests -p test_android_updater.py -v"
       },
       {
         "id": "TAVI-UPDATES-003-ANDROID-DEVICE",
-        "description": "Real signed APK 0.3.100->0.3.101, permission/cancel failure and account preservation",
+        "description": "Real signed APK 0.3.102->0.3.103, permission/cancel failure and account preservation",
         "status": "not_run",
         "reason": "Requires operator-provided physical Android device and sequential releases"
       }
     ]
   },
   "handover": {
-    "next_pass": "Import exact v0.3.100 ZIP into ZipRunner; run Node/Python/Android CI. Android 14+ PackageInstaller callback requires real device proof. Manually install signed v0.3.100 once, run Settings -> Android updater self-test against latest official release (no installation), then after v0.3.101 signed publication run actual in-app 0.3.100->0.3.101 update. Preserve installed data. No LoopRD release/schema migration.",
+    "next_pass": "Import exact v0.3.102 ZIP into ZipRunner. First verify npm run verify passes on the existing non-destructive local overlay, then require the normal Windows NSIS build/launch. After an operator-approved push, verify Android CI compiles the corrected app.tauri.plugin.JSObject import. Manually install signed v0.3.102 once over the existing app without uninstalling, run Settings -> Android updater self-test, then use a later signed v0.3.103 for the actual in-app 0.3.102->0.3.103 update and confirm account/session data is preserved. No LoopRD release/schema migration.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -2216,7 +2216,7 @@
       "Historical v0.3.74 GitHub Release was published despite a failed browser UI QA; release gate in that historical commit omitted UI QA. 0.3.76 fixes future gate only, does not rewrite existing immutable release. New exact-SHA checks must be validated on operator-approved push.",
       "Latest local operator board has 118 tickets and reported not_github; independent public GitHub observation identified 8/9 exact-push checks passing, one UI QA failure on 0.3.74. The collector itself is not modified by this Tavi package.",
       "Generated public static extension assets are committed for deterministic Git/ZipRunner delivery; extensions/ is canonical source. Run extensions:sync before any source changes. Do not hand-edit client/public/tavi-extensions/.",
-      "Client-only Android updater 0.3.100 Kotlin code has no physical device test in this author environment; avoid treating source tests as signed native install acceptance."
+      "Client-only Android updater 0.3.102 fixes both the known Kotlin import failure and the ZipRunner stale-test overlay failure. Physical Android installation/update remains unverified; source tests are not signed native acceptance."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -2314,11 +2314,11 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Client-only 0.3.100 source candidate. No Git push, release, device acceptance, or server publication performed. Publish only with operator-reviewed source and CI."
+    "notes": "Client-only 0.3.102 repair candidate. No Git push, release, device acceptance, or server publication performed. Publish only after ZipRunner local Windows acceptance plus reviewed CI."
   },
   "release_notes": {
-    "version": "0.3.100",
-    "summary": "TAVI-UPDATES-003 Android installer chooser replacement, signed update self-test and diagnostics.",
+    "version": "0.3.102",
+    "summary": "TAVI-UPDATES-003 Android Kotlin compilation repair plus JSObject import regression coverage; PackageInstaller updater behavior retained.",
     "server_unchanged": true,
     "server_release": "0.3.99",
     "database_schema_version": 11,
@@ -2327,9 +2327,9 @@
     "browser_qa": "pending new exact-commit run"
   },
   "verification_summary": {
-    "source_candidate": "0.3.100",
+    "source_candidate": "0.3.102",
     "browser_qa": "pending exact-commit GitHub five-viewport run",
-    "native_acceptance": "pending Android 0.3.100->0.3.101 update on physical phone",
+    "native_acceptance": "pending Android 0.3.102->0.3.103 update on physical phone",
     "git_push": "not performed by source author",
     "server_deploy": "not required; 0.3.99 descriptor and schema 11 retained",
     "database_schema": "11 unchanged",
