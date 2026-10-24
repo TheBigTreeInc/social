@@ -16,11 +16,11 @@ async function fixture(){
  await cp(new URL('../public/tavi-extensions/',import.meta.url),join(tmp,'client/public/tavi-extensions'),{recursive:true});
  return tmp;
 }
-test('offline Companion 0.6.11 is a reviewed optional bundled partner, not a first-party impersonation',async()=>{
+test('offline Companion 0.6.27 is a reviewed optional bundled partner, not a first-party impersonation',async()=>{
  const registry=JSON.parse(await readFile(new URL('../../extensions/registry.json',import.meta.url)));
  const entry=registry.extensions.find(e=>e.id===BUNDLED_COMPANION_ID);
  assert.equal(entry?.mode,'optional');assert.equal(entry?.distribution,'bundled-partner');
- assert.equal(entry.publisher,'tavi-community');assert.equal(entry.version,'0.6.11');
+ assert.equal(entry.publisher,'tavi-community');assert.equal(entry.version,'0.6.27');
  const reviewed=await inspectReviewedBundle(source);
  assert.equal(reviewed.sha256,entry.sha256);
  assert.equal(reviewed.files.length,18);
@@ -72,7 +72,7 @@ test('host-owned My pet opens installed Companion and has Home, while portrait r
  assert.match(main,/sandbox','allow-scripts'/);
  assert.doesNotMatch(main,/sandbox','allow-scripts allow-same-origin'/);
  const catalog=JSON.parse(await readFile(new URL('../public/tavi-extensions/catalog.v1.json',import.meta.url))).extensions;
- const store={enabled:id=>id===BUNDLED_COMPANION_ID,source:()=> 'tavi:bundled',version:()=> '0.6.11',installed:()=>true,metadata:()=>null,permissions:()=>['ui.panel','ui.toast','storage.private'],revision:()=>null,entrypoint:()=>null};
+ const store={enabled:id=>id===BUNDLED_COMPANION_ID,source:()=> 'tavi:bundled',version:()=> '0.6.27',installed:()=>true,metadata:()=>null,permissions:()=>['ui.panel','ui.toast','storage.private'],revision:()=>null,entrypoint:()=>null};
  const apps=menuApplications({catalog,store,platform:'android',petEnabled:false});
  assert.equal(apps.filter(x=>x.label==='Companion').length,1);
  assert.equal(apps.filter(x=>x.kind==='extension'&&x.id===BUNDLED_COMPANION_ID).length,0);

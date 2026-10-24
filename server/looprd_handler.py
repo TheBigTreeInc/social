@@ -355,7 +355,7 @@ DM = sa.table('SocialDirectMessage',sa.column('id',sa.Integer),sa.column('leftId
     sa.column('rightId',sa.String),sa.column('senderId',sa.String),
     sa.column('content',sa.String),sa.column('created',sa.Integer))
 READ = sa.table('SocialConversationRead',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),
-    sa.column('peerId',sa.String),sa.column('readId',sa.Integer),sa.column('updated',sa.Integer))
+    sa.column('peerId',sa.String),sa.column('readId',sa.Integer),sa.column('deliveredId',sa.Integer),sa.column('updated',sa.Integer))
 HANDLE = re.compile(r'^[a-z][a-z0-9_]{2,23}$')
 SESSION_AGE = 30*86400
 DUMMY_SALT = b'looprd-social-dummy-salt'
@@ -539,7 +539,7 @@ def logout(db,token):
 # Development tokens cannot get this privilege, even when their subject resembles
 # a registered user; no public API path changes the flag.
 SOCIAL_RELEASE = '0.3.99'
-SOCIAL_SCHEMA_VERSION = 11
+SOCIAL_SCHEMA_VERSION = 12
 
 def account_developer_permission(db, subject):
     if not isinstance(subject, str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):
@@ -626,14 +626,44 @@ def contact_action(db,subject,peer,action):
         db.execute(sa.delete(CONTACT).where(CONTACT.c.id==row['id']))
     return {'ok':True}
 
+def _conversation_cursor(db,subject,peer):
+    row=db.execute(sa.select(READ).where(READ.c.subjectId==subject,READ.c.peerId==peer)).mappings().first()
+    return {'readId':row['readId'] if row else 0,'deliveredId':row['deliveredId'] if row else 0}
+
+def mark_direct_delivered(db,subject,peer,up_to,now):
+    if not isinstance(peer,str) or not re.fullmatch(r'acct_[0-9]{1,19}',peer):
+        return error('Invalid contact')
+    if type(up_to) is not int or up_to<0 or up_to>2**53-1:
+        return error('Invalid delivery cursor')
+    link=contact_row(db,subject,peer)
+    if not link or link['status']!='accepted':return error('Contact is not accepted')
+    existing=db.execute(sa.select(READ).where(READ.c.subjectId==subject,READ.c.peerId==peer)).mappings().first()
+    previous=existing['deliveredId'] if existing else 0
+    advanced=up_to>previous
+    if advanced:
+        left,right=pair(subject,peer)
+        found=db.execute(sa.select(DM.c.id).where(
+            DM.c.id==up_to,DM.c.leftId==left,DM.c.rightId==right,DM.c.senderId==peer)).first()
+        if not found:return error('Delivery cursor is not an inbound message in this conversation')
+        if existing:
+            db.execute(sa.update(READ).where(READ.c.id==existing['id'],READ.c.deliveredId<up_to).values(deliveredId=up_to,updated=now))
+        else:
+            db.execute(sa.insert(READ).values(subjectId=subject,peerId=peer,readId=0,deliveredId=up_to,updated=now))
+        previous=db.execute(sa.select(READ.c.deliveredId).where(READ.c.subjectId==subject,READ.c.peerId==peer)).scalar_one()
+    return {'ok':True,'deliveredId':previous,'advanced':advanced}
+
 def direct_messages(db,subject,peer,now):
     row=contact_row(db,subject,peer)
     if not row or row['status']!='accepted':return {'ok':False,'error':'Contact is not accepted'}
     left,right=pair(subject,peer)
     rows=db.execute(sa.select(DM).where(DM.c.leftId==left,DM.c.rightId==right,DM.c.created>=now-30*86400)
         .order_by(DM.c.id.desc()).limit(100)).mappings().all()
-    return {'ok':True,'messages':[{'id':m['id'],'authorId':m['senderId'], 'text':m['content'], 'at':m['created']}
-        for m in reversed(rows)]}
+    rows=list(reversed(rows))
+    inbound=[m['id'] for m in rows if m['senderId']==peer]
+    delivery=mark_direct_delivered(db,subject,peer,max(inbound),now) if inbound else {'ok':True,'deliveredId':_conversation_cursor(db,subject,peer)['deliveredId'],'advanced':False}
+    peer_cursor=_conversation_cursor(db,peer,subject)
+    return {'ok':True,'messages':[{'id':m['id'],'authorId':m['senderId'], 'text':m['content'], 'at':m['created']} for m in rows],
+        'peerDeliveredId':peer_cursor['deliveredId'],'peerReadId':peer_cursor['readId'],'deliveryAdvanced':delivery['advanced']}
 
 def conversation_summaries(db, subject, now):
     """One mailbox request instead of polling every friend for their DM feed.
@@ -647,8 +677,10 @@ def conversation_summaries(db, subject, now):
     peers={right if left==subject else left for left,right in pairs}
     if not peers:
         return {'ok':True,'schema':'tavi.dm-summaries/v1','conversations':[]}
-    reads={r['peerId']:r['readId'] for r in db.execute(sa.select(READ).where(
+    own_cursors={r['peerId']:{'readId':r['readId'],'deliveredId':r['deliveredId']} for r in db.execute(sa.select(READ).where(
         READ.c.subjectId==subject,READ.c.peerId.in_(peers))).mappings().all()}
+    peer_cursors={r['subjectId']:{'readId':r['readId'],'deliveredId':r['deliveredId']} for r in db.execute(sa.select(READ).where(
+        READ.c.subjectId.in_(peers),READ.c.peerId==subject)).mappings().all()}
     other=sa.case((DM.c.leftId==subject,DM.c.rightId),else_=DM.c.leftId)
     base=sa.and_(sa.or_(DM.c.leftId==subject,DM.c.rightId==subject),
                  DM.c.created>=now-30*86400,other.in_(peers))
@@ -667,7 +699,10 @@ def conversation_summaries(db, subject, now):
         record=last_by_peer.get(peer)
         recent=({'id':record['id'],'authorId':record['senderId'],'text':record['content'],
                  'at':record['created']} if record else None)
-        conversations.append({'peer':peer,'readId':reads.get(peer,0),
+        own=own_cursors.get(peer,{'readId':0,'deliveredId':0})
+        remote=peer_cursors.get(peer,{'readId':0,'deliveredId':0})
+        conversations.append({'peer':peer,'readId':own['readId'],'deliveredId':own['deliveredId'],
+            'peerDeliveredId':remote['deliveredId'],'peerReadId':remote['readId'],
             'unread':min(99,unread.get(peer,0)), 'latest':recent})
     conversations.sort(key=lambda x:(-(x['latest']['id'] if x['latest'] else 0),x['peer']))
     return {'ok':True,'schema':'tavi.dm-summaries/v1','conversations':conversations}
@@ -691,7 +726,7 @@ def mark_direct_read(db,subject,peer,up_to,now):
         if existing:
             db.execute(sa.update(READ).where(READ.c.id==existing['id'],READ.c.readId<up_to).values(readId=up_to,updated=now))
         else:
-            db.execute(sa.insert(READ).values(subjectId=subject,peerId=peer,readId=up_to,updated=now))
+            db.execute(sa.insert(READ).values(subjectId=subject,peerId=peer,readId=up_to,deliveredId=0,updated=now))
         previous=db.execute(sa.select(READ.c.readId).where(READ.c.subjectId==subject,READ.c.peerId==peer)).scalar_one()
     return {'ok':True,'readId':previous,'advanced':advanced}
 
@@ -705,7 +740,8 @@ def direct_send(db,subject,peer,content,now):
     prev=db.execute(sa.select(DM.c.created).where(DM.c.senderId==subject).order_by(DM.c.id.desc()).limit(1)).scalar_one_or_none()
     if prev is not None and now-prev<1:return {'ok':False,'error':'Please slow down'}
     db.execute(sa.insert(DM).values(leftId=left,rightId=right,senderId=subject,content=content.strip(),created=now))
-    return {'ok':True}
+    message_id=db.execute(sa.select(sa.func.max(DM.c.id)).where(DM.c.leftId==left,DM.c.rightId==right,DM.c.senderId==subject)).scalar_one()
+    return {'ok':True,'message':{'id':message_id,'authorId':subject,'text':content.strip(),'at':now}}
 
 
 def published_games():
@@ -1118,7 +1154,9 @@ def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
                 result=mark_direct_read(db,subject,body.get('peer'),body.get('upToId'),now)
                 return result,event_signal(db) if result['ok'] and result['advanced'] else None
             if op=='dm_feed':
-                return direct_messages(db,subject,body.get('peer'),now),None
+                result=direct_messages(db,subject,body.get('peer'),now)
+                advanced=result.pop('deliveryAdvanced',False)
+                return result,event_signal(db) if result['ok'] and advanced else None
             if op=='dm_send':
                 result=direct_send(db,subject,body.get('peer'),body.get('text'),now)
                 return result,event_signal(db) if result['ok'] else None

@@ -22,13 +22,23 @@ class ConversationSyncTests(unittest.TestCase):
   empty=self.call(op='dm_conversations',token=self.b)
   self.assertEqual(empty['schema'],'tavi.dm-summaries/v1')
   self.assertEqual(empty['conversations'][0]['unread'],0)
-  self.assertTrue(self.call(op='dm_send',token=self.a,peer=self.bid,text='Hello')['ok'])
+  sent=self.call(op='dm_send',token=self.a,peer=self.bid,text='Hello')
+  self.assertTrue(sent['ok']);self.assertEqual(sent['message']['text'],'Hello')
+  message_id=sent['message']['id']
+  before=self.call(op='dm_conversations',token=self.a)['conversations'][0]
+  self.assertEqual(before['peerDeliveredId'],0);self.assertEqual(before['peerReadId'],0)
   inbox=self.call(op='dm_conversations',token=second['token'])['conversations'][0]
   self.assertEqual(inbox['unread'],1);self.assertEqual(inbox['latest']['text'],'Hello')
   self.assertEqual(inbox['latest']['authorId'],self.aid)
-  message_id=inbox['latest']['id']
+  self.assertEqual(inbox['latest']['id'],message_id)
+  delivered=self.call(op='dm_feed',token=self.b,peer=self.aid)
+  self.assertEqual(delivered['messages'][-1]['id'],message_id)
+  sender_view=self.call(op='dm_conversations',token=self.a)['conversations'][0]
+  self.assertEqual(sender_view['peerDeliveredId'],message_id);self.assertEqual(sender_view['peerReadId'],0)
   ack=self.call(op='dm_mark_read',token=self.b,peer=self.aid,upToId=message_id)
   self.assertEqual(ack['readId'],message_id)
+  seen=self.call(op='dm_conversations',token=self.a)['conversations'][0]
+  self.assertEqual(seen['peerReadId'],message_id);self.assertEqual(seen['peerDeliveredId'],message_id)
   sync=self.call(op='dm_conversations',token=second['token'])['conversations'][0]
   self.assertEqual(sync['readId'],message_id);self.assertEqual(sync['unread'],0)
   self.assertEqual(self.call(op='dm_mark_read',token=self.b,peer=self.aid,upToId=message_id)['readId'],message_id)
@@ -86,9 +96,15 @@ class ConversationSyncTests(unittest.TestCase):
   db.close()
  def test_migration_adds_read_table_without_rewriting_messages(self):
   spec=self.fixture.spec
-  self.assertEqual(spec['database']['schemaVersion'],11)
+  self.assertEqual(spec['database']['schemaVersion'],12)
   new=[m for m in spec['database']['migrations'] if m['version']==5][0]
   self.assertEqual(len(new['statements']),2)
   self.assertTrue(all('SocialConversationRead' in stmt for stmt in new['statements']))
+
+ def test_delivery_cursor_migration_is_additive(self):
+  spec=self.fixture.spec
+  migration=next(m for m in spec['database']['migrations'] if m['version']==12)
+  self.assertEqual(migration['statements'],['ALTER TABLE "SocialConversationRead" ADD COLUMN "deliveredId" INTEGER NOT NULL DEFAULT 0'])
+  self.assertIn('deliveredId',spec['models']['SocialConversationRead']['fields'])
 
 if __name__=='__main__':unittest.main()

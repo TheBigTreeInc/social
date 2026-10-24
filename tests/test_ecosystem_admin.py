@@ -80,7 +80,7 @@ class EcosystemAdminTests(unittest.TestCase):
     def test_declaration_is_private_and_password_hash_not_managed(self):
         spec=self.spec
         self.assertIn('management.data',spec['requires'])
-        self.assertEqual(spec['database']['schemaVersion'],11)
+        self.assertEqual(spec['database']['schemaVersion'],12)
         self.assertEqual(spec['resources']['accounts']['permissions']['list'],['social:operator'])
         self.assertEqual(spec['resources']['accounts']['permissions']['get'],['social:operator'])
         self.assertNotIn('passwordHash',spec['resources']['accounts']['projection'])

@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.99
+release: 0.3.103
 api:
   version: v1
 cors:
@@ -74,7 +74,7 @@ limits:
   maxInFlight: 30
 database:
   backend: sqlite
-  schemaVersion: 11
+  schemaVersion: 12
   migrations:
   - version: 2
     statements:
@@ -170,6 +170,9 @@ database:
       "transactionId" INTEGER NOT NULL, "created" INTEGER NOT NULL)
     - CREATE UNIQUE INDEX "WalletRewardIssue_unique" ON "WalletRewardIssue" ("merchant","eventId")
     - CREATE INDEX "WalletRewardIssue_daily" ON "WalletRewardIssue" ("merchant","recipient","currencyId","created")
+  - version: 12
+    statements:
+    - ALTER TABLE "SocialConversationRead" ADD COLUMN "deliveredId" INTEGER NOT NULL DEFAULT 0
 models:
   SocialProfile:
     fields:
@@ -803,6 +806,9 @@ models:
       readId:
         type: integer
         required: true
+      deliveredId:
+        type: integer
+        required: true
       updated:
         type: integer
         required: true
@@ -1091,7 +1097,7 @@ handlers:
     \ = sa.table('SocialContact',sa.column('id',sa.Integer),sa.column('leftId',sa.String),\n    sa.column('rightId',sa.String),sa.column('requestedBy',sa.String),\n\
     \    sa.column('status',sa.String),sa.column('created',sa.Integer))\nDM = sa.table('SocialDirectMessage',sa.column('id',sa.Integer),sa.column('leftId',sa.String),\n\
     \    sa.column('rightId',sa.String),sa.column('senderId',sa.String),\n    sa.column('content',sa.String),sa.column('created',sa.Integer))\n\
-    READ = sa.table('SocialConversationRead',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n    sa.column('peerId',sa.String),sa.column('readId',sa.Integer),sa.column('updated',sa.Integer))\n\
+    READ = sa.table('SocialConversationRead',sa.column('id',sa.Integer),sa.column('subjectId',sa.String),\n    sa.column('peerId',sa.String),sa.column('readId',sa.Integer),sa.column('deliveredId',sa.Integer),sa.column('updated',sa.Integer))\n\
     HANDLE = re.compile(r'^[a-z][a-z0-9_]{2,23}$')\nSESSION_AGE = 30*86400\nDUMMY_SALT = b'looprd-social-dummy-salt'\n\
     \ndef username(value):\n    if not isinstance(value,str) or not HANDLE.fullmatch(value.strip().lower()):\n \
     \       raise ValueError('Username must be 3–24 letters, digits or underscores and start with a letter')\n \
@@ -1179,7 +1185,7 @@ handlers:
     \    return {'ok':True}\n\n# Social-specific development privilege: operator-set DB entitlement, never a\n#\
     \ LoopRD management role. Checked on EVERY privileged request and profile refresh.\n# Development tokens cannot\
     \ get this privilege, even when their subject resembles\n# a registered user; no public API path changes the\
-    \ flag.\nSOCIAL_RELEASE = '0.3.99'\nSOCIAL_SCHEMA_VERSION = 11\n\ndef account_developer_permission(db, subject):\n\
+    \ flag.\nSOCIAL_RELEASE = '0.3.99'\nSOCIAL_SCHEMA_VERSION = 12\n\ndef account_developer_permission(db, subject):\n\
     \    if not isinstance(subject, str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}', subject):\n        return\
     \ False\n    account = db.execute(sa.select(ACCOUNT.c.developerEnabled).where(\n        ACCOUNT.c.id == int(subject[5:]))).first()\n\
     \    return account is not None and account[0] is True\n\ndef account_ecosystem_admin(db, subject):\n    \"\"\
@@ -1220,18 +1226,35 @@ handlers:
     \ row['status']!='pending' or row['requestedBy']==subject:\n            return {'ok':False,'error':'No incoming\
     \ request to accept'}\n        db.execute(sa.update(CONTACT).where(CONTACT.c.id==row['id']).values(status='accepted'))\n\
     \    elif action=='contact_remove':\n        db.execute(sa.delete(CONTACT).where(CONTACT.c.id==row['id']))\n\
-    \    return {'ok':True}\n\ndef direct_messages(db,subject,peer,now):\n    row=contact_row(db,subject,peer)\n\
-    \    if not row or row['status']!='accepted':return {'ok':False,'error':'Contact is not accepted'}\n    left,right=pair(subject,peer)\n\
-    \    rows=db.execute(sa.select(DM).where(DM.c.leftId==left,DM.c.rightId==right,DM.c.created>=now-30*86400)\n\
-    \        .order_by(DM.c.id.desc()).limit(100)).mappings().all()\n    return {'ok':True,'messages':[{'id':m['id'],'authorId':m['senderId'],\
-    \ 'text':m['content'], 'at':m['created']}\n        for m in reversed(rows)]}\n\ndef conversation_summaries(db,\
-    \ subject, now):\n    \"\"\"One mailbox request instead of polling every friend for their DM feed.\n\n    Only\
-    \ accepted contacts participate; read cursors are owned by the authenticated\n    subject, not supplied by clients.\
-    \ The latest-message query is bounded to the\n    same 30-day horizon as dm_feed, and returns no unaccepted\
-    \ contact content.\n    \"\"\"\n    pairs=db.execute(sa.select(CONTACT.c.leftId,CONTACT.c.rightId).where(\n\
+    \    return {'ok':True}\n\ndef _conversation_cursor(db,subject,peer):\n    row=db.execute(sa.select(READ).where(READ.c.subjectId==subject,READ.c.peerId==peer)).mappings().first()\n\
+    \    return {'readId':row['readId'] if row else 0,'deliveredId':row['deliveredId'] if row else 0}\n\ndef mark_direct_delivered(db,subject,peer,up_to,now):\n\
+    \    if not isinstance(peer,str) or not re.fullmatch(r'acct_[0-9]{1,19}',peer):\n        return error('Invalid\
+    \ contact')\n    if type(up_to) is not int or up_to<0 or up_to>2**53-1:\n        return error('Invalid delivery\
+    \ cursor')\n    link=contact_row(db,subject,peer)\n    if not link or link['status']!='accepted':return error('Contact\
+    \ is not accepted')\n    existing=db.execute(sa.select(READ).where(READ.c.subjectId==subject,READ.c.peerId==peer)).mappings().first()\n\
+    \    previous=existing['deliveredId'] if existing else 0\n    advanced=up_to>previous\n    if advanced:\n  \
+    \      left,right=pair(subject,peer)\n        found=db.execute(sa.select(DM.c.id).where(\n            DM.c.id==up_to,DM.c.leftId==left,DM.c.rightId==right,DM.c.senderId==peer)).first()\n\
+    \        if not found:return error('Delivery cursor is not an inbound message in this conversation')\n     \
+    \   if existing:\n            db.execute(sa.update(READ).where(READ.c.id==existing['id'],READ.c.deliveredId<up_to).values(deliveredId=up_to,updated=now))\n\
+    \        else:\n            db.execute(sa.insert(READ).values(subjectId=subject,peerId=peer,readId=0,deliveredId=up_to,updated=now))\n\
+    \        previous=db.execute(sa.select(READ.c.deliveredId).where(READ.c.subjectId==subject,READ.c.peerId==peer)).scalar_one()\n\
+    \    return {'ok':True,'deliveredId':previous,'advanced':advanced}\n\ndef direct_messages(db,subject,peer,now):\n\
+    \    row=contact_row(db,subject,peer)\n    if not row or row['status']!='accepted':return {'ok':False,'error':'Contact\
+    \ is not accepted'}\n    left,right=pair(subject,peer)\n    rows=db.execute(sa.select(DM).where(DM.c.leftId==left,DM.c.rightId==right,DM.c.created>=now-30*86400)\n\
+    \        .order_by(DM.c.id.desc()).limit(100)).mappings().all()\n    rows=list(reversed(rows))\n    inbound=[m['id']\
+    \ for m in rows if m['senderId']==peer]\n    delivery=mark_direct_delivered(db,subject,peer,max(inbound),now)\
+    \ if inbound else {'ok':True,'deliveredId':_conversation_cursor(db,subject,peer)['deliveredId'],'advanced':False}\n\
+    \    peer_cursor=_conversation_cursor(db,peer,subject)\n    return {'ok':True,'messages':[{'id':m['id'],'authorId':m['senderId'],\
+    \ 'text':m['content'], 'at':m['created']} for m in rows],\n        'peerDeliveredId':peer_cursor['deliveredId'],'peerReadId':peer_cursor['readId'],'deliveryAdvanced':delivery['advanced']}\n\
+    \ndef conversation_summaries(db, subject, now):\n    \"\"\"One mailbox request instead of polling every friend\
+    \ for their DM feed.\n\n    Only accepted contacts participate; read cursors are owned by the authenticated\n\
+    \    subject, not supplied by clients. The latest-message query is bounded to the\n    same 30-day horizon as\
+    \ dm_feed, and returns no unaccepted contact content.\n    \"\"\"\n    pairs=db.execute(sa.select(CONTACT.c.leftId,CONTACT.c.rightId).where(\n\
     \        CONTACT.c.status=='accepted',sa.or_(CONTACT.c.leftId==subject,CONTACT.c.rightId==subject))).all()\n\
     \    peers={right if left==subject else left for left,right in pairs}\n    if not peers:\n        return {'ok':True,'schema':'tavi.dm-summaries/v1','conversations':[]}\n\
-    \    reads={r['peerId']:r['readId'] for r in db.execute(sa.select(READ).where(\n        READ.c.subjectId==subject,READ.c.peerId.in_(peers))).mappings().all()}\n\
+    \    own_cursors={r['peerId']:{'readId':r['readId'],'deliveredId':r['deliveredId']} for r in db.execute(sa.select(READ).where(\n\
+    \        READ.c.subjectId==subject,READ.c.peerId.in_(peers))).mappings().all()}\n    peer_cursors={r['subjectId']:{'readId':r['readId'],'deliveredId':r['deliveredId']}\
+    \ for r in db.execute(sa.select(READ).where(\n        READ.c.subjectId.in_(peers),READ.c.peerId==subject)).mappings().all()}\n\
     \    other=sa.case((DM.c.leftId==subject,DM.c.rightId),else_=DM.c.leftId)\n    base=sa.and_(sa.or_(DM.c.leftId==subject,DM.c.rightId==subject),\n\
     \                 DM.c.created>=now-30*86400,other.in_(peers))\n    latest=db.execute(sa.select(other.label('peer'),sa.func.max(DM.c.id).label('id'))\n\
     \        .where(base).group_by(other)).all()\n    latest_rows={r['id']:r for r in db.execute(sa.select(DM).where(\n\
@@ -1240,18 +1263,20 @@ handlers:
     \        .group_by(other)).all()\n    unread={r.peer:r.unread for r in unread_rows}\n    last_by_peer={r.peer:latest_rows.get(r.id)\
     \ for r in latest}\n    conversations=[]\n    for peer in peers:\n        record=last_by_peer.get(peer)\n  \
     \      recent=({'id':record['id'],'authorId':record['senderId'],'text':record['content'],\n                \
-    \ 'at':record['created']} if record else None)\n        conversations.append({'peer':peer,'readId':reads.get(peer,0),\n\
-    \            'unread':min(99,unread.get(peer,0)), 'latest':recent})\n    conversations.sort(key=lambda x:(-(x['latest']['id']\
-    \ if x['latest'] else 0),x['peer']))\n    return {'ok':True,'schema':'tavi.dm-summaries/v1','conversations':conversations}\n\
-    \n\ndef mark_direct_read(db,subject,peer,up_to,now):\n    if not isinstance(peer,str) or not re.fullmatch(r'acct_[0-9]{1,19}',peer):\n\
-    \        return error('Invalid contact')\n    if type(up_to) is not int or up_to<0 or up_to>2**53-1:\n     \
-    \   return error('Invalid read cursor')\n    link=contact_row(db,subject,peer)\n    if not link or link['status']!='accepted':return\
-    \ error('Contact is not accepted')\n    existing=db.execute(sa.select(READ).where(READ.c.subjectId==subject,READ.c.peerId==peer)).mappings().first()\n\
+    \ 'at':record['created']} if record else None)\n        own=own_cursors.get(peer,{'readId':0,'deliveredId':0})\n\
+    \        remote=peer_cursors.get(peer,{'readId':0,'deliveredId':0})\n        conversations.append({'peer':peer,'readId':own['readId'],'deliveredId':own['deliveredId'],\n\
+    \            'peerDeliveredId':remote['deliveredId'],'peerReadId':remote['readId'],\n            'unread':min(99,unread.get(peer,0)),\
+    \ 'latest':recent})\n    conversations.sort(key=lambda x:(-(x['latest']['id'] if x['latest'] else 0),x['peer']))\n\
+    \    return {'ok':True,'schema':'tavi.dm-summaries/v1','conversations':conversations}\n\n\ndef mark_direct_read(db,subject,peer,up_to,now):\n\
+    \    if not isinstance(peer,str) or not re.fullmatch(r'acct_[0-9]{1,19}',peer):\n        return error('Invalid\
+    \ contact')\n    if type(up_to) is not int or up_to<0 or up_to>2**53-1:\n        return error('Invalid read\
+    \ cursor')\n    link=contact_row(db,subject,peer)\n    if not link or link['status']!='accepted':return error('Contact\
+    \ is not accepted')\n    existing=db.execute(sa.select(READ).where(READ.c.subjectId==subject,READ.c.peerId==peer)).mappings().first()\n\
     \    previous=existing['readId'] if existing else 0\n    advanced=up_to>previous\n    if advanced:\n       \
     \ left,right=pair(subject,peer)\n        found=db.execute(sa.select(DM.c.id).where(\n            DM.c.id==up_to,DM.c.leftId==left,DM.c.rightId==right)).first()\n\
     \        if not found:return error('Read cursor is not a message in this conversation')\n        if existing:\n\
     \            db.execute(sa.update(READ).where(READ.c.id==existing['id'],READ.c.readId<up_to).values(readId=up_to,updated=now))\n\
-    \        else:\n            db.execute(sa.insert(READ).values(subjectId=subject,peerId=peer,readId=up_to,updated=now))\n\
+    \        else:\n            db.execute(sa.insert(READ).values(subjectId=subject,peerId=peer,readId=up_to,deliveredId=0,updated=now))\n\
     \        previous=db.execute(sa.select(READ.c.readId).where(READ.c.subjectId==subject,READ.c.peerId==peer)).scalar_one()\n\
     \    return {'ok':True,'readId':previous,'advanced':advanced}\n\n\ndef direct_send(db,subject,peer,content,now):\n\
     \    if not isinstance(content,str) or not 1<=len(content.strip())<=1000 or re.search(r'[\\x00-\\x08\\x0e-\\\
@@ -1259,16 +1284,18 @@ handlers:
     \    if not row or row['status']!='accepted':return {'ok':False,'error':'Contact is not accepted'}\n    left,right=pair(subject,peer)\n\
     \    prev=db.execute(sa.select(DM.c.created).where(DM.c.senderId==subject).order_by(DM.c.id.desc()).limit(1)).scalar_one_or_none()\n\
     \    if prev is not None and now-prev<1:return {'ok':False,'error':'Please slow down'}\n    db.execute(sa.insert(DM).values(leftId=left,rightId=right,senderId=subject,content=content.strip(),created=now))\n\
-    \    return {'ok':True}\n\n\ndef published_games():\n    \"\"\"Operator-published HTTPS game catalog; never\
-    \ supplied by clients.\n\n    Deployment sets TAVI_GAME_CATALOG_JSON to an array of entries. Invalid entries\n\
-    \    fail closed; credentials, arbitrary protocols and local-network URLs are not allowed.\n    \"\"\"\n   \
-    \ from urllib.parse import urlsplit\n    try:\n        entries=json.loads(os.getenv('TAVI_GAME_CATALOG_JSON','[]'))\n\
-    \    except (ValueError,TypeError):\n        return []\n    if not isinstance(entries,list):return []\n    games=[];\
-    \ seen=set()\n    for item in entries[:40]:\n        if not isinstance(item,dict):continue\n        key=item.get('id');\
-    \ name=item.get('name'); url=item.get('url')\n        if not isinstance(key,str) or not re.fullmatch(r'[a-z][a-z0-9-]{1,47}',key)\
-    \ or key in seen:continue\n        if not isinstance(name,str) or not 1<=len(name.strip())<=64:continue\n  \
-    \      if not isinstance(url,str) or len(url)>2048:continue\n        try:\n            parsed=urlsplit(url)\n\
-    \            host=(parsed.hostname or '').lower()\n            if parsed.scheme!='https' or not host or parsed.username\
+    \    message_id=db.execute(sa.select(sa.func.max(DM.c.id)).where(DM.c.leftId==left,DM.c.rightId==right,DM.c.senderId==subject)).scalar_one()\n\
+    \    return {'ok':True,'message':{'id':message_id,'authorId':subject,'text':content.strip(),'at':now}}\n\n\n\
+    def published_games():\n    \"\"\"Operator-published HTTPS game catalog; never supplied by clients.\n\n    Deployment\
+    \ sets TAVI_GAME_CATALOG_JSON to an array of entries. Invalid entries\n    fail closed; credentials, arbitrary\
+    \ protocols and local-network URLs are not allowed.\n    \"\"\"\n    from urllib.parse import urlsplit\n   \
+    \ try:\n        entries=json.loads(os.getenv('TAVI_GAME_CATALOG_JSON','[]'))\n    except (ValueError,TypeError):\n\
+    \        return []\n    if not isinstance(entries,list):return []\n    games=[]; seen=set()\n    for item in\
+    \ entries[:40]:\n        if not isinstance(item,dict):continue\n        key=item.get('id'); name=item.get('name');\
+    \ url=item.get('url')\n        if not isinstance(key,str) or not re.fullmatch(r'[a-z][a-z0-9-]{1,47}',key) or\
+    \ key in seen:continue\n        if not isinstance(name,str) or not 1<=len(name.strip())<=64:continue\n     \
+    \   if not isinstance(url,str) or len(url)>2048:continue\n        try:\n            parsed=urlsplit(url)\n \
+    \           host=(parsed.hostname or '').lower()\n            if parsed.scheme!='https' or not host or parsed.username\
     \ or parsed.password or parsed.fragment or parsed.port not in (None,443):continue\n            if host in ('localhost','localhost.localdomain')\
     \ or host.endswith(('.local','.internal','.localhost')):continue\n            import ipaddress\n           \
     \ try:\n                if not ipaddress.ip_address(host).is_global:continue\n            except ValueError:pass\n\
@@ -1469,7 +1496,8 @@ handlers:
     \                return conversation_summaries(db,subject,now),None\n            if op=='dm_mark_read':\n  \
     \              result=mark_direct_read(db,subject,body.get('peer'),body.get('upToId'),now)\n               \
     \ return result,event_signal(db) if result['ok'] and result['advanced'] else None\n            if op=='dm_feed':\n\
-    \                return direct_messages(db,subject,body.get('peer'),now),None\n            if op=='dm_send':\n\
+    \                result=direct_messages(db,subject,body.get('peer'),now)\n                advanced=result.pop('deliveryAdvanced',False)\n\
+    \                return result,event_signal(db) if result['ok'] and advanced else None\n            if op=='dm_send':\n\
     \                result=direct_send(db,subject,body.get('peer'),body.get('text'),now)\n                return\
     \ result,event_signal(db) if result['ok'] else None\n            stored=db.execute(sa.select(PROFILE).where(PROFILE.c.subjectId==subject)).mappings().first()\n\
     \            current=stored['data'] if stored else {'schema':SCHEMA,'profileId':subject,\n                 \
@@ -2848,4 +2876,4 @@ handlers:
     - recovery-codes-v1
     - game-session-rooms-v1
     - wallet-v1
-    release: 0.3.99
+    release: 0.3.103

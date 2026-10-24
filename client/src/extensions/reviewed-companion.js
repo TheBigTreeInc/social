@@ -3,7 +3,7 @@
  */
 export const REVIEWED_COMPANION=Object.freeze({
   id:'org.tavi.community.companion',publisher:'tavi-community',
-  version:'0.6.11',sha256:'e979fd0c473167c64106fa59c45eae366692b6d2cf2d2ab0c3bcc0fdeb9b11a6'
+  version:'0.6.27',sha256:'f1bf1db6276641f7b19c8ca6bcfd814e8aedc8a903d022bff6fbd0662d280844'
 });
 /** Confirm catalog metadata corresponds EXACTLY to the reviewed source digest.
  * verifyBundledExtension separately checks every published asset byte.

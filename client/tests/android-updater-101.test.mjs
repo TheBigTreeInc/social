@@ -50,8 +50,8 @@ test('Self-test consumes same signed release but never creates install session',
  const release={tag_name:'v0.3.99',assets:[{name:'tavi-android-arm64-v0.3.99.apk',size:12345678,browser_download_url:'https://github.com/TheBigTreeInc/social/releases/download/v0.3.99/tavi-android-arm64-v0.3.99.apk'}]};
  assert.equal((await checkTaviRelease('0.0.0',{fetcher:async()=>({ok:true,json:async()=>release})})).androidUrl,androidApkAsset(release));
 });
-test('Target app identity remains stable through 0.3.102',()=>{
+test('Target app identity remains stable through 0.3.105',()=>{
  assert.equal(config.identifier,'inc.thebigtree.looprdsocial');
- assert.equal(config.version,'0.3.102');
+ assert.equal(config.version,'0.3.105');
  assert.equal(config.bundle?.android?.versionCode,undefined);
 });

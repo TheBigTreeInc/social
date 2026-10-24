@@ -27,7 +27,7 @@ if (wallet_contract.get('schema')!='tavi.embedded-looprd-backend/v1' or
     wallet_contract.get('authRealm')!='tavi-social' or
     wallet_contract.get('source')!='wallet_ledger.py' or
     wallet_contract.get('apiSchema')!='tavi.wallet/v1' or
-    wallet_contract.get('databaseSchemaVersion')!=11 or
+    wallet_contract.get('databaseSchemaVersion')!=12 or
     wallet_contract.get('databaseOwnership')!='looprd-social' or
     wallet_contract.get('deployment')!='embed-in-existing-component' or
     wallet_contract.get('migration')!='none-no-secondary-database' or
@@ -52,7 +52,7 @@ spec={
  'push':{'transport':'unifiedpush','scopes':['push:manage'],
          'deviceLifetimeSeconds':86400,'maxDevicesPerPrincipal':8},
  'limits':{'requestsPerMinute':180,'authAttemptsPerMinute':90,'burstPerSecond':15,'maxInFlight':30},
-  'database':{'backend':'sqlite','schemaVersion':11,'migrations':[{'version':2,'statements':[
+  'database':{'backend':'sqlite','schemaVersion':12,'migrations':[{'version':2,'statements':[
   'CREATE TABLE "SocialAccount" ("id" INTEGER PRIMARY KEY, "handle" VARCHAR(32) NOT NULL UNIQUE, "passwordHash" VARCHAR(255) NOT NULL, "created" INTEGER NOT NULL, "failedAttempts" INTEGER NOT NULL, "lockedUntil" INTEGER NOT NULL)',
   'CREATE TABLE "SocialSession" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "tokenHash" VARCHAR(64) NOT NULL UNIQUE, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL, "lastSeen" INTEGER NOT NULL, "revoked" BOOLEAN NOT NULL)',
   'CREATE TABLE "SocialContact" ("id" INTEGER PRIMARY KEY, "leftId" VARCHAR(72) NOT NULL, "rightId" VARCHAR(72) NOT NULL, "requestedBy" VARCHAR(72) NOT NULL, "status" VARCHAR(16) NOT NULL, "created" INTEGER NOT NULL)',
@@ -106,6 +106,8 @@ spec={
   'CREATE TABLE "WalletRewardIssue" ("id" INTEGER PRIMARY KEY, "merchant" VARCHAR(48) NOT NULL, "eventId" VARCHAR(96) NOT NULL, "recipient" VARCHAR(72) NOT NULL, "currencyId" VARCHAR(48) NOT NULL, "amount" INTEGER NOT NULL, "transactionId" INTEGER NOT NULL, "created" INTEGER NOT NULL)',
   'CREATE UNIQUE INDEX "WalletRewardIssue_unique" ON "WalletRewardIssue" ("merchant","eventId")',
   'CREATE INDEX "WalletRewardIssue_daily" ON "WalletRewardIssue" ("merchant","recipient","currencyId","created")'
+  ]},{'version':12,'statements':[
+  'ALTER TABLE "SocialConversationRead" ADD COLUMN "deliveredId" INTEGER NOT NULL DEFAULT 0'
   ]}]},
  'models':{
     'SocialProfile':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True,True),'data':{'type':'json','required':True},'revision':integer(True),'updated':integer(True)}},
@@ -137,7 +139,7 @@ spec={
          'indexes':[{'name':'SocialGameRoomMessage_room','fields':['roomKey','id']}]},
     'SocialGameSubscription':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'publisher':string(48,True),'gameId':string(96,True),'matchId':string(128,True),'enabled':{'type':'boolean','required':True},'updated':integer(True)},'indexes':[{'name':'SocialGameSubscription_subject','fields':['subjectId','enabled']},{'name':'SocialGameSubscription_unique','fields':['subjectId','publisher','gameId','matchId'],'unique':True}]},
     'SocialGameDelivery':{'fields':{'id':integer(primary=True,generated=True),'publisher':string(48,True),'eventId':string(96,True),'recipient':string(72,True),'digest':string(64,True),'interactionId':integer(True),'created':integer(True)},'indexes':[{'name':'SocialGameDelivery_unique','fields':['publisher','eventId','recipient'],'unique':True}]},
-    'SocialConversationRead':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'peerId':string(72,True),'readId':integer(True),'updated':integer(True)},'indexes':[{'name':'SocialConversationRead_subject_peer','fields':['subjectId','peerId'],'unique':True}]},
+    'SocialConversationRead':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'peerId':string(72,True),'readId':integer(True),'deliveredId':integer(True),'updated':integer(True)},'indexes':[{'name':'SocialConversationRead_subject_peer','fields':['subjectId','peerId'],'unique':True}]},
     'SocialDirectMessage':{'fields':{'id':integer(primary=True,generated=True),'leftId':string(72,True),'rightId':string(72,True),'senderId':string(72,True),'content':string(1000,True),'created':integer(True)},'indexes':[{'name':'SocialDirectMessage_pair','fields':['leftId','rightId','id']}]}
     },
  'resources':{'pulses':{'model':'SocialPulse','path':'/pulses','operations':['get'],

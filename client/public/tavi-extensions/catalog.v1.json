@@ -101,9 +101,9 @@
       "manifest": {
         "schema": "tavi.extension/v1",
         "id": "org.tavi.community.companion",
-        "version": "0.6.11",
+        "version": "0.6.27",
         "name": "Companion",
-        "summary": "Optional care-based digital pets with consent-first local preview.",
+        "summary": "An individual painted companion with evolving habits, experiences, and server-owned saves in Tavi.",
         "publisher": "tavi-community",
         "kind": "app",
         "hostApi": {
@@ -136,8 +136,8 @@
       "files": [
         {
           "path": "ui/cat-study.html",
-          "sha256": "660e8f0a0a7d6c125d5b65976f056ec7d0eed93a48f3fe85930e18ddbf67b62a",
-          "size": 4164
+          "sha256": "5d468de0146fd6a794325ee62ee6acf2dca33478e554156b9742a920dfa0282e",
+          "size": 4223
         },
         {
           "path": "ui/chunks/000.js",
@@ -201,18 +201,18 @@
         },
         {
           "path": "ui/index.html",
-          "sha256": "1de066eee6943d78c493d847fb06b7d088160c9924eb5a592052afc75c68985e",
-          "size": 6674
+          "sha256": "95c5e7e259b91f0d010ec26a630d7fb7e7412b1d2d3bed95554ace105dd67c13",
+          "size": 8531
         },
         {
           "path": "ui/studio-main.js",
-          "sha256": "156da7bdce211e27927a1e152fa08f4427dfc2564389af2ec94c987417ad806f",
-          "size": 40515
+          "sha256": "a49ebe0a82e07a9a9f15a336f2df509dc902c848e5d33034225cbc06b406b8bf",
+          "size": 41629
         },
         {
           "path": "ui/world-main.js",
-          "sha256": "65813a3a6675ec11e66292ebecb1d2b38b7b56b524d16b1ed85b743951d8ff75",
-          "size": 85253
+          "sha256": "11229fb4af85eb55c648d518461dde2b559b6dda2c532a86b81ec9f0bb9a23c2",
+          "size": 114398
         },
         {
           "path": "ui/world/studio.css",
@@ -221,8 +221,8 @@
         },
         {
           "path": "ui/world/style.css",
-          "sha256": "6a2a03761511353602d3256953d870ea550f8f5bcfafe1fb1650a41ff8bcaa31",
-          "size": 7977
+          "sha256": "d23180a651c692e53970eae08af7814aeb1bcf9314953e8a7b90f355fea236fc",
+          "size": 8502
         }
       ]
     }

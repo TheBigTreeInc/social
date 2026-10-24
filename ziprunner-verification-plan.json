@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.102",
+  "version": "0.3.105",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -820,7 +820,7 @@
         },
         {
           "id": "LRS-004-AC-3",
-          "description": "Social SQL schema 8→9 and Android/Windows actual recovery flow independently verified by operator.",
+          "description": "Social SQL schema 8\u21929 and Android/Windows actual recovery flow independently verified by operator.",
           "mode": "manual",
           "checks": [
             "LRS-004-DEVICE"
@@ -1600,6 +1600,62 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-CHAT-004",
+      "criteria": [
+        {
+          "id": "TAVI-CHAT-004-SOURCE",
+          "description": "Message length feedback and persisted/fetched/read receipt semantics pass source tests without weakening authorization.",
+          "mode": "automated",
+          "checks": [
+            "TAVI-CHAT-004-NODE",
+            "TAVI-CHAT-004-PYTHON"
+          ]
+        },
+        {
+          "id": "TAVI-CHAT-004-NATIVE",
+          "description": "Real Windows/Android/Web two-account UX and schema migration acceptance.",
+          "mode": "operator",
+          "checks": [
+            "1001+ character draft preserved with explicit error",
+            "Sent only after persistence; Delivered only after recipient fetch; Seen only after recipient read",
+            "Schema 11->12 backup/migration preserves messages/accounts/Wallet",
+            "Signed Android 0.3.102->0.3.103 updater preserves session"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-EXT-COMPANION-104",
+      "criteria": [
+        {
+          "id": "TAVI-EXT-COMPANION-104-SOURCE",
+          "description": "Reviewed Companion 0.6.27 publisher/version/digest, generated catalog and unchanged permission contract",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/companion-027-integration-104.test.mjs",
+            "npm run extensions:check",
+            "npm run verify"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-COMPANION-104-NATIVE",
+          "description": "Windows and Android App Store/update, top-right portrait, continuous cave visuals, Home/Back and account isolation",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-COMPANION-104-CLOUD",
+          "description": "Do not approve server-owned Companion persistence until companion.get/put CAS backend and operator reset are implemented",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -1807,7 +1863,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"
@@ -2320,6 +2376,48 @@
         "Android and Windows share semantic square controls"
       ],
       "test_ref": "client/tests/messenger-home-inbox-096.test.mjs"
+    },
+    {
+      "id": "TAVI-CHAT-004-NODE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Composer limit and receipt-state client tests",
+      "runner_ref": "tavi-extension-platform-source-0359",
+      "assertions": [
+        "No private DM maxlength silently truncates pasted text",
+        "1001+ characters produce explicit limit error and preserve draft",
+        "Own outbound receipt moves only Sent -> Delivered -> Seen",
+        "PackageInstaller regression guards remain present"
+      ],
+      "test_ref": "client/tests/message-receipts-103.test.mjs"
+    },
+    {
+      "id": "TAVI-CHAT-004-PYTHON",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Social delivery/read cursor and schema migration tests",
+      "runner_ref": "tavi-looprd-generated-0356",
+      "assertions": [
+        "dm_send returns persisted message ID",
+        "recipient dm_feed advances delivered cursor only for inbound message",
+        "dm_mark_read advances existing read cursor and sender sees peerReadId",
+        "schema 12 only adds deliveredId default 0 to SocialConversationRead"
+      ],
+      "test_ref": "tests/test_conversation_sync.py"
+    },
+    {
+      "id": "TAVI-EXT-COMPANION-104-NODE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Companion 0.6.27 reviewed bundled-partner integration",
+      "runner_ref": "tavi-extension-platform-source-0359",
+      "assertions": [
+        "Publisher remains tavi-community with exact reviewed digest",
+        "Permissions remain ui.panel/ui.toast/storage.private",
+        "Public catalog matches canonical extension source",
+        "No false claim of Companion cloud broker in Tavi 0.3.105"
+      ],
+      "test_ref": "client/tests/companion-027-integration-104.test.mjs"
     }
   ]
 }

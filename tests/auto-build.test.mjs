@@ -14,16 +14,16 @@ test('ZipRunner gates auto-build after verification and enables Windows by defau
   assert.match(script,/tavi-last-good-nsis/);
   assert.doesNotMatch(script,/git push|git commit|push origin/);
 });
-test('Social multiplayer match rooms add schema 10 without losing game-event capabilities',async()=>{
+test('Tavi 0.3.105 keeps Social messenger receipts on deployed release 0.3.103/schema 12',async()=>{
   const pkg=JSON.parse(await read('package.json'));
   const server=JSON.parse(await read('server/looprd-release.json'));
   const spec=await read('looprd.yaml');
-  // Client-only updater pass advances its package while keeping the deployed Social descriptor unchanged.
-  assert.equal(pkg.version,'0.3.102');
-  assert.equal(server.release,'0.3.99');
-  assert.match(spec,/release: 0\.3\.99/);
+  // Companion refresh is client/source packaging only; Social stays on the receipt-capable 0.3.103/schema 12 server.
+  assert.equal(pkg.version,'0.3.105');
+  assert.equal(server.release,'0.3.103');
+  assert.match(spec,/release: 0\.3\.103/);
   assert.match(spec,/mode: verified/);
   assert.match(spec,/transport: unifiedpush/);
-  assert.match(spec,/schemaVersion: 11/);
+  assert.match(spec,/schemaVersion: 12/);
   assert.match(spec,/management:/);
 });

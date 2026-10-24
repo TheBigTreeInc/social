@@ -885,3 +885,18 @@ html[data-theme='dark'] .tavi-mobile-tabs{background:#162924;border-color:#355d5
 html[data-theme='dark'] .tavi-mobile-tabs button{color:#b3d8c7;}
 html[data-theme='dark'] .tavi-mobile-tabs button[aria-current="page"]{background:#294a3c;color:#dff9e9;}
 html[data-theme='dark'] .tavi-app-page-tabs button[aria-selected="true"]{background:#3a8060;color:#fff;}
+
+/* Tavi 0.3.103 messenger reliability: visible limits and truthful receipts. */
+.message-count{margin-left:auto;font-size:11px;color:var(--tavi-color-muted,#6b7c8d);white-space:nowrap}
+.message-count.near-limit{font-weight:700;color:#8a6100}
+.message-count.over-limit,.message-error{color:#a32626}
+.message-error{display:block;font-size:11px;line-height:1.25;margin-top:4px}
+.message-error[hidden]{display:none}
+.message-receipt{margin-left:auto;font-size:10px;color:#748494;font-weight:600;white-space:nowrap}
+.message-receipt.modern{margin-left:5px}
+.composer-field,.tavi-compose-field,.pop-composer-field{display:flex;flex:1;min-width:0;flex-direction:column}
+.composer-field textarea,.pop-composer-field textarea{width:100%;box-sizing:border-box;flex:1}
+.tavi-compose-feedback{display:flex;justify-content:flex-end;gap:8px;min-height:18px;padding-top:2px}
+.tavi-chat-meta{display:flex;align-items:center;gap:5px;justify-content:flex-end}
+.tavi-chat-meta time{font-size:10px;color:var(--tavi-color-muted,#748494)}
+.tavi-chat-line.theirs .tavi-chat-meta{justify-content:flex-start}

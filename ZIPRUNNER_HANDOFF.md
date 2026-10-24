@@ -1,3 +1,13 @@
+# ZipRunner handoff — Tavi 0.3.105
+
+- Reviewed Companion bundled-partner updated from 0.6.11 to 0.6.27 using Companion's official Tavi bundle builder and Tavi's canonical reviewed importer.
+- Tavi client/source version is 0.3.105; Social remains 0.3.103/schema 12. No new server migration.
+- Android PackageInstaller implementation is byte-identical to 0.3.103 and updater regression tests remain mandatory.
+- Companion 0.6.27 cloud get/put/reset backend is NOT implemented by this pass; do not claim cross-device Companion persistence.
+- See `ZIPRUNNER_HANDOFF_COMPANION_0104.md` for exact digest, validation and operator acceptance.
+
+---
+
 # Tavi 0.3.98 — Shared Back/Home browser QA selector repair
 
 Date: 2026-10-23 (Europe/Amsterdam)

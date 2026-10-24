@@ -1,9 +1,9 @@
 {
   "schema": "tavi.extension/v1",
   "id": "org.tavi.community.companion",
-  "version": "0.6.11",
+  "version": "0.6.27",
   "name": "Companion",
-  "summary": "Optional care-based digital pets with consent-first local preview.",
+  "summary": "An individual painted companion with evolving habits, experiences, and server-owned saves in Tavi.",
   "publisher": "tavi-community",
   "kind": "app",
   "hostApi": {

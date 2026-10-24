@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.102",
-    "base_version": "0.3.100"
+    "version": "0.3.105",
+    "base_version": "0.3.103"
   },
   "update": {
-    "id": "TAVI-20261024-ANDROID-UPDATER-OVERLAY-0102",
+    "id": "TAVI-20261024-COMPANION-0104",
     "kind": "source_update",
-    "created_at": "2026-10-24T13:10:00+02:00",
-    "summary": "Repair ZipRunner overlay compatibility after 0.3.101 build failure: overwrite stale android-updater-100 test path, retain corrected app.tauri.plugin.JSObject import, and add overlay regression coverage. Social remains 0.3.99/schema 11."
+    "created_at": "2026-10-24T14:56:00+02:00",
+    "summary": "Refresh reviewed bundled Companion from 0.6.11 to 0.6.27 through canonical importer while preserving messenger receipts, Social 0.3.103/schema 12 and Android PackageInstaller updater."
   },
   "planned_work": [
     {
@@ -39,7 +39,7 @@
       "title": "First-party Gold Wallet, purchase and exchange ledger",
       "priority": "high",
       "status": "review",
-      "acceptance_criteria": "Source and ZipRunner build verification, staging schema 10→11 migration, tested exact receipts, first-party host grant isolation, Android/Windows/Web native Wallet acceptance, merchant fulfillment proof and operator approval."
+      "acceptance_criteria": "Source and ZipRunner build verification, staging schema 10\u219211 migration, tested exact receipts, first-party host grant isolation, Android/Windows/Web native Wallet acceptance, merchant fulfillment proof and operator approval."
     },
     {
       "id": "TAVI-EXT-UPDATES-072",
@@ -644,6 +644,13 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": "Import exact Tavi 0.3.99 ZipRunner ZIP; rerun local Node, Python, LoopRD descriptor and SHA-pinned extension checks.; On the next operator-approved exact push SHA, verify actual five-viewport Browser UI QA completes green including Wallet Back, Games Back, Notepad Home and no regression to other navigation, touch/safe area or extension security checks.; Confirm all eight required push workflows complete successfully on that SHA. Preserve ZipRunner's full 145 earlier tickets, statuses and criteria; treat stale local ZIP check failures and not_github watcher separately.; Inspect native Windows compact and Android 320/390px UI before marking review tasks Done; do not infer installation/device acceptance from CI."
+    },
+    {
+      "id": "TAVI-EXT-COMPANION-104",
+      "title": "Bundle reviewed Companion 0.6.27 without regressing messenger or Android updater",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Exact Tavi source pins org.tavi.community.companion 0.6.27 from publisher tavi-community with reviewed digest f1bf1db6276641f7b19c8ca6bcfd814e8aedc8a903d022bff6fbd0662d280844 and unchanged ui.panel/ui.toast/storage.private permissions.; Run Companion 0.6.27 source tests and official tavi:bundle verification, then Tavi reviewed importer dry-run/apply, extensions:check and full npm run verify on the exact package.; On Windows and Android, update/install Companion from Tavi App Store, verify top-right Companion portrait, continuous cave/scale visuals, Back/Home navigation, account isolation and existing messenger Sent/Delivered/Seen behavior.; Do not claim cross-device/server-owned Companion persistence until Tavi exposes reviewed companion.get/companion.put, Social compare-and-swap storage and operator reset; local/private host behavior must fail safely.; Build signed Android 0.3.105 and verify the retained PackageInstaller updater/self-test. Perform in-app update from the previously accepted signed Tavi version without losing remembered account/session data."
     }
   ],
   "done_work": [
@@ -1552,6 +1559,32 @@
           "description": "Windows failure reproduction and operator acceptance instructions"
         }
       ]
+    },
+    {
+      "id": "TAVI-CHAT-004",
+      "summary": "Source candidate implements explicit DM length feedback and truthful persisted/fetched/read receipt states without treating server storage as delivery. Additive deliveredId cursor migration only.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/message-ui.js",
+          "description": "Shared message limits and Sent/Delivered/Seen derivation"
+        },
+        {
+          "kind": "source",
+          "ref": "server/looprd_handler.py",
+          "description": "Persisted message ID plus recipient delivery cursor and peer receipt metadata"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/message-receipts-103.test.mjs",
+          "description": "Composer and receipt UI regression tests"
+        },
+        {
+          "kind": "test",
+          "ref": "tests/test_conversation_sync.py",
+          "description": "Two-account persisted -> fetched -> read cursor lifecycle and additive migration"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -2081,7 +2114,7 @@
       },
       {
         "id": "TAVI-MULTI-044-PY",
-        "description": "Game room seat roster, revocation, migration 9→10, private messages and push content-free wake",
+        "description": "Game room seat roster, revocation, migration 9\u219210, private messages and push content-free wake",
         "status": "passed_source_only",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Linux Python 3.13",
@@ -2174,21 +2207,43 @@
         "reason": "Requires operator native device approval"
       },
       {
-        "id": "TAVI-UPDATES-003-SELFTEST-SOURCE",
-        "description": "Android session/install callback, package/version/signature guard, no-install self-test and Tauri bridge",
-        "status": "requires_exact_zip_rerun",
-        "command": "node --test client/tests/android-updater-100.test.mjs client/tests/android-updater-101.test.mjs && node --test tests/ziprunner-overlay-compat.test.mjs && python -m unittest discover -s tests -p test_android_updater.py -v"
-      },
-      {
         "id": "TAVI-UPDATES-003-ANDROID-DEVICE",
         "description": "Real signed APK 0.3.102->0.3.103, permission/cancel failure and account preservation",
         "status": "not_run",
         "reason": "Requires operator-provided physical Android device and sequential releases"
+      },
+      {
+        "id": "TAVI-CHAT-004-NODE",
+        "description": "Visible private-message limits and Sent/Delivered/Seen derivation",
+        "status": "not_run",
+        "command": "node --test client/tests/message-receipts-103.test.mjs client/tests/mailbox-sync.test.mjs",
+        "environment": "Linux Node.js source verification"
+      },
+      {
+        "id": "TAVI-CHAT-004-PYTHON",
+        "description": "Server delivery/read cursor lifecycle and additive schema 12 migration",
+        "status": "not_run",
+        "command": "python -m unittest discover -s tests -p test_conversation_sync.py -v",
+        "environment": "Linux Python source verification"
+      },
+      {
+        "id": "TAVI-UPDATES-003-SELFTEST-SOURCE",
+        "description": "Android PackageInstaller, signer/version guard, non-installing self-test and ZipRunner overlay compatibility retained in 0.3.103",
+        "status": "requires_exact_zip_rerun",
+        "command": "node --test client/tests/android-updater-100.test.mjs client/tests/android-updater-101.test.mjs && node --test tests/ziprunner-overlay-compat.test.mjs && python -m unittest discover -s tests -p test_android_updater.py -v"
+      },
+      {
+        "id": "TAVI-EXT-COMPANION-104-SOURCE",
+        "description": "Companion 0.6.27 reviewed importer, digest/catalog and permission regression",
+        "status": "tested_source",
+        "command": "node --test client/tests/companion-027-integration-104.test.mjs && npm run extensions:check",
+        "environment": "Node.js source validation; native Windows/Android acceptance pending",
+        "evidence_ref": "ZIPRUNNER_HANDOFF_COMPANION_0104.md"
       }
     ]
   },
   "handover": {
-    "next_pass": "Import exact v0.3.102 ZIP into ZipRunner. First verify npm run verify passes on the existing non-destructive local overlay, then require the normal Windows NSIS build/launch. After an operator-approved push, verify Android CI compiles the corrected app.tauri.plugin.JSObject import. Manually install signed v0.3.102 once over the existing app without uninstalling, run Settings -> Android updater self-test, then use a later signed v0.3.103 for the actual in-app 0.3.102->0.3.103 update and confirm account/session data is preserved. No LoopRD release/schema migration.",
+    "next_pass": "Import exact v0.3.105 ZIP into ZipRunner and require npm run verify plus normal Windows NSIS build/launch. Review Companion 0.6.27 in App Store/top-right portrait on Windows and Android. Keep Social 0.3.103/schema 12. After operator-approved push, require Android CI and perform signed in-app update to 0.3.105 using the retained PackageInstaller path.",
     "risks": [
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
@@ -2216,7 +2271,9 @@
       "Historical v0.3.74 GitHub Release was published despite a failed browser UI QA; release gate in that historical commit omitted UI QA. 0.3.76 fixes future gate only, does not rewrite existing immutable release. New exact-SHA checks must be validated on operator-approved push.",
       "Latest local operator board has 118 tickets and reported not_github; independent public GitHub observation identified 8/9 exact-push checks passing, one UI QA failure on 0.3.74. The collector itself is not modified by this Tavi package.",
       "Generated public static extension assets are committed for deterministic Git/ZipRunner delivery; extensions/ is canonical source. Run extensions:sync before any source changes. Do not hand-edit client/public/tavi-extensions/.",
-      "Client-only Android updater 0.3.102 fixes both the known Kotlin import failure and the ZipRunner stale-test overlay failure. Physical Android installation/update remains unverified; source tests are not signed native acceptance."
+      "Client-only Android updater 0.3.102 fixes both the known Kotlin import failure and the ZipRunner stale-test overlay failure. Physical Android installation/update remains unverified; source tests are not signed native acceptance.",
+      "Sent/Delivered/Seen requires deployed Social release 0.3.103/schema 12; older 0.3.99/schema 11 servers do not expose peer delivery/read receipt metadata.",
+      "Companion 0.6.27 source supports a future server-owned cloud save contract, but Tavi 0.3.105 does not yet implement companion.get/companion.put, CAS storage or operator reset; do not claim cross-device Companion persistence."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -2227,7 +2284,7 @@
       "Life v0.5.87 has internal async command architecture but no public /play; source-only native match chat cannot establish hostless multiplayer.",
       "Life hostless authenticated create/join and legal action endpoints are not deployed; v0.3.46 only provides the Tavi-to-agent challenge handshake."
     ],
-    "notes": "0.3.97 changes client UI QA/tests and touch group-target CSS, not messenger business logic, LoopRD descriptor or reviewed Companion publisher. No automated release/deployment."
+    "notes": "0.3.105 is a client/source packaging refresh over Social 0.3.103/schema 12. Companion 0.6.27 is pinned by publisher/version/digest and retains the existing sandbox permissions. Android PackageInstaller implementation is unchanged from 0.3.103."
   },
   "operator_actions": [
     {
@@ -2262,7 +2319,7 @@
     },
     {
       "id": "TAVI-MULTI-044-OP",
-      "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
+      "description": "Backup and test schema 9\u219210 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
       "status": "required"
     },
     {
@@ -2309,30 +2366,35 @@
       "id": "LRS-004-099-OP",
       "description": "Back up deployed Social DB, validate schema 11, apply server descriptor only via approved deployment, test malformed recovery lockout and successful code flow on staging and Windows/Android; do not log secrets. Keep LRS-004 in Review until operator acceptance.",
       "status": "required"
+    },
+    {
+      "id": "TAVI-EXT-COMPANION-104-OP",
+      "description": "Install/update reviewed Companion 0.6.27 on Windows and Android, verify top-right portrait, continuous cave visuals, Home/Back, account isolation and no cloud-save claim; separately verify signed Android 0.3.105 updater path preserves account/session data.",
+      "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Client-only 0.3.102 repair candidate. No Git push, release, device acceptance, or server publication performed. Publish only after ZipRunner local Windows acceptance plus reviewed CI."
+    "notes": "0.3.105 is a source/client candidate only. No Git push, release, server deployment or device acceptance performed. Publish only after ZipRunner Windows acceptance, exact-SHA CI, Companion 0.6.27 native review and signed Android updater test."
   },
   "release_notes": {
-    "version": "0.3.102",
-    "summary": "TAVI-UPDATES-003 Android Kotlin compilation repair plus JSObject import regression coverage; PackageInstaller updater behavior retained.",
+    "version": "0.3.105",
+    "summary": "Reviewed bundled Companion 0.6.27 refresh with unchanged publisher/permissions and retained messenger receipts/updater.",
     "server_unchanged": true,
-    "server_release": "0.3.99",
-    "database_schema_version": 11,
-    "database_migration": "none",
-    "native_qa": "pending Android CI compile and physical-device update",
-    "browser_qa": "pending new exact-commit run"
+    "server_release": "0.3.103",
+    "database_schema_version": 12,
+    "database_migration": "none in 0.3.105; existing deployed Social 0.3.103 schema 12 remains required for receipts",
+    "native_qa": "pending Windows/Android Companion 0.6.27 and signed updater acceptance",
+    "browser_qa": "pending exact-commit run"
   },
   "verification_summary": {
-    "source_candidate": "0.3.102",
+    "source_candidate": "0.3.105",
     "browser_qa": "pending exact-commit GitHub five-viewport run",
-    "native_acceptance": "pending Android 0.3.102->0.3.103 update on physical phone",
+    "native_acceptance": "pending Windows/Android Companion 0.6.27 plus signed Android in-app update to 0.3.105",
     "git_push": "not performed by source author",
-    "server_deploy": "not required; 0.3.99 descriptor and schema 11 retained",
-    "database_schema": "11 unchanged",
-    "operator_review": "TAVI-UPDATES-003 remains Review; no Done promotion"
+    "server_deploy": "no new server change; retain Social 0.3.103/schema 12 from messenger receipts",
+    "database_schema": "12; unchanged by 0.3.105 Companion refresh",
+    "operator_review": "TAVI-EXT-COMPANION-104, TAVI-CHAT-004 and TAVI-UPDATES-003 remain Review; no Done promotion"
   }
 }

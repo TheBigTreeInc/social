@@ -1,4 +1,5 @@
 /** Independent native conversation window. All authenticated operations stay in main. */
+import {composerState,messageLimit} from './message-ui.js';
 import './style.css';
 import './chat.css';
 import './ui/design-tokens.css';
@@ -19,6 +20,13 @@ const label=chatWindowLabel(peer);
 let sequence=0,pending=new Map(),lastScroll=true;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const stamp=t=>{const d=new Date(Number(t)*1000);return Number.isFinite(d.getTime())?d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''};
+function updateComposer(field){
+ const info=composerState(field?.value||'',messageLimit(peer)),count=$('message-count'),error=$('message-error'),button=field?.form?.querySelector('[type="submit"]');
+ if(count){count.textContent=info.label;count.classList.toggle('near-limit',info.near);count.classList.toggle('over-limit',info.over);}
+ if(error){error.textContent=info.error;error.hidden=!info.error;}
+ if(button)button.disabled=info.over;
+ return info;
+}
 let current=null;
 function redraw(){
  const oldField=$('message');const draft=oldField?.value||'';
@@ -31,11 +39,11 @@ function redraw(){
  const pendingInvite=current?.pending;
  $('chat-app').innerHTML=`<div class="pop-chat">${uiHeader({title:title+' · Tavi',minimizeId:'minimize-chat',variant:'native-chat'})}
  <div class="pop-tools"><span class="pop-contact">☻</span><strong>${esc(title)}</strong><small>${esc(current?.online?'● Online':current?.server||'Social Messenger')}</small></div>
- <div class="pop-transcript" id="history" role="log" aria-label="Conversation history">${(current?.messages||[]).map(m=>`<div class="transcript-message"><span class="transcript-heading"><strong class="${m.authorId===current?.myId?'mine':''}">${esc(m.authorId===current?.myId?'You':m.displayName)}</strong><time>${esc(stamp(m.at))}</time></span><div class="transcript-text">${esc(m.text)}</div></div>`).join('')||'<div class="empty-chat">No messages yet.</div>'}</div>
- ${pendingInvite?`<div class="pop-request">${pendingInvite==='incoming'?'This person would like to add you.':'Friend request awaiting acceptance.'}${pendingInvite==='incoming'?'<button data-accept>Accept</button>':''}</div>`:`<div class="pop-format">A &nbsp; ☺ &nbsp; ♡ <span>Enter sends · Shift+Enter new line</span></div><form id="chat-form" class="pop-composer"><textarea id="message" required maxlength="${peer==='lobby'?320:1000}" aria-label="Your message" placeholder="Type a message…">${esc(draft)}</textarea><button type="submit" class="solid">Send</button></form>`}
+ <div class="pop-transcript" id="history" role="log" aria-label="Conversation history">${(current?.messages||[]).map(m=>`<div class="transcript-message"><span class="transcript-heading"><strong class="${m.authorId===current?.myId?'mine':''}">${esc(m.authorId===current?.myId?'You':m.displayName)}</strong><time>${esc(stamp(m.at))}</time>${m.authorId===current?.myId&&m.receipt?`<span class="message-receipt">${esc(m.receipt)}</span>`:''}</span><div class="transcript-text">${esc(m.text)}</div></div>`).join('')||'<div class="empty-chat">No messages yet.</div>'}</div>
+ ${pendingInvite?`<div class="pop-request">${pendingInvite==='incoming'?'This person would like to add you.':'Friend request awaiting acceptance.'}${pendingInvite==='incoming'?'<button data-accept>Accept</button>':''}</div>`:(()=>{const info=composerState(draft,messageLimit(peer));return `<div class="pop-format">A &nbsp; ☺ &nbsp; ♡ <span>Enter sends · Shift+Enter new line</span><span id="message-count" class="message-count ${info.near?'near-limit':''} ${info.over?'over-limit':''}">${info.label}</span></div><form id="chat-form" class="pop-composer"><div class="pop-composer-field"><textarea id="message" required aria-label="Your message" aria-describedby="message-count message-error" placeholder="Type a message…">${esc(draft)}</textarea><span id="message-error" class="message-error" role="alert" ${info.error?'':'hidden'}>${esc(info.error)}</span></div><button type="submit" class="solid" ${info.over?'disabled':''}>Send</button></form>`;})()}
  <div class="window-status" id="chat-status">${esc(current?.server||'Connecting to Social…')}</div></div>`;
- if($('message')){$('message').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();e.target.form?.requestSubmit();}});}
- $('chat-form')?.addEventListener('submit',async e=>{e.preventDefault();const field=$('message');const text=field.value.trim();if(!text)return;field.disabled=true;try{current=await request('send',text);field.value='';redraw();}catch(err){field.disabled=false;$('chat-status').textContent=err.message;}});
+ if($('message')){const field=$('message');field.addEventListener('input',()=>{updateComposer(field);});field.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();e.target.form?.requestSubmit();}});updateComposer(field);}
+ $('chat-form')?.addEventListener('submit',async e=>{e.preventDefault();const field=$('message');const text=field.value.trim();if(!text)return;const info=composerState(text,messageLimit(peer));if(info.over){updateComposer(field);$('chat-status').textContent=info.error;return;}field.disabled=true;try{current=await request('send',text);field.value='';redraw();}catch(err){field.disabled=false;$('chat-status').textContent=err.message;}});
  $('minimize-chat')?.addEventListener('click',()=>emitTo('main','tavi-surface-minimize',{kind:'chat',id:peer}).catch(()=>{}));
  document.querySelector('[data-accept]')?.addEventListener('click',async()=>{try{current=await request('accept');redraw();}catch(err){$('chat-status').textContent=err.message;}});
  const history=$('history');if(history)history.scrollTop=nearBottom?history.scrollHeight:previousTop;

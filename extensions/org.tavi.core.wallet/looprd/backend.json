@@ -5,7 +5,7 @@
   "authRealm": "tavi-social",
   "source": "wallet_ledger.py",
   "apiSchema": "tavi.wallet/v1",
-  "databaseSchemaVersion": 11,
+  "databaseSchemaVersion": 12,
   "databaseOwnership": "looprd-social",
   "handlers": {
     "user": "/wallet",

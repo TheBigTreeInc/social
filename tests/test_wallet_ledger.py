@@ -31,7 +31,7 @@ class LedgerTest(unittest.TestCase):
    'LOOPRD_TAVI_WALLET_REWARDS_JSON':json.dumps({'test-game':{'currencyId':'gold','maxPerEvent':'120','dailyPerPlayer':'500'}})})
   self.settings.start()
   spec=yaml.safe_load((ROOT/'looprd.yaml').read_text())
-  self.assertEqual(spec['database']['schemaVersion'],11)
+  self.assertEqual(spec['database']['schemaVersion'],12)
   self.engine=sa.create_engine('sqlite+pysqlite:///:memory:')
   meta=sa.MetaData()
   for name,model in spec['models'].items():
@@ -204,9 +204,9 @@ class LedgerTest(unittest.TestCase):
   self.assertEqual(self.call(op='balance')['balances'][0]['availableForShopping'],'480')
  def test_fresh_wallet_schema_has_protected_gold_and_no_legacy_backfill(self):
   spec=yaml.safe_load((ROOT/'looprd.yaml').read_text())
-  self.assertEqual(spec['database']['schemaVersion'],11)
-  self.assertEqual([m['version'] for m in spec['database']['migrations']],list(range(2,12)))
-  last=spec['database']['migrations'][-1]['statements']
+  self.assertEqual(spec['database']['schemaVersion'],12)
+  self.assertEqual([m['version'] for m in spec['database']['migrations']],list(range(2,13)))
+  last=next(m for m in spec['database']['migrations'] if m['version']==11)['statements']
   self.assertTrue(any('CREATE TABLE "WalletRestrictedBalance"' in v for v in last))
   self.assertTrue(any('CREATE TABLE "WalletRewardIssue"' in v for v in last))
   self.assertFalse(any('INSERT INTO "WalletRestrictedBalance"' in v for v in last),
