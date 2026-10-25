@@ -900,3 +900,50 @@ html[data-theme='dark'] .tavi-app-page-tabs button[aria-selected="true"]{backgro
 .tavi-chat-meta{display:flex;align-items:center;gap:5px;justify-content:flex-end}
 .tavi-chat-meta time{font-size:10px;color:var(--tavi-color-muted,#748494)}
 .tavi-chat-line.theirs .tavi-chat-meta{justify-content:flex-start}
+
+/* 0.3.110 — compact, responsive TaviX marketplace. Details never inflate list rows. */
+.tavi-app-store.tavi-marketplace{box-sizing:border-box;width:100%;max-width:840px;padding:8px 10px;margin:0 auto;min-width:0;overflow-x:hidden;color:var(--tavi-color-text,#153e2d)}
+.tavi-marketplace-header{display:flex;align-items:center;gap:5px;margin:0 0 7px;min-width:0}
+.tavi-marketplace-header h2{font-size:15px;margin:0 auto 0 0;line-height:1.35}
+.tavi-marketplace-header>button{flex:0 0 32px;display:grid;place-items:center;min-width:32px;min-height:32px;padding:4px}
+.tavi-marketplace-header .tavi-ui-glyph{width:17px;height:17px}
+.tavi-marketplace-find{margin:0 0 7px}
+.tavi-marketplace-find input{box-sizing:border-box;display:block;width:100%;height:35px;min-width:0;padding:6px 10px;font-size:13px;background:var(--tavi-color-field,#fff);color:var(--tavi-color-text,#143b2a);border:1px solid var(--tavi-color-border,#9fbead);border-radius:8px}
+.tavi-marketplace-filters{display:flex;align-items:center;gap:5px;margin:0 0 6px;white-space:nowrap;max-width:100%;overflow-x:auto}
+.tavi-marketplace-filters button{min-height:30px;padding:3px 9px;border-radius:20px;font-size:11px;flex:0 0 auto}
+.tavi-marketplace-filters button[aria-pressed='true']{background:var(--tavi-color-accent,#28785c)!important;border-color:var(--tavi-color-accent,#28785c);color:var(--tavi-color-accent-contrast,#fff)!important;font-weight:700}
+.tavi-marketplace-list{display:flex;flex-direction:column;gap:0}
+.tavi-marketplace .tavi-store-item.tavi-marketplace-item{box-sizing:border-box;min-width:0;width:100%;display:flex;align-items:center;flex-wrap:nowrap;gap:9px;min-height:63px;padding:7px 1px;margin:0;border:0;border-bottom:1px solid var(--tavi-color-border,#d5e2d8);border-radius:0;background:transparent;color:inherit}
+.tavi-marketplace .tavi-marketplace-item[hidden]{display:none!important}
+.tavi-marketplace .tavi-store-icon{box-sizing:border-box;display:flex;align-items:center;justify-content:center;width:42px;height:42px;min-width:42px;min-height:42px;border-radius:10px;overflow:hidden;margin:0}
+.tavi-marketplace .tavi-store-icon svg{width:27px;height:27px}
+.tavi-marketplace .tavi-store-icon img{max-width:100%;max-height:100%;object-fit:contain}
+.tavi-marketplace-copy{appearance:none;display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-height:45px;min-width:0;flex:1 1 0;justify-content:center;padding:0;border:0!important;background:transparent!important;box-shadow:none!important;text-align:left;color:inherit!important;white-space:normal;overflow:hidden}
+.tavi-marketplace-copy strong{font-size:13px;line-height:1.18;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tavi-marketplace-copy small{font-size:10px;line-height:1.3;color:var(--tavi-color-text-muted,#5c7166);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.tavi-marketplace .tavi-store-actions{width:auto;min-width:0;flex:0 0 auto;max-width:105px;display:flex;flex-direction:column;gap:4px;align-items:stretch;justify-content:center;margin:0}
+.tavi-marketplace .tavi-store-actions button{min-width:57px;max-width:102px;min-height:29px;padding:3px 7px;border-radius:7px;font-size:10px;line-height:1.2;white-space:nowrap}
+.tavi-marketplace .tavi-store-actions .tavi-marketplace-review{background:transparent;border-color:var(--tavi-color-border,#a3bcae);color:var(--tavi-color-text,#174938)}
+.tavi-marketplace-status{font-size:10px;line-height:1.4;color:var(--tavi-color-text-muted,#5a7464);margin:7px 0}
+.tavi-marketplace-repositories{margin:7px 0 3px;border-top:1px solid var(--tavi-color-border,#cedfd4);font-size:11px;overflow-wrap:anywhere}
+.tavi-marketplace-repositories summary{padding:8px 0;cursor:pointer;color:var(--tavi-color-text-muted,#4b7159)}
+.tavi-marketplace-repositories code{white-space:normal;word-break:break-all;font-size:10px}
+.tavi-marketplace-repositories p{font-size:11px}
+.tavi-marketplace-empty{font-size:12px;color:var(--tavi-color-text-muted,#587263);padding:14px 0}
+.tavi-marketplace-empty[hidden]{display:none}
+.tavi-marketplace-details{min-width:0}
+.tavi-marketplace-details h2{margin:6px 0;font-size:18px}
+.tavi-marketplace-details h3{font-size:13px;margin:12px 0 7px}
+.tavi-marketplace-details p{font-size:12px;line-height:1.45}
+.tavi-marketplace-details dl{display:grid;grid-template-columns:86px minmax(0,1fr);gap:7px;font-size:11px}
+.tavi-marketplace-details dt{font-weight:700}
+.tavi-marketplace-details dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.tavi-marketplace-details .tavi-store-actions{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px;max-width:none}
+.tavi-marketplace-details .tavi-store-actions button{min-height:34px;max-width:none;font-size:12px}
+.tavi-marketplace-details .tavi-marketplace-return{font-size:12px;min-height:35px;display:flex;align-items:center;gap:4px}
+.tavi-marketplace-details .tavi-marketplace-return svg{width:16px;height:16px}
+.tavi-marketplace-alt{padding:8px 10px;border:1px solid var(--tavi-color-border,#b2d0bd);border-radius:9px;background:var(--tavi-color-surface-muted,#e9f5ed);display:flex;flex-direction:column;gap:3px}
+.tavi-marketplace-meta{color:var(--tavi-color-text-muted,#4b7161)}
+.tavi-marketplace [hidden]{display:none!important}
+@media(max-width:390px){.tavi-marketplace .tavi-store-icon{width:39px;height:39px;min-width:39px;min-height:39px}.tavi-marketplace .tavi-store-item.tavi-marketplace-item{gap:7px;padding-block:6px;min-height:62px}.tavi-marketplace .tavi-store-actions button{font-size:10px}}
+@media(pointer:coarse){.tavi-marketplace .tavi-store-item.tavi-marketplace-item{min-height:70px}.tavi-marketplace .tavi-store-actions button{min-height:40px}.tavi-marketplace-filters button{min-height:42px}.tavi-marketplace-header>button{min-height:44px;min-width:44px}}

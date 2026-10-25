@@ -1,0 +1,77 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {createExtensionStore,extensionStorageScope} from '../src/extensions/store.js';
+import {mergeRepositoryEntries,TAVIX_REPOSITORY_URL,LEGACY_ATRIUM_REPOSITORY_URL,validateRepository} from '../src/extensions/repositories.js';
+import {alternativeRelease,migrationEligibility,marketplaceRows} from '../src/extensions/marketplace.js';
+const memory=()=>{const m=new Map();return {getItem:k=>m.get(k)??null,setItem:(k,v)=>m.set(k,v)};};
+const store=()=>createExtensionStore({storage:memory(),scope:extensionStorageScope('https://social.example','account1')});
+const fixture=JSON.parse(await readFile(new URL('./fixtures/tavix-repository-109.json',import.meta.url),'utf8'));
+const central=validateRepository(fixture).map(entry=>({...entry,repositoryUrl:TAVIX_REPOSITORY_URL}));
+const bundled=JSON.parse(await readFile(new URL('../public/tavi-extensions/catalog.v1.json',import.meta.url),'utf8')).extensions;
+const companion=central.find(entry=>entry.manifest.id==='org.tavi.community.companion');
+const atrium=central.find(entry=>entry.manifest.id==='inc.thebigtree.tavi.atrium');
+
+test('shows newer Companion 0.6.30 from TaviX while 0.6.27 stays installed and pinned',()=>{
+ const s=store(),local=bundled.find(entry=>entry.manifest.id===companion.manifest.id);
+ s.install(local.manifest,'tavi:bundled');
+ const merged=mergeRepositoryEntries(bundled,[central],{store:s,hostedOptionalIds:[companion.manifest.id]});
+ const shown=merged.find(entry=>entry.manifest.id===companion.manifest.id);
+ assert.equal(shown.manifest.version,local.manifest.version);
+ assert.equal(alternativeRelease(shown,[...bundled,...central],s)?.manifest.version,'0.6.30');
+ assert.equal(migrationEligibility(companion,s,{platform:'windows'}).allowed,true);
+ assert.equal(s.source(companion.manifest.id),'tavi:bundled');
+ const filtered=marketplaceRows([shown],s,central,{filter:'updates'});
+ assert.equal(filtered.length,1);
+ assert.equal(marketplaceRows([shown],s,central,{query:'UNRELATED'}).length,0);
+});
+test('shows newer Atrium 1.0.2 and preserves pinned legacy 1.0.0',()=>{
+ const s=store(),legacy=structuredClone(atrium);
+ legacy.manifest.version='1.0.0';
+ legacy.repositoryUrl=LEGACY_ATRIUM_REPOSITORY_URL;
+ legacy.remote.entrypoint='https://thebigtreeinc.github.io/atrium/ui/index.html';
+ s.install(legacy.manifest,legacy.repositoryUrl);
+ const shown=mergeRepositoryEntries([],[central,[legacy]],{store:s})[0];
+ assert.equal(shown.manifest.version,'1.0.0');
+ assert.equal(alternativeRelease(shown,[legacy,...central],s)?.manifest.version,'1.0.2');
+ assert.equal(s.source(atrium.manifest.id),LEGACY_ATRIUM_REPOSITORY_URL);
+});
+test('alternative source never overrides publisher identity, stale sources or downgrade guard',()=>{
+ const s=store(),local=bundled.find(entry=>entry.manifest.id===companion.manifest.id);
+ s.install(local.manifest);
+ const foreign={...companion,manifest:{...companion.manifest,publisher:'untrusted'}};
+ assert.equal(alternativeRelease(local,[foreign],s),null);
+ assert.equal(migrationEligibility(foreign,s,{platform:'windows'}).allowed,false);
+ assert.equal(alternativeRelease(local,[companion],s,{staleSources:new Set([TAVIX_REPOSITORY_URL])}),null);
+ assert.equal(migrationEligibility(companion,s,{staleSources:new Set([TAVIX_REPOSITORY_URL])}).allowed,false);
+ const older={...companion,manifest:{...companion.manifest,version:'0.1.0'}};
+ assert.equal(migrationEligibility(older,s).allowed,false);
+ assert.equal(migrationEligibility(companion,s,{platform:'unsupported'}).allowed,false);
+});
+test('source migration replaces source metadata without deleting account-private extension data',()=>{
+ const storage=memory(),scope=extensionStorageScope('https://social.example','account1');
+ const s=createExtensionStore({storage,scope});
+ const local=bundled.find(entry=>entry.manifest.id===companion.manifest.id);
+ s.install(local.manifest);s.disable(local.manifest.id);
+ storage.setItem(`${scope}:extension:${local.manifest.id}:private-data`,'retained');
+ assert.equal(migrationEligibility(companion,s,{platform:'android'}).allowed,true);
+ const wasEnabled=s.enabled(local.manifest.id);
+ s.install(companion.manifest,companion.repositoryUrl,companion.release.revision,companion.remote.entrypoint);
+ if(!wasEnabled)s.disable(local.manifest.id);
+ assert.equal(s.source(local.manifest.id),TAVIX_REPOSITORY_URL);
+ assert.equal(s.enabled(local.manifest.id),false);
+ assert.equal(storage.getItem(`${scope}:extension:${local.manifest.id}:private-data`),'retained');
+});
+test('App Store has compact rows, source-switch consent and host-owned Back without token sharing',async()=>{
+ const main=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/style.css',import.meta.url),'utf8');
+ assert.match(main,/tavi-marketplace-item/);
+ assert.match(main,/data-marketplace-filter/);
+ assert.match(main,/data-extension-details/);
+ assert.match(main,/data-extension-switch-approve/);
+ assert.match(main,/if\(state\.panel==='app-store'&&marketplaceSelected\)/);
+ assert.match(main,/const fresh=await fetchRepository\(TAVIX_REPOSITORY_URL\)/);
+ assert.match(main,/store\.install\(next\.manifest/);
+ assert.match(css,/min-height:63px/);
+ assert.match(css,/max-width:390px/);
+});

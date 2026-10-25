@@ -1,3 +1,7 @@
+> **Tavi 0.3.111 — Compact App Store workboard repair:** fixes missing ZipRunner `operator_checks` before installation. The 0.3.110 marketplace implementation is unchanged. See `ZIPRUNNER_HANDOFF_TAVIX_0111.md`.
+
+> **Tavi 0.3.110 — Compact TaviX App Store:** phone-first app rows, search/filter/details, visible alternative-source newer releases and explicit publisher-matched source migration. Existing app pins, private data, Wallet, LoopRD backend and Android updater stay protected. See `ZIPRUNNER_HANDOFF_TAVIX_0110.md`.
+
 > **Tavi 0.3.109 — Central TaviX App Store:** Tavi now discovers official extensions from `https://thebigtreeinc.github.io/tavix/tavi.repository.json` by default. Existing Atrium and bundled Companion installations retain their source pins; new installations still require approval. No Social backend migration or Android updater change. See `ZIPRUNNER_HANDOFF_TAVIX_0109.md`.
 
 > **Tavi 0.3.108 TaviX 1.0:** the existing `tavi.extension/v1` application host is now formalized as the TaviX 1.0 standard with `@tavi/tavix-sdk` 1.0.0, core conformance/validation, host-owned navigation aliases and deterministic `.tavix` package tooling. Existing Companion 0.6.27, Wallet and Atrium manifests remain wire-compatible; generic `tavix.surface/v1` is specified but intentionally not advertised until the coordinated Atrium/Life migration. Social remains 0.3.107/schema 12 and the Android updater implementation is unchanged. See `docs/TAVIX_1_0_SPEC.adoc`.

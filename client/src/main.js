@@ -3,6 +3,7 @@ import {createDiagnosticEvents,classifyFetchFailure,diagnosticsQuickSummary} fro
 import {loadBundledCatalog,verifyBundledExtension,createExtensionStore,extensionStorageScope} from './extensions/store.js';
 import {extensionAssetUrl,validateExtensionManifest} from './extensions/contract.js';
 import {extensionUpdateStatus,extensionUpdateSummary,releaseRevision} from './extensions/updates.js';
+import {alternativeRelease,migrationEligibility,marketplaceRows} from './extensions/marketplace.js';
 import {createExtensionHost,CORE_WALLET_ID} from './extensions/host.js';
 import {verifyReviewedCompanion,REVIEWED_COMPANION} from './extensions/reviewed-companion.js';
 import {readCompanionPreview,clearCompanionPreview} from './extensions/companion-preview.js';
@@ -51,7 +52,7 @@ import {petById} from './companions/catalog.js';
 import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
 import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
-const CLIENT_VERSION='0.3.109';
+const CLIENT_VERSION='0.3.111';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
@@ -77,7 +78,9 @@ const state={companion:newCompanion(),companionKey:null,recoverySupported:false,
   sessionRemembered:false,retryAvailable:false,retryOrigin:'',developerAllowed:false,developerVisible:false,developerInfo:null,developerError:'',lastSyncAt:null,pulseState:'disconnected',mobileRoster:true,restoring:false,chatRead:{},unread:{},peerFeeds:new Map(),chatOffset:0,conversationSummaries:[],summarySupported:null,pendingAcks:new Map(),peerReceipts:new Map(),pendingRequestIds:null,notifyPrefs:{messages:true,preview:false,requests:true},pushPrefs:{backgroundEnabled:false},pushCapability:null,pushPermission:'unknown',atriumUrl:null,gameRooms:[],selectedRoomId:null,roomMessages:[],roomError:'',roomDraft:'',theme:normalizeTheme(config.theme),settingsPage:'root',settingsExpanded:{chat:false,push:false},rosterGroups:{online:true,offline:true,requests:true,pending:true,conversations:true},messageFilter:'all',messageSearch:''};
 let poll=null,pulse=null,connecting=false,polling=false,toastTimer=null;
 let extensionCatalog=[],coreWalletEntry=null,extensionCatalogError='',extensionStore=null,extensionStoreScope='',extensionSelected='',extensionBusy=false;
-let extensionInstallApproval=null;
+let extensionInstallApproval=null,extensionSwitchApproval=null;
+let extensionDiscoveredCatalog=[];
+let marketplaceQuery='',marketplaceFilter='all',marketplaceSelected='';
 let extensionVerified=new Set();
 let extensionSuggested=[],extensionRepoStatuses=[],extensionRepoLoad=0;
 let extensionLastCheckedAt=0,extensionStaleSources=new Set(),extensionUpdatePoll=null;
@@ -213,6 +216,8 @@ async function loadExtensionStore({manual=false}={}){
  if(generation!==extensionRepoLoad||state.api?.origin!==origin)return;
  extensionSuggested=suggested;
  extensionStaleSources=stale;
+ extensionDiscoveredCatalog=[...bundled,...collections.flat()];
+ extensionSwitchApproval=null;
  extensionCatalog=mergeRepositoryEntries(bundled,collections,{store:extensionAccountStore(),hostedOptionalIds:[BUNDLED_COMPANION_ID]});
  // A saved profile thumbnail becomes visible only after source metadata and
  // all bundled bytes have been checked against the reviewed 0.6.27 pin.
@@ -237,30 +242,67 @@ async function addExtensionRepository(form){
   await loadExtensionStore();toast('Repository added. Extensions are available to install.');
  }catch(error){toast('Repository not added: '+error.message);}
 }
+function alternateStoreRelease(entry){return alternativeRelease(entry,extensionDiscoveredCatalog,extensionAccountStore(),{staleSources:extensionStaleSources});}
+function storeSourceLabel(source){return source==='tavi:bundled'?'Bundled with Tavi':source===TAVIX_REPOSITORY_URL?'Official TaviX repository':source===LEGACY_ATRIUM_REPOSITORY_URL?'Atrium legacy catalog':'Community repository';}
+function marketplaceItemActions(entry,{detailed=false}={}){
+ const m=entry.manifest,store=extensionAccountStore(),installed=store?.installed(m.id),enabled=store?.enabled(m.id);
+ const status=extensionUpdateStatus(entry,store),alt=alternateStoreRelease(entry);
+ const compatible=validateExtensionManifest(m).compatible&&(!m.platforms||m.platforms.includes(clientPlatform));
+ const stale=entry.repositoryUrl&&extensionStaleSources.has(entry.repositoryUrl);
+ const blocked=['source-changed','published-older','unknown'].includes(status)||stale;
+ return `${!compatible?'<span class="tavi-marketplace-unavailable">Not compatible</span>':blocked?'':enabled&&status!=='update-available'?`<button type="button" data-extension-open="${esc(m.id)}">Open</button>`:installed&&status!=='update-available'?`<button type="button" data-extension-enable="${esc(m.id)}">Enable</button>`:`<button type="button" data-extension-install="${esc(m.id)}" ${extensionBusy?'disabled':''}>${status==='update-available'?'Update':'Install'}</button>`}${alt&&compatible?`<button type="button" class="tavi-marketplace-review" data-extension-switch="${esc(m.id)}">Review</button>`:''}${detailed&&installed?`${enabled?`<button type="button" data-extension-disable="${esc(m.id)}">Disable</button>`:''}<button type="button" data-extension-remove="${esc(m.id)}">Remove</button>`:''}`;
+}
+function marketplaceCard({entry,installed,alternative}){
+ const m=entry.manifest;
+ let iconSrc=null;try{iconSrc=extensionIconUrl(entry,extensionBase());}catch{}
+ const current=installed?extensionAccountStore()?.version(m.id):null;
+ const status=extensionUpdateStatus(entry,extensionAccountStore());
+ const update=alternative?`New ${alternative.manifest.version} from TaviX`:status==='update-available'?`Update ${m.version} available`:installed?`Installed ${current}`:`${m.version} · ${storeSourceLabel(extensionSource(entry))}`;
+ const keywords=[m.name,m.publisher,m.summary,m.id].join(' ').toLocaleLowerCase();
+ return `<article class="tavi-store-item tavi-marketplace-item" data-marketplace-installed="${installed?'true':'false'}" data-marketplace-update="${alternative||status==='update-available'?'true':'false'}" data-marketplace-search="${esc(keywords)}"><span class="tavi-store-icon tone-forest" aria-hidden="true">${appGlyph(m.id===ATRIUM_EXTENSION_ID?'atrium':'extension')}${iconSrc?`<img src="${esc(iconSrc)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}</span><button type="button" class="tavi-marketplace-copy" data-extension-details="${esc(m.id)}" aria-label="Details for ${esc(m.name)}"><strong>${esc(m.name)}</strong><small>${esc(update)}</small></button><div class="tavi-store-actions">${marketplaceItemActions(entry)}</div></article>`;
+}
+function marketplaceDetail(entry){
+ const m=entry.manifest,store=extensionAccountStore(),installed=store?.installed(m.id),alt=alternateStoreRelease(entry),status=extensionUpdateStatus(entry,store);
+ const source=extensionSource(entry);const remote=entry.remote;
+ return `<section class="tavi-marketplace-details"><button class="tavi-marketplace-return" data-marketplace-back type="button">${uiGlyph('back')} All apps</button><h2>${esc(m.name)}</h2><p>${esc(m.summary)}</p><p class="tavi-marketplace-meta">${esc(m.publisher)} · ${esc(m.version)} · ${esc(storeSourceLabel(source))}</p>${installed?`<p>Installed ${esc(store.version(m.id)||'unknown')} · ${esc(status==='current'?'Current at pinned source':status==='update-available'?'Update available':status)}</p>`:''}${alt?`<p class="tavi-marketplace-alt"><strong>Different source offers ${esc(alt.manifest.version)}</strong><span>Published by ${esc(alt.manifest.publisher)} through the central TaviX catalog. Source switching is not automatic.</span></p>`:''}<div class="tavi-marketplace-detail-actions">${marketplaceItemActions(entry,{detailed:true})}</div><h3>Access and publisher</h3><dl><dt>Permissions</dt><dd>${esc(m.permissions.join(', ')||'None')}</dd><dt>Publisher</dt><dd>${esc(m.publisher)}</dd><dt>Current source</dt><dd>${esc(source)}</dd>${remote?`<dt>Source code</dt><dd><a href="${esc(remote.source)}" rel="noopener noreferrer" target="_blank">Publisher repository</a></dd><dt>License</dt><dd>${esc(remote.license)}</dd>`:''}</dl><p class="fineprint">Tavi keeps your account credentials outside extensions. App state is separate from the publisher's hosted code.</p></section>`;
+}
 function appStorePanel(){
  const store=extensionAccountStore(),subscriptions=extensionRepoSubscriptions()?.list()||[];
  const summary=optionalUpdateSummary(extensionCatalog,store,{staleSources:extensionStaleSources});
+ const rows=marketplaceRows(optionalCatalog(),store,extensionDiscoveredCatalog,{staleSources:extensionStaleSources});
+ const alternativeCount=rows.filter(r=>r.alternative).length;
+ const offers=rows.filter(r=>r.alternative||extensionUpdateStatus(r.entry,store)==='update-available').length;
  const when=extensionLastCheckedAt?new Date(extensionLastCheckedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'Not checked yet';
- return `<section class="utility tavi-app-store"><h2>App Store</h2><p class="fineprint">Browse optional apps. Updates are checked every 15 minutes while signed in. You approve installation and updates; published hosted code is not yet stored locally.</p><div class="tavi-update-summary" role="status"><strong>${!extensionLastCheckedAt?'Updates not checked':summary.count?`${summary.count} update${summary.count===1?'':'s'} available`:extensionStaleSources.size?'Update status incomplete':'No updates detected'}</strong><span>Last checked: ${esc(when)}${extensionStaleSources.size?` · ${extensionStaleSources.size} repository check(s) failed`: ''}</span><button type="button" data-action="store-refresh">Check for updates</button></div>${extensionCatalogError?`<p class="notice" role="alert">${esc(extensionCatalogError)}</p>`:''}${optionalCatalog().length?optionalCatalog().map(entry=>{
- const m=entry.manifest,installed=store?.installed(m.id),enabled=store?.enabled(m.id),source=extensionSource(entry);
- const status=extensionUpdateStatus(entry,store);
- const sourceMismatch=status==='source-changed';
- const outdated=status==='update-available';
- const older=status==='published-older',unknown=status==='unknown';
- const stale=entry.repositoryUrl&&extensionStaleSources.has(entry.repositoryUrl);
- const compatible=validateExtensionManifest(m).compatible&&(!m.platforms||m.platforms.includes(clientPlatform));
- let iconSrc=null;try{iconSrc=extensionIconUrl(entry,extensionBase());}catch{}
- return `<article class="tavi-store-item"><span class="tavi-store-icon tone-forest">${appGlyph(m.id===ATRIUM_EXTENSION_ID?'atrium':'extension')}${iconSrc?`<img src="${esc(iconSrc)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}</span><div class="tavi-store-item-copy"><h3>${esc(m.name)}</h3><p>${esc(m.summary)}</p><small>${esc(m.publisher)} · ${esc(m.version)} · ${esc(m.permissions.join(', '))}</small>${installed?`<p class="tavi-extension-version">Installed ${esc(store.version(m.id)||'unknown')} · Published ${esc(m.version)}${releaseRevision(entry)?` · Revision ${esc(releaseRevision(entry).slice(0,8))}`:''}</p>`:''}<p class="tavi-extension-state" data-extension-state="${esc(m.id)}" aria-live="polite">${stale?'Update check unavailable — showing last known listing':outdated?'Update available — approval required':older?'Installed version is newer than published listing':unknown?'Version verification unavailable':sourceMismatch?'Publisher source changed':installed?'Installed · up to date':'Not installed'}</p><p class="fineprint">${entry.remote?`${source===TAVIX_REPOSITORY_URL?'Official TaviX repository':source===LEGACY_ATRIUM_REPOSITORY_URL?'Legacy Atrium repository':'Community repository'}: ${esc(source)} · ${esc(entry.remote.license)} · <a href="${esc(entry.remote.source)}" target="_blank" rel="noopener noreferrer">Source code ↗</a>`:'Bundled with Tavi'}</p>${sourceMismatch?'<p class="notice">The source repository changed; remove this installation before reinstalling.</p>':''}</div><div class="tavi-store-actions">${!compatible?'<small>Unavailable on this client</small>':sourceMismatch||older||unknown||stale?'':enabled&&!outdated?`<button type="button" data-extension-open="${esc(m.id)}">Open</button><button type="button" data-extension-disable="${esc(m.id)}">Disable</button>`:installed&&!outdated?`<button type="button" data-extension-enable="${esc(m.id)}">Enable</button>`:`<button type="button" data-extension-install="${esc(m.id)}" ${extensionBusy?'disabled':''}>${outdated?'Update':'Install'}</button>`}${installed?`<button type="button" data-extension-remove="${esc(m.id)}">Remove</button>`:''}</div></article>`;
- }).join(''):'<p class="fineprint">No extensions found in subscribed repositories.</p>'}
- <h3>Extension repositories</h3><p class="fineprint">Tavi includes the central TaviX repository and a legacy Atrium compatibility source by default. Extensions are optional and require installation approval. Wallet is a built-in core app and always available through your Gold balance. Other repositories can be added by you or suggested by your server.</p><p class="fineprint">Built-in: ${FIRST_PARTY_REPOSITORIES.map(esc).join(', ')}</p>
- ${extensionSuggested.length?`<p class="fineprint">Suggested by this server: ${extensionSuggested.map(esc).join(', ')}</p>`:'<p class="fineprint">No repository suggestions supplied by this server.</p>'}
- ${extensionLastCheckedAt&&summary.missing.length?`<div class="notice" role="status">${summary.missing.length} installed app(s) are missing from the current catalogs. They are not considered up to date; refresh or restore the publishing source.</div>`:''}
- ${subscriptions.map(url=>`<div class="row-actions"><code>${esc(url)}</code><button type="button" data-repository-remove="${esc(url)}">Remove</button></div>`).join('')}
- <form id="extension-repository-form" class="auth-form"><label>Custom repository URL<input type="url" name="repository" placeholder="https://example.org/tavi.repository.json" required></label><button type="submit">Add repository</button></form>
- ${extensionRepoStatuses.length?`<details><summary>Repository connection details (${extensionRepoStatuses.length})</summary>${extensionRepoStatuses.map(x=>`<p class="fineprint">${esc(x)}</p>`).join('')}</details>`:''}
+ const detail=rows.find(row=>row.entry.manifest.id===marketplaceSelected);
+ return `<section class="utility tavi-app-store tavi-marketplace" aria-label="App Store">
+ <header class="tavi-marketplace-header"><h2>Discover apps</h2><button type="button" data-action="store-refresh" class="tavi-marketplace-refresh" aria-label="Check for app updates" title="Check for updates">${uiGlyph('refresh')}<span class="sr-only">Check for updates</span></button><button type="button" class="tavi-marketplace-manage" data-marketplace-manage aria-label="Manage repositories" title="Manage repositories">${uiGlyph('settings')}</button></header>
+ ${detail?marketplaceDetail(detail.entry):`<div class="tavi-marketplace-find"><label for="tavi-store-search" class="sr-only">Search apps</label><input id="tavi-store-search" type="search" placeholder="Search apps" autocomplete="off" value="${esc(marketplaceQuery)}"></div>
+ <nav class="tavi-marketplace-filters" aria-label="Filter apps"><button data-marketplace-filter="all" type="button" aria-pressed="${marketplaceFilter==='all'}">All</button><button data-marketplace-filter="installed" type="button" aria-pressed="${marketplaceFilter==='installed'}">Installed</button><button data-marketplace-filter="updates" type="button" aria-pressed="${marketplaceFilter==='updates'}">Updates${offers?` (${offers})`:''}</button></nav>
+ ${extensionCatalogError?`<p role="alert" class="notice">${esc(extensionCatalogError)}</p>`:''}
+ <div class="tavi-marketplace-list">${rows.map(marketplaceCard).join('')}</div><p class="tavi-marketplace-empty" id="tavi-marketplace-empty" hidden>No apps match this filter.</p>`}
+ <p class="tavi-marketplace-status" role="status">${rows.length} apps · ${offers?`${offers} newer release${offers===1?'':'s'}`:'No newer releases found'}${summary.missing.length?` · ${summary.missing.length} missing source`:''}${extensionStaleSources.size?' · Some sources unavailable':''} · Checked ${esc(when)}</p>
+ <details class="tavi-marketplace-repositories" id="tavi-marketplace-repositories"><summary>Repositories &amp; diagnostics</summary><p>App updates are checked every 15 minutes. Installing, updating, and switching sources always require approval. Hosted extension code is not stored locally.</p><p>Default: ${esc(TAVIX_REPOSITORY_URL)}</p>${extensionSuggested.length?`<p>Server suggestions: ${extensionSuggested.map(esc).join(', ')}</p>`:''}${subscriptions.map(url=>`<div class="row-actions"><code>${esc(url)}</code><button type="button" data-repository-remove="${esc(url)}">Remove</button></div>`).join('')}<form id="extension-repository-form" class="auth-form"><label>Custom repository URL<input type="url" name="repository" placeholder="https://example.org/tavi.repository.json" required></label><button type="submit">Add repository</button></form>${extensionRepoStatuses.length?`<details><summary>Connection errors (${extensionRepoStatuses.length})</summary>${extensionRepoStatuses.map(x=>`<p class="fineprint">${esc(x)}</p>`).join('')}</details>`:''}</details>
  </section>`;
 }
+function marketplaceApplySearch(){
+ const items=[...document.querySelectorAll('.tavi-marketplace-item')];let shown=0;
+ for(const item of items){
+  const matchText=(item.dataset.marketplaceSearch||'').includes(marketplaceQuery.toLocaleLowerCase().trim());
+  const matchFilter=marketplaceFilter==='all'||marketplaceFilter==='installed'&&item.dataset.marketplaceInstalled==='true'||marketplaceFilter==='updates'&&item.dataset.marketplaceUpdate==='true';
+  item.hidden=!(matchText&&matchFilter);if(!item.hidden)shown++;
+ }
+ const empty=document.getElementById('tavi-marketplace-empty');if(empty)empty.hidden=shown>0;
+ document.querySelectorAll('[data-marketplace-filter]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.marketplaceFilter===marketplaceFilter)));
+}
 function extensionInstallDialog(){
+ if(extensionSwitchApproval&&state.panel==='app-store'){
+  const entry=extensionCatalog.find(e=>e.manifest.id===extensionSwitchApproval);
+  const store=extensionAccountStore(),alt=entry&&alternateStoreRelease(entry);
+  if(!alt)return '';
+  const oldManifest=entry.manifest,latest=alt.manifest;
+  const changedPermissions=latest.permissions.filter(permission=>!store.permissions(latest.id).includes(permission));
+  return `<div class="tavi-install-overlay" role="presentation"><section class="tavi-install-dialog" role="dialog" aria-modal="true" aria-labelledby="tavi-install-heading"><h2 id="tavi-install-heading">Switch publisher source?</h2><p><strong>${esc(latest.name)}</strong> has a newer release from TaviX. This changes which repository you trust for future hosted code. It does not delete your local extension storage.</p><dl><dt>Current version</dt><dd>${esc(store.version(latest.id)||oldManifest.version)}</dd><dt>Current source</dt><dd>${esc(store.source(latest.id))}</dd><dt>New version</dt><dd>${esc(latest.version)}</dd><dt>New source</dt><dd>${esc(alt.repositoryUrl)}</dd><dt>Publisher</dt><dd>${esc(latest.publisher)}</dd><dt>Permissions</dt><dd>${esc(latest.permissions.join(', '))}</dd>${changedPermissions.length?`<dt>New permissions</dt><dd>${esc(changedPermissions.join(', '))}</dd>`:''}</dl><p class="tavi-install-warning">The new publisher-hosted code can behave differently. Your Tavi sign-in token is not shared.</p><div class="tavi-install-buttons"><button type="button" data-extension-switch-cancel>Cancel</button><button type="button" class="tavi-install-approve" data-extension-switch-approve="${esc(latest.id)}">Approve source switch</button></div></section></div>`;
+ }
  if(!extensionInstallApproval||state.panel!=='app-store')return '';
  const entry=extensionCatalog.find(e=>e.manifest.id===extensionInstallApproval);
  if(!entry)return '';
@@ -318,6 +360,35 @@ async function installExtension(id){
  try{if(m.id===BUNDLED_COMPANION_ID&&!entry.remote)await verifyReviewedCompanion(entry);if(!entry.remote)await verifyBundledExtension(entry,{baseUrl:extensionBase()});store.install(m,extensionSource(entry),releaseRevision(entry),entry.remote?.entrypoint||null);extensionVerified.add(id);toast(`${m.name} installed. Select Open to launch it.`);}
  catch(error){toast('Installation blocked: '+error.message);}
  finally{extensionBusy=false;render();}
+}
+
+
+async function switchExtensionSource(id){
+ const entry=extensionCatalog.find(e=>e.manifest.id===id),store=extensionAccountStore(),scope=extensionStoreScope;
+ if(!entry||!store||extensionBusy||extensionSwitchApproval!==id)return;
+ const candidate=alternateStoreRelease(entry);
+ if(!candidate)return toast('No newer verified TaviX source is available.');
+ const check=migrationEligibility(candidate,store,{staleSources:extensionStaleSources,platform:clientPlatform});
+ if(!check.allowed)return toast(check.reason);
+ extensionBusy=true;
+ try{
+  // Re-read the official catalog at approval time so an old confirmation
+  // cannot silently approve different publisher metadata or permissions.
+  const fresh=await fetchRepository(TAVIX_REPOSITORY_URL);
+  const next=fresh.find(e=>e.manifest.id===id);
+  if(!next||JSON.stringify(next.manifest)!==JSON.stringify(candidate.manifest)||releaseRevision(next)!==releaseRevision(candidate)||next.remote.entrypoint!==candidate.remote.entrypoint)throw Error('Publisher metadata changed. Review the source again.');
+  if(store!==extensionAccountStore()||scope!==extensionStoreScope||state.panel!=='app-store'||extensionSwitchApproval!==id)throw Error('Sign-in or approval context changed');
+  const guard=migrationEligibility(next,store,{platform:clientPlatform});if(!guard.allowed)throw Error(guard.reason);
+  const wasEnabled=store.enabled(id);
+  store.install(next.manifest,extensionSource(next),releaseRevision(next),next.remote.entrypoint);
+  if(!wasEnabled)store.disable(id);
+  extensionVerified.delete(id);extensionHost.unmount();
+  extensionDiscoveredCatalog=[...extensionDiscoveredCatalog.filter(x=>x.repositoryUrl!==TAVIX_REPOSITORY_URL),...fresh];
+  extensionCatalog=extensionCatalog.map(e=>e.manifest.id===id?next:e);
+  marketplaceSelected=id;
+  toast(`${next.manifest.name} switched to TaviX ${next.manifest.version}. Local data retained.`);
+ }catch(error){toast('Source switch blocked: '+error.message);}
+ finally{extensionSwitchApproval=null;extensionBusy=false;render();}
 }
 
 let mailboxWake=null;
@@ -690,7 +761,7 @@ async function reconcilePetWindow(){
 function changePet(change){if(!state.connected||!state.companionKey)return;try{state.companion=change(state.companion);saveCompanion(localStorage,state.companionKey,state.companion);render();void reconcilePetWindow();}catch(error){toast('Companion change unavailable: '+error.message);}}
 function render(){
  if(state.panel!=='extension'&&pendingLifeLaunch)clearPendingLifeLaunch();
- if(state.panel!=='app-store')extensionInstallApproval=null;
+ if(state.panel!=='app-store'){extensionInstallApproval=null;extensionSwitchApproval=null;marketplaceSelected='';}
  // Keep an active sandbox frame mounted across chat/notification polling.
  // Moving an iframe through a detached DOM tree reloads it in some WebViews.
  const existingSlot=document.getElementById('tavi-extension-surface');
@@ -933,7 +1004,7 @@ function diagnosticReport(){
  const extensionRows=extensionCatalog.map(entry=>{
   const id=entry?.manifest?.id||'unknown';
   const store=extensionAccountStore();
-  return {id,version:entry?.manifest?.version||'unknown',installedVersion:store?.version(id)||null,installed:!!store?.version(id),enabled:!!store?.enabled(id),updateStatus:extensionStaleSources.has(entry.repositoryUrl)?'unavailable':extensionUpdateStatus(entry,store),sourceType:entry.remote?'repository':'bundled'};
+  return {id,version:entry?.manifest?.version||'unknown',installedVersion:store?.version(id)||null,installed:!!store?.version(id),enabled:!!store?.enabled(id),updateStatus:extensionStaleSources.has(entry.repositoryUrl)?'unavailable':extensionUpdateStatus(entry,store),sourceType:entry.remote?'repository':'bundled',alternativeSourceVersion:alternateStoreRelease(entry)?.manifest?.version||null};
  });
  const snapshot={schema:'tavi.client-diagnostics/v1',generatedAt:new Date().toISOString(),
   client:{version:CLIENT_VERSION,platform:clientPlatform,nativeShell:isTauri(),userAgent:navigator.userAgent,
@@ -947,7 +1018,7 @@ function diagnosticReport(){
    inboxCount:safeCount(state.interactions),nativeChildWindowCount:nativeChildLabels.size},
   integrations:{atriumDiscoveryStatus:state.atriumDiscoveryStatus,atriumConfigured:!!state.atriumUrl,
    extensionCount:extensionRows.length,extensions:extensionRows,
-   repositoryChecks:repositoryChecks.map(x=>({...x})),repositoryStatus:repositoryChecks.map(x=>({status:x.result,httpStatus:x.httpStatus||null})),extensionUpdates:{checkedAt:extensionLastCheckedAt||null,available:optionalUpdateSummary(extensionCatalog,extensionAccountStore(),{staleSources:extensionStaleSources}).count,unavailableRepositories:extensionStaleSources.size}},
+   repositoryChecks:repositoryChecks.map(x=>({...x})),repositoryStatus:repositoryChecks.map(x=>({status:x.result,httpStatus:x.httpStatus||null})),extensionUpdates:{checkedAt:extensionLastCheckedAt||null,available:optionalUpdateSummary(extensionCatalog,extensionAccountStore(),{staleSources:extensionStaleSources}).count,unavailableRepositories:extensionStaleSources.size,alternativeSourceOffers:extensionCatalog.filter(entry=>!!alternateStoreRelease(entry)).length}},
   recentEvents:diagnosticEvents.snapshot(),
   notifications:{permission:state.pushPermission,pulse:state.pulseState,backgroundEnabled:!!state.pushPrefs?.backgroundEnabled},
   updates:{checked:updateChecked,availableVersion:updateInfo?.version||null},
@@ -977,6 +1048,8 @@ function showDiagnosticReport(){
 // Unified host back policy: native Android gestures and visible Tavi controls
 // take the same route. No browser history or exit/quit side effects.
 function goBackInTavi(){
+ if(state.panel==='app-store'&&extensionSwitchApproval){extensionSwitchApproval=null;render();return;}
+ if(state.panel==='app-store'&&marketplaceSelected){marketplaceSelected='';render();return;}
  const focused=document.activeElement;
  const editable=focused?.matches?.('input,textarea,[contenteditable="true"]');
  if(shouldDismissKeyboard({isEditable:editable,viewportHeight:window.visualViewport?.height,
@@ -1006,7 +1079,7 @@ function goBackInTavi(){
 async function action(name){
  if(name==='back'){goBackInTavi();return;}
  if(name==='minimize-view'||name==='home'){if(state.panel==='messenger'&&!state.mobileRoster)surfaces.minimizeChat(state.peer,nameOf(state.peer));state.panel='home';state.mobileRoster=true;render();return;}
- if(name==='app-store'){state.panel='app-store';state.mobileRoster=false;render();if(!extensionCatalog.length||Date.now()-extensionLastCheckedAt>=EXTENSION_CHECK_INTERVAL)void loadExtensionStore();return;}
+ if(name==='app-store'){marketplaceSelected='';state.panel='app-store';state.mobileRoster=false;render();if(!extensionCatalog.length||Date.now()-extensionLastCheckedAt>=EXTENSION_CHECK_INTERVAL)void loadExtensionStore();return;}
  if(name==='wallet'){await openCoreWallet();return;}
  if(name==='store-refresh'){void loadExtensionStore({manual:true});return;}
  if(name==='check-extension-updates'){state.panel='app-store';state.mobileRoster=false;render();void loadExtensionStore({manual:true});return;}
@@ -1085,6 +1158,16 @@ function wire(){
  document.querySelectorAll('[data-message-filter]').forEach(button=>button.addEventListener('click',()=>{state.messageFilter=button.dataset.messageFilter;document.querySelectorAll('[data-message-filter]').forEach(el=>el.setAttribute('aria-pressed',String(el===button)));applyInboxFilter(document.getElementById('message-threads'),{query:state.messageSearch,filter:state.messageFilter});}));
  document.querySelectorAll('[data-resume-surface]').forEach(el=>el.addEventListener('click',()=>void resumeSurface(el.dataset.resumeSurface)));
  document.querySelectorAll('[data-home-game]').forEach(el=>el.addEventListener('click',()=>void launchPromoted(el.dataset.homeGame,true)));
+ const storeSearch=document.getElementById('tavi-store-search');
+ if(storeSearch)storeSearch.addEventListener('input',()=>{marketplaceQuery=storeSearch.value;marketplaceApplySearch();});
+ document.querySelectorAll('[data-marketplace-filter]').forEach(el=>el.addEventListener('click',()=>{marketplaceFilter=el.dataset.marketplaceFilter;marketplaceApplySearch();}));
+ marketplaceApplySearch();
+ document.querySelectorAll('[data-marketplace-manage]').forEach(el=>el.addEventListener('click',()=>{const panel=document.getElementById('tavi-marketplace-repositories');if(panel){panel.open=true;panel.scrollIntoView({block:'nearest'});}}));
+ document.querySelectorAll('[data-marketplace-back]').forEach(el=>el.addEventListener('click',()=>{marketplaceSelected='';render();}));
+ document.querySelectorAll('[data-extension-details]').forEach(el=>el.addEventListener('click',()=>{marketplaceSelected=el.dataset.extensionDetails;render();}));
+ document.querySelectorAll('[data-extension-switch]').forEach(el=>el.addEventListener('click',()=>{extensionSwitchApproval=el.dataset.extensionSwitch;render();}));
+ document.querySelectorAll('[data-extension-switch-cancel]').forEach(el=>el.addEventListener('click',()=>{extensionSwitchApproval=null;render();}));
+ document.querySelectorAll('[data-extension-switch-approve]').forEach(el=>el.addEventListener('click',()=>void switchExtensionSource(el.dataset.extensionSwitchApprove)));
  const repositoryForm=document.getElementById('extension-repository-form');if(repositoryForm)repositoryForm.addEventListener('submit',e=>{e.preventDefault();void addExtensionRepository(repositoryForm);});
  document.querySelectorAll('[data-repository-remove]').forEach(el=>el.addEventListener('click',()=>{extensionRepoSubscriptions()?.remove(el.dataset.repositoryRemove);void loadExtensionStore();}));
  document.querySelectorAll('[data-extension-install]').forEach(el=>el.addEventListener('click',()=>void installExtension(el.dataset.extensionInstall)));
