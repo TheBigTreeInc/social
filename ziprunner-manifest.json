@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.111",
-    "base_version": "0.3.109"
+    "version": "0.3.112",
+    "base_version": "0.3.111"
   },
   "update": {
-    "id": "TAVI-20261025-STORE-0111-WORKBOARD-REPAIR",
+    "id": "TAVI-20261025-TAVIX-GAME-SURFACE-0112",
     "kind": "source_update",
-    "created_at": "2026-10-25T13:30:00+01:00",
-    "summary": "Repair mandatory TAVI-STORE-110 workboard operator_checks before ZipRunner overlay; retain 0.3.110 compact App Store implementation unchanged. Advance to client 0.3.111 from installed 0.3.109."
+    "created_at": "2026-10-25T17:22:00+01:00",
+    "summary": "Implement reviewed Atrium TaviX game surface in Tavi only, with opaque sandbox, explicit user approval, Atrium/Home navigation and hostless game lifecycle. No Social/LoopRD backend, Atrium or Life changes."
   },
   "planned_work": [
     {
@@ -678,7 +678,14 @@
       "title": "Adopt published central TaviX catalog as default extension discovery source",
       "priority": "high",
       "status": "review",
-      "acceptance_criteria": "Import 0.3.111 over 0.3.108 in ZipRunner, keep prior project settings/sessions; run full source and native Windows build.; From clean Tavi account, App Store fetches official TaviX repository, lists Atrium 1.0.2 and Companion 0.6.30 and asks before install.; Existing bundled Companion 0.6.27 and old Atrium repository installs remain pinned with no automatic source switch or re-consent; ensure Back/Home and stored data work.; Verify new central Atrium Life compatibility handoff is allowed only from the two exact first-party sources; arbitrary extensions denied and no credentials sent.; Check stale/withdrawn/foreign source, publisher mismatch, unexpected permission escalation, and ensure Wallet remains bundled-only.; Exercise hosted Atrium/Companion on Windows and Android with signed Tavi client; Android updater 0.3.108 -> 0.3.111 and exact GitHub workflows require separate acceptance."
+      "acceptance_criteria": "Import 0.3.112 over 0.3.108 in ZipRunner, keep prior project settings/sessions; run full source and native Windows build.; From clean Tavi account, App Store fetches official TaviX repository, lists Atrium 1.0.2 and Companion 0.6.30 and asks before install.; Existing bundled Companion 0.6.27 and old Atrium repository installs remain pinned with no automatic source switch or re-consent; ensure Back/Home and stored data work.; Verify new central Atrium Life compatibility handoff is allowed only from the two exact first-party sources; arbitrary extensions denied and no credentials sent.; Check stale/withdrawn/foreign source, publisher mismatch, unexpected permission escalation, and ensure Wallet remains bundled-only.; Exercise hosted Atrium/Companion on Windows and Android with signed Tavi client; Android updater 0.3.108 -> 0.3.112 and exact GitHub workflows require separate acceptance."
+    },
+    {
+      "id": "TAVI-TAVIX-SURFACE-112",
+      "title": "Host reviewed Atrium nested game surface safely",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Verify official Atrium feature handshake; approved request renders sandboxed game only after Tavi consent; Back returns to Atrium, Home to messenger, closing game never ends Life match. Real Win/Android/Web and live hosted Life acceptance separate."
     }
   ],
   "done_work": [
@@ -1990,6 +1997,11 @@
       "id": "TAVI-TAVIX-109",
       "status": "review",
       "reason": "Requires Windows/Android and live published repository operator acceptance."
+    },
+    {
+      "id": "TAVI-TAVIX-SURFACE-112",
+      "status": "review",
+      "reason": "Tavi-only source and security tests pass. Real Atrium-to-Life embed, native iframe compatibility, backend seat authorization, and operator acceptance remain to be tested."
     }
   ],
   "validation": {
@@ -2298,8 +2310,9 @@
     ]
   },
   "handover": {
-    "next_pass": "Import exact 0.3.111 over 0.3.108; verify official central TaviX and existing bundled/legacy app behavior, full native builds and exact-commit UI CI before promotion. Keep Social 0.3.107/schema 12 and Android updater intact.",
+    "next_pass": "Import exact 0.3.112 over accepted 0.3.111. Test reviewed Atrium tavix.surface/v1 request approval, opaque iframe, Home/Atrium return, native Back, and client updater regression. Real Life live game/seat, Atrium lobby and LoopRD deployment require separate projects; no automatic release.",
     "risks": [
+      "Embedded games are opaque-origin sandboxed; current Life may require an adaptation for storage/cookies. Tavi cannot grant allow-same-origin to GitHub Pages games sharing its web origin.",
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
       "Server policy 403 may require operator repair; Tavi retains but does not auto-retry those denied sessions.",
       "Android closed-app UnifiedPush distributor integration still requires native device work.",
@@ -2432,25 +2445,25 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.111 enables first-party central TaviX catalog. Social remains 0.3.107/schema 12; no migration."
+    "notes": "0.3.112 enables only the reviewed Atrium TaviX nested game surface in Tavi; server remains Social 0.3.107/schema 12, no migration and no Android updater modifications."
   },
   "release_notes": {
-    "version": "0.3.111",
-    "summary": "Central TaviX repository default, account-pinned sources and explicit first-party Atrium compatibility. Existing bundled Companion/Wallet retained.",
+    "version": "0.3.112",
+    "summary": "Tavi-only TaviX reviewed game surface with user consent, opaque iframe, Home/Atrium navigation and legacy Life handoff fallback.",
     "server_unchanged": true,
     "server_release": "0.3.107",
     "database_schema_version": 12,
     "database_migration": "none; Social schema 12 and Wallet storage remain unchanged from 0.3.107",
-    "native_qa": "pending Windows and Android App Store + updater acceptance",
+    "native_qa": "Pending 355x630 Windows, 320/390 Android, and actual Life hosted iframe/device acceptance",
     "browser_qa": "source regression tested; live Pages and exact-commit browser CI remain pending"
   },
   "verification_summary": {
-    "source_candidate": "0.3.111",
+    "source_candidate": "0.3.112",
     "browser_qa": "pending exact-commit UI CI + real Pages fetch",
-    "native_acceptance": "pending Windows and Android App Store/Back/updater",
+    "native_acceptance": "Not run in author environment; requires ZipRunner Windows NSIS and Android device tests",
     "git_push": "not performed by source author",
     "server_deploy": "unchanged from 0.3.107; LoopRD 0.4 Wallet rollout remains separately pending",
     "database_schema": "12 unchanged; no migration in 0.3.108",
-    "operator_review": "TAVI-TAVIX-109 Review; previously reviewed tickets unchanged"
+    "operator_review": "TAVI-TAVIX-SURFACE-112 Review; no existing ticket marked Done; operator device and cross-project acceptance pending"
   }
 }

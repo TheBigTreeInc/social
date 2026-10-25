@@ -52,7 +52,7 @@ import {petById} from './companions/catalog.js';
 import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
 import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
-const CLIENT_VERSION='0.3.111';
+const CLIENT_VERSION='0.3.112';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
@@ -90,6 +90,8 @@ let repositoryChecks=[];
 // A sandboxed Atrium iframe can only *request* a Life launch. Tavi owns the
 // final browser click; a postMessage never inherits a gesture or game credential.
 let pendingLifeLaunch=null;
+let pendingGameSurface=null;
+let activeGameSurface=null;
 function clearPendingLifeLaunch(){pendingLifeLaunch=null;document.querySelector('#tavi-life-launch-confirmation')?.remove();}
 function offerLifeLaunch(launch,caller){
  if(state.panel!=='extension'||!state.api||!state.profile||extensionSelected!==ATRIUM_EXTENSION_ID||!extensionAccountStore()?.enabled(ATRIUM_EXTENSION_ID)||!isOfficialAtriumSource(extensionAccountStore()?.source(ATRIUM_EXTENSION_ID))||caller.scope!==extensionStoreScope||caller.extensionId!==ATRIUM_EXTENSION_ID||caller.source!==extensionAccountStore()?.source(ATRIUM_EXTENSION_ID))throw Error('Atrium session no longer active');
@@ -126,10 +128,88 @@ const walletMethods={
  'wallet.orderStatus':(api,p)=>api.walletOrderStatus(p.orderId)
 };
 const extensionReturnsHome=id=>id===CORE_WALLET_ID||id===BUNDLED_COMPANION_ID;
+
+// Tavi hosts the presentation, never the Atrium lobby or a Life match.
+// A game launch is a reviewable user action tied to the current Atrium session.
+function currentAtriumCaller(caller){
+ const store=extensionAccountStore();
+ return state.panel==='extension'&&state.api&&state.profile&&
+  extensionSelected===ATRIUM_EXTENSION_ID&&store?.enabled(ATRIUM_EXTENSION_ID)&&
+  isOfficialAtriumSource(store.source(ATRIUM_EXTENSION_ID))&&
+  caller.scope===extensionStoreScope&&caller.extensionId===ATRIUM_EXTENSION_ID&&
+  caller.source===store.source(ATRIUM_EXTENSION_ID);
+}
+function clearPendingGameSurface(){
+ pendingGameSurface=null;
+ document.querySelector('#tavi-game-surface-confirmation')?.remove();
+}
+function closeNestedGameSurface({home=false}={}){
+ const active=activeGameSurface;activeGameSurface=null;
+ active?.root?.remove(); // Closing a UI window never sends a game-end action.
+ if(home){state.panel='home';state.mobileRoster=true;render();}
+}
+function offerGameSurface(surface,caller){
+ if(!currentAtriumCaller(caller))throw Error('Atrium session no longer active');
+ if(pendingGameSurface||activeGameSurface)throw Error('A game surface is already pending or open');
+ pendingGameSurface={surface,caller,server:state.api.origin,account:state.profile.profileId};
+ presentPendingGameSurface();
+ return {awaitingApproval:true};
+}
+function approvedGameSurfaceSession(p){
+ return p&&currentAtriumCaller(p.caller)&&
+  p.server===state.api?.origin&&p.account===state.profile?.profileId;
+}
+function presentPendingGameSurface(){
+ document.querySelector('#tavi-game-surface-confirmation')?.remove();
+ if(!pendingGameSurface||state.panel!=='extension')return;
+ const toolbar=document.querySelector('.tavi-extension-toolbar');
+ if(!toolbar){clearPendingGameSurface();return;}
+ const p=pendingGameSurface;
+ const notice=document.createElement('section');notice.id='tavi-game-surface-confirmation';
+ notice.className='tavi-game-surface-confirmation';notice.setAttribute('role','group');
+ notice.setAttribute('aria-label','Approve embedded game');
+ const description=document.createElement('span');
+ description.textContent=`Atrium wants to open ${p.surface.id} from ${p.surface.origin}. Life/game accounts stay with their own service. Tavi never shares your messenger token.`;
+ const approve=document.createElement('button');approve.type='button';approve.textContent=p.surface.presentation==='external'?'Open in browser':'Play in Tavi';
+ approve.setAttribute('data-surface-approve','');
+ approve.addEventListener('click',()=>{
+  if(pendingGameSurface!==p||!approvedGameSurfaceSession(p)){
+   clearPendingGameSurface();toast('Game request expired. Reopen from Atrium.');return;
+  }
+  clearPendingGameSurface();
+  if(p.surface.presentation==='external'){
+   void openExternalGame(p.surface.url);return;
+  }
+  showNestedGameSurface(p.surface);
+ });
+ const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel';cancel.setAttribute('data-surface-cancel','');
+ cancel.addEventListener('click',()=>clearPendingGameSurface());
+ notice.append(description,approve,cancel);toolbar.after(notice);
+}
+function showNestedGameSurface(surface){
+ if(state.panel!=='extension'||activeGameSurface)return;
+ const root=document.createElement('section');root.className='tavi-nested-game';
+ root.setAttribute('role','region');root.setAttribute('aria-label',`${surface.id} game surface`);
+ const header=document.createElement('header');header.className='tavi-nested-game-header';
+ const back=document.createElement('button');back.type='button';back.textContent='← Atrium';back.setAttribute('aria-label','Back to Atrium lobby');
+ back.addEventListener('click',()=>closeNestedGameSurface());
+ const name=document.createElement('strong');name.textContent=surface.id;
+ const home=document.createElement('button');home.type='button';home.textContent='Home';home.setAttribute('aria-label','Return to Tavi Home');
+ home.addEventListener('click',()=>closeNestedGameSurface({home:true}));
+ header.append(back,name,home);
+ const stage=document.createElement('div');stage.className='tavi-nested-game-stage';
+ const frame=document.createElement('iframe');frame.title=`${surface.id} game`;
+ // The opaque origin is deliberate: never grant same-origin to a remote
+ // game, including GitHub Pages games cohosted beside the Tavi web client.
+ frame.setAttribute('sandbox','allow-scripts allow-forms');
+ frame.setAttribute('referrerpolicy','no-referrer');frame.src=surface.url;
+ stage.append(frame);root.append(header,stage);document.body.append(root);
+ activeGameSurface={surface,root};back.focus();
+}
 const extensionHost=createExtensionHost({storage:localStorage,notify:message=>toast(message),
  onCompanionPreview:(_preview,scope)=>{if(scope===extensionStoreScope&&(state.panel==='home'||state.panel==='messenger'))render();},
  isReviewedCompanionSession:current=>!!state.api&&!!state.profile&&current.id===BUNDLED_COMPANION_ID&&current.scope===extensionStoreScope&&current.source==='tavi:bundled'&&current.reviewedBundle===REVIEWED_COMPANION.sha256&&extensionVerified.has(BUNDLED_COMPANION_ID)&&!!extensionAccountStore()?.enabled(BUNDLED_COMPANION_ID)&&extensionAccountStore()?.source(BUNDLED_COMPANION_ID)==='tavi:bundled'&&extensionCatalog.some(e=>e.manifest.id===BUNDLED_COMPANION_ID&&e.manifest.version===REVIEWED_COMPANION.version&&!e.remote),
- close:()=>{clearPendingLifeLaunch();state.panel=extensionReturnsHome(extensionSelected)?'home':'app-store';state.mobileRoster=state.panel==='home';render();},onGameLaunch:offerLifeLaunch,
+ close:()=>{clearPendingLifeLaunch();state.panel=extensionReturnsHome(extensionSelected)?'home':'app-store';state.mobileRoster=state.panel==='home';render();},onGameLaunch:offerLifeLaunch,onSurfaceOpen:offerGameSurface,
  walletApi:async (method,params)=>{
   if(!state.connected||!state.api||!state.profile)throw Error('Sign in to use Wallet');
   const run=walletMethods[method];if(!run)throw Error('Unsupported Wallet operation');
@@ -320,11 +400,11 @@ function extensionPanel(){
 }
 function attachExtensionFrame(previous){
  const slot=document.getElementById('tavi-extension-surface');
- if(!slot){clearPendingLifeLaunch();extensionHost.unmount();return;}
+ if(!slot){clearPendingLifeLaunch();clearPendingGameSurface();closeNestedGameSurface();extensionHost.unmount();return;}
  const entry=extensionEntry(extensionSelected),store=extensionAccountStore();
- if(!entry||!extensionEnabled(entry.manifest.id)||!store||store.source(entry.manifest.id)!==extensionSource(entry)){clearPendingLifeLaunch();extensionHost.unmount();return;}
- if(previous?.dataset?.extensionId===extensionSelected && store.source(extensionSelected)===extensionSource(entry)){slot.append(previous);presentPendingLifeLaunch();return;}
- clearPendingLifeLaunch();extensionHost.unmount();
+ if(!entry||!extensionEnabled(entry.manifest.id)||!store||store.source(entry.manifest.id)!==extensionSource(entry)){clearPendingLifeLaunch();clearPendingGameSurface();closeNestedGameSurface();extensionHost.unmount();return;}
+ if(previous?.dataset?.extensionId===extensionSelected && store.source(extensionSelected)===extensionSource(entry)){slot.append(previous);presentPendingLifeLaunch();presentPendingGameSurface();return;}
+ clearPendingLifeLaunch();clearPendingGameSurface();closeNestedGameSurface();extensionHost.unmount();
  if(!extensionVerified.has(extensionSelected))return;
  const frame=document.createElement('iframe');
  frame.setAttribute('sandbox','allow-scripts');
@@ -342,7 +422,7 @@ async function openInstalledExtension(id){
  if(extensionUpdateStatus(entry,extensionAccountStore())!=='current')return toast('Extension metadata has changed. Review it in the App Store before opening.');
  try{
   if(!extensionVerified.has(id)){if(id===BUNDLED_COMPANION_ID&&!entry.remote)await verifyReviewedCompanion(entry);if(!entry.remote)await verifyBundledExtension(entry,{baseUrl:extensionBase()});extensionVerified.add(id);}
-  clearPendingLifeLaunch();extensionSelected=id;state.panel='extension';state.mobileRoster=false;render();
+  clearPendingLifeLaunch();clearPendingGameSurface();closeNestedGameSurface();extensionSelected=id;state.panel='extension';state.mobileRoster=false;render();
  }catch(error){toast('Extension verification failed: '+error.message);}
 }
 async function installExtension(id){
@@ -761,6 +841,7 @@ async function reconcilePetWindow(){
 function changePet(change){if(!state.connected||!state.companionKey)return;try{state.companion=change(state.companion);saveCompanion(localStorage,state.companionKey,state.companion);render();void reconcilePetWindow();}catch(error){toast('Companion change unavailable: '+error.message);}}
 function render(){
  if(state.panel!=='extension'&&pendingLifeLaunch)clearPendingLifeLaunch();
+ if(state.panel!=='extension'){clearPendingGameSurface();if(activeGameSurface)closeNestedGameSurface();}
  if(state.panel!=='app-store'){extensionInstallApproval=null;extensionSwitchApproval=null;marketplaceSelected='';}
  // Keep an active sandbox frame mounted across chat/notification polling.
  // Moving an iframe through a detached DOM tree reloads it in some WebViews.
@@ -774,7 +855,7 @@ function render(){
  }
  document.querySelector('body > .toast')?.remove();if(state.panel!=='settings')state.recoveryCodes=null;const entry=document.getElementById('message');if(entry&&document.activeElement===entry)state.draft=entry.value;const oldFrame=document.getElementById('portrait-frame');const oldExtensionFrame=document.querySelector('#tavi-extension-surface iframe');if(oldExtensionFrame)oldExtensionFrame.remove();const filter=document.getElementById('roster-filter');const search=filter?.value||'';const focused=document.activeElement===entry?{start:entry.selectionStart,end:entry.selectionEnd}:null;const settingsScroll=document.querySelector('.aux-content')?.scrollTop||0;const oldScroll=document.getElementById('chat-scroll');const nearBottom=!oldScroll||oldScroll.scrollHeight-oldScroll.scrollTop-oldScroll.clientHeight<90;const oldTop=oldScroll?.scrollTop;document.title=unreadTotal()?`(${unreadTotal()}) Tavi`:'Tavi';applyTheme();app.innerHTML=(!state.connected&&!nativeDesktop?header():'')+(state.connected?dashboard():signIn())+(state.toast?`<div class="toast" role="status">${esc(state.toast)}</div>`:'')+(state.connected?companionBadge(state.companion):'')+(state.connected?extensionInstallDialog():'');if(oldFrame&&state.panel==='portrait')document.getElementById('portrait-frame')?.replaceWith(oldFrame);attachExtensionFrame(oldExtensionFrame);wire();const newSettings=document.querySelector('.aux-content');if(newSettings&&state.panel==='settings')newSettings.scrollTop=settingsScroll;const newFilter=document.getElementById('roster-filter');if(newFilter){newFilter.value=search;applyContactFilter(search);}if(focused){const field=document.getElementById('message');if(field){field.focus();field.setSelectionRange(focused.start,focused.end);}}if(state.panel==='messenger'){const scroll=document.getElementById('chat-scroll');if(scroll){scroll.scrollTop=nearBottom?scroll.scrollHeight:oldTop;}}}
 function applyContactFilter(query){const term=query.trim().toLowerCase();document.querySelectorAll('[data-contact-name]').forEach(node=>{node.hidden=!!term&&!node.dataset.contactName.includes(term);});}
-function stop(){extensionInstallApproval=null;clearPendingLifeLaunch();++extensionRepoLoad;extensionSuggested=[];extensionRepoStatuses=[];repositoryChecks=[];diagnosticEvents.clear();extensionHost.unmount();extensionSelected='';extensionCatalog=[];extensionCatalogError='';extensionStore=null;extensionStoreScope='';coreWalletEntry=null;extensionVerified=new Set();state.goldAmount=null;state.goldStatus='loading';state.goldLastCheckedAt=0;extensionLastCheckedAt=0;extensionStaleSources=new Set();if(extensionUpdatePoll){clearInterval(extensionUpdatePoll);extensionUpdatePoll=null;}void closePetWindow();for(const label of nativeChildLabels){void WebviewWindow.getByLabel(label).then(w=>w?.close()).catch(()=>{});}nativeChildLabels.clear();mailboxWake?.close();mailboxWake=null;sessionRetry.disable();state.retryAvailable=false;state.retryOrigin='';if(pulse){pulse.onclose=null;pulse.close();pulse=null;}clearInterval(poll);poll=null;state.api=null;state.connected=false;state.companion=newCompanion();state.companionKey=null;state.profile=null;state.lobby=[];state.direct=[];state.contacts=[];state.avatarCode='';state.gameTokens.clear();state.turns=[];state.gameRooms=[];state.selectedRoomId=null;state.roomMessages=[];state.roomError='';state.interactions=[];state.selectedInteraction=null;state.interactionError='';state.catalog=[];state.catalogError='';state.atriumGames=[];state.atriumDiscoveryStatus='not_connected';state.lastCatalogAt=0;state.draft='';state.developerAllowed=false;state.developerVisible=false;state.developerInfo=null;state.developerError='';state.lastSyncAt=null;state.pulseState='disconnected';state.chatRead={};state.unread={};state.peerFeeds.clear();state.chatOffset=0;state.conversationSummaries=[];state.summarySupported=null;state.pendingAcks.clear();state.peerReceipts.clear();state.pendingRequestIds=null;state.notifyPrefs={messages:true,preview:false,requests:true};state.pushPrefs={backgroundEnabled:false};state.pushCapability=null;state.atriumUrl=null;state.pushPermission='unknown';state.step='server';state.panel='home';state.mobileRoster=true;surfaces.clear();closeEmbeddedGame();render();}
+function stop(){extensionInstallApproval=null;clearPendingLifeLaunch();clearPendingGameSurface();closeNestedGameSurface();++extensionRepoLoad;extensionSuggested=[];extensionRepoStatuses=[];repositoryChecks=[];diagnosticEvents.clear();extensionHost.unmount();extensionSelected='';extensionCatalog=[];extensionCatalogError='';extensionStore=null;extensionStoreScope='';coreWalletEntry=null;extensionVerified=new Set();state.goldAmount=null;state.goldStatus='loading';state.goldLastCheckedAt=0;extensionLastCheckedAt=0;extensionStaleSources=new Set();if(extensionUpdatePoll){clearInterval(extensionUpdatePoll);extensionUpdatePoll=null;}void closePetWindow();for(const label of nativeChildLabels){void WebviewWindow.getByLabel(label).then(w=>w?.close()).catch(()=>{});}nativeChildLabels.clear();mailboxWake?.close();mailboxWake=null;sessionRetry.disable();state.retryAvailable=false;state.retryOrigin='';if(pulse){pulse.onclose=null;pulse.close();pulse=null;}clearInterval(poll);poll=null;state.api=null;state.connected=false;state.companion=newCompanion();state.companionKey=null;state.profile=null;state.lobby=[];state.direct=[];state.contacts=[];state.avatarCode='';state.gameTokens.clear();state.turns=[];state.gameRooms=[];state.selectedRoomId=null;state.roomMessages=[];state.roomError='';state.interactions=[];state.selectedInteraction=null;state.interactionError='';state.catalog=[];state.catalogError='';state.atriumGames=[];state.atriumDiscoveryStatus='not_connected';state.lastCatalogAt=0;state.draft='';state.developerAllowed=false;state.developerVisible=false;state.developerInfo=null;state.developerError='';state.lastSyncAt=null;state.pulseState='disconnected';state.chatRead={};state.unread={};state.peerFeeds.clear();state.chatOffset=0;state.conversationSummaries=[];state.summarySupported=null;state.pendingAcks.clear();state.peerReceipts.clear();state.pendingRequestIds=null;state.notifyPrefs={messages:true,preview:false,requests:true};state.pushPrefs={backgroundEnabled:false};state.pushCapability=null;state.atriumUrl=null;state.pushPermission='unknown';state.step='server';state.panel='home';state.mobileRoster=true;surfaces.clear();closeEmbeddedGame();render();}
 async function activate(api){const me=await api.me();if(!me?.profile?.profileId)throw Error('Social did not return your profile');stop();await closePetWindow();state.api=api;state.connected=true;state.profile=me.profile;state.goldAmount=null;state.goldStatus='loading';state.goldLastCheckedAt=0;try{state.companionKey=storageKey(api.origin,me.profile.profileId);state.companion=loadCompanion(localStorage,state.companionKey);}catch{state.companionKey=null;state.companion=newCompanion();}state.revision=me.revision;void reconcilePetWindow();updateDeveloperPermission(me);state.avatarCode=me.profile.portraitCode||'';selectServerGames(config,api.origin);writeConfig(config);state.peer='lobby';state.panel='home';state.mobileRoster=true;try{state.chatRead=loadChatReadState(localStorage,readKey());state.notifyPrefs=loadNotificationPrefs(localStorage,notificationPrefsKey(api.origin,me.profile.profileId));state.pushPrefs=readPushPreferences(localStorage,pushKey());}catch{}render();void loadExtensionStore();void refreshGoldBalance(api);extensionUpdatePoll=setInterval(()=>{if(state.api===api&&navigator.onLine!==false)void loadExtensionStore();},EXTENSION_CHECK_INTERVAL);void refreshPushReadiness();await loadCatalog();await refresh();mailboxWake=createWakeCoordinator(()=>refresh({mailboxOnly:true}),{isBusy:()=>polling});startPulse();poll=setInterval(()=>{void refresh();void refreshGoldBalance(api);if(Date.now()-state.lastCatalogAt>=60000)void loadCatalog();},25000);}
 async function refresh({mailboxOnly=false}={}){if(!state.api||polling)return;polling=true;try{const api=state.api;
  if(!mailboxOnly){const me=await api.me();if(api!==state.api)return;updateDeveloperPermission(me);}
@@ -1048,6 +1129,8 @@ function showDiagnosticReport(){
 // Unified host back policy: native Android gestures and visible Tavi controls
 // take the same route. No browser history or exit/quit side effects.
 function goBackInTavi(){
+ if(activeGameSurface){closeNestedGameSurface();return;}
+ if(pendingGameSurface){clearPendingGameSurface();return;}
  if(state.panel==='app-store'&&extensionSwitchApproval){extensionSwitchApproval=null;render();return;}
  if(state.panel==='app-store'&&marketplaceSelected){marketplaceSelected='';render();return;}
  const focused=document.activeElement;
@@ -1078,7 +1161,7 @@ function goBackInTavi(){
 
 async function action(name){
  if(name==='back'){goBackInTavi();return;}
- if(name==='minimize-view'||name==='home'){if(state.panel==='messenger'&&!state.mobileRoster)surfaces.minimizeChat(state.peer,nameOf(state.peer));state.panel='home';state.mobileRoster=true;render();return;}
+ if(name==='minimize-view'||name==='home'){if(activeGameSurface)closeNestedGameSurface();clearPendingGameSurface();if(state.panel==='messenger'&&!state.mobileRoster)surfaces.minimizeChat(state.peer,nameOf(state.peer));state.panel='home';state.mobileRoster=true;render();return;}
  if(name==='app-store'){marketplaceSelected='';state.panel='app-store';state.mobileRoster=false;render();if(!extensionCatalog.length||Date.now()-extensionLastCheckedAt>=EXTENSION_CHECK_INTERVAL)void loadExtensionStore();return;}
  if(name==='wallet'){await openCoreWallet();return;}
  if(name==='store-refresh'){void loadExtensionStore({manual:true});return;}

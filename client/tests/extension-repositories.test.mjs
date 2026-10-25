@@ -74,7 +74,7 @@ test('Atrium is first-party discoverable without user subscription or automatic 
  assert.match(main,/data-extension-install/);
 });
 
-test('published TaviX 0.1.1 catalog is compatible with the Tavi 0.3.111 repository parser',async()=>{
+test('published TaviX 0.1.1 catalog is compatible with the Tavi 0.3.112 repository parser',async()=>{
  const published=JSON.parse(await readFile(new URL('./fixtures/tavix-repository-109.json',import.meta.url),'utf8'));
  const entries=validateRepository(published);
  assert.deepEqual(entries.map(e=>e.manifest.id).sort(),['inc.thebigtree.tavi.atrium','org.tavi.community.companion']);

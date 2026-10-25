@@ -127,6 +127,8 @@ The request is a launch request, not authorization. The source provider remains 
 
 Tavi 0.3.108 defines this module in the SDK/spec but does NOT advertise `tavix.surface/v1`; `surface.requestOpen` therefore fails closed. The existing first-party `atrium.tavi-launch/v1` / `ui.requestGameLaunch` behavior remains a temporary compatibility API until Atrium migrates.
 
+Tavi 0.3.112 implements the initially reviewed **game** surface path for an installed/enabled, pinned, official Atrium extension only. This is not a general ability for arbitrary TaviX publishers to embed URLs. The host requires explicit user approval, validates a public canonical HTTPS target and opaque match selector, and sandboxes the game with an opaque origin. The application/game backend remains external and independently authorized; Home/Back never terminates a match. Real Life deployment and device acceptance remain separate operator gates.
+
 == Host events and lifecycle
 
 TaviX reserves host-to-application `direction: "event"` envelopes. The 1.0 SDK can subscribe with `sdk.on(event, handler)`. Event names and payloads are not core-conformance requirements until their feature module is advertised. Applications MUST tolerate receiving no lifecycle events.

@@ -4,13 +4,14 @@
 import {ATRIUM_EXTENSION_ID,isOfficialAtriumSource,parseReviewedLifeHandoff} from './game-launch.js';
 import {validateCompanionPreview,previewStorageKey} from './companion-preview.js';
 import {REVIEWED_COMPANION} from './reviewed-companion.js';
+import {validateTaviXSurface} from './surface-host.js';
 export const TAVIX_STANDARD='tavix/1.0';
 export const TAVIX_CHANNEL='tavi.extension/v1';
 const CHANNEL=TAVIX_CHANNEL;
 export const CORE_WALLET_ID='org.tavi.core.wallet';
 const KEY=/^[a-zA-Z0-9._-]{1,80}$/;
 const throttle=()=>({started:Date.now(),count:0});
-export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');},walletApi=()=>{throw Error('Wallet service unavailable');},onCompanionPreview=()=>{},isReviewedCompanionSession=()=>false}){
+export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');},onSurfaceOpen=()=>{throw Error('Game surfaces unavailable');},walletApi=()=>{throw Error('Wallet service unavailable');},onCompanionPreview=()=>{},isReviewedCompanionSession=()=>false}){
  let session=null;
  function send(message){session?.frame?.contentWindow?.postMessage({channel:CHANNEL,direction:'response',...message},'*');}
  function onMessage(e){
@@ -21,10 +22,11 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
   if(Date.now()-current.rate.started>60_000){current.rate=throttle();current.previewCount=0;}
   if(++current.rate.count>60){send({id,ok:false,error:'Extension request limit exceeded'});return;}
   const permissions=new Set(current.permissions);
+  const reviewedAtrium=current.id===ATRIUM_EXTENSION_ID&&isOfficialAtriumSource(current.source)&&permissions.has('ui.panel');
   try{
    let result=null;
    switch(request.method){
-    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(current.id===ATRIUM_EXTENSION_ID&&isOfficialAtriumSource(current.source)?['atrium.tavi-launch/v1']:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[])]};break;
+    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[])]};break;
     case 'host.capabilities': result=current.permissions.filter(p=>['ui.panel','ui.toast','storage.private'].includes(p));break;
     case 'storage.get':{
      if(!permissions.has('storage.private'))throw Error('Permission denied');
@@ -45,6 +47,12 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
      if(!permissions.has('ui.panel')||current.id!==ATRIUM_EXTENSION_ID||!isOfficialAtriumSource(current.source))throw Error('Game launch requires the official Atrium extension');
      const handoff=parseReviewedLifeHandoff(request.handoff);
      result=onGameLaunch(handoff,{extensionId:current.id,scope:current.scope,source:current.source});
+     break;
+    }
+    case 'surface.requestOpen':{
+     if(!reviewedAtrium)throw Error('Game surfaces require the reviewed Atrium extension');
+     const surface=validateTaviXSurface(request.surface);
+     result=onSurfaceOpen(surface,{extensionId:current.id,scope:current.scope,source:current.source});
      break;
     }
     case 'wallet.balance':

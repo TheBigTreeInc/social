@@ -32,10 +32,10 @@ test('TaviX host-owned navigation works while legacy ui.close remains compatible
  }
 });
 
-test('generic surface module is standardized but fails closed until host advertises it',async()=>{
+test('generic surface module fails closed for unreviewed extensions',async()=>{
  const {host,parent,source}=bridge();const sdk=createTaviXSDK(parent,source);const info=await sdk.info();
  assert(!info.features.includes('tavix.surface/v1'));
- await assert.rejects(sdk.surfaces.requestOpen({schema:'tavix.surface/v1',id:'life.loop',kind:'game',target:'https://example.test/life/',presentation:'auto'}),/Unsupported extension method/);
+ await assert.rejects(sdk.surfaces.requestOpen({schema:'tavix.surface/v1',id:'life.loop',kind:'game',target:'https://example.test/life/',presentation:'auto'}),/Game surfaces require the reviewed Atrium extension/);
  sdk.dispose();host.dispose();
 });
 

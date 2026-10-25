@@ -947,3 +947,15 @@ html[data-theme='dark'] .tavi-app-page-tabs button[aria-selected="true"]{backgro
 .tavi-marketplace [hidden]{display:none!important}
 @media(max-width:390px){.tavi-marketplace .tavi-store-icon{width:39px;height:39px;min-width:39px;min-height:39px}.tavi-marketplace .tavi-store-item.tavi-marketplace-item{gap:7px;padding-block:6px;min-height:62px}.tavi-marketplace .tavi-store-actions button{font-size:10px}}
 @media(pointer:coarse){.tavi-marketplace .tavi-store-item.tavi-marketplace-item{min-height:70px}.tavi-marketplace .tavi-store-actions button{min-height:40px}.tavi-marketplace-filters button{min-height:42px}.tavi-marketplace-header>button{min-height:44px;min-width:44px}}
+
+/* 0.3.112: reviewed TaviX game surfaces. The Tavi shell owns navigation;
+   iframe lifecycle is not the Life backend or Atrium lobby lifecycle. */
+.tavi-game-surface-confirmation{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;margin:4px 0;border:1px solid var(--tavi-color-border,#739887);border-radius:8px;background:var(--tavi-color-surface,#edf9ee);color:var(--tavi-color-text,#193626)}
+.tavi-game-surface-confirmation span{flex:1 1 190px;font-size:13px;overflow-wrap:anywhere}
+.tavi-game-surface-confirmation button{min-height:44px;padding:7px 12px;border-radius:6px;cursor:pointer}
+.tavi-nested-game{position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--tavi-color-background,#eef5ef);color:var(--tavi-color-text,#183626)}
+.tavi-nested-game-header{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 6px) 10px 6px;flex:none;background:var(--tavi-color-surface,#dfefe3);border-bottom:1px solid var(--tavi-color-border,#799d86)}
+.tavi-nested-game-header strong{min-width:0;flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.tavi-nested-game-header button{min-width:72px;min-height:44px;padding:6px 10px;border-radius:6px;cursor:pointer}
+.tavi-nested-game-stage{display:flex;flex:1;min-height:0;padding-bottom:env(safe-area-inset-bottom,0px)}
+.tavi-nested-game-stage iframe{display:block;border:0;width:100%;height:100%;flex:1;min-height:0;background:#fff}
