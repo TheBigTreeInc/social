@@ -185,7 +185,19 @@ async function testViewport(browser,base,device){
   await visible(page,'.tavi-app-store');
   assert.equal(await page.locator('[data-extension-install="org.tavi.core.wallet"], [data-extension-remove="org.tavi.core.wallet"], [data-extension-disable="org.tavi.core.wallet"]').count(),0,'Core Wallet must have no install/remove/disable controls');
   assert.equal(await page.locator('.tavi-store-item').filter({hasText:'Core Gold Wallet'}).count(),0,'Core Wallet is not an optional store app');
+  // Repository configuration is intentionally collapsed in the compact App Store.
+  // Open it through the visible Manage repositories control before asserting the
+  // URL field, so browser QA exercises the user journey instead of a hidden node.
+  stage='App Store repository diagnostics';
+  const repositoryDetails=page.locator('#tavi-marketplace-repositories');
+  assert.equal(await repositoryDetails.getAttribute('open'),null,'Repository diagnostics must start collapsed');
+  await page.locator('[data-marketplace-manage]').click();
   await visible(page,'#extension-repository-form input[name="repository"]');
+  assert.notEqual(await repositoryDetails.getAttribute('open'),null,'Manage repositories must expand diagnostics');
+  await noOverflow(page,`${device.name} expanded App Store repositories`);
+  await repositoryDetails.locator('summary').click();
+  await page.locator('#extension-repository-form input[name="repository"]').waitFor({state:'hidden',timeout:6000});
+  stage='app-store';
   // App Store can contain Notepad, Companion, and additional extensions.
   // Never wait on an unscoped multi-match locator (Playwright strict mode).
   const notepadInstall=page.locator('[data-extension-install="org.tavi.examples.notepad"]');

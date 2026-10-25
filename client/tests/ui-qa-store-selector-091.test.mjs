@@ -20,3 +20,13 @@ test('App Store QA still covers user-confirmed installation, cancellation and Ho
   "name:'desktop'","name:'tablet'","name:'compact-355'","name:'mobile-390'","name:'mobile-320'"
  ])assert(source.includes(token),token);
 });
+
+test('App Store browser QA explicitly opens and recloses collapsed repository diagnostics before probing the URL input',()=>{
+ const manage=source.indexOf("await page.locator('[data-marketplace-manage]').click()");
+ const input=source.indexOf("await visible(page,'#extension-repository-form input[name=\"repository\"]')");
+ assert(manage>0&&input>manage,'Open Manage repositories before expecting its hidden form');
+ assert.match(source,/const repositoryDetails=page\.locator\('#tavi-marketplace-repositories'\)/);
+ assert.match(source,/repositoryDetails\.locator\('summary'\)\.click\(\)/);
+ assert.match(source,/expanded App Store repositories/);
+ assert.match(source,/waitFor\(\{state:'hidden',timeout:6000\}\)/);
+});

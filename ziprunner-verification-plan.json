@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.112",
+  "version": "0.3.113",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -1707,6 +1707,29 @@
       "id": "TAVI-TAVIX-109",
       "description": "Use TheBigTreeInc/tavix public catalog as Tavi first-party source, preserve legacy Atrium and pinned bundled Companion, allow new reviewed central extension installs with explicit approval, and maintain strict Life broker source checks and Wallet isolation.",
       "status": "review"
+    },
+    {
+      "id": "TAVI-UI-CI-113",
+      "criteria": [
+        {
+          "id": "TAVI-UI-CI-113-LOCAL",
+          "description": "Source-level regression and five-viewport browser test after expanding repository diagnostics",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/ui-qa-store-selector-091.test.mjs",
+            "npm --prefix client run ui:ci",
+            "npm run verify"
+          ]
+        },
+        {
+          "id": "TAVI-UI-CI-113-OPERATOR",
+          "description": "Exact GitHub push check correlation, native device acceptance and safe release gate",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
     }
   ],
   "checks": [

@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.112",
-    "base_version": "0.3.111"
+    "version": "0.3.113",
+    "base_version": "0.3.112"
   },
   "update": {
-    "id": "TAVI-20261025-TAVIX-GAME-SURFACE-0112",
+    "id": "TAVI-20261025-UI-QA-REPOSITORIES-0113",
     "kind": "source_update",
-    "created_at": "2026-10-25T17:22:00+01:00",
-    "summary": "Implement reviewed Atrium TaviX game surface in Tavi only, with opaque sandbox, explicit user approval, Atrium/Home navigation and hostless game lifecycle. No Social/LoopRD backend, Atrium or Life changes."
+    "created_at": "2026-10-25T19:00:00+01:00",
+    "summary": "Tavi-only CI/browser QA repair: open collapsed App Store repositories before checking the URL form, then close; no app behavior, server or Android updater modifications."
   },
   "planned_work": [
     {
@@ -686,6 +686,13 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": "Verify official Atrium feature handshake; approved request renders sandboxed game only after Tavi consent; Back returns to Atrium, Home to messenger, closing game never ends Life match. Real Win/Android/Web and live hosted Life acceptance separate."
+    },
+    {
+      "id": "TAVI-UI-CI-113",
+      "title": "Repair collapsed repository diagnostics in five-viewport browser QA",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "On exact GitHub push SHA, five-viewport Tavi browser UI QA passes desktop/tablet/355px/390px/320px and includes App Store repository management expand/collapse.; Verify App Store remains collapsed on entry, Manage repositories expands the URL form, no overflow occurs, and Notepad install/cancel/approve/back still passes.; Run npm run verify and client/tests/ui-qa-store-selector-091.test.mjs on the exact ZipRunner candidate; confirm no changes to native gameplay or existing publisher assets.; Reconcile ZipRunner not_github with exact-commit GitHub workflow run URLs and rerun post-update checks against the new ZIP SHA; no historical result rewrite.; Continue physical Windows and Android acceptance for TAVI-TAVIX-SURFACE-112 separately; do not mark release Done based on source/CI alone."
     }
   ],
   "done_work": [
@@ -2002,6 +2009,11 @@
       "id": "TAVI-TAVIX-SURFACE-112",
       "status": "review",
       "reason": "Tavi-only source and security tests pass. Real Atrium-to-Life embed, native iframe compatibility, backend seat authorization, and operator acceptance remain to be tested."
+    },
+    {
+      "id": "TAVI-UI-CI-113",
+      "status": "review",
+      "reason": "Local harness source test passed; exact-commit five-viewport GitHub workflow, ZipRunner exact ZIP checks and operator review pending."
     }
   ],
   "validation": {
@@ -2310,7 +2322,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Import exact 0.3.112 over accepted 0.3.111. Test reviewed Atrium tavix.surface/v1 request approval, opaque iframe, Home/Atrium return, native Back, and client updater regression. Real Life live game/seat, Atrium lobby and LoopRD deployment require separate projects; no automatic release.",
+    "next_pass": "Import exact 0.3.113 over applied 0.3.112. Inspect GitHub commit 42b70b5 UI QA failure; rerun npm run verify and Tavi browser UI QA on five viewports, then verify exact new GitHub SHA. Do not modify Atrium, Life, LoopRD, Android PackageInstaller, or manually close prior workboard issues.",
     "risks": [
       "Embedded games are opaque-origin sandboxed; current Life may require an adaptation for storage/cookies. Tavi cannot grant allow-same-origin to GitHub Pages games sharing its web origin.",
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
@@ -2342,7 +2354,8 @@
       "Client-only Android updater 0.3.102 fixes both the known Kotlin import failure and the ZipRunner stale-test overlay failure. Physical Android installation/update remains unverified; source tests are not signed native acceptance.",
       "Sent/Delivered/Seen requires deployed Social release 0.3.103/schema 12; older 0.3.99/schema 11 servers do not expose peer delivery/read receipt metadata.",
       "Companion 0.6.27 source supports a future server-owned cloud save contract, but Tavi 0.3.106 does not yet implement companion.get/companion.put, CAS storage or operator reset; do not claim cross-device Companion persistence.",
-      "LoopRD 0.4 tavi-wallet is a service-authentication façade in 0.3.107; Gold balances/history remain in Social schema 12. Do not treat the child SQLite file as migrated ledger storage or delete the Social wallet tables."
+      "LoopRD 0.4 tavi-wallet is a service-authentication façade in 0.3.107; Gold balances/history remain in Social schema 12. Do not treat the child SQLite file as migrated ledger storage or delete the Social wallet tables.",
+      "0.3.112 exact-commit Tavi browser QA failed all 5 viewports because a now-collapsed App Store diagnostics form was asserted visible. 0.3.113 changes only the harness; rerun real browser CI before accepting."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -2445,11 +2458,11 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.112 enables only the reviewed Atrium TaviX nested game surface in Tavi; server remains Social 0.3.107/schema 12, no migration and no Android updater modifications."
+    "notes": "0.3.113 is a Tavi-only browser QA harness/metadata repair; no behavior change in the Tavi app, Atrium, Life, Social backend, or Android updater. Release remains gated on exact-commit UI CI and operator approval."
   },
   "release_notes": {
-    "version": "0.3.112",
-    "summary": "Tavi-only TaviX reviewed game surface with user consent, opaque iframe, Home/Atrium navigation and legacy Life handoff fallback.",
+    "version": "0.3.113",
+    "summary": "Repair App Store browser QA navigation for collapsed repositories across five viewports; product behavior and TaviX game-surface implementation unchanged.",
     "server_unchanged": true,
     "server_release": "0.3.107",
     "database_schema_version": 12,
@@ -2458,10 +2471,10 @@
     "browser_qa": "source regression tested; live Pages and exact-commit browser CI remain pending"
   },
   "verification_summary": {
-    "source_candidate": "0.3.112",
-    "browser_qa": "pending exact-commit UI CI + real Pages fetch",
+    "source_candidate": "0.3.113",
+    "browser_qa": "0.3.112 exact-SHA failed 5/5 on hidden diagnostics input. 0.3.113 QA harness regression source test passes; full Playwright/next SHA pending.",
     "native_acceptance": "Not run in author environment; requires ZipRunner Windows NSIS and Android device tests",
-    "git_push": "not performed by source author",
+    "git_push": "Not performed by source author; operator to review through ZipRunner.",
     "server_deploy": "unchanged from 0.3.107; LoopRD 0.4 Wallet rollout remains separately pending",
     "database_schema": "12 unchanged; no migration in 0.3.108",
     "operator_review": "TAVI-TAVIX-SURFACE-112 Review; no existing ticket marked Done; operator device and cross-project acceptance pending"
