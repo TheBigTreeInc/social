@@ -1,0 +1,22 @@
+= Tavi 0.3.114 — Trusted Social challenge status for Atrium
+
+== Ownership
+
+Social owns existing Tavi account-to-account challenge lifecycle. Atrium owns the lobby, Life owns match seats and rules. An accepted challenge is not Life seat authorization. No new user-facing Tavi controls or client permissions are needed for the status lookup.
+
+== Service endpoint
+
+* LoopRD Social POST `/ecosystem/challenge-status`; `tavi-challenge-status` v1, service-only, `social:service` scope, `allowedCallers: [atrium]`.
+* Operator must explicitly set `LOOPRD_TAVI_CHALLENGE_READ_CALLERS=atrium` on Social runtime (default denies). LoopRD must verify `ctx.principal.kind=service` and `subject=atrium`; neither clients nor caller-supplied headers may choose this principal.
+* Request `{ "schema":"tavi.challenge-status-query/v1", "challengeId":123, "gameId":"life", "sender":"acct_1", "recipient":"acct_2" }`.
+* Successful response `{ "ok":true, "schema":"tavi.challenge-status/v1", "challengeId":123, "gameId":"life", "sender":"acct_1", "recipient":"acct_2", "status":"accepted" }`. Status: `pending`, `accepted`, `declined`, `expired` or `unavailable`.
+* Fail-closed response `{ "ok":false, "reason":"challenge_not_found" }` for missing/mismatched challenge; other reasons are `service_identity_required`, `caller_not_approved`, `invalid_request`.
+* Identity matching uses original SocialInteraction publisher `challenge:<sender>`, recipient, game ID and challenge schema; outcomes are from the durable original interaction response. No contact aliases, friend list inference, match ID or game-seat grants are returned.
+
+== Atrium consumption
+
+Atrium calls this endpoint from its trusted backend after a challenge ID is known; never from a public client. Atrium must reject non-accepted status and mismatched sender/recipient/game even if an old lobby exists. Social acceptance must not bypass Life's independent authorize-create/join/submit checks. Do not hardcode Social URL or service credential in web/mobile extensions.
+
+== Verification and rollout
+
+Run `python tools/generate-looprd.py --check` and `python -m unittest discover -s tests -p test_challenge_status_service.py -v`; assert user principal rejected, unapproved service rejected, participant/game mismatch rejected, expiry, decline and one-time acceptance. The service endpoint is read-only and needs no database migration. On staging, configure the caller allowlist and LoopRD service credential, then verify Atrium-to-Social contract before any Life online two-account test. Live deployment, CI and offline/notification acceptance remain pending.

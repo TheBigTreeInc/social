@@ -12,6 +12,7 @@ verifier=(root/'server/looprd_verifier.py').read_text(encoding='utf8')
 admin_events=(root/'server/admin_event_service.py').read_text(encoding='utf8')
 admin_role=(root/'server/admin_role_service.py').read_text(encoding='utf8')
 game_events=(root/'server/game_event_service.py').read_text(encoding='utf8')
+challenge_status=(root/'server/challenge_status_service.py').read_text(encoding='utf8')
 game_grants=(root/'server/game_grant_service.py').read_text(encoding='utf8')
 game_rooms=(root/'server/game_room_service.py').read_text(encoding='utf8')
 # Wallet storage remains in the Social home-realm database during the LoopRD 0.4
@@ -215,6 +216,17 @@ spec={
        'response':{'type':'object','required':['accepted','recipients'],
            'additionalProperties':False,'properties':{'accepted':{'type':'boolean'},
              'recipients':{'type':'integer','minimum':0},'reason':{'type':'string','maxLength':48}}}}},
+    {'path':'/ecosystem/challenge-status','method':'POST','kind':'python','scopes':['social:service'],
+     'source':challenge_status,'contract':{
+       'name':'tavi-challenge-status','version':1,'serviceOnly':True,'allowedCallers':['atrium'],
+       'request':{'type':'object','required':['schema','challengeId','gameId','sender','recipient'],
+         'additionalProperties':False,'properties':{
+           'schema':{'type':'string','enum':['tavi.challenge-status-query/v1']},
+           'challengeId':{'type':'integer','minimum':1},
+           'gameId':{'type':'string','minLength':2,'maxLength':48},
+           'sender':{'type':'string','minLength':6,'maxLength':72},
+           'recipient':{'type':'string','minLength':6,'maxLength':72}}},
+       'response':{'type':'object','additionalProperties':True}}},
     {'path':'/ecosystem/game-event','method':'POST','kind':'python','scopes':['social:service'],
      'source':game_events,'contract':{
        'name':'tavi-game-event','version':1,'serviceOnly':True,

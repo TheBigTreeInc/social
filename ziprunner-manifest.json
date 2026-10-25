@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.113",
-    "base_version": "0.3.112"
+    "version": "0.3.116",
+    "base_version": "0.3.113"
   },
   "update": {
-    "id": "TAVI-20261025-UI-QA-REPOSITORIES-0113",
+    "id": "TAVI-20261025-VERSION-TEST-0116",
     "kind": "source_update",
-    "created_at": "2026-10-25T19:00:00+01:00",
-    "summary": "Tavi-only CI/browser QA repair: open collapsed App Store repositories before checking the URL form, then close; no app behavior, server or Android updater modifications."
+    "created_at": "2026-10-25T20:00:00+01:00",
+    "summary": "Repair outdated fixed-version test assertions; keep release metadata consistent and preserve challenge verification and the 20-entry post-update stamp."
   },
   "planned_work": [
     {
@@ -39,7 +39,7 @@
       "title": "First-party Gold Wallet, purchase and exchange ledger",
       "priority": "high",
       "status": "review",
-      "acceptance_criteria": "Source and ZipRunner build verification, staging schema 10→11 migration, tested exact receipts, first-party host grant isolation, Android/Windows/Web native Wallet acceptance, merchant fulfillment proof and operator approval."
+      "acceptance_criteria": "Source and ZipRunner build verification, staging schema 10\u219211 migration, tested exact receipts, first-party host grant isolation, Android/Windows/Web native Wallet acceptance, merchant fulfillment proof and operator approval."
     },
     {
       "id": "TAVI-EXT-UPDATES-072",
@@ -2186,7 +2186,7 @@
       },
       {
         "id": "TAVI-MULTI-044-PY",
-        "description": "Game room seat roster, revocation, migration 9→10, private messages and push content-free wake",
+        "description": "Game room seat roster, revocation, migration 9\u219210, private messages and push content-free wake",
         "status": "passed_source_only",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Linux Python 3.13",
@@ -2322,7 +2322,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Import exact 0.3.113 over applied 0.3.112. Inspect GitHub commit 42b70b5 UI QA failure; rerun npm run verify and Tavi browser UI QA on five viewports, then verify exact new GitHub SHA. Do not modify Atrium, Life, LoopRD, Android PackageInstaller, or manually close prior workboard issues.",
+    "next_pass": "Import exact 0.3.114 over applied 0.3.112. Inspect GitHub commit 42b70b5 UI QA failure; rerun npm run verify and Tavi browser UI QA on five viewports, then verify exact new GitHub SHA. Do not modify Atrium, Life, LoopRD, Android PackageInstaller, or manually close prior workboard issues.",
     "risks": [
       "Embedded games are opaque-origin sandboxed; current Life may require an adaptation for storage/cookies. Tavi cannot grant allow-same-origin to GitHub Pages games sharing its web origin.",
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
@@ -2354,8 +2354,8 @@
       "Client-only Android updater 0.3.102 fixes both the known Kotlin import failure and the ZipRunner stale-test overlay failure. Physical Android installation/update remains unverified; source tests are not signed native acceptance.",
       "Sent/Delivered/Seen requires deployed Social release 0.3.103/schema 12; older 0.3.99/schema 11 servers do not expose peer delivery/read receipt metadata.",
       "Companion 0.6.27 source supports a future server-owned cloud save contract, but Tavi 0.3.106 does not yet implement companion.get/companion.put, CAS storage or operator reset; do not claim cross-device Companion persistence.",
-      "LoopRD 0.4 tavi-wallet is a service-authentication façade in 0.3.107; Gold balances/history remain in Social schema 12. Do not treat the child SQLite file as migrated ledger storage or delete the Social wallet tables.",
-      "0.3.112 exact-commit Tavi browser QA failed all 5 viewports because a now-collapsed App Store diagnostics form was asserted visible. 0.3.113 changes only the harness; rerun real browser CI before accepting."
+      "LoopRD 0.4 tavi-wallet is a service-authentication fa\u00e7ade in 0.3.107; Gold balances/history remain in Social schema 12. Do not treat the child SQLite file as migrated ledger storage or delete the Social wallet tables.",
+      "0.3.112 exact-commit Tavi browser QA failed all 5 viewports because a now-collapsed App Store diagnostics form was asserted visible. 0.3.114 changes only the harness; rerun real browser CI before accepting."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -2401,7 +2401,7 @@
     },
     {
       "id": "TAVI-MULTI-044-OP",
-      "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
+      "description": "Backup and test schema 9\u219210 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
       "status": "required"
     },
     {
@@ -2458,10 +2458,10 @@
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.113 is a Tavi-only browser QA harness/metadata repair; no behavior change in the Tavi app, Atrium, Life, Social backend, or Android updater. Release remains gated on exact-commit UI CI and operator approval."
+    "notes": "0.3.114 is a Tavi-only browser QA harness/metadata repair; no behavior change in the Tavi app, Atrium, Life, Social backend, or Android updater. Release remains gated on exact-commit UI CI and operator approval."
   },
   "release_notes": {
-    "version": "0.3.113",
+    "version": "0.3.114",
     "summary": "Repair App Store browser QA navigation for collapsed repositories across five viewports; product behavior and TaviX game-surface implementation unchanged.",
     "server_unchanged": true,
     "server_release": "0.3.107",
@@ -2471,8 +2471,8 @@
     "browser_qa": "source regression tested; live Pages and exact-commit browser CI remain pending"
   },
   "verification_summary": {
-    "source_candidate": "0.3.113",
-    "browser_qa": "0.3.112 exact-SHA failed 5/5 on hidden diagnostics input. 0.3.113 QA harness regression source test passes; full Playwright/next SHA pending.",
+    "source_candidate": "0.3.114",
+    "browser_qa": "0.3.112 exact-SHA failed 5/5 on hidden diagnostics input. 0.3.114 QA harness regression source test passes; full Playwright/next SHA pending.",
     "native_acceptance": "Not run in author environment; requires ZipRunner Windows NSIS and Android device tests",
     "git_push": "Not performed by source author; operator to review through ZipRunner.",
     "server_deploy": "unchanged from 0.3.107; LoopRD 0.4 Wallet rollout remains separately pending",

@@ -15,7 +15,8 @@ test('ZipRunner workboard update stays within the 256 KiB ingestion limit', asyn
   const parsed = JSON.parse(await readFile(WORKBOARD_UPDATE, 'utf8'));
   assert.equal(parsed.schema, 'ziprunner.workboard-update.v1');
   assert.equal(parsed.project, 'looprd-social');
-  assert.equal(parsed.version, '0.3.113');
+  const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.equal(parsed.version, pkg.version);
 });
 
 // Mirror the mandatory ZipRunner workboard validation contract locally.

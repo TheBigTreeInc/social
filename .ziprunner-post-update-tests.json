@@ -1,6 +1,6 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.113",
+  "version": "0.3.116",
   "tests": [
     {
       "kind": "command",
@@ -167,9 +167,9 @@
     {
       "kind": "command",
       "semantic_id": "tavi-openclaw-game-challenge-authorization",
-      "definition_revision": "1",
+      "definition_revision": "2",
       "rerun_policy": "every_update",
-      "command": "python -m unittest discover -s tests -p test_game_challenges.py -v",
+      "command": "python -m unittest discover -s tests -p test_game_challenges.py -v && python tools/generate-looprd.py --check && python -m unittest discover -s tests -p test_challenge_status_service.py -v",
       "attention_on_failure": true,
       "gating": false
     },

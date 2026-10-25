@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.107
+release: 0.3.108
 api:
   version: v1
 cors:
@@ -2718,6 +2718,83 @@ handlers:
         reason:
           type: string
           maxLength: 48
+- path: /ecosystem/challenge-status
+  method: POST
+  kind: python
+  scopes:
+  - social:service
+  source: "\"\"\"Trusted read-only challenge verification for Atrium lobby admission.\n\nNever exposes a user-token\
+    \ API and never grants seats or starts matches.\n\"\"\"\nimport os\nimport re\nimport time\nimport sqlalchemy\
+    \ as sa\nfrom starlette.concurrency import run_in_threadpool\n\nSUBJECT = re.compile(r'^acct_[1-9][0-9]{0,18}$')\n\
+    COMPONENT = re.compile(r'^[a-z][a-z0-9-]{1,47}$')\nGAME = re.compile(r'^[a-z][a-z0-9-]{1,47}$')\n\n\ndef verify(ctx):\n\
+    \    caller = getattr(ctx.principal, 'subject', None)\n    if getattr(ctx.principal, 'kind', None) != 'service'\
+    \ or not isinstance(caller, str) or not COMPONENT.fullmatch(caller):\n        return {'ok': False, 'reason':\
+    \ 'service_identity_required'}\n    # A verified service principal alone is insufficient. Operator explicitly\
+    \ admits Atrium.\n    allowed = {s.strip() for s in os.getenv('LOOPRD_TAVI_CHALLENGE_READ_CALLERS', '').split(',')\
+    \ if s.strip()}\n    if caller not in allowed or caller != 'atrium':\n        return {'ok': False, 'reason':\
+    \ 'caller_not_approved'}\n    body = ctx.body\n    if (not isinstance(body, dict) or set(body) != {'schema',\
+    \ 'challengeId', 'gameId', 'sender', 'recipient'}\n            or body['schema'] != 'tavi.challenge-status-query/v1'\n\
+    \            or type(body['challengeId']) is not int or not 0 < body['challengeId'] <= 9223372036854775807\n\
+    \            or not isinstance(body['gameId'], str) or not GAME.fullmatch(body['gameId'])\n            or not\
+    \ isinstance(body['sender'], str) or not SUBJECT.fullmatch(body['sender'])\n            or not isinstance(body['recipient'],\
+    \ str) or not SUBJECT.fullmatch(body['recipient'])\n            or body['sender'] == body['recipient']):\n \
+    \       return {'ok': False, 'reason': 'invalid_request'}\n    with ctx.transaction() as db:\n        row =\
+    \ db.execute(sa.text('''SELECT recipient,publisher,topic,data,status,response,expires\n           FROM \"SocialInteraction\"\
+    \ WHERE id=:id'''), {'id': body['challengeId']}).mappings().first()\n        # Non-existence and participant\
+    \ mismatch intentionally have same reply.\n        if not row or row['recipient'] != body['recipient'] or row['publisher']\
+    \ != 'challenge:' + body['sender'] or row['topic'] != 'game.challenge.requested':\n            return {'ok':\
+    \ False, 'reason': 'challenge_not_found'}\n        data = row['data']\n        import json\n        if isinstance(data,\
+    \ str):\n            try: data = json.loads(data)\n            except ValueError: data = None\n        detail\
+    \ = data.get('challenge') if isinstance(data, dict) else None\n        if (not isinstance(detail, dict) or detail.get('schema')\
+    \ != 'tavi.game-challenge/v1'\n                or detail.get('sender') != body['sender'] or detail.get('gameId')\
+    \ != body['gameId']):\n            return {'ok': False, 'reason': 'challenge_not_found'}\n        status = 'pending'\n\
+    \        if row['status'] == 'open':\n            if row['expires'] <= int(time.time()): status = 'expired'\n\
+    \        elif row['status'] == 'responded':\n            response = row['response']\n            if isinstance(response,\
+    \ str):\n                try: response = json.loads(response)\n                except ValueError: response =\
+    \ None\n            action = response.get('action') if isinstance(response, dict) else None\n            status\
+    \ = {'accept-challenge':'accepted', 'decline-challenge':'declined'}.get(action, 'unavailable')\n        else:\n\
+    \            status = 'unavailable'\n        # Accepted means only that a Social response was recorded; no Life\
+    \ authorization.\n        return {'ok': True, 'schema': 'tavi.challenge-status/v1', 'challengeId': body['challengeId'],\n\
+    \                'gameId': body['gameId'], 'sender': body['sender'], 'recipient': body['recipient'],\n     \
+    \           'status': status}\n\n\nasync def handle(ctx):\n    return await run_in_threadpool(verify, ctx)\n"
+  contract:
+    name: tavi-challenge-status
+    version: 1
+    serviceOnly: true
+    allowedCallers:
+    - atrium
+    request:
+      type: object
+      required:
+      - schema
+      - challengeId
+      - gameId
+      - sender
+      - recipient
+      additionalProperties: false
+      properties:
+        schema:
+          type: string
+          enum:
+          - tavi.challenge-status-query/v1
+        challengeId:
+          type: integer
+          minimum: 1
+        gameId:
+          type: string
+          minLength: 2
+          maxLength: 48
+        sender:
+          type: string
+          minLength: 6
+          maxLength: 72
+        recipient:
+          type: string
+          minLength: 6
+          maxLength: 72
+    response:
+      type: object
+      additionalProperties: true
 - path: /ecosystem/game-event
   method: POST
   kind: python
@@ -3182,4 +3259,4 @@ handlers:
     - recovery-codes-v1
     - game-session-rooms-v1
     - wallet-v1
-    release: 0.3.107
+    release: 0.3.108
