@@ -2,10 +2,13 @@ import {validateExtensionManifest} from './contract.js';
 
 // Tavi subscriptions are URLs to independent, static, open-source indexes.
 // No central publisher account, upload API or registry is involved.
-// First-party discovery source, shipped with Tavi; installation remains opt-in.
-// The remote catalog must be published by Atrium before entries can appear.
+// TaviX is the official aggregate catalog. The legacy Atrium feed is retained
+// for existing per-account source pins and as a fallback if TaviX is unavailable.
+// Neither feed installs apps automatically; the user must approve installs.
+export const TAVIX_REPOSITORY_URL = 'https://thebigtreeinc.github.io/tavix/tavi.repository.json';
+export const LEGACY_ATRIUM_REPOSITORY_URL = 'https://thebigtreeinc.github.io/atrium/tavi/tavi.repository.json';
 export const FIRST_PARTY_REPOSITORIES = Object.freeze([
-  'https://thebigtreeinc.github.io/atrium/tavi/tavi.repository.json'
+  TAVIX_REPOSITORY_URL
 ]);
 const MAX_BYTES = 160_000;
 const STORAGE_PREFIX = 'tavi.extensions.repositories/v1:';
@@ -77,10 +80,42 @@ export function createRepositorySubscriptions({storage,serverOrigin}) {
     remove(value){urls=urls.filter(url=>url!==value);persist();}
   };
 }
-export function mergeRepositoryEntries(bundled,collections) {
-  const entries=[...bundled];const ids=new Set(bundled.map(e=>e.manifest.id));
-  for(const collection of collections)for(const entry of collection){if(ids.has(entry.manifest.id))continue;ids.add(entry.manifest.id);entries.push(entry);}
-  return entries;
+/** Resolve same-ID applications without silently switching an existing install's
+ * publisher source. Core/bundled applications remain authoritative unless an
+ * explicitly recognized optional app opts into the first-party hosted catalog.
+ * If a pinned source goes offline, keep the catalog entry unavailable rather
+ * than silently using another publisher as the active installed application.
+ */
+export function mergeRepositoryEntries(bundled,collections,{store=null,hostedOptionalIds=[]}={}) {
+  const groups=new Map();
+  for(const entry of [...bundled,...collections.flat()]){
+    const id=entry.manifest.id;
+    if(!groups.has(id))groups.set(id,[]);
+    groups.get(id).push(entry);
+  }
+  const allowed=new Set(hostedOptionalIds);
+  return [...groups.values()].map(group=>{
+    const id=group[0].manifest.id;
+    const installed=store?.installed?.(id)===true;
+    if(installed){
+      const pinned=store.source(id);
+      const match=group.find(entry=>extensionSource(entry)===pinned);
+      if(match)return match;
+      // Keep a missing, untrusted source visibly incompatible and unlaunchable.
+      return group[0];
+    }
+    const bundled=group.find(entry=>!entry.remote);
+    if(bundled){
+      if(allowed.has(id)){
+        const hosted=group.find(entry=>entry.repositoryUrl===TAVIX_REPOSITORY_URL&&
+          entry.manifest.publisher===bundled.manifest.publisher&&
+          entry.manifest.permissions.every(permission=>bundled.manifest.permissions.includes(permission)));
+        if(hosted)return hosted;
+      }
+      return bundled;
+    }
+    return group[0];
+  });
 }
 export function extensionSource(entry) {return entry?.repositoryUrl || 'tavi:bundled';}
 export function remoteOrigin(entry) {return new URL(entry.remote.entrypoint).origin;}

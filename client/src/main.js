@@ -7,8 +7,8 @@ import {createExtensionHost,CORE_WALLET_ID} from './extensions/host.js';
 import {verifyReviewedCompanion,REVIEWED_COMPANION} from './extensions/reviewed-companion.js';
 import {readCompanionPreview,clearCompanionPreview} from './extensions/companion-preview.js';
 import {coreWalletFromBundle,filterOptionalApps,goldStatusLabel} from './wallet/core-ui.js';
-import {ATRIUM_EXTENSION_ID,ATRIUM_REPOSITORY_URL} from './extensions/game-launch.js';
-import {FIRST_PARTY_REPOSITORIES,createRepositorySubscriptions,fetchRepository,fetchServerRepositories,mergeRepositoryEntries,extensionSource,remoteOrigin} from './extensions/repositories.js';
+import {ATRIUM_EXTENSION_ID,isOfficialAtriumSource} from './extensions/game-launch.js';
+import {FIRST_PARTY_REPOSITORIES,TAVIX_REPOSITORY_URL,LEGACY_ATRIUM_REPOSITORY_URL,createRepositorySubscriptions,fetchRepository,fetchServerRepositories,mergeRepositoryEntries,extensionSource,remoteOrigin} from './extensions/repositories.js';
 import {atriumLauncher,reviewedAtriumBase} from './atrium-launch.js';
 import {menuApplications,appGlyph,uiGlyph,extensionIconUrl,BUNDLED_COMPANION_ID} from './launcher.js';
 import './style.css';
@@ -51,7 +51,7 @@ import {petById} from './companions/catalog.js';
 import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
 import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
-const CLIENT_VERSION='0.3.108';
+const CLIENT_VERSION='0.3.109';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
@@ -89,7 +89,7 @@ let repositoryChecks=[];
 let pendingLifeLaunch=null;
 function clearPendingLifeLaunch(){pendingLifeLaunch=null;document.querySelector('#tavi-life-launch-confirmation')?.remove();}
 function offerLifeLaunch(launch,caller){
- if(state.panel!=='extension'||!state.api||!state.profile||extensionSelected!==ATRIUM_EXTENSION_ID||!extensionAccountStore()?.enabled(ATRIUM_EXTENSION_ID)||extensionAccountStore()?.source(ATRIUM_EXTENSION_ID)!==ATRIUM_REPOSITORY_URL||caller.scope!==extensionStoreScope||caller.extensionId!==ATRIUM_EXTENSION_ID||caller.source!==ATRIUM_REPOSITORY_URL)throw Error('Atrium session no longer active');
+ if(state.panel!=='extension'||!state.api||!state.profile||extensionSelected!==ATRIUM_EXTENSION_ID||!extensionAccountStore()?.enabled(ATRIUM_EXTENSION_ID)||!isOfficialAtriumSource(extensionAccountStore()?.source(ATRIUM_EXTENSION_ID))||caller.scope!==extensionStoreScope||caller.extensionId!==ATRIUM_EXTENSION_ID||caller.source!==extensionAccountStore()?.source(ATRIUM_EXTENSION_ID))throw Error('Atrium session no longer active');
  if(pendingLifeLaunch)throw Error('A Life launch is already awaiting your approval');
  pendingLifeLaunch={launch,caller,server:state.api.origin,account:state.profile.profileId};
  presentPendingLifeLaunch();
@@ -105,7 +105,7 @@ function presentPendingLifeLaunch(){
  const link=document.createElement('a');link.textContent='Open Life ↗';link.href=launch.url;link.target='_blank';link.rel='noopener noreferrer';link.setAttribute('data-life-launch-approve','');
  link.addEventListener('click',event=>{
   const p=pendingLifeLaunch;
-  if(!p||p.launch!==launch||state.panel!=='extension'||extensionSelected!==p.caller.extensionId||state.api?.origin!==p.server||state.profile?.profileId!==p.account||!extensionAccountStore()?.enabled(ATRIUM_EXTENSION_ID)||extensionAccountStore()?.source(ATRIUM_EXTENSION_ID)!==ATRIUM_REPOSITORY_URL){event.preventDefault();clearPendingLifeLaunch();toast('Life launch expired. Reopen it from Atrium.');return;}
+  if(!p||p.launch!==launch||state.panel!=='extension'||extensionSelected!==p.caller.extensionId||state.api?.origin!==p.server||state.profile?.profileId!==p.account||!extensionAccountStore()?.enabled(ATRIUM_EXTENSION_ID)||!isOfficialAtriumSource(extensionAccountStore()?.source(ATRIUM_EXTENSION_ID))||p.caller.source!==extensionAccountStore()?.source(ATRIUM_EXTENSION_ID)){event.preventDefault();clearPendingLifeLaunch();toast('Life launch expired. Reopen it from Atrium.');return;}
   // The user clicked Tavi's own control, so browsers can open without popups
   // and Tauri invokes its approved external opener instead of iframe navigation.
   if(isTauri()){event.preventDefault();void openUrl(launch.url).catch(e=>toast('Unable to open Life: '+String(e)));}
@@ -201,15 +201,19 @@ async function loadExtensionStore({manual=false}={}){
  let suggested=[];
  try{suggested=await fetchServerRepositories(origin);diagnosticEvents.record({area:'repository',operation:'server_recommendations',result:'ok'});}catch(error){extensionRepoStatuses.push('Server recommendations: '+error.message);diagnosticEvents.record({area:'repository',operation:'server_recommendations',...classifyFetchFailure(error)});}
  const subscribed=extensionRepoSubscriptions()?.list()||[];
- const all=[...new Set([...FIRST_PARTY_REPOSITORIES,...subscribed,...suggested])].slice(0,24);
+ // Preserve old Atrium installations without contacting the legacy catalog on
+ // every new account. The old source is consulted only for installed pins or
+ // when the user explicitly subscribed to it.
+ const legacyPinned=extensionAccountStore()?.listInstalled()?.some(x=>x.source===LEGACY_ATRIUM_REPOSITORY_URL);
+ const all=[...new Set([...FIRST_PARTY_REPOSITORIES,...(legacyPinned?[LEGACY_ATRIUM_REPOSITORY_URL]:[]),...subscribed,...suggested])].slice(0,24);
  const collections=await Promise.all(all.map(async url=>{
-  try{const entries=await fetchRepository(url);repositoryChecks.push({source:FIRST_PARTY_REPOSITORIES.includes(url)?'first_party_atrium':subscribed.includes(url)?'user_subscription':'server_suggestion',result:'ok',entryCount:entries.length});diagnosticEvents.record({area:'repository',operation:'fetch_index',result:'ok'});return entries;}
-  catch(error){const classified=classifyFetchFailure(error);repositoryChecks.push({source:FIRST_PARTY_REPOSITORIES.includes(url)?'first_party_atrium':subscribed.includes(url)?'user_subscription':'server_suggestion',result:classified.result,...(classified.status?{httpStatus:classified.status}:{})});diagnosticEvents.record({area:'repository',operation:'fetch_index',...classified});extensionRepoStatuses.push(`${url}: ${error.message}`);stale.add(url);return previousCatalog.filter(entry=>entry.repositoryUrl===url);}
+  try{const entries=await fetchRepository(url);repositoryChecks.push({source:url===TAVIX_REPOSITORY_URL?'first_party_tavix':url===LEGACY_ATRIUM_REPOSITORY_URL?'first_party_atrium':subscribed.includes(url)?'user_subscription':'server_suggestion',result:'ok',entryCount:entries.length});diagnosticEvents.record({area:'repository',operation:'fetch_index',result:'ok'});return entries;}
+  catch(error){const classified=classifyFetchFailure(error);repositoryChecks.push({source:url===TAVIX_REPOSITORY_URL?'first_party_tavix':url===LEGACY_ATRIUM_REPOSITORY_URL?'first_party_atrium':subscribed.includes(url)?'user_subscription':'server_suggestion',result:classified.result,...(classified.status?{httpStatus:classified.status}:{})});diagnosticEvents.record({area:'repository',operation:'fetch_index',...classified});extensionRepoStatuses.push(`${url}: ${error.message}`);stale.add(url);return previousCatalog.filter(entry=>entry.repositoryUrl===url);}
  }));
  if(generation!==extensionRepoLoad||state.api?.origin!==origin)return;
  extensionSuggested=suggested;
  extensionStaleSources=stale;
- extensionCatalog=mergeRepositoryEntries(bundled,collections);
+ extensionCatalog=mergeRepositoryEntries(bundled,collections,{store:extensionAccountStore(),hostedOptionalIds:[BUNDLED_COMPANION_ID]});
  // A saved profile thumbnail becomes visible only after source metadata and
  // all bundled bytes have been checked against the reviewed 0.6.27 pin.
  extensionVerified.delete(BUNDLED_COMPANION_ID);
@@ -246,9 +250,9 @@ function appStorePanel(){
  const stale=entry.repositoryUrl&&extensionStaleSources.has(entry.repositoryUrl);
  const compatible=validateExtensionManifest(m).compatible&&(!m.platforms||m.platforms.includes(clientPlatform));
  let iconSrc=null;try{iconSrc=extensionIconUrl(entry,extensionBase());}catch{}
- return `<article class="tavi-store-item"><span class="tavi-store-icon tone-forest">${appGlyph(m.id===ATRIUM_EXTENSION_ID?'atrium':'extension')}${iconSrc?`<img src="${esc(iconSrc)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}</span><div class="tavi-store-item-copy"><h3>${esc(m.name)}</h3><p>${esc(m.summary)}</p><small>${esc(m.publisher)} · ${esc(m.version)} · ${esc(m.permissions.join(', '))}</small>${installed?`<p class="tavi-extension-version">Installed ${esc(store.version(m.id)||'unknown')} · Published ${esc(m.version)}${releaseRevision(entry)?` · Revision ${esc(releaseRevision(entry).slice(0,8))}`:''}</p>`:''}<p class="tavi-extension-state" data-extension-state="${esc(m.id)}" aria-live="polite">${stale?'Update check unavailable — showing last known listing':outdated?'Update available — approval required':older?'Installed version is newer than published listing':unknown?'Version verification unavailable':sourceMismatch?'Publisher source changed':installed?'Installed · up to date':'Not installed'}</p><p class="fineprint">${entry.remote?`${FIRST_PARTY_REPOSITORIES.includes(source)?'Official Atrium repository':'Community repository'}: ${esc(source)} · ${esc(entry.remote.license)} · <a href="${esc(entry.remote.source)}" target="_blank" rel="noopener noreferrer">Source code ↗</a>`:'Bundled with Tavi'}</p>${sourceMismatch?'<p class="notice">The source repository changed; remove this installation before reinstalling.</p>':''}</div><div class="tavi-store-actions">${!compatible?'<small>Unavailable on this client</small>':sourceMismatch||older||unknown||stale?'':enabled&&!outdated?`<button type="button" data-extension-open="${esc(m.id)}">Open</button><button type="button" data-extension-disable="${esc(m.id)}">Disable</button>`:installed&&!outdated?`<button type="button" data-extension-enable="${esc(m.id)}">Enable</button>`:`<button type="button" data-extension-install="${esc(m.id)}" ${extensionBusy?'disabled':''}>${outdated?'Update':'Install'}</button>`}${installed?`<button type="button" data-extension-remove="${esc(m.id)}">Remove</button>`:''}</div></article>`;
+ return `<article class="tavi-store-item"><span class="tavi-store-icon tone-forest">${appGlyph(m.id===ATRIUM_EXTENSION_ID?'atrium':'extension')}${iconSrc?`<img src="${esc(iconSrc)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}</span><div class="tavi-store-item-copy"><h3>${esc(m.name)}</h3><p>${esc(m.summary)}</p><small>${esc(m.publisher)} · ${esc(m.version)} · ${esc(m.permissions.join(', '))}</small>${installed?`<p class="tavi-extension-version">Installed ${esc(store.version(m.id)||'unknown')} · Published ${esc(m.version)}${releaseRevision(entry)?` · Revision ${esc(releaseRevision(entry).slice(0,8))}`:''}</p>`:''}<p class="tavi-extension-state" data-extension-state="${esc(m.id)}" aria-live="polite">${stale?'Update check unavailable — showing last known listing':outdated?'Update available — approval required':older?'Installed version is newer than published listing':unknown?'Version verification unavailable':sourceMismatch?'Publisher source changed':installed?'Installed · up to date':'Not installed'}</p><p class="fineprint">${entry.remote?`${source===TAVIX_REPOSITORY_URL?'Official TaviX repository':source===LEGACY_ATRIUM_REPOSITORY_URL?'Legacy Atrium repository':'Community repository'}: ${esc(source)} · ${esc(entry.remote.license)} · <a href="${esc(entry.remote.source)}" target="_blank" rel="noopener noreferrer">Source code ↗</a>`:'Bundled with Tavi'}</p>${sourceMismatch?'<p class="notice">The source repository changed; remove this installation before reinstalling.</p>':''}</div><div class="tavi-store-actions">${!compatible?'<small>Unavailable on this client</small>':sourceMismatch||older||unknown||stale?'':enabled&&!outdated?`<button type="button" data-extension-open="${esc(m.id)}">Open</button><button type="button" data-extension-disable="${esc(m.id)}">Disable</button>`:installed&&!outdated?`<button type="button" data-extension-enable="${esc(m.id)}">Enable</button>`:`<button type="button" data-extension-install="${esc(m.id)}" ${extensionBusy?'disabled':''}>${outdated?'Update':'Install'}</button>`}${installed?`<button type="button" data-extension-remove="${esc(m.id)}">Remove</button>`:''}</div></article>`;
  }).join(''):'<p class="fineprint">No extensions found in subscribed repositories.</p>'}
- <h3>Extension repositories</h3><p class="fineprint">Tavi includes the official Atrium repository by default. Extensions are optional and require installation approval. Wallet is a built-in core app and always available through your Gold balance. Other repositories can be added by you or suggested by your server.</p><p class="fineprint">Built-in: ${FIRST_PARTY_REPOSITORIES.map(esc).join(', ')}</p>
+ <h3>Extension repositories</h3><p class="fineprint">Tavi includes the central TaviX repository and a legacy Atrium compatibility source by default. Extensions are optional and require installation approval. Wallet is a built-in core app and always available through your Gold balance. Other repositories can be added by you or suggested by your server.</p><p class="fineprint">Built-in: ${FIRST_PARTY_REPOSITORIES.map(esc).join(', ')}</p>
  ${extensionSuggested.length?`<p class="fineprint">Suggested by this server: ${extensionSuggested.map(esc).join(', ')}</p>`:'<p class="fineprint">No repository suggestions supplied by this server.</p>'}
  ${extensionLastCheckedAt&&summary.missing.length?`<div class="notice" role="status">${summary.missing.length} installed app(s) are missing from the current catalogs. They are not considered up to date; refresh or restore the publishing source.</div>`:''}
  ${subscriptions.map(url=>`<div class="row-actions"><code>${esc(url)}</code><button type="button" data-repository-remove="${esc(url)}">Remove</button></div>`).join('')}
@@ -276,8 +280,8 @@ function attachExtensionFrame(previous){
  const slot=document.getElementById('tavi-extension-surface');
  if(!slot){clearPendingLifeLaunch();extensionHost.unmount();return;}
  const entry=extensionEntry(extensionSelected),store=extensionAccountStore();
- if(!entry||!extensionEnabled(entry.manifest.id)||!store){clearPendingLifeLaunch();extensionHost.unmount();return;}
- if(previous?.dataset?.extensionId===extensionSelected){slot.append(previous);presentPendingLifeLaunch();return;}
+ if(!entry||!extensionEnabled(entry.manifest.id)||!store||store.source(entry.manifest.id)!==extensionSource(entry)){clearPendingLifeLaunch();extensionHost.unmount();return;}
+ if(previous?.dataset?.extensionId===extensionSelected && store.source(extensionSelected)===extensionSource(entry)){slot.append(previous);presentPendingLifeLaunch();return;}
  clearPendingLifeLaunch();extensionHost.unmount();
  if(!extensionVerified.has(extensionSelected))return;
  const frame=document.createElement('iframe');
@@ -295,7 +299,7 @@ async function openInstalledExtension(id){
  if(extensionAccountStore()?.source(id)!==extensionSource(entry))return toast('Extension repository changed. Remove and reinstall before opening.');
  if(extensionUpdateStatus(entry,extensionAccountStore())!=='current')return toast('Extension metadata has changed. Review it in the App Store before opening.');
  try{
-  if(!extensionVerified.has(id)){if(id===BUNDLED_COMPANION_ID)await verifyReviewedCompanion(entry);if(!entry.remote)await verifyBundledExtension(entry,{baseUrl:extensionBase()});extensionVerified.add(id);}
+  if(!extensionVerified.has(id)){if(id===BUNDLED_COMPANION_ID&&!entry.remote)await verifyReviewedCompanion(entry);if(!entry.remote)await verifyBundledExtension(entry,{baseUrl:extensionBase()});extensionVerified.add(id);}
   clearPendingLifeLaunch();extensionSelected=id;state.panel='extension';state.mobileRoster=false;render();
  }catch(error){toast('Extension verification failed: '+error.message);}
 }
@@ -311,7 +315,7 @@ async function installExtension(id){
  if(extensionInstallApproval!==id){extensionInstallApproval=id;render();return;}
  extensionInstallApproval=null;
  extensionBusy=true;render();
- try{if(m.id===BUNDLED_COMPANION_ID)await verifyReviewedCompanion(entry);if(!entry.remote)await verifyBundledExtension(entry,{baseUrl:extensionBase()});store.install(m,extensionSource(entry),releaseRevision(entry),entry.remote?.entrypoint||null);extensionVerified.add(id);toast(`${m.name} installed. Select Open to launch it.`);}
+ try{if(m.id===BUNDLED_COMPANION_ID&&!entry.remote)await verifyReviewedCompanion(entry);if(!entry.remote)await verifyBundledExtension(entry,{baseUrl:extensionBase()});store.install(m,extensionSource(entry),releaseRevision(entry),entry.remote?.entrypoint||null);extensionVerified.add(id);toast(`${m.name} installed. Select Open to launch it.`);}
  catch(error){toast('Installation blocked: '+error.message);}
  finally{extensionBusy=false;render();}
 }

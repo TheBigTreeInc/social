@@ -1,7 +1,7 @@
 // Requests are served by Tavi, not by the iframe. No account, message, auth,
 // network, native or contact APIs are exposed directly to applications. TaviX
 // navigation is host-owned: apps may request back/close but cannot navigate Tavi.
-import {ATRIUM_EXTENSION_ID,ATRIUM_REPOSITORY_URL,parseReviewedLifeHandoff} from './game-launch.js';
+import {ATRIUM_EXTENSION_ID,isOfficialAtriumSource,parseReviewedLifeHandoff} from './game-launch.js';
 import {validateCompanionPreview,previewStorageKey} from './companion-preview.js';
 import {REVIEWED_COMPANION} from './reviewed-companion.js';
 export const TAVIX_STANDARD='tavix/1.0';
@@ -24,7 +24,7 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
   try{
    let result=null;
    switch(request.method){
-    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(current.id===ATRIUM_EXTENSION_ID&&current.source===ATRIUM_REPOSITORY_URL?['atrium.tavi-launch/v1']:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[])]};break;
+    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(current.id===ATRIUM_EXTENSION_ID&&isOfficialAtriumSource(current.source)?['atrium.tavi-launch/v1']:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[])]};break;
     case 'host.capabilities': result=current.permissions.filter(p=>['ui.panel','ui.toast','storage.private'].includes(p));break;
     case 'storage.get':{
      if(!permissions.has('storage.private'))throw Error('Permission denied');
@@ -42,7 +42,7 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
      notify(request.message);break;
     }
     case 'ui.requestGameLaunch':{
-     if(!permissions.has('ui.panel')||current.id!==ATRIUM_EXTENSION_ID||current.source!==ATRIUM_REPOSITORY_URL)throw Error('Game launch requires the official Atrium extension');
+     if(!permissions.has('ui.panel')||current.id!==ATRIUM_EXTENSION_ID||!isOfficialAtriumSource(current.source))throw Error('Game launch requires the official Atrium extension');
      const handoff=parseReviewedLifeHandoff(request.handoff);
      result=onGameLaunch(handoff,{extensionId:current.id,scope:current.scope,source:current.source});
      break;

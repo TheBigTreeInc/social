@@ -5,7 +5,12 @@
 const MATCH_ID=/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
 const OWN=(obj,keys)=>obj!==null&&typeof obj==='object'&&!Array.isArray(obj)&&Object.keys(obj).sort().join('|')===keys.slice().sort().join('|');
 export const ATRIUM_EXTENSION_ID='inc.thebigtree.tavi.atrium';
+// Both first-party publishing channels are explicitly trusted for the
+// temporary Life compatibility broker. Arbitrary community mirrors are not.
 export const ATRIUM_REPOSITORY_URL='https://thebigtreeinc.github.io/atrium/tavi/tavi.repository.json';
+export const TAVIX_ATRIUM_REPOSITORY_URL='https://thebigtreeinc.github.io/tavix/tavi.repository.json';
+const APPROVED_ATRIUM_SOURCES=new Set([ATRIUM_REPOSITORY_URL,TAVIX_ATRIUM_REPOSITORY_URL]);
+export const isOfficialAtriumSource=source=>APPROVED_ATRIUM_SOURCES.has(source);
 export function parseReviewedLifeHandoff(input){
  if(!OWN(input,['schema','gameId','target','matchContext'])||input.schema!=='atrium.tavi-launch/v1'||input.gameId!=='life.loop'||!OWN(input.matchContext,['matchId']))throw Error('Unsupported Life launch handoff');
  const matchId=input.matchContext.matchId;

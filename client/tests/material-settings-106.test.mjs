@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {renderSettings,settingsPageTitle} from '../src/ui/settings-view.js';
 
-const model={page:'root',profile:{displayName:'Dorbian',username:'dorbian'},origin:'https://social.example',sessionRemembered:true,theme:'light',notifyPrefs:{messages:true,requests:true,preview:false},pushPrefs:{backgroundEnabled:false},pushPermission:'granted',pushLabel:'Background alerts off',mute:false,platform:'android',nativeApp:true,clientVersion:'0.3.108',companionVersion:'0.6.27',updateChecked:true,updateInfo:{version:'0.3.109'},androidStatus:{stage:'idle'},developerAllowed:false};
+const model={page:'root',profile:{displayName:'Dorbian',username:'dorbian'},origin:'https://social.example',sessionRemembered:true,theme:'light',notifyPrefs:{messages:true,requests:true,preview:false},pushPrefs:{backgroundEnabled:false},pushPermission:'granted',pushLabel:'Background alerts off',mute:false,platform:'android',nativeApp:true,clientVersion:'0.3.109',companionVersion:'0.6.27',updateChecked:true,updateInfo:{version:'0.3.109'},androidStatus:{stage:'idle'},developerAllowed:false};
 
 test('settings index follows Android-style category hierarchy with search and account card',()=>{
  const html=renderSettings(model);

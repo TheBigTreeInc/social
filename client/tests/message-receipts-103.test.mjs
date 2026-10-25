@@ -30,7 +30,7 @@ test('main and native chat no longer depend on maxlength for private-message rej
   assert.match(chat,/message-receipt/);
 });
 
-test('0.3.108 keeps the Android PackageInstaller repair and overlay compatibility guards',()=>{
+test('0.3.109 keeps the Android PackageInstaller repair and overlay compatibility guards',()=>{
   const plugin=readFileSync(new URL('../../tools/android-update/TaviUpdaterPlugin.kt',import.meta.url),'utf8');
   const legacy=readFileSync(new URL('./android-updater-100.test.mjs',import.meta.url),'utf8');
   const overlay=readFileSync(new URL('../../tests/ziprunner-overlay-compat.test.mjs',import.meta.url),'utf8');

@@ -58,3 +58,15 @@ test('hosted Life approval is a first-party Tavi click, never iframe popup permi
  const distributed=fs.readFileSync(new URL('../extension-sdk/index.js',import.meta.url),'utf8');
  assert.equal(sdk,distributed,'distributed SDK must include game launch RPC');
 });
+
+test('central first-party TaviX Atrium supports the compatibility broker but other origins do not',()=>{
+ const listeners=new Map(),windowRef={addEventListener:(n,cb)=>listeners.set(n,cb),removeEventListener:n=>listeners.delete(n)};
+ const frame={contentWindow:{postMessage:()=>{}}};let calls=0;
+ const host=createExtensionHost({windowRef,storage:memory(),notify:()=>{},close:()=>{},onGameLaunch:()=>{++calls;return {awaitingApproval:true};}});
+ const dispatch=()=>listeners.get('message')({source:frame.contentWindow,origin:'null',data:{channel:'tavi.extension/v1',direction:'request',id:calls+1,method:'ui.requestGameLaunch',handoff:valid}});
+ host.mount(frame,{id:ATRIUM_EXTENSION_ID,source:'https://thebigtreeinc.github.io/tavix/tavi.repository.json',scope:'account-x',permissions:['ui.panel']});
+ dispatch();assert.equal(calls,1);
+ host.mount(frame,{id:ATRIUM_EXTENSION_ID,source:'https://other.example.org/tavi.repository.json',scope:'account-x',permissions:['ui.panel']});
+ dispatch();assert.equal(calls,1);
+ host.dispose();
+});

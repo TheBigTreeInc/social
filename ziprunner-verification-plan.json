@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.108",
+  "version": "0.3.109",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -820,7 +820,7 @@
         },
         {
           "id": "LRS-004-AC-3",
-          "description": "Social SQL schema 8\u21929 and Android/Windows actual recovery flow independently verified by operator.",
+          "description": "Social SQL schema 8→9 and Android/Windows actual recovery flow independently verified by operator.",
           "mode": "manual",
           "checks": [
             "LRS-004-DEVICE"
@@ -1662,7 +1662,7 @@
       "criteria": [
         {
           "id": "TAVI-WALLET-LOOPRD-107-SOURCE",
-          "description": "LoopRD 0.4 parent/child descriptor, caller-bound Wallet service fa\u00e7ade and unchanged Social schema-12 ledger",
+          "description": "LoopRD 0.4 parent/child descriptor, caller-bound Wallet service façade and unchanged Social schema-12 ledger",
           "mode": "automated",
           "checks": [
             "python tools/generate-looprd.py --check",
@@ -1702,6 +1702,11 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-TAVIX-109",
+      "description": "Use TheBigTreeInc/tavix public catalog as Tavi first-party source, preserve legacy Atrium and pinned bundled Companion, allow new reviewed central extension installs with explicit approval, and maintain strict Life broker source checks and Wallet isolation.",
+      "status": "review"
     }
   ],
   "checks": [
@@ -1909,7 +1914,7 @@
       "runner_ref": "tavi-client-session-recovery",
       "assertions": [
         "HTTP 401 clears rejected credentials; HTTP 403 and transient statuses retain them.",
-        "Recovery retries are serialized with exponential 8\u201360s schedule and cancelled on manual account switching and authentication.",
+        "Recovery retries are serialized with exponential 8–60s schedule and cancelled on manual account switching and authentication.",
         "Startup login offers explicit saved-session retry and never fabricates offline Social identity."
       ],
       "test_ref": "client/tests/session-recovery.test.mjs"
@@ -2479,6 +2484,12 @@
         "No unsupported LoopRD 0.4 service-contract shape keys"
       ],
       "test_ref": "tests/test_wallet_looprd04_subcomponent.py"
+    },
+    {
+      "id": "TAVI-TAVIX-109-VERIFY",
+      "command": "node --test client/tests/extension-repositories.test.mjs client/tests/extension-life-launch.test.mjs",
+      "status": "source_only",
+      "description": "Verify published central TaviX fixture, fallback, account pins and broker isolation; GUI QA separately"
     }
   ]
 }
