@@ -1,3 +1,4 @@
+import {extensionFrameIdentity} from './extensions/frame-identity.js';
 import {sendBugReport} from './bug-report.js';
 import {createDiagnosticEvents,classifyFetchFailure,diagnosticsQuickSummary} from './diagnostic-events.js';
 import {loadBundledCatalog,verifyBundledExtension,createExtensionStore,extensionStorageScope} from './extensions/store.js';
@@ -52,7 +53,7 @@ import {petById} from './companions/catalog.js';
 import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
 import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
-const CLIENT_VERSION='0.3.116';
+const CLIENT_VERSION='0.3.117';
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
 const clientPlatform=nativeDesktop?'windows':isTauri()&&/Android/i.test(navigator.userAgent)?'android':'web';
@@ -403,13 +404,15 @@ function attachExtensionFrame(previous){
  if(!slot){clearPendingLifeLaunch();clearPendingGameSurface();closeNestedGameSurface();extensionHost.unmount();return;}
  const entry=extensionEntry(extensionSelected),store=extensionAccountStore();
  if(!entry||!extensionEnabled(entry.manifest.id)||!store||store.source(entry.manifest.id)!==extensionSource(entry)){clearPendingLifeLaunch();clearPendingGameSurface();closeNestedGameSurface();extensionHost.unmount();return;}
- if(previous?.dataset?.extensionId===extensionSelected && store.source(extensionSelected)===extensionSource(entry)){slot.append(previous);presentPendingLifeLaunch();presentPendingGameSurface();return;}
+ const identity=extensionFrameIdentity(extensionSelected,entry,store,extensionSource(entry));
+ if(identity && previous?.dataset?.frameIdentity===identity){slot.append(previous);presentPendingLifeLaunch();presentPendingGameSurface();return;}
  clearPendingLifeLaunch();clearPendingGameSurface();closeNestedGameSurface();extensionHost.unmount();
  if(!extensionVerified.has(extensionSelected))return;
  const frame=document.createElement('iframe');
  frame.setAttribute('sandbox','allow-scripts');
  frame.referrerPolicy='no-referrer';frame.title=entry.manifest.name;
  frame.dataset.extensionId=extensionSelected;
+ frame.dataset.frameIdentity=identity||'';
  frame.src=extensionPanelUrl(entry.remote ? entry.remote.entrypoint : extensionAssetUrl(entry.manifest.id,entry.manifest.entrypoints.panel,extensionBase()),{companion:entry.manifest.id===BUNDLED_COMPANION_ID});
  slot.append(frame);
  extensionHost.mount(frame,{id:entry.manifest.id,permissions:entry.manifest.id===CORE_WALLET_ID?['ui.panel']:store.permissions(entry.manifest.id),scope:extensionStoreScope,source:entry.manifest.id===CORE_WALLET_ID?'tavi:bundled':extensionSource(entry),reviewedBundle:entry.manifest.id===BUNDLED_COMPANION_ID&&extensionVerified.has(BUNDLED_COMPANION_ID)?REVIEWED_COMPANION.sha256:null});
@@ -669,8 +672,10 @@ function gameSettings(){
  const rooms=state.gameRooms.length?state.gameRooms.map(r=>`<button class="tavi-game-list-row" type="button" data-select-game-room="${esc(r.roomId)}"><span class="tavi-game-list-icon" aria-hidden="true">▤</span><span class="tavi-game-list-info"><strong>${esc(r.gameId)}</strong><small>Match · ${esc(r.matchId.slice(0,20))}</small></span><span class="tavi-game-status">Open chat ›</span></button>`).join(''):'';
  const turns=state.turns.filter(t=>t.status==='your-turn').slice(0,6).map(t=>`<button class="tavi-game-list-row" type="button" data-route="${esc(t.path||'')}" ${t.path?'':'disabled'}><span class="tavi-game-list-icon">⏱</span><span class="tavi-game-list-info"><strong>${esc(t.title)}</strong><small>Your turn</small></span><span>›</span></button>`).join('');
  const atrium=atriumLauncher(state.atriumUrl);
- const status=state.atriumDiscoveryStatus==='connected'?'No reviewed games are currently available from Atrium.':state.atriumDiscoveryStatus==='unavailable'?'Game discovery is temporarily unavailable.': 'Connect this server to Atrium to discover games.';
- return `<section class="utility tavi-games-browser" aria-label="Games"><h2>Games</h2><div class="tavi-games-group"><h3>Your games</h3>${turns||rooms||'<p class="tavi-game-empty">No active games yet.</p>'}${turns&&rooms?rooms:''}${state.selectedRoomId?gameRoomPanel():''}</div><div class="tavi-games-group"><h3>Play with friends</h3>${games||'<p class="tavi-game-empty">No playable games published yet.</p>'}</div><div class="tavi-games-group"><div class="tavi-game-title-row"><h3>Discover games</h3><button type="button" data-action="refresh" title="Refresh this server’s game discovery">Refresh ↻</button>${atrium.available?'<button type="button" data-action="atrium">Browse Atrium ↗</button>':''}</div>${discovered||`<p class="tavi-game-empty">${esc(status||'No games discovered yet.')}</p>`}</div><div class="tavi-games-group"><h3>Invitations</h3><p class="tavi-game-empty">Game invitations and replies appear in your Inbox.</p><button type="button" data-action="inbox">Open invitations</button></div></section>`;
+ const status=state.atriumDiscoveryStatus==='connected'?'Connected to Atrium; no published games yet.':state.atriumDiscoveryStatus==='unavailable'?'Atrium game discovery is temporarily unavailable.': 'This Social server is not connected to Atrium game discovery.';
+ const atriumInstalled=extensionEnabled(ATRIUM_EXTENSION_ID);
+ const atriumAction=atriumInstalled?'<button type="button" data-extension-open="'+ATRIUM_EXTENSION_ID+'">Open Atrium</button>':'<button type="button" data-action="find-atrium">Find Atrium in Apps</button>'; 
+ return `<section class="utility tavi-games-browser" aria-label="Games"><h2>Games</h2><div class="tavi-games-group"><h3>Your games</h3>${turns||rooms||'<p class="tavi-game-empty">No active games yet.</p>'}${turns&&rooms?rooms:''}${state.selectedRoomId?gameRoomPanel():''}</div><div class="tavi-games-group"><h3>Play with friends</h3>${games||'<p class="tavi-game-empty">No playable games published yet.</p>'}</div><div class="tavi-games-group"><div class="tavi-game-title-row"><h3>Discover games</h3><button type="button" data-action="refresh" title="Refresh this server’s game discovery">Refresh ↻</button>${atriumAction}${atrium.available?'<button type="button" data-action="atrium">Browse website ↗</button>':''}</div>${discovered||`<p class="tavi-game-empty">${esc(status||'No games discovered yet.')}</p>`}</div><div class="tavi-games-group"><h3>Invitations</h3><p class="tavi-game-empty">Game invitations and replies appear in your Inbox.</p><button type="button" data-action="inbox">Open invitations</button></div></section>`;
 }
 
 function companion(){return companionPanel(tickCompanion(state.companion),{desktopFloatingAvailable:nativeWindowsPet});}
@@ -846,7 +851,7 @@ function render(){
  // Keep an active sandbox frame mounted across chat/notification polling.
  // Moving an iframe through a detached DOM tree reloads it in some WebViews.
  const existingSlot=document.getElementById('tavi-extension-surface');
- if(state.panel==='extension'&&existingSlot?.dataset.extensionId===extensionSelected&&existingSlot.querySelector('iframe')){
+ if(state.panel==='extension'&&existingSlot?.dataset.extensionId===extensionSelected&&existingSlot.querySelector('iframe')?.dataset.frameIdentity===extensionFrameIdentity(extensionSelected,extensionEntry(extensionSelected),extensionAccountStore(),extensionEntry(extensionSelected)?extensionSource(extensionEntry(extensionSelected)):null)){
   document.title=unreadTotal()?`(${unreadTotal()}) Tavi`:'Tavi';
   let notice=document.querySelector('body > .toast');
   if(state.toast){if(!notice){notice=document.createElement('div');notice.className='toast';notice.setAttribute('role','status');document.body.append(notice);}notice.textContent=state.toast;}
@@ -1169,6 +1174,7 @@ async function action(name){
  if(name==='main-menu'){state.panel='menu';state.mobileRoster=false;render();return;}
  if(name==='atrium'){const url=reviewedAtriumBase(state.atriumUrl);if(!url)return toast('Atrium is not configured for this server.');await openExternalGame(url);return;}if(name==='developer'){if(!state.developerAllowed||!state.developerVisible)return;state.panel=name;await updateDeveloperInfo();render();return;}
  if(name==='developer-refresh'){await updateDeveloperInfo();render();return;}
+ if(name==='find-atrium'){marketplaceSelected=ATRIUM_EXTENSION_ID;state.panel='app-store';state.mobileRoster=false;render();if(!extensionCatalog.length)void loadExtensionStore();return;}
  if(name==='companion'){if(extensionEnabled(BUNDLED_COMPANION_ID)){await openInstalledExtension(BUNDLED_COMPANION_ID);return;}state.panel='app-store';state.mobileRoster=false;render();if(!extensionCatalog.length)void loadExtensionStore();return;}
  if(name==='inbox'){state.panel='inbox';state.mobileRoster=false;render();return;}
  if(name==='contacts'){state.panel='messenger';state.mobileRoster=true;render();return;}

@@ -21,7 +21,9 @@ test('unconfigured Atrium is an explicit disabled launcher, not a second catalog
 test('Windows Games shows explicit Atrium destination and keeps the old challenge flow separate',async()=>{
  const code=await read('../src/main.js');
  assert.match(code,/atriumLauncher\(state\.atriumUrl\)/);
- assert.match(code,/Browse Atrium/);
+ assert.match(code,/Open Atrium/);
+ assert.match(code,/Find Atrium in Apps/);
+ assert.match(code,/Browse website/);
  assert.match(code,/data-action="atrium"/);
  assert.match(code,/Play with friends/);
  assert.match(code,/data-challenge-game/);

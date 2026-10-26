@@ -54,6 +54,6 @@ test('Self-test consumes same signed release but never creates install session',
 });
 test('Target app identity remains stable across releases',()=>{
  assert.equal(config.identifier,'inc.thebigtree.looprdsocial');
- assert.equal(config.version,'0.3.116');
+ assert.equal(config.version,'0.3.118');
  assert.equal(config.bundle?.android?.versionCode,undefined);
 });

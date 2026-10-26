@@ -33,7 +33,7 @@ test('Games has explicit trusted-catalog refresh, and browser QA proves discover
  const main=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
  const qa=await readFile(new URL('../tools/ui-qa.mjs',import.meta.url),'utf8');
  assert.match(main,/Refresh ↻/);
- assert.match(main,/No reviewed games are currently available from Atrium/);
+ assert.match(main,/Connected to Atrium; no published games yet./);
  assert.match(qa,/The Life Loop/);
  assert.match(qa,/__qa\/withdraw-life/);
  assert.match(qa,/Not playable yet/);
