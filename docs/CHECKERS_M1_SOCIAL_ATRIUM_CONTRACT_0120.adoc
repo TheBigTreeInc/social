@@ -1,0 +1,69 @@
+= Tavi Social 0.3.120 — Checkers M1 original challenge and current-contact service contract
+:revdate: 2026-11-04
+:toc: left
+
+== Scope and ownership
+
+This is the Social-owned part of the DGN Checkers M1 cross-project contract, not a claim that Checkers is playable through Tavi. Tavi owns verified accounts, accepted friendships, challenges, messenger navigation and notifications. Atrium owns catalog, persistent lobbies and launch. The Checkers module alone owns rules, match seats, revisions, durable moves and results. LoopRD/DAPI owns authenticated routing and hosting. No Checkers rules or seat/match creation were inserted into Social.
+
+Atrium 0.5.43's strict consumer expects `atrium.social-challenge-status/v1` and `atrium.social-contact-status/v1`, whereas Social previously only exposed `tavi.challenge-status/v1`, which needs caller-supplied sender/game/recipient and returns a different envelope. This release supplies two *additive* service-only operations while retaining the old route unmodified.
+
+== Private operations (NOT browser endpoints)
+
+Both routes require the existing LoopRD `social:service` scope, a server-verified service principal `kind=service,subject=atrium`, operator approval `LOOPRD_TAVI_CHALLENGE_READ_CALLERS=atrium`, and the non-secret operator-bound identity `LOOPRD_TAVI_SOCIAL_ISSUER`. Missing identity binding fails closed. No browser, game extension, or remote client is allowed to send trusted principal fields.
+
+=== POST /looprd/looprd-social/v1/ecosystem/atrium-challenge-status
+
+Request (exact fields):
+
+[source,json]
+----
+{"schema":"atrium.social-challenge-status/v1","challengeId":123}
+----
+
+Response on a real stored original challenge:
+
+[source,json]
+----
+{"schema":"atrium.social-challenge-status/v1","challengeId":123,"issuer":"operator-bound-issuer","sender":"acct_1","recipient":"acct_2","gameId":"checkers","status":"accepted","original":true}
+----
+
+`pending`, `accepted`, `declined`, `expired` or `cancelled` are derived from the actual `SocialInteraction` record. Only the original `game.challenge.requested` publisher and embedded challenge fields are accepted; an originator-side inbox echo is not proof. Invalid, unauthorized or unreadable rows return sanitized fail-closed errors and never assert `original:true`. A historical accepted challenge does not independently authorize a seat.
+
+=== POST /looprd/looprd-social/v1/ecosystem/atrium-contact-status
+
+Request:
+
+[source,json]
+----
+{"schema":"atrium.social-contact-status/v1","issuer":"operator-bound-issuer","sender":"acct_1","recipient":"acct_2"}
+----
+
+Response:
+
+[source,json]
+----
+{"schema":"atrium.social-contact-status/v1","issuer":"operator-bound-issuer","sender":"acct_1","recipient":"acct_2","accepted":true}
+----
+
+The relationship is independently queried from the current SocialContact table for every request; removing a friend immediately returns `accepted:false` even if their original challenge was once accepted. Missing/unknown relationships also return false, never guessed true.
+
+== Deployment and remaining gates
+
+. Preserve the current Social/Wallet database and schema 12. Both handlers are read-only and do not introduce a migration. Generate the LoopRD descriptor with `python tools/generate-looprd.py`; verify with `--check`.
+. Review and grant only the Atrium service the `social:service` calling authority. Bind the exact Social issuer on the operator runtime; do not put credentials or private runtime state into ZipRunner source ZIPs. Before deployment validate the LoopRD component version and actual route prefix against installed routing.
+. Test real service-to-service calls from the operator's approved Atrium deployment against the running LoopRD Social instance. The host's transport must adapt operation names `challenge.status` and `contact.status` to these reviewed routes; no URL/token is accepted from browser input.
+. Independently activate the Checkers-owned authenticated match/seat authority, Atrium durable lobby route, matching game deployment and TaviX. Without these, no M1 multiplayer claim is valid.
+. Run the DGN group's exact-package Checkers engine test with two distinct network clients, including restart/idempotency and denied actions, then execute actual Tavi-to-browser acceptance and record separate operator approval. Tests against local Social SQL fixtures are *not* the group end-to-end test.
+
+== Source validation
+
+`python -m unittest discover -s tests -p test_checkers_m1_social_contract.py -v` verifies two independently registered Social accounts, friend consent, Checkers catalog gating, challenge acceptance, current friendship removal, forged/principal denial, expiration/dismissal, and no unauthorized game grants.
+
+`python -m unittest discover -s tests -p test_challenge_status_service.py -v` protects the existing Tavi legacy challenge-status API. The existing Node and full Python suites are retained.
+
+No Git push, live deployment, release, game authority or operator acceptance is performed by installing source alone.
+
+== ZipRunner group evidence adapter
+
+`python tools/checkers_social_group_qa.py` runs six source-tree Social fixtures and emits bounded per-assertion JSON under protected `state/qa/checkers-social/`. `python tools/checkers_social_group_qa.py --package <exact-looprd-social-0.3.120-ziprunner.zip>` verifies the input archive SHA, safely extracts into a temporary directory and invokes the *packaged* service/test sources. Its report uses `scope=EXACT_PACKAGE_EXTRACTED`. No skipped assertions count as success. This is one **Social-owned** component record; it cannot satisfy Atrium's Checkers-engine network QA or the group's final live acceptance.

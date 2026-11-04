@@ -13,6 +13,8 @@ admin_events=(root/'server/admin_event_service.py').read_text(encoding='utf8')
 admin_role=(root/'server/admin_role_service.py').read_text(encoding='utf8')
 game_events=(root/'server/game_event_service.py').read_text(encoding='utf8')
 challenge_status=(root/'server/challenge_status_service.py').read_text(encoding='utf8')
+atrium_challenge=(root/'server/atrium_challenge_lookup.py').read_text(encoding='utf8')
+atrium_contact=(root/'server/atrium_contact_lookup.py').read_text(encoding='utf8')
 game_grants=(root/'server/game_grant_service.py').read_text(encoding='utf8')
 game_rooms=(root/'server/game_room_service.py').read_text(encoding='utf8')
 # Wallet storage remains in the Social home-realm database during the LoopRD 0.4
@@ -224,6 +226,25 @@ spec={
            'schema':{'type':'string','enum':['tavi.challenge-status-query/v1']},
            'challengeId':{'type':'integer','minimum':1},
            'gameId':{'type':'string','minLength':2,'maxLength':48},
+           'sender':{'type':'string','minLength':6,'maxLength':72},
+           'recipient':{'type':'string','minLength':6,'maxLength':72}}},
+       'response':{'type':'object','additionalProperties':True}}},
+    # Separate additive service-only response contracts for Atrium's strict, host-injected
+    # Social adapters. The existing tavi.challenge-status/v1 API remains unchanged.
+    {'path':'/ecosystem/atrium-challenge-status','method':'POST','kind':'python','scopes':['social:service'],
+     'source':atrium_challenge,'contract':{
+       'name':'atrium-social-challenge-status','version':1,'serviceOnly':True,'allowedCallers':['atrium'],
+       'request':{'type':'object','required':['schema','challengeId'],'additionalProperties':False,
+         'properties':{'schema':{'type':'string','enum':['atrium.social-challenge-status/v1']},
+                       'challengeId':{'type':'integer','minimum':1}}},
+       'response':{'type':'object','additionalProperties':True}}},
+    {'path':'/ecosystem/atrium-contact-status','method':'POST','kind':'python','scopes':['social:service'],
+     'source':atrium_contact,'contract':{
+       'name':'atrium-social-contact-status','version':1,'serviceOnly':True,'allowedCallers':['atrium'],
+       'request':{'type':'object','required':['schema','issuer','sender','recipient'],
+         'additionalProperties':False,'properties':{
+           'schema':{'type':'string','enum':['atrium.social-contact-status/v1']},
+           'issuer':{'type':'string','minLength':1,'maxLength':128},
            'sender':{'type':'string','minLength':6,'maxLength':72},
            'recipient':{'type':'string','minLength':6,'maxLength':72}}},
        'response':{'type':'object','additionalProperties':True}}},

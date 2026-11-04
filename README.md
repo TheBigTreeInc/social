@@ -1,3 +1,7 @@
+## Tavi 0.3.120 — Checkers M1 Social/Atrium service contract
+
+Additive privileged original-challenge and current-contact lookup routes make the existing Checkers game invitation flow consumable by Atrium's strict service adapters. Source-only and operator-gated: no public Checkers match authority, no live two-client acceptance. See `docs/CHECKERS_M1_SOCIAL_ATRIUM_CONTRACT_0120.adoc`.
+
 # Tavi 0.3.119 — ZipRunner review host support
 
 Adds an optional read-only bridge for the included optional ZipRunner review app (also supplied as a separate TaviX package). It stays locked until you load the existing current ZipRunner web-connection .zrmobile file inside Tavi. The host sends its exact file digest and bearer only to that file's HTTPS issuer. No credentials are persisted; clearing/closing the panel removes the grant. Requires ZipRunner .188 review endpoints. Existing sandbox/network restrictions and all other applications remain unchanged. Install/test manually; no accounts or active configuration are replaced by this source package.

@@ -1,6 +1,6 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.119",
+  "version": "0.3.120",
   "tests": [
     {
       "kind": "command",
@@ -122,9 +122,9 @@
     {
       "kind": "command",
       "semantic_id": "tavi-game-invite-grant",
-      "definition_revision": "1",
+      "definition_revision": "2",
       "rerun_policy": "every_update",
-      "command": "python -m unittest discover -s tests -p test_game_invites_grants.py -v",
+      "command": "python -m unittest discover -s tests -p test_game_invites_grants.py -v && python -m unittest discover -s tests -p test_checkers_m1_social_contract.py -v && python tools/checkers_social_group_qa.py",
       "attention_on_failure": true,
       "gating": false
     },

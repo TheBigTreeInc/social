@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.108
+release: 0.3.120
 api:
   version: v1
 cors:
@@ -2795,6 +2795,130 @@ handlers:
     response:
       type: object
       additionalProperties: true
+- path: /ecosystem/atrium-challenge-status
+  method: POST
+  kind: python
+  scopes:
+  - social:service
+  source: "\"\"\"Atrium's privileged original Tavi challenge lookup (game-neutral).\n\nOnly a host-verified, operator-approved\
+    \ service principal may call this route.\nA response proves a stored Social interaction, NOT a game seat or\
+    \ match grant.\nThe issuer is an operator binding, never accepted from browser input.\n\"\"\"\nimport json\n\
+    import os\nimport re\nimport time\nimport sqlalchemy as sa\nfrom starlette.concurrency import run_in_threadpool\n\
+    \nACTOR = re.compile(r'acct_[1-9][0-9]{0,18}\\Z')\nGAME = re.compile(r'[a-z][a-z0-9-]{1,47}\\Z')\nISSUER = re.compile(r'[A-Za-z0-9._:/-]{1,128}\\\
+    Z')\nSCHEMA = 'atrium.social-challenge-status/v1'\n\n\ndef _authorized(ctx):\n    principal = getattr(ctx, 'principal',\
+    \ None)\n    caller = getattr(principal, 'subject', None)\n    if getattr(principal, 'kind', None) != 'service'\
+    \ or caller != 'atrium':\n        return False\n    allowed = {part.strip() for part in os.getenv('LOOPRD_TAVI_CHALLENGE_READ_CALLERS',\
+    \ '').split(',') if part.strip()}\n    return caller in allowed\n\n\ndef _issuer():\n    value = os.getenv('LOOPRD_TAVI_SOCIAL_ISSUER',\
+    \ '').strip()\n    return value if ISSUER.fullmatch(value) else None\n\n\ndef _object(value):\n    if isinstance(value,\
+    \ str):\n        try:\n            value = json.loads(value)\n        except ValueError:\n            return\
+    \ None\n    return value if type(value) is dict else None\n\n\ndef verify(ctx):\n    if not _authorized(ctx):\n\
+    \        return {'ok': False, 'reason': 'caller_not_approved'}\n    issuer = _issuer()\n    if issuer is None:\n\
+    \        return {'ok': False, 'reason': 'issuer_binding_required'}\n    body = getattr(ctx, 'body', None)\n\
+    \    if (type(body) is not dict or set(body) != {'schema', 'challengeId'}\n            or body['schema'] !=\
+    \ SCHEMA or type(body['challengeId']) is not int\n            or not 1 <= body['challengeId'] <= 9223372036854775807):\n\
+    \        return {'ok': False, 'reason': 'invalid_request'}\n    with ctx.transaction() as db:\n        row =\
+    \ db.execute(sa.text('''SELECT recipient,publisher,topic,data,status,response,expires\n            FROM \"SocialInteraction\"\
+    \ WHERE id=:id'''), {'id': body['challengeId']}).mappings().first()\n        if not row or row['topic'] != 'game.challenge.requested'\
+    \ or not isinstance(row['publisher'], str):\n            return {'ok': False, 'reason': 'challenge_not_found'}\n\
+    \        publisher = row['publisher']\n        if not publisher.startswith('challenge:'):\n            return\
+    \ {'ok': False, 'reason': 'challenge_not_found'}\n        sender = publisher[len('challenge:'):]\n        recipient\
+    \ = row['recipient']\n        data = _object(row['data'])\n        detail = data.get('challenge') if data else\
+    \ None\n        if (not ACTOR.fullmatch(sender) or not isinstance(recipient, str)\n                or not ACTOR.fullmatch(recipient)\
+    \ or sender == recipient\n                or type(detail) is not dict or detail.get('schema') != 'tavi.game-challenge/v1'\n\
+    \                or detail.get('sender') != sender or not isinstance(detail.get('gameId'), str)\n          \
+    \      or not GAME.fullmatch(detail['gameId'])):\n            return {'ok': False, 'reason': 'challenge_not_found'}\n\
+    \        if row['status'] == 'open':\n            status = 'expired' if row['expires'] <= int(time.time()) else\
+    \ 'pending'\n        elif row['status'] == 'responded':\n            response = _object(row['response'])\n \
+    \           action = response.get('action') if response else None\n            if response is None or response.get('by')\
+    \ != recipient:\n                return {'ok': False, 'reason': 'challenge_unavailable'}\n            status\
+    \ = {'accept-challenge': 'accepted', 'decline-challenge': 'declined'}.get(action)\n            if status is\
+    \ None:\n                return {'ok': False, 'reason': 'challenge_unavailable'}\n        elif row['status']\
+    \ == 'dismissed':\n            status = 'cancelled'\n        else:\n            return {'ok': False, 'reason':\
+    \ 'challenge_unavailable'}\n        return {'schema': SCHEMA, 'challengeId': body['challengeId'], 'issuer':\
+    \ issuer,\n                'sender': sender, 'recipient': recipient, 'gameId': detail['gameId'],\n         \
+    \       'status': status, 'original': True}\n\n\nasync def handle(ctx):\n    return await run_in_threadpool(verify,\
+    \ ctx)\n"
+  contract:
+    name: atrium-social-challenge-status
+    version: 1
+    serviceOnly: true
+    allowedCallers:
+    - atrium
+    request:
+      type: object
+      required:
+      - schema
+      - challengeId
+      additionalProperties: false
+      properties:
+        schema:
+          type: string
+          enum:
+          - atrium.social-challenge-status/v1
+        challengeId:
+          type: integer
+          minimum: 1
+    response:
+      type: object
+      additionalProperties: true
+- path: /ecosystem/atrium-contact-status
+  method: POST
+  kind: python
+  scopes:
+  - social:service
+  source: "\"\"\"Atrium's privileged current-relationship lookup; no cached friendship claims.\n\nQueries the Social-owned\
+    \ contact table on each request. A prior accepted\nchallenge does not override a subsequently removed/blocked\
+    \ relationship.\n\"\"\"\nimport os\nimport re\nimport sqlalchemy as sa\nfrom starlette.concurrency import run_in_threadpool\n\
+    \nACTOR = re.compile(r'acct_[1-9][0-9]{0,18}\\Z')\nISSUER = re.compile(r'[A-Za-z0-9._:/-]{1,128}\\Z')\nSCHEMA\
+    \ = 'atrium.social-contact-status/v1'\n\n\ndef verify(ctx):\n    principal = getattr(ctx, 'principal', None)\n\
+    \    caller = getattr(principal, 'subject', None)\n    allowed = {s.strip() for s in os.getenv('LOOPRD_TAVI_CHALLENGE_READ_CALLERS',\
+    \ '').split(',') if s.strip()}\n    if getattr(principal, 'kind', None) != 'service' or caller != 'atrium' or\
+    \ caller not in allowed:\n        return {'ok': False, 'reason': 'caller_not_approved'}\n    issuer = os.getenv('LOOPRD_TAVI_SOCIAL_ISSUER',\
+    \ '').strip()\n    if not ISSUER.fullmatch(issuer):\n        return {'ok': False, 'reason': 'issuer_binding_required'}\n\
+    \    body = getattr(ctx, 'body', None)\n    if (type(body) is not dict or set(body) != {'schema','issuer','sender','recipient'}\n\
+    \            or body['schema'] != SCHEMA or body['issuer'] != issuer\n            or not isinstance(body['sender'],\
+    \ str) or not ACTOR.fullmatch(body['sender'])\n            or not isinstance(body['recipient'], str) or not\
+    \ ACTOR.fullmatch(body['recipient'])\n            or body['sender'] == body['recipient']):\n        return {'ok':\
+    \ False, 'reason': 'invalid_request'}\n    left, right = sorted((body['sender'], body['recipient']))\n    with\
+    \ ctx.transaction() as db:\n        row = db.execute(sa.text('''SELECT status FROM \"SocialContact\"\n     \
+    \       WHERE \"leftId\"=:left AND \"rightId\"=:right'''),\n            {'left':left,'right':right}).mappings().first()\n\
+    \    return {'schema': SCHEMA, 'issuer': issuer, 'sender':body['sender'],\n            'recipient':body['recipient'],\
+    \ 'accepted': bool(row and row['status'] == 'accepted')}\n\n\nasync def handle(ctx):\n    return await run_in_threadpool(verify,\
+    \ ctx)\n"
+  contract:
+    name: atrium-social-contact-status
+    version: 1
+    serviceOnly: true
+    allowedCallers:
+    - atrium
+    request:
+      type: object
+      required:
+      - schema
+      - issuer
+      - sender
+      - recipient
+      additionalProperties: false
+      properties:
+        schema:
+          type: string
+          enum:
+          - atrium.social-contact-status/v1
+        issuer:
+          type: string
+          minLength: 1
+          maxLength: 128
+        sender:
+          type: string
+          minLength: 6
+          maxLength: 72
+        recipient:
+          type: string
+          minLength: 6
+          maxLength: 72
+    response:
+      type: object
+      additionalProperties: true
 - path: /ecosystem/game-event
   method: POST
   kind: python
@@ -3259,4 +3383,4 @@ handlers:
     - recovery-codes-v1
     - game-session-rooms-v1
     - wallet-v1
-    release: 0.3.108
+    release: 0.3.120
