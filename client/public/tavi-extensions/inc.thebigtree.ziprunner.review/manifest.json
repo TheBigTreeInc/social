@@ -1,0 +1,34 @@
+{
+  "schema": "tavi.extension/v1",
+  "id": "inc.thebigtree.ziprunner.review",
+  "version": "1.0.0",
+  "name": "ZipRunner review",
+  "summary": "Read-only ZipRunner builds and project QA, unlocked by importing your ZipRunner web-connection authentication file inside Tavi.",
+  "publisher": "tavi",
+  "kind": "app",
+  "hostApi": {
+    "min": "1.0.0",
+    "maxExclusive": "2.0.0"
+  },
+  "entrypoints": {
+    "panel": "ui/index.html"
+  },
+  "contributions": [
+    {
+      "slot": "app.launcher",
+      "id": "ziprunner-review",
+      "label": "ZipRunner",
+      "action": "openPanel"
+    }
+  ],
+  "permissions": [
+    "ui.panel",
+    "ziprunner.review"
+  ],
+  "platforms": [
+    "web",
+    "windows",
+    "android"
+  ],
+  "icon": "ui/icon.svg"
+}

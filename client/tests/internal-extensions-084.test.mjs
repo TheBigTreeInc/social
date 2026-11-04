@@ -24,13 +24,13 @@ const fixture=async()=>{
 test('canonical Tavi-owned extension registry is a strict source of truth, not Atrium or native host screens',async()=>{
  const registry=JSON.parse(await readFile(new URL('../../extensions/registry.json',import.meta.url)));
  assert.equal(registry.schema,'tavi.internal-extensions/v1');
- assert.deepEqual(registry.extensions.map(e=>e.id).sort(),['org.tavi.community.companion','org.tavi.core.wallet','org.tavi.examples.notepad']);
+ assert.deepEqual(registry.extensions.map(e=>e.id).sort(),['inc.thebigtree.ziprunner.review','org.tavi.community.companion','org.tavi.core.wallet','org.tavi.examples.notepad']);
  assert.equal(registry.extensions.find(e=>e.id==='org.tavi.core.wallet').mode,'core');
  assert.equal(registry.extensions.find(e=>e.id==='org.tavi.examples.notepad').mode,'optional');
  assert(!registry.extensions.some(e=>e.id.includes('atrium')));
  const bundled=JSON.parse(await readFile(new URL('../public/tavi-extensions/catalog.v1.json',import.meta.url)));
- assert.equal(validateCatalog(bundled).length,3);
- assert.deepEqual((await syncInternalExtensions({check:true})).ids,['org.tavi.examples.notepad','org.tavi.core.wallet','org.tavi.community.companion']);
+ assert.equal(validateCatalog(bundled).length,4);
+ assert.deepEqual((await syncInternalExtensions({check:true})).ids,['org.tavi.examples.notepad','org.tavi.core.wallet','org.tavi.community.companion','inc.thebigtree.ziprunner.review']);
 });
 test('published static mirror is regenerated deterministically and rejects out-of-band asset edits',async()=>{
  const root=await fixture();

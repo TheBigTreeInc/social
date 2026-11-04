@@ -120,7 +120,8 @@
         "enum": [
           "ui.panel",
           "ui.toast",
-          "storage.private"
+          "storage.private",
+          "ziprunner.review"
         ]
       }
     },

@@ -25,7 +25,7 @@ test('offline Companion 0.6.27 is a reviewed optional bundled partner, not a fir
  assert.equal(reviewed.sha256,entry.sha256);
  assert.equal(reviewed.files.length,18);
  const catalog=JSON.parse(await readFile(new URL('../public/tavi-extensions/catalog.v1.json',import.meta.url)));
- assert.equal(validateCatalog(catalog).length,3);
+ assert.equal(validateCatalog(catalog).length,4);
  assert(catalog.extensions.some(e=>e.manifest.id===BUNDLED_COMPANION_ID));
  await syncInternalExtensions({check:true});
 });

@@ -1,3 +1,7 @@
+== Tavi 0.3.119 — Manual ZipRunner review extension
+
+Implement TAVI-ZR-REVIEW-001 under the matching DESIGN.adoc boundary: exact app/permission/frame gate, current original .zrmobile file, narrow read-only HTTPS bridge, session-only secrets, revocation/expiry/clear and stale-response checks. Preserve existing sandbox, accounts, extension grants and native build/update behavior. Deliver an incremented source ZIP separately from the optional App Store review app and separate .tavix package and ZipRunner .188. No installation, publish or operator Done approval is performed.
+
 = looprd-social Project Plan
 :doctype: article
 :toc:

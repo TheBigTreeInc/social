@@ -1,3 +1,7 @@
+== Optional application-specific ZipRunner review bridge (0.3.119)
+
+Permission `ziprunner.review` is specific to `inc.thebigtree.ziprunner.review`, alongside `ui.panel`. Advertise `ziprunner.review/v1` only to that app. Methods: `ziprunner.importCredential` with original file byte array (max 16 KiB); `ziprunner.review` with optional exact project key; `ziprunner.clear`. Import validates the existing ZipRunner v2 authentication file and its issuer before returning private data. All grants are session-only; cookies and existing Tavi login do not unlock this bridge. No generic fetch or mutation API is added. See the matching governing DESIGN.adoc section.
+
 = TaviX 1.0 application standard
 :revnumber: 1.0.0
 :revdate: 2026-10-24

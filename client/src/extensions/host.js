@@ -1,3 +1,4 @@
+import {ZIPRUNNER_ID,ZIPRUNNER_PERMISSION,createZipRunnerReview} from './ziprunner-review.js';
 // Requests are served by Tavi, not by the iframe. No account, message, auth,
 // network, native or contact APIs are exposed directly to applications. TaviX
 // navigation is host-owned: apps may request back/close but cannot navigate Tavi.
@@ -12,7 +13,7 @@ export const CORE_WALLET_ID='org.tavi.core.wallet';
 const KEY=/^[a-zA-Z0-9._-]{1,80}$/;
 const throttle=()=>({started:Date.now(),count:0});
 export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');},onSurfaceOpen=()=>{throw Error('Game surfaces unavailable');},walletApi=()=>{throw Error('Wallet service unavailable');},onCompanionPreview=()=>{},isReviewedCompanionSession=()=>false}){
- let session=null;
+ let session=null;const ziprunner=createZipRunnerReview();
  function send(message){session?.frame?.contentWindow?.postMessage({channel:CHANNEL,direction:'response',...message},'*');}
  function onMessage(e){
   const current=session;if(!current||e.source!==current.frame.contentWindow||e.origin!=='null')return;
@@ -22,12 +23,22 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
   if(Date.now()-current.rate.started>60_000){current.rate=throttle();current.previewCount=0;}
   if(++current.rate.count>60){send({id,ok:false,error:'Extension request limit exceeded'});return;}
   const permissions=new Set(current.permissions);
+  const ziprunnerAllowed=current.id===ZIPRUNNER_ID&&current.source==='tavi:bundled'&&permissions.has(ZIPRUNNER_PERMISSION)&&permissions.has('ui.panel');
   const reviewedAtrium=current.id===ATRIUM_EXTENSION_ID&&isOfficialAtriumSource(current.source)&&permissions.has('ui.panel');
   try{
    let result=null;
    switch(request.method){
-    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[])]};break;
-    case 'host.capabilities': result=current.permissions.filter(p=>['ui.panel','ui.toast','storage.private'].includes(p));break;
+    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(ziprunnerAllowed?['ziprunner.review/v1']:[]),...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[])]};break;
+    case 'ziprunner.importCredential':
+    case 'ziprunner.review':
+    case 'ziprunner.clear':{
+     if(!ziprunnerAllowed)throw Error('ZipRunner review permission denied');
+     if(request.method==='ziprunner.importCredential')result=ziprunner.importCredential(request.bytes);
+     else if(request.method==='ziprunner.review')result=ziprunner.review(request.project);
+     else{ziprunner.clear();result={cleared:true};}
+     break;
+    }
+    case 'host.capabilities': result=current.permissions.filter(p=>['ui.panel','ui.toast','storage.private'].includes(p)||(ziprunnerAllowed&&p===ZIPRUNNER_PERMISSION));break;
     case 'storage.get':{
      if(!permissions.has('storage.private'))throw Error('Permission denied');
      if(typeof request.key!=='string'||!KEY.test(request.key))throw Error('Invalid key');
@@ -94,9 +105,9 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
  return {
   mount(frame,{id,permissions,scope,source='tavi:bundled',reviewedBundle=null}){
    if(!frame||!scope||typeof id!=='string'||!Array.isArray(permissions))throw Error('Invalid session');
-   session={frame,id,permissions,scope,source,reviewedBundle,previewCount:0,rate:throttle()};
+   ziprunner.clear();session={frame,id,permissions,scope,source,reviewedBundle,previewCount:0,rate:throttle()};
   },
-  unmount(){session=null;},
-  dispose(){session=null;windowRef.removeEventListener('message',onMessage);}
+  unmount(){ziprunner.clear();session=null;},
+  dispose(){ziprunner.clear();session=null;windowRef.removeEventListener('message',onMessage);}
  };
 }

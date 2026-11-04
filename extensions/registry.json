@@ -22,6 +22,11 @@
       "publisher": "tavi-community",
       "version": "0.6.27",
       "sha256": "f1bf1db6276641f7b19c8ca6bcfd814e8aedc8a903d022bff6fbd0662d280844"
+    },
+    {
+      "id": "inc.thebigtree.ziprunner.review",
+      "mode": "optional",
+      "backend": null
     }
   ]
 }

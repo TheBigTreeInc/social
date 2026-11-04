@@ -1,3 +1,7 @@
+## 0.3.119 ZipRunner review gate
+
+Focused: `node --test client/tests/ziprunner-review-119.test.mjs client/tests/tavix-100.test.mjs client/tests/extensions.test.mjs`. Verify no data/network before file import; original-byte SHA, HTTPS origin, no cookies/redirects/persistence; invalid/v1/expired/revoked files; late-response rejection, foreign IDs/frames and absent permission. Run `npm run verify` and fresh source/package checks. Real Windows/Android Tavi import using the operator's own file remains manual.
+
 # Testing and regression rules for looprd-social
 
 ## Required sequence

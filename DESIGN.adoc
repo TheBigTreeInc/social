@@ -1,3 +1,11 @@
+== Tavi 0.3.119 — Exact-file-gated ZipRunner review
+
+The operator requests a manually supplied ZipRunner extension that works only after the existing web-connection authentication file is sideloaded inside Tavi. The review app is included in the internal registry as optional, with a separate package for manual distribution. Its assets are mirrored through the normal integrity-checked extension sync; it is never installed/enabled automatically. The exact extension inc.thebigtree.ziprunner.review may request the application-specific ziprunner.review permission. Its host bridge accepts bounded original v2 .zrmobile bytes, computes the exact SHA-256, validates one HTTPS origin and expiry, and asks that issuer for sanitized read-only review using the secret and file digest on every request. No browser/Tavi login, cookie or generic API token substitutes for the file.
+
+Credentials remain in per-frame/session memory only, never storage, logs, URLs or source. Mount/unmount, account/frame change, clear, expiry, rejection or revocation discard the grant. Generation checks reject late asynchronous responses. Requests omit cookies, reject redirects and use fixed read-only review/project routes; no generic networking, native/file access, commands, builds, configuration, Git, publishing or release actions are exposed. Preserve the extension iframe sandbox and existing CSP. Only the bundled, integrity-verified app source is eligible; remote lookalikes, other IDs/frames or missing permissions are denied. The module is advertised only to the exact authorized application. Older hosts reject the new permission or fail closed on feature negotiation.
+
+Context: the existing host intentionally denies extension networking; enabling arbitrary iframe fetches would weaken that boundary. Reuse the existing ZipRunner-issued credential format and add a narrow host broker rather than a second login or general network permission. Source-only rollback removes the optional bridge without changing accounts, saved extensions, Social/Wallet data, configuration or existing authorization. Manual Tavi/extension installation and operator Windows/Android acceptance remain separate gates. Governing work: TAVI-ZR-REVIEW-001; paired ZipRunner work: ZR-TAVI-001.
+
 = looprd-social Design
 :doctype: article
 :toc:

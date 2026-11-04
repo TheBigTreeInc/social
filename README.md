@@ -1,3 +1,7 @@
+# Tavi 0.3.119 — ZipRunner review host support
+
+Adds an optional read-only bridge for the included optional ZipRunner review app (also supplied as a separate TaviX package). It stays locked until you load the existing current ZipRunner web-connection .zrmobile file inside Tavi. The host sends its exact file digest and bearer only to that file's HTTPS issuer. No credentials are persisted; clearing/closing the panel removes the grant. Requires ZipRunner .188 review endpoints. Existing sandbox/network restrictions and all other applications remain unchanged. Install/test manually; no accounts or active configuration are replaced by this source package.
+
 > **Tavi 0.3.111 — Compact App Store workboard repair:** fixes missing ZipRunner `operator_checks` before installation. The 0.3.110 marketplace implementation is unchanged. See `ZIPRUNNER_HANDOFF_TAVIX_0111.md`.
 
 > **Tavi 0.3.110 — Compact TaviX App Store:** phone-first app rows, search/filter/details, visible alternative-source newer releases and explicit publisher-matched source migration. Existing app pins, private data, Wallet, LoopRD backend and Android updater stay protected. See `ZIPRUNNER_HANDOFF_TAVIX_0110.md`.

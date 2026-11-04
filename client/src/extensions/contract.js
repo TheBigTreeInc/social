@@ -1,7 +1,7 @@
 // Tavi Extension Manifest v1. Deny unknown permissions/contributions rather than
 // silently accepting a grant the installed host does not understand.
 export const HOST_API_VERSION = '1.0.0';
-export const PERMISSIONS = Object.freeze(['ui.panel', 'ui.toast', 'storage.private']);
+export const PERMISSIONS = Object.freeze(['ui.panel', 'ui.toast', 'storage.private', 'ziprunner.review']);
 export const SUPPORTED_SLOTS = Object.freeze(['app.store', 'app.launcher']);
 const ID = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+){2,}$/;
 const FILE = /^(?!\/)(?!.*(?:^|\/)\.\.?\/)[a-zA-Z0-9_/-]+\.(?:html|css|js|png|svg|webp)$/;
