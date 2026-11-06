@@ -1,0 +1,30 @@
+= Tavi 0.3.129 — developer shadow for protected TaviX applications
+:revdate: 2026-11-06
+
+== Context
+The 0.3.128 local package validator denies `org.tavi.community.companion` and core IDs even for a LoopRD-authorized developer. This prevents fast testing of new Companion UI builds through Apps. A full replacement of trusted backend code or grants from a locally selected ZIP would compromise Tavi's publisher and first-party isolation. We therefore provide a *local shadow*, not an executable overwrite.
+
+== Behavior
+* Apps -> Install .tavix is available only with authenticated `permissions.developer` from LoopRD and enabled Settings Developer Mode. Recheck `api.me()` before selecting and committing; no GitHub push.
+* Valid TaviX ZIP, lockfile hashes, bounded ZIP member paths, manifest and host API compatibility remain required. With explicit developer review, a protected first-party ID or a currently installed app may create a preview shadow. The dialog states this is an untrusted local preview.
+* The shadow points at the original manifest ID, is stored per account on this device as SHA-256-locked ZIP bytes in IndexedDB, with a separate versioned localStorage index. It does *not* call `extensionStore.install` for the shadow or change a first-party publisher pin, bundled asset, game service or version.
+* From Apps, the Companion/Wallet/other eligible tile opens the shadow while Developer Mode is authorized. Profile Wallet/Companion actions still use Tavi's trusted originals. The application menu includes *Restore original app*; disabling Developer Mode or losing server permission also restores the original Apps routing. Stored shadow bytes remain for next authorized development session unless explicitly removed.
+* Preview executes in the existing opaque-origin, script-only iframe with restrictive CSP, no cookies or Tavi auth. It identifies as `tavi:local`, not `tavi:bundled`; first-party Companion preview, Wallet, Atrium game/surface and ZipRunner APIs remain denied. Private extension storage is namespaced by account and preview revision to avoid reading original application's data.
+* This flow is for UI/runtime testing; it does not hot-patch the native Tavi executable, replace the trusted Wallet backend or grant a simulated live Companion service. Publisher updates are unaffected.
+
+== Automatic tests
+[source,shell]
+----
+node --test client/tests/local-tavix-shadow-129.test.mjs
+node --test client/tests/local-tavix-install-127.test.mjs client/tests/local-tavix-developer-gate-128.test.mjs
+npm run verify
+python tools/generate-looprd.py --check
+----
+
+== Windows/Android operator acceptance
+. Enable Developer Mode using a LoopRD-permitted account and install a new signed-off test `org.tavi.community.companion` .tavix.
+. In Apps, open Companion and verify the local UI displays; check host.info cannot claim official Companion permission. Profile's original controls must remain trusted.
+. Long-press (mobile) or right-click (Windows) the Apps Companion icon and select *Restore original app*; verify the bundled Companion is immediately restored and the original pinned revision did not change.
+. Repeat with Developer Mode disabled or LoopRD permission revoked. The shadow must not launch. Switching accounts must not leak it.
+. Test a malformed/corrupted ZIP is blocked; no accidental App Store publication or local runtime/private state replacement.
+. Record native checks and operator acceptance in ZipRunner, without inferring Done, push, tag or release.

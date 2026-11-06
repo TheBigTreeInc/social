@@ -117,5 +117,5 @@ export function mergeRepositoryEntries(bundled,collections,{store=null,hostedOpt
     return group[0];
   });
 }
-export function extensionSource(entry) {return entry?.repositoryUrl || 'tavi:bundled';}
+export function extensionSource(entry) {return entry?.local===true?'tavi:local':entry?.repositoryUrl || 'tavi:bundled';}
 export function remoteOrigin(entry) {return new URL(entry.remote.entrypoint).origin;}

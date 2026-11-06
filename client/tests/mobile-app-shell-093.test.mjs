@@ -8,9 +8,9 @@ const read=async path=>readFile(new URL(path,import.meta.url),'utf8');
 
 test('compact host toolbar and tabs have one semantic icon route to Home and messenger',()=>{
  const toolbar=hostToolbar('Companion',{action:'back',backLabel:'Home'});
- assert.match(toolbar,/aria-label="Tavi Home"/);
+ assert.doesNotMatch(toolbar,/aria-label="Tavi Home"/);
  assert.match(toolbar,/aria-label="Back to Home"/);
- assert.equal((toolbar.match(/data-action="home"/g)||[]).length,1);
+ assert.equal((toolbar.match(/data-action="home"/g)||[]).length,0);
  assert.ok(!toolbar.includes('File</summary>'));
  const tabs=mobileTabs('extension',{unread:2});
  for(const a of ['home','contacts','games','main-menu'])assert.match(tabs,new RegExp(`data-action="${a}"`));
@@ -46,7 +46,7 @@ test('rubberband uses bounded passive feedback and respects page scroll bounds',
 
 test('App categories, native scroll snap and non-overlapping mobile chrome are wired',async()=>{
  const main=await read('../src/main.js'), css=await read('../src/style.css');
- for(const part of ["label:'Talk'","label:'Explore'","label:'Your apps'",'wireAppPages(document)','mobileTabs(state.panel','tavi-companion-world-host'])assert.ok(main.includes(part),part);
+ for(const part of ["label:'Favorites'","label:'All'",'wireAppPages(document','mobileTabs(state.panel','tavi-companion-world-host'])assert.ok(main.includes(part),part);
  for(const part of ['.tavi-app-pages','scroll-snap-type:x mandatory','.tavi-mobile-tabs','overscroll-behavior-y:contain','.tavi-extension-panel>.tavi-extension-toolbar{display:none;}',"@media(max-width:620px)"])assert.ok(css.includes(part),part);
  assert.doesNotMatch(main,/exit\(0\)|history\.back\(/);
 });

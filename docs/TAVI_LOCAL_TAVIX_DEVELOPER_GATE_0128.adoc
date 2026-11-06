@@ -1,0 +1,36 @@
+= Tavi 0.3.128 — LoopRD-gated local TaviX installer
+:revdate: 2026-11-06
+
+== Goal
+The *Install .tavix* button is for developer testing only. A normal signed-in account must not see a file-picker or its permission-review dialog.
+
+== Authorization and UX
+
+* LoopRD Social already owns `developerEnabled` in its account database, and authenticated `/me` exposes it as `permissions.developer` (strict Boolean). The client cannot grant this through a local preference.
+* Only when `permissions.developer === true` can the user enable *Developer Mode* in Tavi Settings. Both this explicit opt-in (`developerVisible`) and the current server permission (`developerAllowed`) must be true, with an active session, to render the local TaviX toolbar.
+* The file picker and its change handler require the same gate. After selecting a file, and again when clicking *Install locally*, Tavi re-queries authenticated `api.me()` through LoopRD. A missing permission, network error, stale session or account switch blocks the import. Tavi also rechecks the gate after asynchronous archive validation and storage, before recording an installed application.
+* Turning off Developer Mode, receiving a revoked permission or signing out clears a pending local-install approval and hides its dialog. No developer grant is persisted on the device.
+* Already-installed local applications remain listed according to normal account-local extension behavior; this change gates new manual imports, not published App Store use or current installations.
+* The original ZIP+SHA256 manifest validation, unverified publisher warning, per-account storage, sandbox and source-pin restrictions remain unchanged. No new server operations, schemas or public release behaviors are added.
+
+This is a client-side workflow guard using an authenticated server-derived capability, not a tamper-resistant server-side extension-install authorization service. A modified client can bypass its own interface; no trusted first-party capability is granted to locally imported packages.
+
+== Source tests
+
+[source,shell]
+----
+node --test client/tests/local-tavix-developer-gate-128.test.mjs
+node --test client/tests/local-tavix-install-127.test.mjs
+npm run verify
+python tools/generate-looprd.py --check
+----
+
+== Operator checks (manual, Windows and Android)
+
+. Sign in to a normal account: Apps must not show *Install .tavix*.
+. With a LoopRD-authorized developer account, Developer Mode off: installer remains hidden.
+. Enable Developer Mode in Settings: Apps shows the installer; select a test `.tavix`, inspect publisher, permissions and SHA-256, then cancel and retry installation.
+. Turn Developer Mode off while a review dialog is open: dialog closes and import cannot finish.
+. Revoke `developerEnabled` server-side, allow a sync or attempt import: button disappears and installation is refused. Offline permission checks also block new imports.
+. Verify an already installed locally pinned app and the regular App Store remain usable, and Home/Back work on narrow windows and Android.
+. Record native operator acceptance separately; no public GitHub push, tag or release.

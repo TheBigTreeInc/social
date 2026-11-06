@@ -1,0 +1,22 @@
+= Tavi 0.3.125 — Apps Favorites / All navigation
+:revdate: 2026-11-05
+
+== Source scope
+
+* Replaced Talk/Explore/Your apps category pages with two accessible tabs: Favorites (default on entering Apps) and All (every currently eligible installed launcher entry).
+* Star controls add/remove installed and built-in app shortcuts without calling extension installation, publisher, trust or permission APIs. A signed-in account gets independent on-device preferences keyed by the canonical extension storage scope (server and profile).
+* Default shortcuts: Messages, Notifications, Games and App Store. Empty favorites show a help message; temporary removed/disabled extensions never appear as launchable, but their saved favorite choice is retained for later reinstallation.
+* Tab swipe, keyboard arrows/Home/End, and chosen tab preservation after re-render are supported; entering Apps via bottom navigation always starts at Favorites.
+* Removed the redundant top-right Home icon from focused screens. One visible contextual Back remains; bottom Home navigation and Android Back are still reachable. App Store opened from Apps returns to Apps with Back, while extensions still return to the App Store or Home according to the existing host policy.
+* Fixed App Store icon-only update control text visually overflowing the header. Accessible labels and privacy settings are unchanged.
+* The attached TaviX 0.1.7 source repository index was reviewed for compatibility, not overlaid or automatically installed. Extension registration, local install approval, and update/release policy are unchanged.
+
+== Test coverage
+
+Run `node --test client/tests/apps-favorites-125.test.mjs`. The six tests cover defaults, per-account persistence, corruption/hostile identifiers, two-tab UI contracts, swipe/click/keyboard behavior, and App Store icon access. The full Node `npm run verify` suite is also required.
+
+ZipRunner post-update test-1 includes the new suite and should be refreshed against the exact package hash. Record Windows and Android visual acceptance separately for 320/355/390 widths, dark/light themes, screen readers and hardware Back. No success claim for Chromium, native build, device acceptance, GitHub CI or public release is made by this author.
+
+== Protected/operator scope
+
+No `.env`, active `ziprunner.config.json`, credentials, on-device data, runtime state, generated dist/target or operator approvals are shipped. Git push and public releases require separate explicit authorization. Workboard IDs and approval statuses are retained.

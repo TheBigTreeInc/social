@@ -264,8 +264,8 @@
       "files": [
         {
           "path": "ui/app.js",
-          "sha256": "b88636f97f54ddc04ccd4c658e995a9e029c124d8b7c6094452fc6b97a28ff2e",
-          "size": 5335
+          "sha256": "db066327fa6fe749606ad9ee4faf6c758fc2a5b75ebfc65191549eb08f9290e3",
+          "size": 5322
         },
         {
           "path": "ui/icon.svg",

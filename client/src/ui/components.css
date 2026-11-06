@@ -214,3 +214,34 @@
 
 /* Rectangular shared navigation, on both phone and desktop. */
 .tavi-single-workspace > .tavi-mobile-tabs button {border-radius:4px;}
+
+/* Tavi 0.3.124 — locally bundled Lucide icon foundation and messenger polish.
+   Source-only: applies to host-owned views, never to sandboxed extension HTML. */
+.tavi-ui-glyph,.tavi-app-glyph {stroke-linecap:round;stroke-linejoin:round;}
+.tavi-single-workspace > .tavi-mobile-tabs button {min-height:48px;gap:3px;touch-action:manipulation;}
+.tavi-single-workspace > .tavi-mobile-tabs button .tavi-ui-glyph {width:24px;height:24px;min-width:24px;}
+.tavi-single-workspace > .tavi-mobile-tabs button[aria-current="page"] {font-weight:700;}
+.tavi-single-workspace > .tavi-mobile-tabs button[aria-current="page"] .tavi-ui-glyph {stroke-width:2.3;}
+.tavi-home-messenger .tavi-home-identity {padding-block:12px;}
+.tavi-home-messenger .tavi-home-contacts-heading {min-height:50px;padding-inline:12px;}
+.tavi-home-messenger .tavi-home-contacts-heading button {border-radius:6px;min-width:44px;min-height:44px;}
+.tavi-home-messenger .tavi-home-contacts-heading .tavi-ui-glyph {width:22px;height:22px;}
+.tavi-home-messenger .tavi-home-group-title {min-height:40px;padding:9px 12px;gap:9px;}
+.tavi-home-messenger .tavi-home-group-chevron {display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;flex:none;}
+.tavi-home-messenger .tavi-home-group-chevron .tavi-ui-glyph {width:15px;height:15px;min-width:15px;transform:rotate(90deg);transition:transform 120ms ease;}
+.tavi-home-messenger .tavi-home-group-title[aria-expanded="false"] .tavi-ui-glyph {transform:rotate(0deg);}
+.tavi-home-messenger .tavi-group-count {font-size:12px;}
+.tavi-home-messenger .tavi-home-buddy {min-height:52px;padding:9px 12px;}
+.tavi-home-messenger .tavi-home-buddy-copy small {min-width:0;}
+.tavi-home-messenger .tavi-home-buddy-subtitle {white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.tavi-home-messenger .tavi-home-contacts-heading,
+.tavi-home-messenger .tavi-home-group-title,
+.tavi-home-messenger .tavi-home-buddy {border-bottom-color:color-mix(in srgb,var(--tavi-color-border) 65%,transparent);}
+.tavi-home-messenger .tavi-home-group-title:hover {background:var(--tavi-color-surface-raised);}
+.tavi-home-companion .tavi-companion-portrait-empty {display:grid;place-items:center;width:40px;height:40px;border-radius:9px;background:var(--tavi-color-surface-muted);}
+.tavi-home-companion .tavi-companion-portrait-empty .tavi-ui-glyph {width:22px;height:22px;min-width:22px;}
+@media(pointer:coarse){
+ .tavi-home-messenger .tavi-home-group-title {min-height:44px;}
+ .tavi-home-messenger .tavi-home-buddy {min-height:54px;}
+}
+@media(prefers-reduced-motion:reduce){.tavi-home-messenger .tavi-home-group-chevron .tavi-ui-glyph {transition:none;}}

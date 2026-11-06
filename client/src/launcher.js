@@ -39,7 +39,7 @@ export function menuApplications({catalog=[],store=null,platform='web',petEnable
 // pass credentials supplied directly by an untrusted extension manifest.
 export function extensionIconUrl(entry,baseUrl){
  const icon=entry?.manifest?.icon;
- if(!icon)return null;
+ if(!icon||entry?.local)return null;
  validateExtensionManifest(entry.manifest);
  if(entry.remote){
   const entrypoint=new URL(entry.remote.entrypoint);

@@ -1,3 +1,25 @@
+**Tavi 0.3.129 developer shadow for protected apps:** LoopRD-approved Developer Mode can temporarily shadow a first-party TaviX UI (including Companion) from a local SHA-verified `.tavix` archive. The original app remains pinned, restoring is explicit, and no trusted core capability is granted. Native Windows/Android acceptance pending; no public release. See `docs/TAVI_LOCAL_TAVIX_DEVELOPER_SHADOW_0129.adoc`.
+
+**Tavi 0.3.128 local TaviX developer gate:** The Apps install button is visible only when LoopRD grants `permissions.developer` and the signed-in account enables Developer Mode in Settings. Import and approval recheck LoopRD and fail closed on revoked/offline grants; Windows/Android acceptance remains pending. No GitHub push or release. See `docs/TAVI_LOCAL_TAVIX_DEVELOPER_GATE_0128.adoc`.
+
+**Tavi 0.3.127 — local `.tavix` installer (source-only):** Apps → Install .tavix opens a Windows/Android file chooser, verifies the ZIP/lockfile SHA-256 and manifest, reviews permissions, then stores an explicitly approved package in per-account IndexedDB. Only local sandboxed app APIs are available: no publisher privileges, no network access, no GitHub push or public publication. See `docs/TAVI_LOCAL_TAVIX_0127.adoc`.
+
+Local 0.3.126 Apps UX: no icon badge clutter; right-click/long-press/Shift+F10 context menu for Favorites and guarded optional-extension removal. No public push. See docs/TAVI_APPS_CONTEXT_MENU_0126.adoc.
+
+**Local 0.3.125 Apps UX:** Favorites/All two-tab drawer, personal on-device star preferences, contextual Back, and App Store icon layout fix; no GitHub publication. See docs/TAVI_APPS_FAVORITES_0125.adoc.
+
+**Tavi 0.3.124 local UX foundation:** Host navigation, settings, launcher and Home now use reviewed, locally bundled Lucide icons (ISC/Feather notices included); Apps tab uses a grid distinct from Store; Home groups, Companion placeholder and privacy-respecting recent-message snippets receive compact touch improvements. No hosted Checkers game activated, no Git push/public release. See `docs/TAVI_UI_LUCIDE_FOUNDATION_0124.adoc`.
+
+**Tavi 0.3.123 local Checkers M1 group QA:** exact Social/Atrium ZIP-based coordinator with provenance, bounded evidence, fail-closed checks and no network/Git/publishing. See `docs/DGN_CHECKERS_M1_LOCAL_EXACT_GROUP_QA_0123.adoc`. This is NOT a live match activation.
+
+## Tavi 0.3.123 — correct displayed version of the running application
+
+The 0.3.121 source packaged a hardcoded `const CLIENT_VERSION='0.3.117'` in `client/src/main.js`, making About Tavi and its stable-release comparison report 0.3.117 even when the compiled Tauri binary was newer. This client-only fix injects the canonical `client/package.json` version into the Vite build for Windows/Android/Web and adds source regression checks against Tauri/Cargo/ZipRunner metadata. The local ZipRunner build/start recipe remains `node tools/auto-build.mjs` / `node tools/launch-tavi.mjs`. No LoopRD service/schema change, no updater behavior change, no game authority, and no automatic release. See `docs/TAVI_0_3_122_CLIENT_VERSION_SOURCE_FIX.adoc`.
+
+## Tavi 0.3.121 — exact-commit CI extension mirror and catalog UI QA repair
+
+0.3.120 GitHub Actions at SHA `9e8f3688ad4d5d0d3103746f8a5bfcec1e673c09` produced seven failed workflows (two passed). The exact Git commit tracked first-party extension files differed from the canonical ZIP (published catalog stale, `ui/app.js` size mismatch); the source ZIP itself passed internal extension checks. This repair stages a changed first-party review app copy and regenerates its committed mirror/catalog, and updates the five-viewport Life-withdrawn smoke assertion to Tavi's current connected-but-empty message. The reviewed Companion remains SHA-pinned and unchanged. Cross-platform GitHub push CI, ZipRunner Windows acceptance, actual Android update and Checkers M1 live play remain separate gates. Details: `docs/TAVI_0_3_121_EXACT_COMMIT_CI_REPAIR.adoc`.
+
 ## Tavi 0.3.120 — Checkers M1 Social/Atrium service contract
 
 Additive privileged original-challenge and current-contact lookup routes make the existing Checkers game invitation flow consumable by Atrium's strict service adapters. Source-only and operator-gated: no public Checkers match authority, no live two-client acceptance. See `docs/CHECKERS_M1_SOCIAL_ATRIUM_CONTRACT_0120.adoc`.

@@ -1,0 +1,30 @@
+= Tavi Apps context actions — 0.3.126
+:revdate: 2026-11-05
+
+== Behavior
+
+* Apps continues to open on Favorites, with the All tab beside it. The visible star badges are removed from every app tile.
+* Primary click/tap launches the app normally. Windows mouse secondary-click and keyboard Context Menu or Shift+F10 open a small action menu; a stationary 550 ms touch/pen press opens a mobile bottom sheet. Dragging more than 12 px cancels a pending touch press so the app list can still scroll.
+* Menu: Open; Add to Favorites / Remove from Favorites. Stored favorites remain local to the current account/server and never install, enable or trust an extension.
+* Only a genuinely installed *optional extension* may display Remove from Tavi, with a host-owned confirmation. It clears that account's local installation record; it does not delete published bundles or remote repository code. Bundled apps, first-party Wallet and the bundled Companion are protected.
+* The menu is host-generated from safe textContent, not extension-provided markup. The remove/favorite targets are re-resolved before actions execute. Escape and outside tap dismiss it; menu buttons support keyboard navigation.
+* No Git push, public release, new remote endpoint, database migration or additional extension permission is part of this change.
+
+== Verification
+
+[source,powershell]
+----
+node --test client/tests/apps-context-menu-126.test.mjs client/tests/apps-favorites-125.test.mjs
+npm run verify
+node tools/sync-internal-extensions.mjs --check
+python tools/generate-looprd.py --check
+----
+
+== Operator acceptance (not automatically passed)
+
+. In the ZipRunner-built Windows app at 355 px, confirm icons have *no* star badge. Left click still launches.
+. Right-click an icon, Favorite/Unfavorite it and verify the appropriate tab updates and persistence after restart/account switch.
+. Keyboard-focus a tile, Shift+F10; test Escape, keyboard menu item selection and outside-click dismissal.
+. On Android, hold for the options bottom sheet; swipe vertically without causing a menu or launching the app; normal tap must still launch.
+. For an installed optional extension, Remove from Tavi must show an explicit confirmation and remove only its account-local installation record; cancel must be a no-op. Verify built-in applications, Wallet and Companion have no removal action.
+. Repeat at compact and phone widths in light and dark mode. Separately verify Windows/Android builds, native QA, operator acceptance and public release gates.

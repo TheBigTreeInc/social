@@ -14,10 +14,34 @@ export function wireElasticScroll(element,{reducedMotion=false}={}){
  element.addEventListener('touchstart',down,{passive:true});element.addEventListener('touchmove',move,{passive:true});element.addEventListener('touchend',reset,{passive:true});element.addEventListener('touchcancel',reset,{passive:true});
  return ()=>{element.removeEventListener('touchstart',down);element.removeEventListener('touchmove',move);element.removeEventListener('touchend',reset);element.removeEventListener('touchcancel',reset);element.style.transform='';element.style.transition='';};
 }
-export function wireAppPages(root){
+export function wireAppPages(root,{initialIndex=0,onChange=()=>{}}={}){
  const pages=root?.querySelector('.tavi-app-pages');if(!pages)return;
  const controls=[...root.querySelectorAll('[data-app-page]')];
- const activate=index=>{controls.forEach((el,i)=>{el.setAttribute('aria-selected',i===index?'true':'false');el.tabIndex=i===index?0:-1;});};
- controls.forEach((el,i)=>el.addEventListener('click',()=>{pages.children[i]?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',inline:'start',block:'nearest'});activate(i);}));
- pages.addEventListener('scroll',()=>{const index=Math.max(0,Math.min(controls.length-1,Math.round(pages.scrollLeft/Math.max(1,pages.clientWidth))));activate(index);},{passive:true});
+ if(!controls.length)return;
+ const bounded=index=>Math.max(0,Math.min(controls.length-1,index));
+ const activate=index=>{
+  const selected=bounded(index);
+  controls.forEach((el,i)=>{el.setAttribute('aria-selected',i===selected?'true':'false');el.tabIndex=i===selected?0:-1;});
+  onChange(selected);
+ };
+ const scrollTo=index=>{
+  const selected=bounded(index);
+  pages.scrollTo({left:selected*pages.clientWidth,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+  activate(selected);
+ };
+ controls.forEach((el,i)=>{
+  el.addEventListener('click',()=>scrollTo(i));
+  el.addEventListener('keydown',event=>{
+   if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+   event.preventDefault();
+   const selected=event.key==='Home'?0:event.key==='End'?controls.length-1:bounded(i+(event.key==='ArrowRight'?1:-1));
+   scrollTo(selected);controls[selected].focus();
+  });
+ });
+ pages.scrollLeft=bounded(initialIndex)*pages.clientWidth;
+ activate(bounded(initialIndex));
+ pages.addEventListener('scroll',()=>{
+  const index=bounded(Math.round(pages.scrollLeft/Math.max(1,pages.clientWidth)));
+  activate(index);
+ },{passive:true});
 }

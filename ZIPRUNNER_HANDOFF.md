@@ -1,3 +1,31 @@
+# Tavi 0.3.129 local-only developer shadow
+
+Allow developer-only local previews to shadow protected first-party TaviX application tiles without replacing bundled source or trusted permissions. Revert from app context menu or Developer Mode off. Test with ZipRunner. Windows/Android operator acceptance pending; GitHub release forbidden. See `docs/TAVI_LOCAL_TAVIX_DEVELOPER_SHADOW_0129.adoc`.
+
+# Tavi 0.3.128 local-only developer-gated .tavix installer
+
+Requires server-granted developer permission plus Settings Developer Mode opt-in, with authenticated recheck before installing local packages. Source checks and ZipRunner 0.3.128 post-update tests required. Windows/Android operator review pending; no public push/release. See `docs/TAVI_LOCAL_TAVIX_DEVELOPER_GATE_0128.adoc`.
+
+# Tavi Social 0.3.127 — local offline TaviX file installation
+
+Import through local ZipRunner. No GitHub push, server deployment, or release permission is granted. Apps → Install .tavix; review publisher/permissions/SHA; approve; open from Apps → All. Per-account device-local storage; removal through app context menu. Local Atrium previews have no official game-launch grants. See docs/TAVI_LOCAL_TAVIX_0127.adoc. Windows/Android native checks and operator acceptance pending.
+
+Local 0.3.127 Apps UX: no icon badge clutter; right-click/long-press/Shift+F10 context menu for Favorites and guarded optional-extension removal. No public push. See docs/TAVI_APPS_CONTEXT_MENU_0126.adoc.
+
+Local 0.3.125 Apps UX: Favorites/All, per-account starred shortcuts, contextual Back, responsive/dark-mode styling and six regression tests. No GitHub push, release, or operator sign-off. See docs/TAVI_APPS_FAVORITES_0125.adoc.
+
+Local 0.3.124 UI/Lucide foundation: no GitHub push, public CI or release. See docs/TAVI_UI_LUCIDE_FOUNDATION_0124.adoc. Windows/Android operator acceptance remains pending. Checkers M1 is unchanged.
+
+Local 0.3.123 pass: group QA from explicitly supplied Social and Atrium source ZIPs. No GitHub push, release or operator approval. See docs/DGN_CHECKERS_M1_LOCAL_EXACT_GROUP_QA_0123.adoc.
+
+# Tavi Social 0.3.123 — About version source-of-truth repair
+
+Base 0.3.121. The native Windows build was versioned 0.3.121 in Tauri/Cargo/package metadata, but the browser UI embedded an older hardcoded `CLIENT_VERSION='0.3.117'` for About Tavi and update comparison. Fix with Vite package-version injection and regression tests. Import and test exact source ZIP with ZipRunner, confirm running Windows executable path and About Tavi display, run new exact-commit CI independently. Original 0.3.117 stamp failure is historical and superseded. No local/private config, session, state, build artifacts or operator approvals changed. Social LoopRD release stays 0.3.121 because server code is unchanged. Checkers M1 remains the Group Workboard milestone.
+
+# Tavi Social 0.3.121 — exact-commit CI repair
+
+Base: 0.3.120. Fix the source-controlled extension asset/catalog drift by regenerating the first-party review extension mirror, and repair the historical empty-Atrium UI QA assertion. Checkers M1 Social status operations are unchanged, and no live Checkers match is claimed. No operator permissions, signatures, credentials, private state, or tracked partner bytes are altered. Import into ZipRunner and separately verify exact new Git commit, native builds and operator approval.
+
 # Tavi Social 0.3.120 — Checkers M1 trusted Social/Atrium contract
 
 Source ZIP input based on actual 0.3.119 ZIP. No local config, runtime state, database, credentials or build outputs included. The current Social schema remains 12; the server descriptor adds two service-only read routes. Post-update suite remains at 20 entries with new Checkers Social regression included in an existing entry. Build and operator gates remain separate.

@@ -1,0 +1,34 @@
+= Tavi 0.3.127 — Local offline TaviX installation
+:revdate: 2026-11-06
+
+== Purpose and UX
+
+* In Tavi, open Apps. Tap *Install .tavix*, then select a `.tavix` file from Windows or the Android device picker (web browser file picker also supported).
+* Review the manifest's name, publisher, version, permissions, SHA-256 and local/unverified warning. No package is installed before approval.
+* On approval, the validated package files are stored in IndexedDB under the signed-in LoopRD server/account scope; only that account on that device can list it.
+* Go to Apps -> All, open the app. Use right-click (Windows), long-press (Android), or Shift+F10 for Favorites and *Remove from Tavi*.
+* A published extension with the same ID must first be removed by the operator; local installation never silently replaces its source. TaviX repository subscriptions remain independent.
+
+== Source architecture
+
+`client/src/extensions/local-package.js` validates a bounded ZIP archive (stored or raw DEFLATE) with central-directory and local-entry checks, duplicate/path/symlink protections, 12 MB package bound, 1 MB member bound, `manifest.json` and `tavix.lock.json` SHA-256 for every member. It calls the existing extension manifest validator, rejects reserved/core identities and `ziprunner.review`, and does not grant publisher trust.
+
+The approved package is pinned as `tavi:local` with original archive SHA-256 and stored using IndexedDB, not inside Git, the server, the public TaviX repository or Tavi's localStorage message/credential state. A missing or altered package fails closed. Removing a local app removes its package record. Reloaded catalogs preserve local source pins.
+
+`client/public/local-extension-host.html` is loaded into an `iframe sandbox="allow-scripts"` with opaque origin. Its bootstrap receives verified bytes from the parent, rewrites bundle-local scripts, styles, images and relative JS module imports to sandbox-owned Blob URLs; it blocks external network requests with a restrictive CSP. Tavi does not enable `allow-same-origin`. Only explicitly declared unprivileged SDK capabilities are available via Tavi's existing rate-limited host bridge. The official Atrium game launch and core Wallet grants remain unavailable to locally imported lookalikes.
+
+== Limitations
+
+* This is a bounded developer/offline-install flow, not publisher verification, APK installation or a TaviX repository deployment.
+* Remote HTTP(S) content and cross-origin fetch are blocked inside local preview. A package requiring publisher-hosted APIs or custom game-launch privilege is not made production-ready by local import.
+* The local renderer supports static HTML/CSS/JS/images and relative ESM imports. Modules depending on runtime relative fetches, workers, unsupported import cycles or external scripts may require rebundling into an offline-safe release.
+* Older Android WebViews without `DecompressionStream('deflate-raw')` cannot import compressed `.tavix` files; report an explicit compatibility error rather than using unsafe extraction.
+* Native Windows and Android file chooser, persisted launch and visual acceptance remain pending. The author environment could not load Chromium test URLs (administrator network restriction).
+
+== Source QA
+
+* `node --test client/tests/local-tavix-install-127.test.mjs`
+* `npm run verify`
+* `python tools/generate-looprd.py --check`
+
+Both `Windows` and `Android` acceptance are required before the feature's Workboard ticket can be marked Done. No Git push, GitHub Actions trigger, deployment or public release authorized.

@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.120",
-    "base_version": "0.3.119"
+    "version": "0.3.129",
+    "base_version": "0.3.128"
   },
   "update": {
-    "id": "TAVI-20261104-CHECKERS-SOCIAL-INTEROP-0120",
+    "id": "TAVI-20261106-DEVELOPER-CORE-SHADOW-0129",
     "kind": "source_update",
-    "created_at": "2026-11-04T16:00:00+01:00",
-    "summary": "Service-only Atrium challenge and current friend lookup for Checkers M1; no game authority or automatic release."
+    "created_at": "2026-11-06T08:00:00+01:00",
+    "summary": "Dev-only local .tavix shadow for protected first-party UI extensions, with safe rollback, no first-party host grants, and no publication."
   },
   "planned_work": [
     {
@@ -693,6 +693,20 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": "On exact GitHub push SHA, five-viewport Tavi browser UI QA passes desktop/tablet/355px/390px/320px and includes App Store repository management expand/collapse.; Verify App Store remains collapsed on entry, Manage repositories expands the URL form, no overflow occurs, and Notepad install/cancel/approve/back still passes.; Run npm run verify and client/tests/ui-qa-store-selector-091.test.mjs on the exact ZipRunner candidate; confirm no changes to native gameplay or existing publisher assets.; Reconcile ZipRunner not_github with exact-commit GitHub workflow run URLs and rerun post-update checks against the new ZIP SHA; no historical result rewrite.; Continue physical Windows and Android acceptance for TAVI-TAVIX-SURFACE-112 separately; do not mark release Done based on source/CI alone."
+    },
+    {
+      "id": "TAVI-UX-APP-CONTEXT-126",
+      "title": "Accept app context menu and local optional-extension uninstall",
+      "priority": "medium",
+      "status": "review",
+      "acceptance_criteria": "Verify 355px Windows and Android normal tap/long-press/swipe/right-click/Shift+F10; Favorites persists per account; remove action appears only for enabled optional installed apps, requires confirmation and does not delete remote files; Home accessible, dark mode and accessibility; local Windows build and native QA separately."
+    },
+    {
+      "id": "TAVI-EXT-DEV-GATE-128",
+      "title": "LoopRD-gated developer-only local TaviX installation",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Source checks pass; on real Windows and Android verify ordinary accounts never see the picker, developer opt-in required, revocation/offline blocks installation, and App Store remains available."
     }
   ],
   "done_work": [
@@ -2014,10 +2028,25 @@
       "id": "TAVI-UI-CI-113",
       "status": "review",
       "reason": "Local harness source test passed; exact-commit five-viewport GitHub workflow, ZipRunner exact ZIP checks and operator review pending."
+    },
+    {
+      "id": "TAVI-UX-APP-CONTEXT-126",
+      "status": "review",
+      "reason": "Source implementation and focused tests only; native Windows/Android visual and operator acceptance required. Not done."
+    },
+    {
+      "id": "TAVI-EXT-DEV-GATE-128",
+      "status": "review",
+      "reason": "Source behavior implemented; operator must verify Windows/Android Developer Mode switch, revoked permission, live file-picker and installation. Not Done."
+    },
+    {
+      "id": "TAVI-EXT-DEV-SHADOW-129",
+      "status": "review",
+      "reason": "Source and regression tests implemented; real Windows and Android protected Companion .tavix install/open/revert remain unaccepted."
     }
   ],
   "validation": {
-    "model_reported": "partial_source_candidate",
+    "model_reported": "source_candidate_native_pending",
     "checks": [
       {
         "id": "TAVI-CHAT-002-PY",
@@ -2318,11 +2347,43 @@
         "status": "tested_source",
         "command": "node --test client/tests/extension-repositories.test.mjs client/tests/extension-life-launch.test.mjs",
         "environment": "Node.js regression; live Pages/native checks pending"
+      },
+      {
+        "id": "TAVI-UI-LUCIDE-124-SOURCE",
+        "description": "Locally bundled Lucide aliases, safe fallback, messenger Home and navigation design/source checks",
+        "status": "passed",
+        "command": "node --test client/tests/ui-lucide-foundation-124.test.mjs",
+        "environment": "Linux Node v22.16.0",
+        "evidence_ref": "docs/TAVI_UI_LUCIDE_FOUNDATION_0124.adoc"
+      },
+      {
+        "id": "TAVI-EXT-LOCAL-127-SOURCE",
+        "description": "Offline TaviX ZIP, lock SHA, local IndexedDB vault, sandbox boundary and launcher pinned-source tests",
+        "status": "passed",
+        "command": "node --test client/tests/local-tavix-install-127.test.mjs",
+        "environment": "Linux Node 22; native browser/Android checks pending",
+        "evidence_ref": "docs/TAVI_LOCAL_TAVIX_0127.adoc"
+      },
+      {
+        "id": "TAVI-EXT-DEV-GATE-128-SOURCE",
+        "description": "Developer gate for local offline .tavix installer (fresh LoopRD permission, opt-in, revoke, identity race and UI event guards)",
+        "status": "passed",
+        "command": "node --test client/tests/local-tavix-developer-gate-128.test.mjs",
+        "environment": "Linux Node; native Windows/Android pending",
+        "evidence_ref": "docs/TAVI_LOCAL_TAVIX_DEVELOPER_GATE_0128.adoc"
+      },
+      {
+        "id": "TAVI-EXT-DEV-SHADOW-129-SOURCE",
+        "description": "Account-local protected TaviX developer shadow, explicit rollback, original first-party pin retained and privileged APIs denied",
+        "status": "passed",
+        "command": "node --test client/tests/local-tavix-shadow-129.test.mjs",
+        "environment": "Linux Node; Windows and Android native QA pending",
+        "evidence_ref": "docs/TAVI_LOCAL_TAVIX_DEVELOPER_SHADOW_0129.adoc"
       }
     ]
   },
   "handover": {
-    "next_pass": "Import exact 0.3.114 over applied 0.3.112. Inspect GitHub commit 42b70b5 UI QA failure; rerun npm run verify and Tavi browser UI QA on five viewports, then verify exact new GitHub SHA. Do not modify Atrium, Life, LoopRD, Android PackageInstaller, or manually close prior workboard issues.",
+    "next_pass": "Import exact 0.3.128 ZIP in local ZipRunner. On a normal account or with Developer Mode off, Apps must hide Install .tavix. With LoopRD-granted developer access and Settings switch on, install a reviewed local test package. Disable/revoke developer permission to verify installation is blocked. Test Windows and Android separately. No GitHub push or release.",
     "risks": [
       "Embedded games are opaque-origin sandboxed; current Life may require an adaptation for storage/cookies. Tavi cannot grant allow-same-origin to GitHub Pages games sharing its web origin.",
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
@@ -2366,7 +2427,7 @@
       "Life v0.5.87 has internal async command architecture but no public /play; source-only native match chat cannot establish hostless multiplayer.",
       "Life hostless authenticated create/join and legal action endpoints are not deployed; v0.3.46 only provides the Tavi-to-agent challenge handshake."
     ],
-    "notes": "Client-only TaviX catalog adoption. No LoopRD or Wallet service changes; no automatic Git push/deploy or extension install."
+    "notes": "Developer-only TaviX core-identity UI preview (Apps tile only), original pinned first-party source unchanged. Native acceptance pending. No GitHub release."
   },
   "operator_actions": [
     {
@@ -2453,30 +2514,45 @@
       "id": "TAVI-EXT-COMPANION-104-OP",
       "description": "Install/update reviewed Companion 0.6.27 on Windows and Android, verify top-right portrait, continuous cave visuals, Home/Back, account isolation and no cloud-save claim; separately verify signed Android 0.3.106 updater path preserves account/session data.",
       "status": "required"
+    },
+    {
+      "id": "TAVI-UI-LUCIDE-124-OP",
+      "description": "Verify installed WebView2 and Android light/dark icon/navigation, touch target, long-name, message preview privacy, Companion portrait and back-to-Home paths using the exact candidate ZIP. Do not infer acceptance from source tests.",
+      "status": "required"
+    },
+    {
+      "id": "TAVI-UX-APP-CONTEXT-126-OP",
+      "description": "Accept Apps context menu on Windows WebView2/Android at 320/355/390px and dark mode. Check touch hold vs swipe, keyboard Shift+F10/Escape, local removal and install restoration, and absence of uninstall on built-ins. No GitHub push.",
+      "status": "required"
+    },
+    {
+      "id": "TAVI-EXT-LOCAL-127-OP",
+      "description": "On Windows and Android, select local .tavix from device, inspect manifest/permissions/revision, approve and launch in sandbox, restart, test SDK capabilities, remove; no publisher grants or automatic publication.",
+      "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "0.3.120 includes additive Social service-only challenge/contact lookups required by Atrium; real LoopRD/Atrium service calls, Checkers seats, Tavi-to-browser QA and operator approval remain pending."
+    "notes": "Local-only ZipRunner candidate. No GitHub push, tag, public CI, release or deployment authorized."
   },
   "release_notes": {
-    "version": "0.3.120",
-    "summary": "Checkers M1 Social-to-Atrium service contract adapters, source-tested and operator-gated.",
-    "server_unchanged": false,
-    "server_release": "0.3.120",
+    "version": "0.3.129",
+    "summary": "Developer Mode can shadow protected first-party UI extensions with a local SHA-locked TaviX package; original installation and privileges stay intact, with one-click restore. Windows/Android acceptance pending.",
+    "server_unchanged": true,
+    "server_release": "0.3.121",
     "database_schema_version": 12,
-    "database_migration": "none; existing schema 12 and user data preserved",
-    "native_qa": "Windows and Android device acceptance pending; no game authority added",
-    "browser_qa": "Existing client QA retained; no Checkers Tavi-to-browser acceptance claimed"
+    "database_migration": "none; UI/client-only source changes, protected state unchanged",
+    "native_qa": "0.3.129 protected Companion shadow preview and restore require Windows/Android native operator review.",
+    "browser_qa": "Node ZIP/security tests passed; real Chromium rendered UI blocked by environment"
   },
   "verification_summary": {
-    "source_candidate": "0.3.114",
-    "browser_qa": "0.3.112 exact-SHA failed 5/5 on hidden diagnostics input. 0.3.114 QA harness regression source test passes; full Playwright/next SHA pending.",
-    "native_acceptance": "Not run in author environment; requires ZipRunner Windows NSIS and Android device tests",
-    "git_push": "Not performed by source author; operator to review through ZipRunner.",
+    "source_candidate": "0.3.129",
+    "browser_qa": "Source QA and ZIP decompression tests; real browser UI QA blocked in current environment",
+    "native_acceptance": "0.3.129 local protected TaviX shadow preview Windows/Android pending operator acceptance.",
+    "git_push": "Not performed nor authorized for 0.3.129; local ZipRunner development only.",
     "server_deploy": "unchanged from 0.3.107; LoopRD 0.4 Wallet rollout remains separately pending",
     "database_schema": "12 unchanged; no migration in 0.3.108",
-    "operator_review": "TAVI-TAVIX-SURFACE-112 Review; no existing ticket marked Done; operator device and cross-project acceptance pending"
+    "operator_review": "Dev shadow preview source implemented; original core app retained; native Windows/Android not accepted; Checkers M1 unchanged."
   }
 }

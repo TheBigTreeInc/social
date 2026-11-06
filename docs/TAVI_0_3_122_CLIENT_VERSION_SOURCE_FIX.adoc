@@ -1,0 +1,25 @@
+= Tavi 0.3.122 — build-derived About and updater version
+:revdate: 2026-11-05
+
+== Evidence
+
+The actual 0.3.121 source ZIP has Tauri `client/src-tauri/tauri.conf.json`, Cargo and `client/package.json` at 0.3.121, but `client/src/main.js` embeds `const CLIENT_VERSION='0.3.117';`. This value feeds the About view and the stable-release comparison. Thus an operator may launch the newest build yet see an older About version. The separate 0.3.117 ZipRunner stamp mismatch from 2026-10-25 was an older ZIP, not proof of current 0.3.121 import failure.
+
+== Repair
+
+* `client/vite.config.mjs` reads the single client package version and defines `__TAVI_CLIENT_VERSION__` for Vite build and dev.
+* `client/src/main.js` uses the injected value, not a source-maintained literal.
+* Regression checks enforce the Vite binding and equality of client package, root package, Tauri, Cargo, ZipRunner post-update stamp, and workboard version.
+* No LoopRD service code, database migration, private config, release channel, updater backend, registration, game authority, or immutable TaviX package changes. Server descriptor remains 0.3.121, as the current source change is client-only.
+
+== Operator validation (not yet accepted)
+
+. Import `looprd-social-0.3.122-ui-version-source-ziprunner.zip` and inspect the new Windows build log for `TAVI_AUTO_BUILD_STARTED: Windows` then `TAVI_AUTO_BUILD_PASSED: Windows` (not `TAVI_AUTO_BUILD_CACHED` unless source hashes and output are independently confirmed).
+. Check Tavi's running process `ExecutablePath` matches the checkout `client\src-tauri\target\release\looprd-social-client.exe`. The ZipRunner start recipe specifically launches this path; an installed NSIS copy is independent.
+. In About Tavi, verify `App version: 0.3.122` from the real compiled UI. Check Stable channel separately: the update service compares against the latest *published* stable GitHub release and must not claim a local developer source ZIP is an installable release.
+. Verify exact source ZIP post-update checks and GitHub Actions on the exact pushed SHA if approved. Confirm Windows/Android app builds and user data preservation independently; never infer operator acceptance from these source tests.
+. Resume DGN-CHECKERS-M1 critical group-test/lobby/game registration tasks. No Source-only fix proves Checkers visible or playable in Tavi.
+
+== Rollback
+
+If the UI version still reports 0.3.117, first identify the exact running executable path and capture the latest ZipRunner build logs. Do not delete local persistent Tavi session, reinstall an older release, disable version checks or overwrite private configuration merely to change the label.

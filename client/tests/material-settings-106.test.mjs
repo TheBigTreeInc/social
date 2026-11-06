@@ -34,7 +34,8 @@ test('settings title and host back integration preserve Settings before Home',()
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
  assert.match(main,/state\.panel==='settings'&&state\.settingsPage!=='root'/);
  assert.match(main,/state\.settingsPage='root'/);
- assert.match(main,/settingsBack=.*\?'Settings':'Home'/);
+ assert.match(main,/settingsBack=.*\?'Settings':state\.panel==='app-store'/);
+ assert.match(main,/appStoreReturnPanel==='menu'\?'Apps':'Home'/);
 });
 
 test('settings stylesheet uses Material-like surfaces and touch-friendly rows',()=>{

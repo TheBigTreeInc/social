@@ -11,6 +11,7 @@ import {buddyGroups,conversationThreads} from '../src/ui/messenger-model.js';
 import {applyInboxFilter} from '../src/ui/message-inbox.js';
 import {composerState,messageLimit,messageReceipt} from '../src/message-ui.js';
 
+const buildVersion=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8')).version;
 const source=(await readFile(new URL('../src/main.js',import.meta.url),'utf8'))
   .split('\n').filter(line=>!line.startsWith('import ')).join('\n')
   .split("window.addEventListener('message'")[0];
@@ -18,7 +19,8 @@ const source=(await readFile(new URL('../src/main.js',import.meta.url),'utf8'))
 function shell({connected=true,mobileRoster=false,panel='messenger'}={}) {
   const app={innerHTML:''};
   const context={
-    uiHeader:()=>'<header>Tavi · Sign in</header>',buddyGroups,conversationThreads,applyInboxFilter,composerState,messageLimit,messageReceipt,homeToolbar,BUNDLED_COMPANION_ID:'org.tavi.community.companion',CORE_WALLET_ID:'org.tavi.core.wallet',hostToolbar,uiGlyph,mobileTabs,wireAppPages,wireElasticScroll,extensionPanelUrl,wireExclusiveMenus:()=>{},createDiagnosticEvents:()=>({record(){},clear(){},snapshot(){return [];}}),createSurfaceRegistry,extensionUpdateSummary:()=>({count:0,missing:[]}),filterOptionalApps:entries=>entries,createExtensionHost:()=>({unmount(){},mount(){}}),extensionStorageScope:()=>null,petById:()=>null,petSprite:()=>'',atriumLauncher:()=>({available:false}),companionPanel:()=>'',
+    __TAVI_CLIENT_VERSION__:buildVersion,
+    uiHeader:()=>'<header>Tavi · Sign in</header>',buddyGroups,conversationThreads,applyInboxFilter,composerState,messageLimit,messageReceipt,homeToolbar,BUNDLED_COMPANION_ID:'org.tavi.community.companion',CORE_WALLET_ID:'org.tavi.core.wallet',hostToolbar,uiGlyph,mobileTabs,wireAppPages,wireElasticScroll,extensionPanelUrl,wireAppContextMenus:()=>()=>{},canRemoveAppFromTavi:()=>false,wireExclusiveMenus:()=>{},createDiagnosticEvents:()=>({record(){},clear(){},snapshot(){return [];}}),createSurfaceRegistry,extensionUpdateSummary:()=>({count:0,missing:[]}),filterOptionalApps:entries=>entries,createExtensionHost:()=>({unmount(){},mount(){}}),extensionStorageScope:()=>null,petById:()=>null,petSprite:()=>'',atriumLauncher:()=>({available:false}),companionPanel:()=>'',
     document:{addEventListener:()=>{},getElementById:key=>key==='app'?app:null,querySelectorAll:()=>[],querySelector:()=>null},
     localStorage:{getItem:()=>null},newCompanion:()=>({enabled:false,overlay:'off'}),companionBadge:()=>'',readConfig:()=>({server:'https://social.example.org',games:['jones'],gamesByServer:{}}),
     createResumeSync:()=>()=>false,createPushWakeupBridge:()=>()=>false,createDeviceSessionStore:()=>({load:async()=>({record:null,remembered:false})}),invoke:async()=>null,sessionStorage:{getItem:()=>null},isTauri:()=>false,navigator:{userAgent:'Mozilla/5.0'},clearTimeout(){},setTimeout(){},URL,Date,Map,JSON,String,console,
@@ -58,7 +60,8 @@ test('mobile navigation state and login are server-scoped and token-free',()=>{
 test('untrusted friend names/messages are escaped before inclusion',()=>{
   const app={innerHTML:''};
   const context={
-    uiHeader:()=>'<header>Tavi · Sign in</header>',buddyGroups,conversationThreads,applyInboxFilter,composerState,messageLimit,messageReceipt,homeToolbar,BUNDLED_COMPANION_ID:'org.tavi.community.companion',CORE_WALLET_ID:'org.tavi.core.wallet',hostToolbar,uiGlyph,mobileTabs,wireAppPages,wireElasticScroll,extensionPanelUrl,wireExclusiveMenus:()=>{},createDiagnosticEvents:()=>({record(){},clear(){},snapshot(){return [];}}),createSurfaceRegistry,extensionUpdateSummary:()=>({count:0,missing:[]}),filterOptionalApps:entries=>entries,createExtensionHost:()=>({unmount(){},mount(){}}),extensionStorageScope:()=>null,petById:()=>null,petSprite:()=>'',atriumLauncher:()=>({available:false}),companionPanel:()=>'',
+    __TAVI_CLIENT_VERSION__:buildVersion,
+    uiHeader:()=>'<header>Tavi · Sign in</header>',buddyGroups,conversationThreads,applyInboxFilter,composerState,messageLimit,messageReceipt,homeToolbar,BUNDLED_COMPANION_ID:'org.tavi.community.companion',CORE_WALLET_ID:'org.tavi.core.wallet',hostToolbar,uiGlyph,mobileTabs,wireAppPages,wireElasticScroll,extensionPanelUrl,wireAppContextMenus:()=>()=>{},canRemoveAppFromTavi:()=>false,wireExclusiveMenus:()=>{},createDiagnosticEvents:()=>({record(){},clear(){},snapshot(){return [];}}),createSurfaceRegistry,extensionUpdateSummary:()=>({count:0,missing:[]}),filterOptionalApps:entries=>entries,createExtensionHost:()=>({unmount(){},mount(){}}),extensionStorageScope:()=>null,petById:()=>null,petSprite:()=>'',atriumLauncher:()=>({available:false}),companionPanel:()=>'',
     document:{addEventListener:()=>{},getElementById:key=>key==='app'?app:null,querySelectorAll:()=>[],querySelector:()=>null},
     localStorage:{getItem:()=>null},newCompanion:()=>({enabled:false,overlay:'off'}),companionBadge:()=>'',readConfig:()=>({server:'https://social.example.org',games:[],gamesByServer:{}}),
     createResumeSync:()=>()=>false,createPushWakeupBridge:()=>()=>false,createDeviceSessionStore:()=>({load:async()=>({record:null,remembered:false})}),invoke:async()=>null,sessionStorage:{getItem:()=>null},isTauri:()=>false,navigator:{userAgent:'Mozilla/5.0'},clearTimeout(){},setTimeout(){},URL,Date,Map,JSON,String,

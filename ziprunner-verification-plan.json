@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.120",
+  "version": "0.3.129",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -1730,6 +1730,94 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-UX-APP-CONTEXT-126",
+      "criteria": [
+        {
+          "id": "TAVI-UX-APP-CONTEXT-126-SOURCE",
+          "description": "No visible favorite badges, contextual actions, touch gesture cancellation and protected uninstall policy",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/apps-context-menu-126.test.mjs client/tests/apps-favorites-125.test.mjs",
+            "npm run verify"
+          ]
+        },
+        {
+          "id": "TAVI-UX-APP-CONTEXT-126-OPERATOR",
+          "description": "Test mouse, touch and keyboard menus on Windows/Android in light/dark mode; verify local uninstall and launcher restoration",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-EXT-LOCAL-127",
+      "criteria": [
+        {
+          "id": "TAVI-EXT-LOCAL-127-SOURCE",
+          "description": "Verified ZIP central directory, lockfile SHA-256, source pin, sandbox CSP and per-account local package vault",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/local-tavix-install-127.test.mjs",
+            "npm run verify"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-LOCAL-127-OPERATOR",
+          "description": "Windows and Android file picker, actual local app execution, reopen after restart and safe removal",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-EXT-DEV-GATE-128",
+      "criteria": [
+        {
+          "id": "TAVI-EXT-DEV-GATE-128-SOURCE",
+          "description": "Signed-in LoopRD permissions.developer and the explicit Tavi Developer Mode opt-in jointly gate local TaviX picker and approval. Recheck /me; revoke/disable fails closed.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/local-tavix-developer-gate-128.test.mjs",
+            "node --test client/tests/local-tavix-install-127.test.mjs"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-DEV-GATE-128-OPERATOR",
+          "description": "Windows/Android verify hidden installer for normal users, visible for authorized opted-in developer, disabled on server revoke and logout.",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-EXT-DEV-SHADOW-129",
+      "criteria": [
+        {
+          "id": "TAVI-EXT-DEV-SHADOW-129-SOURCE",
+          "description": "LoopRD-authorized Developer Mode permits a separately SHA-pinned shadow of a protected local .tavix UI; official source pin unchanged; host capabilities restricted; restore explicit and opt-out immediate.",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/local-tavix-shadow-129.test.mjs",
+            "node --test client/tests/local-tavix-install-127.test.mjs client/tests/local-tavix-developer-gate-128.test.mjs"
+          ]
+        },
+        {
+          "id": "TAVI-EXT-DEV-SHADOW-129-OPERATOR",
+          "description": "Test a real Companion .tavix on Windows and Android: Apps tile uses preview; profile/core remains trusted; disable/revert restores original; no private data leak.",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -2513,6 +2601,82 @@
       "command": "node --test client/tests/extension-repositories.test.mjs client/tests/extension-life-launch.test.mjs",
       "status": "source_only",
       "description": "Verify published central TaviX fixture, fallback, account pins and broker isolation; GUI QA separately"
+    },
+    {
+      "id": "TAVI-UI-LUCIDE-124-SOURCE",
+      "kind": "automated",
+      "stage": "unit",
+      "description": "Locally pinned Lucide SVGs, fixed icon aliases and messenger Home privacy/accessibility",
+      "runner_ref": "tavi-extension-platform-source-0359",
+      "assertions": [
+        "Every existing host glyph maps to trusted static SVG on a 24px grid",
+        "Apps tab is an app grid distinct from the actual store",
+        "Unknown icon names do not inject markup or attributes",
+        "Home recent previews honor the explicit preview preference",
+        "Compact touch targets, focus and dark mode preserve host/iframe separation"
+      ],
+      "test_ref": "client/tests/ui-lucide-foundation-124.test.mjs"
+    },
+    {
+      "id": "TAVI-UX-APP-CONTEXT-126-SOURCE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Apps long-press/right-click options and per-account local uninstall guard",
+      "runner_ref": "tavi-extension-platform-source-0359",
+      "assertions": [
+        "No star overlays on app tiles",
+        "Context menu opens via mouse, touch and keyboard",
+        "Swipe gesture cancels long press and synthetic click cannot launch app",
+        "Core/built-in apps cannot be removed",
+        "Only installed optional extensions expose removal, requiring operator confirmation"
+      ],
+      "test_ref": "client/tests/apps-context-menu-126.test.mjs"
+    },
+    {
+      "id": "TAVI-EXT-LOCAL-127-SOURCE",
+      "kind": "automated",
+      "stage": "functional",
+      "description": "Local .tavix archive integrity, account source pin and sandbox confinement",
+      "runner_ref": "tavi-extension-platform-source-0359",
+      "assertions": [
+        "Reject unsafe ZIP members, sha mismatch, protected permissions and incomplete packages",
+        "Approve local install only after manifest and requested permissions reviewed",
+        "Local IndexedDB package is scoped to account and device; removal cleans it",
+        "Sandbox has no same-origin, network or first-party grants",
+        "Native Windows/Android package execution is separately operator tested"
+      ],
+      "test_ref": "client/tests/local-tavix-install-127.test.mjs"
+    },
+    {
+      "id": "TAVI-EXT-DEV-GATE-128-SOURCE",
+      "kind": "automated",
+      "stage": "unit",
+      "description": "LoopRD-backed developer permission + explicit opt-in gates manual TaviX import on both desktop and mobile",
+      "runner_ref": "tavi-extension-platform-source-0359",
+      "assertions": [
+        "No local installer UI or file-picker access without server-provided developer grant and opt-in",
+        "Fresh authenticated LoopRD /me rechecks before preview and install; offline and revoked grants fail closed",
+        "Revoking server permission or disabling toggle clears pending approval",
+        "Account switching and signout do not preserve developer installation authorization",
+        "Windows and Android real-device acceptance remains separate"
+      ],
+      "test_ref": "client/tests/local-tavix-developer-gate-128.test.mjs"
+    },
+    {
+      "id": "TAVI-EXT-DEV-SHADOW-129-SOURCE",
+      "kind": "automated",
+      "stage": "unit",
+      "description": "Protected first-party developer shadow can be tested safely and restored without overwriting pinned bundled code",
+      "runner_ref": "tavi-extension-platform-source-0359",
+      "assertions": [
+        "Developer shadow only with LoopRD-developer and explicit Settings opt-in",
+        "Companion/Wallet/ZipRunner identities accepted only as developer previews",
+        "Original source pin and host permissions unchanged; sandbox source remains tavi:local",
+        "Preview data isolated by revision; disabling opt-in immediately dismisses preview",
+        "Restoring original deletes only shadow metadata and local file; no public publication",
+        "Windows/Android manual acceptance remains pending"
+      ],
+      "test_ref": "client/tests/local-tavix-shadow-129.test.mjs"
     }
   ]
 }

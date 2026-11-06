@@ -1,0 +1,30 @@
+= Tavi 0.3.124 — local Lucide icon and Home UX foundation
+:revdate: 2026-11-05
+
+== Scope and ownership
+
+* Host-only, locally bundled Lucide SVG shapes under `client/src/ui/lucide-icons.js` with a fixed upstream revision and ISC/Feather attribution in `client/src/ui/LUCIDE_LICENSE.txt`. No runtime icon CDN, fonts, SVG downloaded from an extension, or new npm dependency. All existing `uiGlyph`/`appGlyph` names remain supported with a closed alias map and safe puzzle fallback.
+* The Tavi bottom tab labeled *Apps* now uses an app grid. The storefront remains reserved for the *App Store* entry. Home, Chats, Games, notifications, settings, wallet, help and launcher icons share Lucide's 24x24 geometry and stroke convention.
+* Preserve the existing Home buddy-list primary layout and distinct Chats inbox. Improve Online/Offline group affordances, rectangular touch targets, avatar/Companion placement, less harsh separators, and unread state. The Companion placeholder now shows a paw rather than an unexplained sparkle. If a recent direct message exists, Home can show its summary; actual text is displayed ONLY when the account opted into message previews. Presence remains accessible even when a preview is shown.
+* All elements remain host-owned. Existing extension iframe sandbox, Social account/session state, native routing, wallet and game services are unchanged. Theme uses existing light/dark design tokens; reduced-motion and keyboard focus styles remain.
+
+== Automated source checks
+
+* `node --test client/tests/ui-lucide-foundation-124.test.mjs` — five tests: full aliased-icon coverage, static/fail-closed markup, navigation/store distinction, optional preview/privacy and accessible Home states, touch/dark CSS boundaries.
+* `npm run verify` — full server/client/OpenClaw regression suite and package checks.
+* `npm run extensions:check` and `python tools/generate-looprd.py --check` — no publisher asset or LoopRD descriptor changes.
+* ZipRunner post-update test 1 includes the new icon source checks; it still requires local installed-source/Windows acceptance. A source test pass does not establish a visual pass.
+
+== Operator acceptance, Windows and Android (not yet performed)
+
+. Import exact `looprd-social-0.3.124-ui-lucide-foundation-ziprunner.zip`; verify ZIP digest and local development build without touching protected runtime/configuration, source Git remote, public release or auto-publish.
+. On Windows WebView2 at 355x630 and at desktop width, open Home/Chats/Games/Apps, and the settings view. Confirm icons match, Apps uses grid not storefront, keyboard focus/back/Home routing works and Home remains reachable from Games.
+. At Android 320px and 390px, test coarse touch targets, collapsed groups, dark/light contrast, Companion portrait when present/absent, unread labels, and long or unusual usernames without horizontal clipping. Do not assert Android acceptance using source-only checks.
+. Confirm message previews are hidden when disabled, and appear only when explicitly enabled; changing this setting must not leak message content into an extension.
+. Preserve the Checkers M1 priorities; this UI pass does NOT activate Checkers or public hosted games.
+
+== Release guardrails
+
+* No Git push, tag, public build, GitHub Pages update, or release authorization.
+* Do not mark existing `TAVI-UI-FOUNDATION-075`, `TAVI-UI-NAVIGATION-076`, `TAVI-UI-VISUAL-QA-079` or operator items Done from source checks. The Windows/Android/Web visual acceptance remains pending.
+* Server schema 12 and existing LoopRD source hash remain unchanged. No new native capability or permission.

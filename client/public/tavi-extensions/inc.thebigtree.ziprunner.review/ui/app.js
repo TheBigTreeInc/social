@@ -2,7 +2,7 @@
  const ID='inc.thebigtree.ziprunner.review',CHANNEL='tavi.extension/v1';
  const byId=id=>document.getElementById(id),pending=new Map();let next=0,epoch=0,ready=false,connection=null,busy=false;
  function status(text){byId('status').textContent=text;}
- function clearLocal(){epoch++;connection=null;byId('model').hidden=true;byId('detail-section').hidden=true;for(const id of ['jobs','projects','detail','workload'])byId(id).replaceChildren();byId('connection').textContent='Locked. Load your ZipRunner web-connection authentication file inside Tavi.';byId('refresh').disabled=byId('disconnect').disabled=true;}
+ function clearLocal(){epoch++;connection=null;byId('model').hidden=true;byId('detail-section').hidden=true;for(const id of ['jobs','projects','detail','workload'])byId(id).replaceChildren();byId('connection').textContent='Locked. Load your ZipRunner web-connection file inside Tavi. Review is read-only; approval stays in ZipRunner.';byId('refresh').disabled=byId('disconnect').disabled=true;}
  function request(method,args={}){
   if(window.parent===window)return Promise.reject(Error('Open this extension inside Tavi'));
   return new Promise((resolve,reject)=>{

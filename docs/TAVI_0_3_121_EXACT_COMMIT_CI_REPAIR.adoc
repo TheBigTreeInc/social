@@ -1,0 +1,25 @@
+= Tavi Social 0.3.121 — exact-commit CI and catalog UI QA repair
+:revdate: 2026-11-05
+
+== Root cause confirmed from exact GitHub commit
+
+Commit `9e8f3688ad4d5d0d3103746f8a5bfcec1e673c09` in `TheBigTreeInc/social` had nine push workflows: two successes, seven failures. Linux and Windows `npm run verify` ran 14 server tests successfully, then 296 client tests with 288 passing and 8 failing. Failures share the checked-in first-party extension registry/mirror/catalog mismatch: `Published catalog stale: run npm run extensions:sync.` and `Extension asset size changed: ui/app.js`. The 0.3.120 ZIP (not the pushed checkout) passes `node tools/sync-internal-extensions.mjs --check`, so source-package success was not equivalent to the exact Git commit. The original push did not include updated first-party review extension asset paths or the generated public mirror.
+
+The separate browser UI QA failed on all five viewports (desktop, tablet, 355 px, 390 px, 320 px) at Life withdrawal, expecting the removed copy `No reviewed games are currently available`. Actual UI reports `Connected to Atrium; no published games yet.` and `No playable games published yet.`; this is a test expectation drift, not evidence that Life or Checkers became playable.
+
+== Source-only repair
+
+* Update first-party `inc.thebigtree.ziprunner.review/ui/app.js` to clearly say review is read-only and approvals remain in ZipRunner; regenerate its published mirror and `catalog.v1.json` with the existing `tools/sync-internal-extensions.mjs`. This causes all three tracked files to differ from the old Git checkout, preventing the same incomplete push. Verify source/published bytes and generated catalog with `npm run extensions:check`, including preserved reviewed Companion SHA-256. Never manually rewrite a published partner asset or loosen its digest check.
+* Update only the Life-withdrawn browser smoke assertion to test the current connected/empty hosted catalog message. Keep checks that the withdrawn game card disappears; do not weaken authentication or launch gates.
+* Version metadata, Tauri/Cargo lock root version, generated LoopRD release/hash link and ZipRunner Workboard version advance together to 0.3.121. Social schema remains 12; Checkers Social interop handlers are untouched.
+
+== Operator verification and release gates
+
+1. Import exact 0.3.121 ZIP in ZipRunner. Run `npm run extensions:check`, `npm run verify`, `python tools/generate-looprd.py --check`, and all current ZipRunner post-update checks. Record exact SHA and any failing logs.
+2. Verify the resulting *Git commit* includes canonical `extensions/inc.thebigtree.ziprunner.review/ui/app.js`, matching `client/public/tavi-extensions/.../ui/app.js`, and new `client/public/tavi-extensions/catalog.v1.json`; run GitHub push workflows for that exact commit, including Linux, Windows, Android and browser UI. Do not treat the previous 0.3.120 workflow results as new evidence.
+3. Keep native Windows and Android operator acceptance open; no full browser QA pass, signed APK installation, or Checkers match is claimed by source-only tests. The Group Workboard continues to prioritize DGN-CHECKERS-M1 automated group QA / contract / Tavi-to-browser live acceptance, owned by Atrium + Checkers + LoopRD.
+4. Do not push, publish, release, close Workboard items, alter database credentials, or override operator approval gates from this package.
+
+== Rollback
+
+If 0.3.121 cannot pass exact-commit CI, restore 0.3.120 source locally without changing operator-managed databases or native user data, and preserve all immutable externally published extension versions. Diagnose the exact Git checkout's asset provenance before another source revision.

@@ -7,7 +7,7 @@ export function extensionUpdateStatus(entry,store){
  const id=entry?.manifest?.id;
  if(!id||!store)return 'not-installed';
  if(typeof store.installed==='function' && !store.installed(id))return 'not-installed';
- if(store.source(id)!==(entry.repositoryUrl || 'tavi:bundled'))return 'source-changed';
+ if(store.source(id)!==(entry.local===true?'tavi:local':entry.repositoryUrl || 'tavi:bundled'))return 'source-changed';
  const installed=store.version(id),published=entry.manifest.version;
  if(!installed)return 'unknown';
  let comparison;

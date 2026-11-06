@@ -19,7 +19,8 @@ test('central header/actions escape untrusted text and reject invalid host attri
 test('one component drives main toolbar and native chat/game header',async()=>{
  const toolbar=hostToolbar('Wallet',{action:'back',backLabel:'Home'});
  assert.match(toolbar,/class="tavi-ui-header tavi-focus-toolbar tavi-shell-bar"/);
- assert.match(toolbar,/data-action="home"/);
+ assert.doesNotMatch(toolbar,/data-action="home"/);
+ assert.match(toolbar,/data-action="back"/);
  for(const file of ['../src/main.js','../src/chat.js','../src/game.js','../src/match.js']){
   const source=await read(file);
   assert.match(source,/\.\/ui\/components\.css/);

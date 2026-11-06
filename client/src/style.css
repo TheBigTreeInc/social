@@ -959,3 +959,61 @@ html[data-theme='dark'] .tavi-app-page-tabs button[aria-selected="true"]{backgro
 .tavi-nested-game-header button{min-width:72px;min-height:44px;padding:6px 10px;border-radius:6px;cursor:pointer}
 .tavi-nested-game-stage{display:flex;flex:1;min-height:0;padding-bottom:env(safe-area-inset-bottom,0px)}
 .tavi-nested-game-stage iframe{display:block;border:0;width:100%;height:100%;flex:1;min-height:0;background:#fff}
+
+/* 0.3.125 — Personal Apps drawer: two Material-like tabs, account-local favorites. */
+.tavi-menu-panel{padding:15px 12px 18px!important;max-width:700px;}
+.tavi-menu-panel .tavi-launcher-header{align-items:center;margin:0 0 13px;}
+.tavi-menu-panel .tavi-launcher-header h2{font-size:18px;line-height:1.3;margin:0;color:var(--tavi-color-text);}
+.tavi-menu-panel .tavi-launcher-count{color:var(--tavi-color-text-muted);font-size:11px;}
+.tavi-menu-panel .tavi-app-page-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;padding:4px;margin:0 0 12px;overflow:visible;scroll-snap-type:none;background:var(--tavi-color-surface-raised);border:1px solid var(--tavi-color-border);border-radius:13px;}
+.tavi-menu-panel .tavi-app-page-tabs button{min-height:44px;min-width:0;display:grid;place-items:center;border:0;border-radius:9px;background:transparent;color:var(--tavi-color-text-muted);padding:8px 10px;font-size:13px;letter-spacing:.01em;box-shadow:none;}
+.tavi-menu-panel .tavi-app-page-tabs button[aria-selected="true"]{color:var(--tavi-color-accent-contrast);background:var(--tavi-color-accent);box-shadow:0 1px 3px #0000001c;}
+.tavi-menu-panel .tavi-app-page-tabs button:focus-visible,.tavi-menu-panel .tavi-app-tile:focus-visible,.tavi-menu-panel .tavi-launcher-tools button:focus-visible{outline:2px solid var(--tavi-color-focus);outline-offset:2px;}
+.tavi-menu-panel .tavi-app-page{padding:2px 0 8px;}
+.tavi-menu-panel .tavi-app-page-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:1px 4px 12px;}
+.tavi-menu-panel .tavi-app-page-heading h3{font-size:13px;margin:0;color:var(--tavi-color-text);font-weight:700;}
+.tavi-menu-panel .tavi-app-page-heading>span{font-size:11px;color:var(--tavi-color-text-muted);white-space:nowrap;}
+.tavi-menu-panel .tavi-menu-grid{row-gap:10px;column-gap:5px;}
+.tavi-menu-panel .tavi-app-card{min-width:0;position:relative;display:flex;align-items:stretch;justify-content:center;}
+.tavi-menu-panel .tavi-app-card .tavi-app-tile{width:100%;min-height:102px;padding:6px 2px 8px;color:var(--tavi-color-text);}
+.tavi-menu-panel .tavi-app-card .tavi-app-caption{font-size:11px;max-width:96%;color:var(--tavi-color-text);}
+.tavi-menu-panel .tavi-app-empty{text-align:center;padding:30px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--tavi-color-text-muted);}
+.tavi-menu-panel .tavi-app-empty .tavi-ui-glyph{height:30px;width:30px;}
+.tavi-menu-panel .tavi-app-empty strong{font-size:13px;color:var(--tavi-color-text);}
+.tavi-menu-panel .tavi-app-empty p{font-size:12px;max-width:240px;margin:0;line-height:1.5;}
+.tavi-menu-panel .tavi-launcher-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 1px 0;padding:12px 2px 0;border-top:1px solid var(--tavi-color-border);}
+.tavi-menu-panel .tavi-launcher-tools p{font-size:11px;line-height:1.4;margin:0;color:var(--tavi-color-text-muted);}
+.tavi-menu-panel .tavi-launcher-tools button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:6px 11px;white-space:nowrap;border-radius:10px;border:1px solid var(--tavi-color-border);background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);font-size:12px;font-weight:650;}
+.tavi-menu-panel .tavi-launcher-tools button .tavi-ui-glyph{width:17px;height:17px;min-width:17px;}
+@media(max-width:345px){.tavi-menu-panel .tavi-launcher-tools{flex-wrap:wrap;}.tavi-menu-panel .tavi-launcher-tools button{margin-left:auto;}}
+html[data-theme='dark'] .tavi-menu-panel .tavi-app-page-tabs button[aria-selected="true"]{background:var(--tavi-color-accent);color:var(--tavi-color-accent-contrast);}
+/* Visually hidden helper text must not inflate icon-only App Store buttons. */
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
+.tavi-marketplace-header{justify-content:space-between;}
+.tavi-marketplace-header h2{min-width:0;margin-right:auto;}
+.tavi-marketplace-header>button{overflow:hidden;flex:0 0 38px;min-width:38px;min-height:38px;border-radius:9px;}
+.tavi-menu-panel .tavi-app-card .tavi-app-tile:hover{background:var(--tavi-color-surface-raised)!important;}
+
+/* 0.3.126 — clean app tiles; actions live in a contextual mouse/keyboard menu or touch bottom sheet. */
+.tavi-menu-panel .tavi-app-tile{touch-action:pan-y;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;}
+.tavi-app-context-overlay{position:fixed;inset:0;z-index:3000;background:#132b2026;overscroll-behavior:contain;}
+.tavi-app-context-menu{position:absolute;left:var(--context-left,12px);top:var(--context-top,12px);width:min(238px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;background:var(--tavi-color-surface);color:var(--tavi-color-text);border:1px solid var(--tavi-color-border);border-radius:14px;box-shadow:0 12px 38px #0003;padding:7px;display:flex;flex-direction:column;gap:2px;}
+.tavi-app-context-heading{padding:10px 13px 9px;font-size:13px;font-weight:700;border-bottom:1px solid var(--tavi-color-border);margin-bottom:3px;overflow-wrap:anywhere;}
+.tavi-app-context-menu button{appearance:none;background:transparent;border:0;box-shadow:none;color:inherit;text-align:left;border-radius:9px;min-height:46px;padding:10px 13px;font-size:14px;line-height:1.4;cursor:pointer;}
+.tavi-app-context-menu button:is(:hover,:focus-visible){background:var(--tavi-color-surface-raised);outline:2px solid var(--tavi-color-focus);outline-offset:-2px;}
+.tavi-app-context-menu .tavi-app-context-remove{color:var(--tavi-color-danger,#ac4242);}
+.tavi-app-context-overlay.is-touch{background:#0d1e17a0;}
+.tavi-app-context-overlay.is-touch .tavi-app-context-menu{position:absolute;left:10px;right:10px;top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));width:auto;max-height:min(72dvh,360px);border-radius:18px;padding:8px 10px 12px;box-shadow:0 -12px 35px #0003;}
+.tavi-app-context-overlay.is-touch .tavi-app-context-menu button{min-height:50px;font-size:15px;}
+@media(prefers-reduced-motion:reduce){.tavi-app-context-menu{transition:none;}}
+
+/* 0.3.127 — local TaviX file picker and permission review */
+.tavi-launcher-tool-buttons{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;}
+.tavi-menu-panel .tavi-launcher-tools{align-items:flex-start;}
+.tavi-local-hash{font-size:10px;overflow-wrap:anywhere;word-break:break-all;}
+@media(max-width:390px){.tavi-menu-panel .tavi-launcher-tools{flex-direction:column;}.tavi-launcher-tool-buttons{width:100%;}.tavi-launcher-tool-buttons button{flex:1;min-width:0;padding-inline:6px;font-size:11px;}}
+
+.tavi-local-package-toolbar{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:8px 4px;margin:2px 0;color:var(--tavi-color-text-muted);font-size:11px;}
+.tavi-local-package-toolbar button{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:5px 10px;border-radius:9px;border:1px solid var(--tavi-color-border);background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);white-space:nowrap;font-size:11px;font-weight:650;}
+.tavi-local-package-toolbar svg{width:16px;height:16px;}
+@media(pointer:coarse){.tavi-local-package-toolbar button{min-height:44px;}}

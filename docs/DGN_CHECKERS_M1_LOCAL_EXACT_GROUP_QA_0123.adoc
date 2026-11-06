@@ -1,0 +1,67 @@
+= Tavi Social 0.3.123 — local exact-source-ZIP Checkers M1 group QA
+:revdate: 2026-11-05
+
+== Scope
+
+This pass adds an explicit, operator-run *cross-project test coordinator* for the
+Group Workboard ticket `DGN-CHECKERS-M1-AUTOMATED-QA-001`. It does NOT create,
+publish or host Checkers matches. It does NOT update TaviX, LoopRD, Atrium or
+Tavi's production application. Tavi stays messenger-first, and Checkers rules
+remain owned by the game module inside Atrium.
+
+Atrium's separate 0.5.62 candidate provides module-owned rules and the trusted
+match-host/route source plus its own disposable exact-ZIP group suite. It is
+not included in this Social ZIP and must be supplied separately to ZipRunner.
+The Atrium component's runtime Social binding and production deployment remain
+unverified. No test result from a Social component alone can close M1.
+
+== Run (Windows PowerShell; no GitHub, no additional packages)
+
+From `C:\Users\dorbi\source\looprd-social`, using original source ZIPs (or ZipRunner hash-suffixed stable copies),
+provide explicit paths; do not let this script guess an older latest package:
+
+[source,powershell]
+----
+python tools/checkers_m1_local_group.py `
+  --social-zip 'C:\path\to\looprd-social-0.3.123-checkers-local-group-ziprunner.zip' `
+  --atrium-zip 'C:\path\to\atrium-0.5.62-ziprunner.zip'
+----
+
+The Python standard-library runner checks both archive CRCs, input lengths,
+mandatory package/rules/service source members, matching versions and static
+module boundaries. It executes each archive's *own packaged runner* using
+`--package`, which independently extracts the corresponding package, runs
+its tests, verifies its SHA and emits project-specific JSON evidence.
+
+The summary uses `dgn.checkers-m1.local-group-qa/v1`, records *both* exact ZIP
+SHA-256 values, tested-runner SHA-256 values, assertion counts and evidence
+SHA-256 values, and explicitly states that production, operator acceptance,
+public release and real Tavi/browser gameplay are NOT proved. Component reports
+are separate and named for their owning projects. If either archive, runner,
+execution or evidence is missing, inconsistent or skipped, the combined result
+is blocked and exits nonzero. The coordinator never calls GitHub or reads credentials. Atrium's own packaged test binds disposable loopback HTTP only; it makes no production connection.
+
+Reports default to protected `state/qa/checkers-group/`; no private data or
+runtime state is packaged in the source ZIP. ZipRunner local workboard and
+operator approvals remain authoritative and unchanged.
+
+== Operator release gates
+
+. Import 0.3.123 in ZipRunner, perform source verification/Windows build, and
+  run the twelve local coordinator unit checks. They are harness tests only.
+. Execute the above two-archive group command using exactly the candidate Social
+  ZIP and the separately accepted current Atrium ZIP. Inspect both JSON outputs.
+. Run the real Tavi-to-browser match against deployed Social, trusted Atrium
+  lobby and Checkers match service; prove two genuine sessions, turn/capture,
+  wrong-actor rejection, duplicate move protection and restart/resume.
+. Confirm game appears and opens in desktop Tavi and a mobile device, with
+  Back/Home returning to Tavi rather than closing the match.
+. Record operator acceptance separately. A successful disposable test is
+  insufficient. Never auto Git-push, tag, publish TaviX or deploy LoopRD.
+
+== Remaining
+
+* Atrium/Checkers production LoopRD hosting, trusted Social session and accepted
+  lobby validation, and persistent match-creation binding.
+* End-to-end two authenticated clients and operator Windows/Android acceptance.
+* Public game catalog entry after operator-approved deployment; release remains gated.
