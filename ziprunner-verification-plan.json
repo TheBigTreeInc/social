@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.129",
+  "version": "0.3.130",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -1818,6 +1818,28 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-LOCAL-PREVIEW-CSP-130",
+      "criteria": [
+        {
+          "id": "TAVI-LOCAL-PREVIEW-CSP-130-SOURCE",
+          "description": "CSP-safe local stylesheets and fail-closed preview preparation without privileged SDK or global CSP expansion",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/local-tavix-preview-loader-130.test.mjs",
+            "node --test client/tests/local-tavix-install-127.test.mjs client/tests/local-tavix-shadow-129.test.mjs"
+          ]
+        },
+        {
+          "id": "TAVI-LOCAL-PREVIEW-CSP-130-NATIVE",
+          "description": "Under independent process-memory limits, visually verify benign CSS/JS fixture on Windows WebView2 and Android; do not retry affected Companion on operator PC until safe.",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -2677,6 +2699,21 @@
         "Windows/Android manual acceptance remains pending"
       ],
       "test_ref": "client/tests/local-tavix-shadow-129.test.mjs"
+    },
+    {
+      "id": "TAVI-LOCAL-PREVIEW-CSP-130-SOURCE",
+      "kind": "automated",
+      "stage": "unit",
+      "description": "Strict local CSS inline preflight under the unchanged native CSP; invalid or missing CSS cannot start app scripts",
+      "runner_ref": "tavi-extension-platform-source-0359",
+      "assertions": [
+        "Offline local CSS assets are inserted inline ahead of scripts",
+        "Missing/unsupported CSS prevents JavaScript execution",
+        "No global CSP loosening, no first-party SDK grants",
+        "Bounded anonymous preview status recorded without package contents or private data",
+        "Windows/Android and process memory containment remain separate acceptance gates"
+      ],
+      "test_ref": "client/tests/local-tavix-preview-loader-130.test.mjs"
     }
   ]
 }

@@ -1,0 +1,71 @@
+= Tavi Social 0.3.130 — local TaviX preview CSS / CSP repair
+:revdate: 2026-11-06
+
+== Observed operator defect
+
+Opening `org.tavi.community.companion-0.6.37.tavix` from the developer-only
+Apps shadow caused a partly unstyled Companion page and serious PC
+unresponsiveness. The operator's performance CSV recorded one WebView2 process
+reaching about 15.7 GiB working set. The CSV did *not* prove which app owned
+that process. The 0.6.37 package was statically audited, not executed here.
+
+== Cause and correction
+
+The 0.3.129 local host changed package stylesheets into `blob:` URLs while
+native Tauri `style-src 'self' 'unsafe-inline'` did not permit blob stylesheets.
+That CSP mismatch can cause the Companion canvas to run with its intended layout
+missing. Without the layout bounds, the Companion's observed ResizeObserver and
+canvas intrinsic-size changes can feed each other. This is a well-supported
+hypothesis, not a reproduced native WebView2 call stack.
+
+0.3.130 changes only the local developer/optional TaviX preview rendering path:
+
+* CSS imports are flattened from the SHA-verified, strictly local package
+  assets and stylesheets are inserted as inline `<style>` text. Tauri's global
+  CSP remains unchanged; no `blob:` is added to native `style-src`.
+* All linked stylesheets are prepared *before* any extension script URLs are
+  created. Missing, cyclic, oversized, external, conditional or unsafe CSS
+  causes the local preview to fail closed, not continue unstyled.
+* Local CSS image references may use already-validated package assets via
+  `blob:` URLs permitted by `img-src`; external CSS network references remain
+  blocked. CSS flattening is bounded to 256,000 characters and eight levels.
+* The opaque-origin `sandbox="allow-scripts"` iframe and restricted first-party
+  SDK permissions are unchanged. Developer overrides remain account-local and
+  reversible; approved Companion/Wallet/Atrium APIs are *not* granted.
+* A tiny trusted blob script runs before package scripts and reports only the categories `document_loaded`, `script_error`, `resource_error`, or `policy_violation`. No exception details, asset URLs, content or stack traces leave the opaque iframe.
+* The preview also sends allowlisted asset-preparation status codes. The host accepts them
+  only from the currently mounted local iframe, limits reports per frame, and
+  stores only code/category/timestamp in privacy-safe Tavi diagnostics. A
+  package can forge these *untrusted* diagnostic messages, so they are never
+  evidence of publisher identity or privileged status.
+
+== Tested
+
+* Node VM fixture tests execute the loader using harmless HTML/CSS/JS only.
+  They prove CSS precedes JavaScript, normal layout CSS is emitted inline,
+  missing CSS prevents JS URLs, local imported CSS/image references work,
+  malicious remote/cyclic/unbounded CSS fails closed, and native CSP need not
+  be relaxed. Loader status reporting is bounded.
+* Full `npm run verify`, `npm run extensions:check`, LoopRD descriptor and
+  ZipRunner version/stamp checks are independent required source gates.
+* A harmless Chromium headless integration attempt in this Linux author
+  environment timed out. It is *not* a browser pass. Native Windows WebView2
+  and Android are *not* run or accepted by these source tests.
+
+== Residual risk and required follow-up
+
+An extension's own JavaScript can still allocate memory or render continuously
+and overwhelm a WebView. An in-renderer JS timeout cannot guarantee containment
+of a blocked renderer. True CPU/memory budget enforcement and recovery require
+separate native process-level work; this pass does not claim to implement them.
+Companion itself should defensively bound canvas backing size and ensure its
+resize measurement does not depend on its own intrinsic canvas size.
+
+On an isolated Windows test machine, first load the benign 0.1.0 local TaviX
+fixture with a low process-memory budget and verify CSS + JS + Back navigation;
+then test a CSS-missing fixture to verify the fail-closed page. Only after
+native memory containment and the Companion canvas fix should 0.6.37 be run.
+Do not use the operator's affected PC as the first reproduction machine.
+
+No Git push, public TaviX publish, server schema change, runtime config overlay,
+Workboard acceptance, operator approval or release is authorized by this ZIP.

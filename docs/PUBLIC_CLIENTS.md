@@ -1,10 +1,19 @@
 # Tavi clients and GitHub distribution — 0.3.39
 
-## GitHub Pages
+## GitHub Pages (manual publication only from 0.3.131)
 
-Enable **Settings → Pages → Build and deployment → Source: GitHub Actions** in `TheBigTreeInc/social`. The `pages.yml` workflow builds the existing Vite web client and deploys it. Expected URL (only after successful Pages deployment): `https://thebigtreeinc.github.io/social/`.
+The web client is still built and checked by the read-only CI workflows, but
+**normal pushes no longer deploy it**. Repository owner approval through
+ZipRunner is required before publishing any new client. To deploy a verified
+commit manually, configure required reviewers on the `github-pages` environment
+in GitHub Settings, then use **Actions → Publish Tavi web client to GitHub Pages →
+Run workflow**, supplying the exact current main SHA and the literal confirmation
+`PUBLISH-TAVI-WEB`. The workflow checks all eight CI results and source SHA before
+deployment. An unprotected environment is not an approval gate: verify it is
+actually configured before using this workflow.
 
-The web client uses relative paths for the repository subpath. Browser CORS must allow the actual Pages origin (`https://thebigtreeinc.github.io`), which is already present in the Tavi LoopRD descriptor. GitHub Pages is **static hosting**, not a backend or a secure token vault. Tavi still connects to your deployed LoopRD server. Never put server secrets into Pages.
+GitHub Pages is static hosting, not a backend or secret store; the deployed client
+still talks to your LoopRD server and must not include server secrets.
 
 ## GitHub SDK consumption
 

@@ -1,3 +1,14 @@
+## 0.3.131 — Review-only release candidates
+
+Pushing Tavi no longer automatically invokes public release or Pages deployment
+through these workflows. Use local ZipRunner acceptance first; GitHub release
+publication is disabled and Pages requires explicit manual confirmation plus
+protected-environment review. See `docs/RELEASE_PROCESS.md`. The Windows CRLF and
+browser Favorites context-menu CI regressions are corrected in source, pending
+remote run and native acceptance. No Git push or public release performed.
+
+**Tavi 0.3.130 (local preview loader CSP repair):** Fix local developer TaviX CSS preparation using offline inline styles, rejecting missing/unsafe CSS before scripts can execute. Keep global CSP and trusted first-party services unchanged. Node safe-fixture QA only; real native WebView2/Android and memory containment remain pending. Do **not** reopen Companion 0.6.37 on the affected PC. See `docs/TAVI_LOCAL_PREVIEW_CSP_0130.adoc`. No GitHub push or publication.
+
 **Tavi 0.3.129 developer shadow for protected apps:** LoopRD-approved Developer Mode can temporarily shadow a first-party TaviX UI (including Companion) from a local SHA-verified `.tavix` archive. The original app remains pinned, restoring is explicit, and no trusted core capability is granted. Native Windows/Android acceptance pending; no public release. See `docs/TAVI_LOCAL_TAVIX_DEVELOPER_SHADOW_0129.adoc`.
 
 **Tavi 0.3.128 local TaviX developer gate:** The Apps install button is visible only when LoopRD grants `permissions.developer` and the signed-in account enables Developer Mode in Settings. Import and approval recheck LoopRD and fail closed on revoked/offline grants; Windows/Android acceptance remains pending. No GitHub push or release. See `docs/TAVI_LOCAL_TAVIX_DEVELOPER_GATE_0128.adoc`.

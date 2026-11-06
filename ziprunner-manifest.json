@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.129",
-    "base_version": "0.3.128"
+    "version": "0.3.131",
+    "base_version": "0.3.130"
   },
   "update": {
-    "id": "TAVI-20261106-DEVELOPER-CORE-SHADOW-0129",
+    "id": "TAVI-20261106-RELEASE-CANDIDATE-0131",
     "kind": "source_update",
-    "created_at": "2026-11-06T08:00:00+01:00",
-    "summary": "Dev-only local .tavix shadow for protected first-party UI extensions, with safe rollback, no first-party host grants, and no publication."
+    "created_at": "2026-11-06T22:39:00+01:00",
+    "summary": "Replace auto-publishing workflow_run storm with one explicit read-only candidate; make Pages manual; fix Windows and context-menu CI QA tests."
   },
   "planned_work": [
     {
@@ -707,6 +707,13 @@
       "priority": "high",
       "status": "review",
       "acceptance_criteria": "Source checks pass; on real Windows and Android verify ordinary accounts never see the picker, developer opt-in required, revocation/offline blocks installation, and App Store remains available."
+    },
+    {
+      "id": "TAVI-LOCAL-PREVIEW-CSP-130",
+      "title": "Native containment and acceptance for local TaviX preview loader",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "New CSS preflight is source-tested. Windows WebView2 and Android must prove benign CSS and JS render within a process budget; capture fail-closed diagnostics. Companion 0.6.37 remains unsafe to run until canvas bounds and native memory protection are tested. No automatic release."
     }
   ],
   "done_work": [
@@ -1641,6 +1648,32 @@
           "description": "Two-account persisted -> fetched -> read cursor lifecycle and additive migration"
         }
       ]
+    },
+    {
+      "id": "TAVI-RELEASE-131",
+      "summary": "Manual exact-SHA release candidate; no GitHub Release publication, automatic Pages triggers removed; test repairs for Windows CRLF and Favorites UI QA.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": ".github/workflows/release.yml",
+          "description": "Manual-only read-only candidate action"
+        },
+        {
+          "kind": "source",
+          "ref": "tools/release-gate.py",
+          "description": "Fail-closed exact-SHA verified CI and asset assembly"
+        },
+        {
+          "kind": "test",
+          "ref": "tests/test_release_gate.py",
+          "description": "11 release safety regressions"
+        },
+        {
+          "kind": "documentation",
+          "ref": "docs/RELEASE_PROCESS.md",
+          "description": "Four-stage operator approval design"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -2043,6 +2076,14 @@
       "id": "TAVI-EXT-DEV-SHADOW-129",
       "status": "review",
       "reason": "Source and regression tests implemented; real Windows and Android protected Companion .tavix install/open/revert remain unaccepted."
+    },
+    {
+      "id": "TAVI-RELEASE-131-OP",
+      "status": "review",
+      "next_action": "After separate operator approval of any Git push: verify exact CI workflows and candidate manifest, configure github-pages required reviewers, keep public release disabled until explicitly authorized; Windows/Android native tests before acceptance.",
+      "blockers": [
+        "Remote GitHub run, ZipRunner acceptance and native device checks not yet performed."
+      ]
     }
   ],
   "validation": {
@@ -2379,11 +2420,19 @@
         "command": "node --test client/tests/local-tavix-shadow-129.test.mjs",
         "environment": "Linux Node; Windows and Android native QA pending",
         "evidence_ref": "docs/TAVI_LOCAL_TAVIX_DEVELOPER_SHADOW_0129.adoc"
+      },
+      {
+        "id": "TAVI-LOCAL-PREVIEW-CSP-130-SOURCE",
+        "description": "Local CSS CSP-safe inline preparation and conservative rejection of missing/unsafe assets",
+        "status": "passed",
+        "command": "node --test client/tests/local-tavix-preview-loader-130.test.mjs",
+        "environment": "Linux Node VM safe fixture; no native WebView and no Companion JS execution",
+        "evidence_ref": "docs/TAVI_LOCAL_PREVIEW_CSP_0130.adoc"
       }
     ]
   },
   "handover": {
-    "next_pass": "Import exact 0.3.128 ZIP in local ZipRunner. On a normal account or with Developer Mode off, Apps must hide Install .tavix. With LoopRD-granted developer access and Settings switch on, install a reviewed local test package. Disable/revoke developer permission to verify installation is blocked. Test Windows and Android separately. No GitHub push or release.",
+    "next_pass": "Import 0.3.131 through local ZipRunner. Verify source and workflow regression tests, and only after separate operator approval of Git push check exact GitHub CI. No auto-publication or Pages deployment; native Windows/Android acceptance pending.",
     "risks": [
       "Embedded games are opaque-origin sandboxed; current Life may require an adaptation for storage/cookies. Tavi cannot grant allow-same-origin to GitHub Pages games sharing its web origin.",
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
@@ -2529,30 +2578,35 @@
       "id": "TAVI-EXT-LOCAL-127-OP",
       "description": "On Windows and Android, select local .tavix from device, inspect manifest/permissions/revision, approve and launch in sandbox, restart, test SDK capabilities, remove; no publisher grants or automatic publication.",
       "status": "required"
+    },
+    {
+      "id": "TAVI-RELEASE-131-OP",
+      "description": "Import 0.3.131 through local ZipRunner. Verify source tests, user-approved exact-SHA CI evidence, protected github-pages environment configuration, local Windows/Android operation. Do not publish, push or authorize a release implicitly.",
+      "status": "required"
     }
   ],
   "release": {
     "requested": false,
     "requires_operator_approval": true,
-    "notes": "Local-only ZipRunner candidate. No GitHub push, tag, public CI, release or deployment authorized."
+    "notes": "Local ZipRunner QA only. No push, release, tag, public catalog or deployment authorized."
   },
   "release_notes": {
-    "version": "0.3.129",
-    "summary": "Developer Mode can shadow protected first-party UI extensions with a local SHA-locked TaviX package; original installation and privileges stay intact, with one-click restore. Windows/Android acceptance pending.",
+    "version": "0.3.131",
+    "summary": "Manual read-only exact-SHA candidate preparation, manual Pages, cross-platform QA test repairs. No public release.",
     "server_unchanged": true,
     "server_release": "0.3.121",
     "database_schema_version": 12,
-    "database_migration": "none; UI/client-only source changes, protected state unchanged",
-    "native_qa": "0.3.129 protected Companion shadow preview and restore require Windows/Android native operator review.",
-    "browser_qa": "Node ZIP/security tests passed; real Chromium rendered UI blocked by environment"
+    "database_migration": "none; CI/workflow/tests/docs only, schema 12 unchanged",
+    "native_qa": "Windows/Android local operator acceptance remains pending; no native runtime change.",
+    "browser_qa": "Stale Favorites button assertion replaced by context-menu interaction; actual GitHub browser CI pending."
   },
   "verification_summary": {
-    "source_candidate": "0.3.129",
-    "browser_qa": "Source QA and ZIP decompression tests; real browser UI QA blocked in current environment",
-    "native_acceptance": "0.3.129 local protected TaviX shadow preview Windows/Android pending operator acceptance.",
-    "git_push": "Not performed nor authorized for 0.3.129; local ZipRunner development only.",
+    "source_candidate": "0.3.131",
+    "browser_qa": "Stale Favorites UI QA now uses Shift+F10 context menu, remote browser run pending",
+    "native_acceptance": "Windows CRLF source assertion repaired; native Windows/Android installer acceptance pending.",
+    "git_push": "No Git push, public release, tag, Pages deployment or approvals authorized.",
     "server_deploy": "unchanged from 0.3.107; LoopRD 0.4 Wallet rollout remains separately pending",
     "database_schema": "12 unchanged; no migration in 0.3.108",
-    "operator_review": "Dev shadow preview source implemented; original core app retained; native Windows/Android not accepted; Checkers M1 unchanged."
+    "operator_review": "Release candidate flow manually invoked/read-only; verify GitHub env required reviewers before any explicit web publication."
   }
 }

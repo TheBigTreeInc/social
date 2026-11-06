@@ -1656,6 +1656,24 @@ async function openChatWindow(peer){
    windowHandle.once('tauri://error',e=>toast('Could not open conversation window: '+String(e.payload)));
  }catch(e){toast('Could not open conversation: '+e.message);}
 }
+// Anonymous developer-preview frames may report bounded diagnostic codes only.
+// These reports are untrusted UI telemetry, never an identity or privilege grant.
+const LOCAL_PREVIEW_STATUS_CODES=new Set(['assets_prepared','document_loaded','script_error','resource_error','policy_violation','css_missing','css_cycle','css_budget','css_unsafe',
+ 'css_import_missing','css_import_unsupported','css_asset_missing','css_asset_unsupported','script_missing','render_error']);
+window.addEventListener('message',event=>{
+ const frame=document.querySelector('#tavi-extension-surface iframe');
+ if(event.data?.type!=='tavi.local.preview-status/v1'||event.source!==frame?.contentWindow||
+    !frame.src?.includes('/local-extension-host.html')||
+    (!activeLocalTavix&&!activeDeveloperOverlay))return;
+ const code=event.data.code;
+ if(typeof code!=='string'||!LOCAL_PREVIEW_STATUS_CODES.has(code))return;
+ // Untrusted iframe code can send more messages; never let it flood diagnostics.
+ const count=Number(frame.dataset.previewStatusCount||0);
+ if(count>=4)return;
+ frame.dataset.previewStatusCount=String(count+1);
+ diagnosticEvents.record({area:'extension',operation:`local_preview.${code}`,
+  result:['assets_prepared','document_loaded'].includes(code)?'ok':'error'});
+});
 window.addEventListener('message',async e=>{if(e.origin!==location.origin||e.source!==document.getElementById('portrait-frame')?.contentWindow||e.data?.type!=='looprd.portrait.selected/v1'||!state.api)return;const code=e.data.code;try{const result=await state.api.saveProfile({schema:'looprd.social.profile/v1',profileId:state.profile.profileId,displayName:state.profile.displayName,appearance:state.profile.appearance||null,portraitCode:code},state.revision);state.profile=result.profile;state.revision=result.revision;state.avatarCode=code;toast('Portrait saved to Social.');}catch(error){toast(error.message);}});
 window.addEventListener('focus',()=>{if(state.api){refresh();void refreshGoldBalance(state.api);if(Date.now()-extensionLastCheckedAt>=EXTENSION_CHECK_INTERVAL)void loadExtensionStore();}});
 const sessionRetry=createSessionRetry({retry:()=>restoreSession()});

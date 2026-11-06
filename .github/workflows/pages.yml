@@ -1,26 +1,68 @@
+# Deliberately no push/tag/workflow_run trigger. Publishing requires manual intent.
 name: Publish Tavi web client to GitHub Pages
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: ['client/**', 'sdk/**', 'integrations/openclaw/**', '.github/workflows/pages.yml', 'docs/PUBLIC_CLIENTS.md']
+    inputs:
+      target_sha:
+        description: 'Exact 40-character commit SHA to deploy (must still be main HEAD)'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type PUBLISH-TAVI-WEB to approve this public deployment'
+        required: true
+        type: string
 permissions:
   contents: read
-  pages: write
-  id-token: write
+  actions: read
 concurrency:
   group: tavi-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
+      - name: Reject missing publication confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          test "$CONFIRMATION" = 'PUBLISH-TAVI-WEB' || { echo 'Explicit publication confirmation missing' >&2; exit 1; }
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_sha }}
+          persist-credentials: false
+      - name: Verify exact current main SHA before publishing
+        env:
+          TARGET_SHA: ${{ inputs.target_sha }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python - <<'PY'
+          import os,re,subprocess
+          sha=os.environ['TARGET_SHA']
+          if not re.fullmatch(r'[0-9a-fA-F]{40}',sha):
+              raise SystemExit('Refusing non-SHA deployment')
+          actual=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          if actual.lower()!=sha.lower():
+              raise SystemExit('Checkout SHA mismatch')
+          main=subprocess.check_output(['gh','api',f'repos/{os.environ["GH_REPO"]}/branches/main','--jq','.commit.sha'],text=True).strip()
+          if main.lower()!=sha.lower():
+              raise SystemExit('Main moved; refusing stale Pages deployment')
+          PY
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify all required CI passed for exact commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_SHA: ${{ inputs.target_sha }}
+          CANDIDATE_CHECK_ONLY: '1'
+        run: python tools/release-gate.py
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Install client dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
         working-directory: client
       - name: Build and verify browser app
         run: npm run web:build && npm run web:verify
@@ -31,7 +73,7 @@ jobs:
           cp docs/PUBLIC_CLIENTS.md client/dist/docs/README.md
           cp sdk/README.md client/dist/sdk/README.md
           touch client/dist/.nojekyll
-      - name: Upload standalone web client (even when Pages is disabled)
+      - name: Upload standalone web client for review
         uses: actions/upload-artifact@v4
         with:
           name: tavi-web-client-pages-ready
@@ -45,13 +87,31 @@ jobs:
   deploy:
     runs-on: ubuntu-24.04
     needs: build
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Verify GitHub Pages is enabled
+      - name: Require configured GitHub environment reviewers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          echo 'GitHub Pages must be enabled under Settings > Pages > Build and deployment: GitHub Actions.'
-          echo 'The standalone tavi-web-client-pages-ready artifact remains downloadable even if deployment fails.'
+          python - <<'PY'
+          import json,os,subprocess
+          result=subprocess.run(['gh','api',f'repos/{os.environ["GH_REPO"]}/environments/github-pages'],capture_output=True,text=True)
+          if result.returncode:
+              raise SystemExit('Cannot verify protected github-pages environment: refusing deployment')
+          env=json.loads(result.stdout)
+          configured=any(rule.get('type')=='required_reviewers' and rule.get('reviewers')
+                         for rule in env.get('protection_rules',[]))
+          if not configured:
+              raise SystemExit('github-pages has no required reviewers: refusing deployment')
+          print('Protected github-pages environment reviewers verified')
+          PY
       - id: deployment
         uses: actions/deploy-pages@v4

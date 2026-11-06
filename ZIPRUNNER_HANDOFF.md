@@ -1,3 +1,19 @@
+## Tavi 0.3.131 — Release pipeline refactor (local-only)
+
+Base 0.3.130. Replace repeated `workflow_run` release jobs with one manually
+invoked, read-only exact-main-SHA CI candidate collector. A push is not publication.
+The candidate gate fails visibly on missing/failed CI and emits six reviewed
+artifact bundles, hashes and operator-pending JSON. Pages is also manual-only:
+exact SHA, all eight CI checks, explicit confirmation and protected `github-pages`
+environment required; repository admin must configure required reviewers.
+Correct Windows CRLF Cargo.lock test and obsolete favorite-star UI QA test.
+No GitHub Release workflow, new secrets, public push, account/config changes,
+server migration, release approval or native acceptance. See `docs/RELEASE_PROCESS.md`.
+
+## Tavi 0.3.130 — Local TaviX preview stylesheet loader
+
+0.3.130 corrects the inline-CSS native CSP mismatch for untrusted local TaviX developer previews, preflights required styles before scripts, and records only bounded anonymous diagnostic codes. Workboard/operator gates are unchanged; no native device QA performed. `docs/TAVI_LOCAL_PREVIEW_CSP_0130.adoc` contains implementation and safety scope. No Git push or public release.
+
 # Tavi 0.3.129 local-only developer shadow
 
 Allow developer-only local previews to shadow protected first-party TaviX application tiles without replacing bundled source or trusted permissions. Revert from app context menu or Developer Mode off. Test with ZipRunner. Windows/Android operator acceptance pending; GitHub release forbidden. See `docs/TAVI_LOCAL_TAVIX_DEVELOPER_SHADOW_0129.adoc`.

@@ -22,7 +22,7 @@ test('Vite injects package version into About and stable updater without a hardc
 
 test('client, Tauri, Cargo, root, ZipRunner metadata versions agree', () => {
   const cargo = text('../src-tauri/Cargo.toml');
-  const lock = text('../src-tauri/Cargo.lock');
+  const lock = text('../src-tauri/Cargo.lock').replaceAll('\r\n','\n');
   assert.equal(root.version, client.version);
   assert.equal(config.version, client.version);
   assert.equal(stamp.version, client.version);
