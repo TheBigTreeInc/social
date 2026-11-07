@@ -1,0 +1,73 @@
+= Tavi 0.3.138 — Windows-native TaviX package chooser
+:toc:
+
+== Verified symptom and diagnosis
+
+Operator screenshots on Tavi 0.3.137 confirm that both _Install .tavix_
+and _Browse files directly_ respond in the UI but neither opens a file
+chooser on Windows. Both previously relied on HTML `<input type="file">`,
+so the supposed fallback was not independent. The exact cause inside the
+operator's WebView2 runtime has NOT yet been proven; do not classify the
+older CSS or developer permission handling as the confirmed cause.
+
+== Scope
+
+* New `tavi_native_pick_tavix` Tauri command is registered on the main
+  Windows WebviewWindow only. Windows opens a native Win32 common-file
+  dialog through `GetOpenFileNameW` on a blocking background thread.
+* The native side accepts only `.tavix`, bounds reads to 12 MB, returns
+  filename and Base64 bytes, never filesystem paths. Cancel and OS errors
+  are distinct.
+* The JS adapter converts the result into a bounded File-like object and
+  calls the **existing** `selectLocalTavix` validator and explicit
+  install-approval UI. LoopRD developer access is checked before selection,
+  after selection, and before saving.
+* Web and Android continue to use standard HTML selection. Nothing
+  changes their native package/update permissions, UI or storage.
+* No backend/database or TaviX manifest/permission contract change.
+* Uses the Windows Comdlg32/User32 system libraries and already locked
+  `base64 0.22.1` dependency. Cargo package metadata is synchronized.
+
+== Safety and limitations
+
+The native command is limited to the Tavi main WebView; sandboxed
+extensions are not granted access. A Windows system dialog is not the
+same as granting arbitrary filesystem reads. The native code reads only
+an operator-selected `.tavix` package with bounded size; it does not
+provide a path-based read API. Validation retains SHA-256, publisher,
+permission and install approval checks. Before installing, compare
+package identity and digest. Do not use the known memory-risk Companion
+0.6.37 bundle as the first acceptance fixture.
+
+This pass cannot perform a native Windows build or confirm that the dialog
+opens in the operator's environment. Rust FFI ABI, threading and focus
+behaviour require Windows build/runtime acceptance; source/Node tests alone
+do not prove them. If the dialog is not visible, record whether the status
+says `Opening Windows file dialog`, `No package selected`, or
+`Windows file dialog failed (code ...)`.
+
+== Windows operator acceptance
+
+. Import exact 0.3.138 ZIP to ZipRunner. Build the Windows installer; fail
+  on any Cargo compile or linker errors.
+. Launch the rebuilt Tavi from ZipRunner, verify About version 0.3.138.
+. With LoopRD developer grant and Developer Mode on, go Apps > Install
+  .tavix; confirm a **Windows native OS file dialog** appears above Tavi.
+. Cancel; confirm `No package selected`. Retry and select a harmless valid
+  package; confirm publisher, permissions, SHA-256 and explicit approval.
+. Reject the approval, retry and approve; verify installed tile in Apps > All.
+. Disable Developer Mode and revoke the LoopRD developer grant; confirm
+  installer is unavailable and cannot be bypassed through the UI.
+. Repeat on Android with the ordinary Android file input; Android must not
+  invoke `tavi_native_pick_tavix`.
+. Do not push, deploy or publish without a separate operator authorization.
+
+== Regression commands
+
+[source,shell]
+----
+node --test client/tests/local-tavix-picker-136.test.mjs client/tests/local-tavix-launcher-137.test.mjs client/tests/local-tavix-native-dialog-138.test.mjs
+node --test client/tests/local-tavix-install-127.test.mjs client/tests/local-tavix-developer-gate-128.test.mjs
+npm run verify
+python tools/generate-looprd.py --check
+----

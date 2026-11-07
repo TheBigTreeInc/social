@@ -1,0 +1,51 @@
+= Tavi 0.3.136 — Native local TaviX chooser repair
+:revnumber: 0.3.136
+:toc:
+
+== Report
+
+On a LoopRD-authorized Developer Mode account in Tavi 0.3.135, selecting
+"Install .tavix" appeared to do nothing. Source review found that the Apps
+button programmatically called `.click()` on `<input type=file hidden>`. The
+specific failing WebView condition has not been reproduced in this authoring
+environment; a synthetic click on an invisible input is a fragile native file
+picker trigger.
+
+== Change
+
+* Render a styled label with a real file input covering its interactive area;
+  Windows WebView2/Android WebView receive the direct user gesture rather than
+  a JavaScript-proxied click on a display:none element.
+* Keep the clickable input accessible, keyboard focusable, and at least 44px
+  high on touch devices; use `:focus-within` indication.
+* Clear `input.value` after each `change` event so the same `.tavix` file may
+  be selected repeatedly. Cancel means no import; no credentials or file
+  paths are logged.
+* Check the current developer gate on click and selection. Recheck the current
+  authenticated LoopRD developer permission before parsing, and again before
+  install approval. Deny on stale session, account change or permission revoke.
+* Report missing app-storage scope explicitly instead of silently returning.
+* No new native dependency or expanded permissions. Package ZIP validation,
+  sandbox privileges, first-party shadow isolation and published catalog
+  permissions remain unchanged.
+
+== Tests
+
+`node --test client/tests/local-tavix-picker-136.test.mjs client/tests/local-tavix-developer-gate-128.test.mjs`
+
+Retain full `npm run verify`, LoopRD descriptor checks and exact-ZIP package QA.
+
+== Operator acceptance — not yet passed
+
+. On native Windows 355x630 with LoopRD Developer Mode enabled, open Apps,
+  press Install .tavix, and verify the operating-system chooser appears.
+. Choose the harmless, previously issued local smoke-test package; confirm
+  the review dialog shows manifest, permissions and SHA-256. Cancel once.
+. Select the same package again and approve; verify it appears under Apps > All.
+. Repeat on Android. Confirm no installer for normal accounts, and that
+  revoked Developer Mode cannot trigger or commit an install.
+. Do not use the unsafe Companion 0.6.37 preview as a picker smoke test until
+  native memory containment and Companion canvas fixes are separately accepted.
+
+No GitHub push, release, repository configuration migration, server change
+or operator sign-off is implied by this source repair.

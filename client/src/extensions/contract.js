@@ -2,7 +2,7 @@
 // silently accepting a grant the installed host does not understand.
 export const HOST_API_VERSION = '1.0.0';
 export const PERMISSIONS = Object.freeze(['ui.panel', 'ui.toast', 'storage.private', 'ziprunner.review']);
-export const SUPPORTED_SLOTS = Object.freeze(['app.store', 'app.launcher']);
+export const SUPPORTED_SLOTS = Object.freeze(['app.store', 'app.launcher', 'settings.app']);
 const ID = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+){2,}$/;
 const FILE = /^(?!\/)(?!.*(?:^|\/)\.\.?\/)[a-zA-Z0-9_/-]+\.(?:html|css|js|png|svg|webp)$/;
 const ICON = /^(?!\/)(?!.*(?:^|\/)\.\.?\/)[a-zA-Z0-9_/-]+\.(?:png|svg|webp)$/;
@@ -23,6 +23,7 @@ export function validateExtensionManifest(m,hostVersion=HOST_API_VERSION){
  if(!plain(m.entrypoints)||!only(m.entrypoints,['panel'])||typeof m.entrypoints.panel!=='string'||!FILE.test(m.entrypoints.panel))throw Error('Invalid entrypoint');
  if(!Array.isArray(m.permissions)||m.permissions.length>10||new Set(m.permissions).size!==m.permissions.length||m.permissions.some(p=>!PERMISSIONS.includes(p))||!m.permissions.includes('ui.panel'))throw Error('Unsupported extension permission');
  if(!Array.isArray(m.contributions)||m.contributions.length>12||m.contributions.some(c=>!plain(c)||!only(c,['slot','id','label','action'])||!SUPPORTED_SLOTS.includes(c.slot)||typeof c.id!=='string'||!/^[-a-z0-9]{1,40}$/.test(c.id)||typeof c.label!=='string'||c.label.length>50||!c.label.trim()||c.action!=='openPanel'))throw Error('Unsupported contribution');
+ if(m.contributions.filter(c=>c.slot==='settings.app').length>1)throw Error('Only one settings entry is allowed per app');
  if(m.platforms!==undefined&&(!Array.isArray(m.platforms)||m.platforms.length<1||m.platforms.some(p=>!['web','windows','android'].includes(p))||new Set(m.platforms).size!==m.platforms.length))throw Error('Invalid platforms');
  if(compareVersions(hostVersion,m.hostApi.min)<0||compareVersions(hostVersion,m.hostApi.maxExclusive)>=0)return {compatible:false,reason:`Requires Tavi extension API ${m.hostApi.min}–${m.hostApi.maxExclusive}`};
  return {compatible:true,reason:''};

@@ -56,10 +56,10 @@ test('turning off the opt-in during a pending request blocks installation',async
 
 test('Tavi launcher and file-picker handlers require the same developer gate',()=>{
  const source=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
- assert.match(source,/\$\{canInstallLocalTavix\(state\)\?`<div class="tavi-local-package-toolbar"/);
- assert.match(source,/if\(name==='local-tavix-picker'\)\{if\(canInstallLocalTavix\(state\)\)/);
- assert.match(source,/document\.querySelectorAll\('\[data-local-file-picker\]'\)\.forEach\(el=>el\.addEventListener\('click',\(\)=>\{if\(canInstallLocalTavix\(state\)\)/);
- assert.match(source,/if\(file&&canInstallLocalTavix\(state\)\)void selectLocalTavix\(file\)/);
+ assert.match(source,/\$\{canInstallLocalTavix\(state\)\?`<div class="tavi-local-package-toolbar(?: \w[\w-]*)?"/);
+ assert.match(source,/if\(name==='local-tavix-picker'\)\{toast\('Open Apps and select Install \.tavix/);
+ assert.match(source,/wireLocalPackagePicker\(document,\{/);
+ assert.match(source,/onSelected:file=>selectLocalTavix\(file\)/);
  assert.match(source,/verifyLocalTavixDeveloperGrant\(state,updateDeveloperPermission\)/);
  assert.match(source,/function localTavixDialog\(\)\{\s*if\(!pendingLocalTavix\|\|!canInstallLocalTavix\(state\)\)return '';/);
 });

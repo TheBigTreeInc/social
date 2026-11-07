@@ -1,3 +1,42 @@
+## Tavi 0.3.138 — Windows-native package chooser (local-only)
+
+Base 0.3.137. The user reproduced a missing file chooser in the native
+Windows client even after the HTML file-input fallback appeared. Both prior
+routes depended on WebView2 HTML selection; this pass adds a separate
+Win32 `GetOpenFileNameW` dialog behind the main-window-only
+`tavi_native_pick_tavix` Tauri command. Filename/bytes are validated
+and passed to the existing LoopRD-gated TaviX installer, never a raw path.
+Web/Android retain ordinary HTML selection. Source tests pass; Windows
+Rust build and native dialog acceptance remain unverified. No release.
+See `docs/TAVI_NATIVE_WINDOWS_TAVIX_DIALOG_0138.adoc`.
+
+## Tavi 0.3.137 — Restore known-working local package button (local-only)
+
+Base 0.3.136. Moved developer-only Install .tavix back above the Apps grid,
+restored the synchronous button -> file picker path from 0.3.129, and added
+an inline direct native file-input fallback and status for WebView failures.
+The prior diagnosis of a blocked hidden file input was not reproduced; root
+cause remains unconfirmed pending native Windows/Android acceptance. No change
+to LoopRD authorizations, installed packages, permissions, or release gates.
+See `docs/TAVI_PICKER_ROUTING_REPAIR_0137.adoc`.
+
+## Tavi 0.3.136 — Native developer TaviX chooser repair (local-only)
+
+Base 0.3.135. Apps > Install .tavix now uses an actual file input, with a
+transparent native hit target receiving the user's gesture. The previous
+button-to-hidden-input .click() path could fail silently in Windows WebView2
+or Android. Repeated file selection is supported, while stale/missing LoopRD
+developer permission remains fail-closed. Missing extension storage now gives
+visible feedback. All local ZIP integrity, approval and sandbox checks remain.
+Native OS chooser verification on Windows/Android is pending; no public push.
+See `docs/TAVI_NATIVE_TAVIX_PICKER_0136.adoc`.
+
+## Tavi 0.3.135 — Shared Settings directory and app sources (local-only)
+
+Base 0.3.134. Host-owned repository settings move from App Store to Settings -> Apps & extensions -> App sources. Approved installed extensions can declare one `settings.app` link and open in their sandbox with `host.info().launchContext=settings`; game preferences remain inside games. Account, permissions, repository source pins and existing on-device subscription data are preserved. No server/schema changes.
+
+Operator acceptance required: Windows and Android Settings navigation and dark mode, App Store return, repository add/remove and source checks, installed app settings link and sandbox/Back behavior. No Git push or publication.
+
 ## Tavi Social 0.3.134 — OpenClaw DM bridge compatibility (local-only)
 
 Base 0.3.133. Fix 1000-character silent reply drop with bounded numbered DMs,

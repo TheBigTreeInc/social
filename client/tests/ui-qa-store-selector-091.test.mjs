@@ -21,12 +21,11 @@ test('App Store QA still covers user-confirmed installation, cancellation and Ho
  ])assert(source.includes(token),token);
 });
 
-test('App Store browser QA explicitly opens and recloses collapsed repository diagnostics before probing the URL input',()=>{
- const manage=source.indexOf("await page.locator('[data-marketplace-manage]').click()");
- const input=source.indexOf("await visible(page,'#extension-repository-form input[name=\"repository\"]')");
- assert(manage>0&&input>manage,'Open Manage repositories before expecting its hidden form');
- assert.match(source,/const repositoryDetails=page\.locator\('#tavi-marketplace-repositories'\)/);
- assert.match(source,/repositoryDetails\.locator\('summary'\)\.click\(\)/);
- assert.match(source,/expanded App Store repositories/);
- assert.match(source,/waitFor\(\{state:'hidden',timeout:6000\}\)/);
+test('App Store browser QA uses central Settings for repositories, never a duplicate App Store form',()=>{
+ const open=source.indexOf("await page.locator('.tavi-marketplace-settings-help [data-action=\"settings-sources\"]').click()");
+ const form=source.indexOf("await visible(page,'#extension-repository-form input[name=\"repository\"]')");
+ assert(open>0&&form>open);
+ assert.match(source,/Settings app sources/);
+ assert.doesNotMatch(source,/repositoryDetails\.locator\('summary'\)/);
+ assert.match(source,/Settings app sources.*?[\s\S]*?return to App Store/);
 });

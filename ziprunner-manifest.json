@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.134",
-    "base_version": "0.3.133"
+    "version": "0.3.138",
+    "base_version": "0.3.137"
   },
   "update": {
-    "id": "TAVI-20261107-OPENCLAW-DM-BRIDGE-0134",
+    "id": "TAVI-20261107-NATIVE-DIALOG-0138",
     "kind": "source_update",
-    "created_at": "2026-11-07T10:46:00+01:00",
-    "summary": "Repair OpenClaw compatibility and DM reply delivery; source-only, native bot host acceptance pending."
+    "created_at": "2026-11-07T17:07:00+01:00",
+    "summary": "Add native Windows file dialog for developer TaviX installer; preserve LoopRD grant, TaviX validation and web/Android paths."
   },
   "planned_work": [
     {
@@ -1695,6 +1695,48 @@
           "description": "Six Contacts/root-navigation source regressions"
         }
       ]
+    },
+    {
+      "id": "TAVI-SETTINGS-HUB-135",
+      "summary": "Host App sources now owns existing repository subscriptions; approved installed extensions may declare sandboxed Settings entry points, without new permissions.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/ui/settings-registry.js",
+          "description": "Approval-checked declarative registry"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/ui/settings-view.js",
+          "description": "Central host-owned repository settings"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/settings-hub-135.test.mjs",
+          "description": "Five targeted settings and extension-isolation tests"
+        }
+      ]
+    },
+    {
+      "id": "TAVI-LOCAL-PICKER-136",
+      "summary": "Replace programmatic click on hidden TaviX input with directly clickable, accessible native input overlay; user-visible gate/storage error states without changing LoopRD authorization.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "client/src/ui/local-package-picker.js",
+          "description": "Permission-aware event routing and repeat selection"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/main.js",
+          "description": "Native file input is direct user gesture; import still re-verifies server grant"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/local-tavix-picker-136.test.mjs",
+          "description": "Five regression tests for picker behavior and gating"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -2111,6 +2153,18 @@
       "status": "review",
       "priority": "medium",
       "description": "Native acceptance for 355×630 Windows and Android Apps/Chats/Games root navigation, Contacts list and friend requests, pill rounding and restore/back, dark/light themes; do not infer from source tests."
+    },
+    {
+      "id": "TAVI-SETTINGS-HUB-135-OP",
+      "status": "review",
+      "priority": "high",
+      "description": "On Windows 355x630 and Android, confirm Material Settings navigation, existing repository retention, installed extension settings links and Back, dark mode, no first-party privilege escalation or silent publisher changes."
+    },
+    {
+      "id": "TAVI-LOCAL-PICKER-136-OP",
+      "status": "review",
+      "priority": "high",
+      "description": "On Windows WebView2 and Android, with a LoopRD-authorized developer account and Developer Mode on: click Install .tavix; verify OS file chooser opens, same package can be reselected, permission revocation blocks installation, valid test app presents review, cancel is safe. No Companion 0.6.37 memory-load acceptance on affected PC."
     }
   ],
   "validation": {
@@ -2459,7 +2513,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Import 0.3.134 in ZipRunner, verify exact-package OpenClaw tests and test with a disposable Tavi bot account against actual OpenClaw CLI 2026.6.10 before touching Pegas service. Check long DM chunking, cooldown pacing, read receipts and restart; preserve private credentials; no Git push/release.",
+    "next_pass": "Windows NSIS build and real 0.3.138 native .tavix file-dialog acceptance; preserve all release gates.",
     "risks": [
       "Embedded games are opaque-origin sandboxed; current Life may require an adaptation for storage/cookies. Tavi cannot grant allow-same-origin to GitHub Pages games sharing its web origin.",
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
@@ -2616,6 +2670,16 @@
       "id": "TAVI-UX-CONTACTS-133-OP",
       "status": "required",
       "description": "On Windows and Android confirm root Apps/Games/Chats have no redundant Back toolbar, Home remains accessible, Contacts displays current LoopRD friends/requests and Add friend works; test Back and dark mode."
+    },
+    {
+      "id": "TAVI-SETTINGS-HUB-135-OP",
+      "status": "required",
+      "description": "Verify App Store has no repository settings gear; Settings > Apps & extensions > App sources shows existing subscriptions and lets operator add/remove with approval. Install one settings.app test extension and verify Back/permissions on Windows and Android."
+    },
+    {
+      "id": "TAVI-LOCAL-PICKER-136-OP",
+      "status": "required",
+      "description": "Confirm native OS picker on Windows/Android, input selection and review modal, repeat selection, cancel, missing/withdrawn developer grant, and no installer for normal users. Do not reproduce unsafe Companion preview on affected PC."
     }
   ],
   "release": {
@@ -2624,19 +2688,19 @@
     "notes": "Local ZipRunner QA only. No push, release, tag, public catalog or deployment authorized."
   },
   "release_notes": {
-    "version": "0.3.134",
-    "summary": "OpenClaw bridge: no silent long-reply drop, bounded numbered DM chunks with cooldown, CLI flag probing, 15-minute timeout and checkpointed read receipts. No client/server schema change.",
+    "version": "0.3.138",
+    "summary": "Windows-native file selection bypasses WebView2 HTML file chooser failure. Existing auth, validation, and manual approval remain.",
     "server_unchanged": true,
     "server_release": "0.3.121",
     "database_schema_version": 12,
     "database_migration": "none",
-    "native_qa": "Real OpenClaw 2026.6.10 integration and Windows/Android app acceptance pending.",
-    "browser_qa": "unchanged from 0.3.133; no browser visual changes."
+    "native_qa": "Windows Cargo build, real native file dialog and Android WebView input require operator acceptance.",
+    "browser_qa": "Focused native adapter and HTML-picker regression tests passed; native dialog not executed here."
   },
   "verification_summary": {
-    "source_candidate": "0.3.134",
+    "source_candidate": "source_candidate_native_pending",
     "browser_qa": "Focused source regression passed; real Windows/Android browser layout not yet accepted.",
-    "native_acceptance": "Pending 355x630 Windows and Android UI review for Contacts and root navigation.",
+    "native_acceptance": "pending",
     "git_push": "No Git push, public release, tag, Pages deployment or approvals authorized.",
     "server_deploy": "unchanged from 0.3.107; LoopRD 0.4 Wallet rollout remains separately pending",
     "database_schema": "12 unchanged; no migration in 0.3.108",

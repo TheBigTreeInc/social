@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.130",
+  "version": "0.3.138",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -2714,6 +2714,23 @@
         "Windows/Android and process memory containment remain separate acceptance gates"
       ],
       "test_ref": "client/tests/local-tavix-preview-loader-130.test.mjs"
+    },
+    {
+      "id": "TAVI-EXT-NATIVE-PICKER-0138",
+      "description": "Windows-native file-dialog command and bounded payload adapter, unchanged LoopRD/extension gate",
+      "mode": "automated",
+      "checks": [
+        "node --test client/tests/local-tavix-native-dialog-138.test.mjs",
+        "node --test client/tests/local-tavix-install-127.test.mjs client/tests/local-tavix-developer-gate-128.test.mjs"
+      ]
+    },
+    {
+      "id": "TAVI-EXT-NATIVE-PICKER-0138-WINDOWS",
+      "description": "Windows NSIS build and main-window native dialog appears, cancellation works, package approval honored",
+      "mode": "manual",
+      "checks": [
+        "OPERATOR-APPROVAL-REQUIRED"
+      ]
     }
   ]
 }

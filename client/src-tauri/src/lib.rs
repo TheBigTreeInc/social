@@ -186,10 +186,122 @@ fn android_updater_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
         .build()
 }
 
+
+// Native Windows TaviX file picker. WebView2 may decline HTML file inputs without
+// reporting an error; use the OS common-file dialog instead. The selected path
+// never crosses the JS boundary. Only the authenticated main window can call it.
+#[cfg(target_os = "windows")]
+mod native_tavix_picker {
+    use std::{ffi::{c_void, OsString}, fs::File, io::Read,
+        mem, os::windows::ffi::OsStringExt, path::PathBuf};
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+
+    const MAX_PACKAGE_BYTES: u64 = 12_000_000;
+    const OFN_EXPLORER: u32 = 0x0008_0000;
+    const OFN_FILEMUSTEXIST: u32 = 0x0000_1000;
+    const OFN_PATHMUSTEXIST: u32 = 0x0000_0800;
+    const OFN_HIDEREADONLY: u32 = 0x0000_0004;
+    const OFN_NOCHANGEDIR: u32 = 0x0000_0008;
+
+    // ABI layout matches the Win32 OPENFILENAMEW structure (commdlg.h).
+    #[repr(C)]
+    struct OpenFilenameW {
+        l_struct_size: u32,
+        hwnd_owner: *mut c_void,
+        h_instance: *mut c_void,
+        lpstr_filter: *const u16,
+        lpstr_custom_filter: *mut u16,
+        n_max_cust_filter: u32,
+        n_filter_index: u32,
+        lpstr_file: *mut u16,
+        n_max_file: u32,
+        lpstr_file_title: *mut u16,
+        n_max_file_title: u32,
+        lpstr_initial_dir: *const u16,
+        lpstr_title: *const u16,
+        flags: u32,
+        n_file_offset: u16,
+        n_file_extension: u16,
+        lpstr_def_ext: *const u16,
+        l_cust_data: isize,
+        lpfn_hook: *const c_void,
+        lp_template_name: *const u16,
+        pv_reserved: *mut c_void,
+        dw_reserved: u32,
+        flags_ex: u32,
+    }
+    #[link(name = "Comdlg32")]
+    unsafe extern "system" {
+        fn GetOpenFileNameW(ofn: *mut OpenFilenameW) -> i32;
+        fn CommDlgExtendedError() -> u32;
+    }
+    #[link(name = "User32")]
+    unsafe extern "system" { fn GetForegroundWindow() -> *mut c_void; }
+
+    pub fn pick() -> Result<serde_json::Value, String> {
+        let filter: Vec<u16> = "TaviX packages (*.tavix)\0*.tavix\0All files (*.*)\0*.*\0\0"
+            .encode_utf16().collect();
+        let title: Vec<u16> = "Install local TaviX package\0".encode_utf16().collect();
+        let mut filename: Vec<u16> = vec![0; 32_768];
+        // SAFETY: All pointers refer to live local storage throughout the
+        // blocking Win32 call; all other OPENFILENAMEW fields are initialized.
+        let mut dialog: OpenFilenameW = unsafe { mem::zeroed() };
+        dialog.l_struct_size = mem::size_of::<OpenFilenameW>() as u32;
+        dialog.hwnd_owner = unsafe { GetForegroundWindow() };
+        dialog.lpstr_filter = filter.as_ptr();
+        dialog.n_filter_index = 1;
+        dialog.lpstr_file = filename.as_mut_ptr();
+        dialog.n_max_file = filename.len() as u32;
+        dialog.lpstr_title = title.as_ptr();
+        dialog.flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST
+            | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
+        let selected = unsafe { GetOpenFileNameW(&mut dialog) };
+        if selected == 0 {
+            let code = unsafe { CommDlgExtendedError() };
+            if code == 0 { return Ok(serde_json::json!({"status": "cancelled"})); }
+            return Err(format!("Windows file dialog failed (code {code})"));
+        }
+        let length = filename.iter().position(|&c| c == 0)
+            .ok_or_else(|| "Selected path is too long".to_string())?;
+        let path = PathBuf::from(OsString::from_wide(&filename[..length]));
+        let name = path.file_name().and_then(|name| name.to_str())
+            .ok_or_else(|| "Selected package name is invalid".to_string())?;
+        if !name.to_ascii_lowercase().ends_with(".tavix") {
+            return Err("Please select a .tavix package".to_string());
+        }
+        let file = File::open(&path).map_err(|_| "Cannot open selected package".to_string())?;
+        let metadata = file.metadata().map_err(|_| "Cannot inspect selected package".to_string())?;
+        if !metadata.is_file() || metadata.len() == 0 || metadata.len() > MAX_PACKAGE_BYTES {
+            return Err("Selected package must be under 12 MB".to_string());
+        }
+        let mut bytes = Vec::with_capacity(metadata.len() as usize);
+        file.take(MAX_PACKAGE_BYTES + 1).read_to_end(&mut bytes)
+            .map_err(|_| "Cannot read selected package".to_string())?;
+        if bytes.is_empty() || bytes.len() as u64 > MAX_PACKAGE_BYTES {
+            return Err("Selected package must be under 12 MB".to_string());
+        }
+        // A package's filename is displayed to the user but the absolute path
+        // is never returned. The JS validator still checks manifest and lockfile.
+        Ok(serde_json::json!({"status":"selected","name":name,"base64":STANDARD.encode(&bytes)}))
+    }
+}
+
+#[tauri::command]
+async fn tavi_native_pick_tavix(window: WebviewWindow) -> Result<serde_json::Value, String> {
+    main_window_only(&window)?;
+    #[cfg(target_os = "windows")]
+    {
+        tauri::async_runtime::spawn_blocking(native_tavix_picker::pick)
+            .await.map_err(|_| "Windows file dialog stopped unexpectedly".to_string())?
+    }
+    #[cfg(not(target_os = "windows"))]
+    { Err("Native TaviX selection is available on Windows only".into()) }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![tavi_session_load, tavi_session_save, tavi_session_clear, tavi_android_install_update, tavi_android_test_update, tavi_android_update_status])
+        .invoke_handler(tauri::generate_handler![tavi_session_load, tavi_session_save, tavi_session_clear, tavi_native_pick_tavix, tavi_android_install_update, tavi_android_test_update, tavi_android_update_status])
         .plugin(android_updater_plugin())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())

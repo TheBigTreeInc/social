@@ -1131,3 +1131,31 @@ html[data-theme='dark'] .tavi-menu-panel .tavi-app-page-tabs button[aria-selecte
 .tavi-people-empty{padding:28px 14px;background:var(--tavi-color-surface-raised);border-radius:20px;text-align:center;color:var(--tavi-color-text-muted);font-size:13px;line-height:1.5;}
 .tavi-people-help{margin:17px 3px 0;}
 @media(max-width:345px){.tavi-people-directory{padding:13px 10px!important;}.tavi-people-heading{align-items:flex-start;}.tavi-people-add{padding:8px 9px;}}
+
+/* App Store browsing no longer owns global repository configuration. */
+.tavi-marketplace-settings-help{font-size:12px;color:var(--tavi-color-text-muted,#586d5d);padding:5px 2px 9px;}
+.tavi-marketplace-settings-help button{border:0;padding:3px;background:transparent;color:var(--tavi-color-accent,#247a51);text-decoration:underline;cursor:pointer;font:inherit;}
+
+/* 0.3.136 — direct native TaviX file selection on Windows and Android.
+   The real input, not a synthesized .click() on a hidden element, receives the
+   pointer/keyboard gesture. This is still gated by the LoopRD developer grant. */
+.tavi-menu-panel .tavi-local-file-control{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:8px 14px;overflow:hidden;border:1px solid var(--tavi-color-border);border-radius:999px;background:transparent;color:var(--tavi-color-text);font-size:12px;font-weight:650;white-space:nowrap;cursor:pointer;}
+.tavi-menu-panel .tavi-local-file-control svg{width:16px;height:16px;pointer-events:none;}
+.tavi-menu-panel .tavi-local-file-control>input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:1;font-size:16px;}
+.tavi-menu-panel .tavi-local-file-control:focus-within{outline:2px solid var(--tavi-color-accent);outline-offset:2px;}
+.tavi-menu-panel .tavi-local-file-control:hover{background:var(--tavi-color-surface-raised);}
+@media(pointer:coarse){.tavi-menu-panel .tavi-local-file-control{min-height:44px;}}
+
+/* 0.3.137 — restore the known-working pre-redesign Apps picker position and
+   button event. Keep direct file-input fallback if a WebView declines click(). */
+.tavi-menu-panel .tavi-local-package-shortcut{margin:0 2px 16px;padding:5px 2px 10px;border:0;display:flex;flex-direction:column;align-items:stretch;gap:7px;}
+.tavi-menu-panel .tavi-local-package-shortcut>span{font-size:11px;color:var(--tavi-color-text-muted);}
+.tavi-menu-panel .tavi-local-picker-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.tavi-menu-panel .tavi-local-picker-actions>button{display:inline-flex;gap:7px;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--tavi-color-border);border-radius:999px;padding:8px 15px;background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);font-size:12px;font-weight:650;cursor:pointer;}
+.tavi-menu-panel .tavi-local-picker-actions>button svg{width:16px;height:16px;}
+.tavi-menu-panel .tavi-local-picker-fallback{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;border:1px solid var(--tavi-color-border);padding:8px 12px;background:var(--tavi-color-surface);color:var(--tavi-color-text);font-size:12px;cursor:pointer;overflow:hidden;}
+.tavi-menu-panel .tavi-local-picker-fallback[hidden]{display:none!important;}
+.tavi-menu-panel .tavi-local-picker-fallback>input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:1;font-size:16px;}
+.tavi-menu-panel .tavi-local-picker-fallback:focus-within,.tavi-menu-panel .tavi-local-picker-actions>button:focus-visible{outline:2px solid var(--tavi-color-accent);outline-offset:2px;}
+.tavi-menu-panel #tavi-local-picker-status{margin:0;font-size:11px;line-height:1.4;color:var(--tavi-color-text-muted);}
+.tavi-menu-panel #tavi-local-picker-status[hidden]{display:none!important;}

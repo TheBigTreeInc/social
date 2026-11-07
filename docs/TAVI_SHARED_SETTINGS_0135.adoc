@@ -1,0 +1,50 @@
+= Tavi 0.3.135: Shared Settings for host components and TaviX apps
+:toc:
+
+== Intent
+Tavi remains a messenger first. The core Settings hierarchy is the single discoverable location for host-owned configuration; it is not a repository for every preference from every game. For example, an App Store repository is a host-managed, device-level source configuration; a game character name or match rule remains game-owned and contextual to that game.
+
+== Implemented
+
+* Settings -> Apps & extensions -> App sources is the only form for adding/removing optional repositories. The App Store has an unobtrusive link to the Settings page but no duplicate repository editor or settings gear.
+* The existing `createRepositorySubscriptions` store, its HTTPS validation, fetch-before-subscribe behavior, source-pinning, manual approval, and error diagnostics remain in use; no migration or silent configuration reset.
+* Custom subscriptions in the current implementation are scoped to the Social *server origin on this local device*, not an individual account. This is intentionally preserved and disclosed in the UI; a future migration needs explicit design and consent.
+* Settings -> Apps & extensions lists installed app settings entries declared through a validated manifest contribution. The app stays in its sandbox: a host-owned link is not a host-rendered extension configuration form.
+* The browser SDK's existing `info()` call reports `launchContext: 'settings'` when an app is opened through Settings, otherwise `app`. The feature is advertised as `tavix.settings-entry/v1` and does not add permissions.
+* Contextual Back / app close restores Settings -> Apps & extensions. Opening apps normally follows the previous navigation behavior.
+* Verified installed manifest metadata determines which links may appear. Uninstalled, disabled, changed-source, changed-version or unapproved manifests never register settings links.
+* UI labels, source URLs and diagnostic strings are escaped. Nothing grants access to credentials, other app storage, or first-party privileged capabilities.
+
+== Extension contract
+
+Existing TaviX 1.0 packages remain compatible. An extension can *optionally* declare a maximum of one settings entry with the existing manifest contribution structure:
+
+[source,json]
+----
+{
+  "slot": "settings.app",
+  "id": "preferences",
+  "label": "App preferences",
+  "action": "openPanel"
+}
+----
+
+The app decides what its own settings UI displays. When an app is opened from Settings it may call `sdk.info()` and examine `launchContext`. No arbitrary extension HTML or script is injected into the trusted Settings document. The new contribution is accepted only after the manifest passes normal package validation and explicit install/update review.
+
+== Scope and ownership
+
+[cols="1,1,2",options="header"]
+|===
+|Setting type |Owner |Location
+|Extension repository URL and update source |Tavi host |Settings -> Apps & extensions -> App sources
+|Notification, account, privacy, and appearance defaults |Tavi host |Existing Settings categories
+|Companion preference explicitly published by the reviewed app |Companion |Settings link opens Companion's isolated panel
+|Game display name, match difficulty or temporary seat |Game |In-game menu; only an opt-in account-level preference belongs in global Settings
+|Developer `.tavix` installation |Tavi Developer Mode |Apps (developer-only installation action, not a persistent setting)
+|===
+
+== Acceptance and boundaries
+
+Verify Windows 355x630 and Android dark/light modes: repository form is reachable in Settings, existing subscriptions are visible/removable, App Store browsing remains functional, Back navigation works both ways, no duplicate gear, keyboard and touch controls are accessible. Verify an installed test extension with `settings.app` opens the same isolated app panel, has `launchContext: 'settings'`, and returns to Settings. Disabling or uninstalling it immediately removes the entry. Verify game-local preferences remain in the game.
+
+Source tests are not native visual acceptance. No Git push, public release, server schema, or account-storage migration is authorized by this pass.

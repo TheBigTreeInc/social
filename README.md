@@ -1,3 +1,40 @@
+## Tavi 0.3.138 — Windows-native TaviX file selection (local-only)
+
+Apps > Install .tavix on Windows now calls a dedicated, main-window-only
+Win32 system file dialog instead of a WebView2 `<input type="file">`.
+File bytes are bounded, never expose the local path to extensions, and
+follow the pre-existing LoopRD developer permission, package validation,
+and explicit install approval. Web/Android selection is unchanged.
+Windows native build and real-dialog acceptance are pending. No public push.
+See `docs/TAVI_NATIVE_WINDOWS_TAVIX_DIALOG_0138.adoc`.
+
+## Tavi 0.3.138 — Restore local TaviX picker routing (local-only)
+
+Restores the original synchronous Apps installer button before the swipeable grid,
+retaining the Material layout and the LoopRD developer permission gate. A visible
+"Browse files directly" fallback and live feedback prevent silent failure when
+a native WebView ignores file selection. Native Windows/Android acceptance remains
+required. Source-based cause is not fully established; no public release.
+See `docs/TAVI_PICKER_ROUTING_REPAIR_0137.adoc`.
+
+## Tavi 0.3.136 — Native developer TaviX chooser repair (local-only)
+
+Base 0.3.135. Apps > Install .tavix now uses an actual file input, with a
+transparent native hit target receiving the user's gesture. The previous
+button-to-hidden-input .click() path could fail silently in Windows WebView2
+or Android. Repeated file selection is supported, while stale/missing LoopRD
+developer permission remains fail-closed. Missing extension storage now gives
+visible feedback. All local ZIP integrity, approval and sandbox checks remain.
+Native OS chooser verification on Windows/Android is pending; no public push.
+See `docs/TAVI_NATIVE_TAVIX_PICKER_0136.adoc`.
+
+## Tavi 0.3.135 — Shared Settings & TaviX contribution links (local only)
+
+* Settings -> Apps & extensions -> App sources now owns custom repository configuration and diagnostics. The App Store retains browsing and a subtle Settings link, but no duplicate gear/form.
+* Installed, approved TaviX apps may declare one `settings.app` contribution; host Settings links to their isolated app panel with a `launchContext=settings` hint. This adds no permissions and does not migrate game-local preferences into global Settings.
+* Server-origin-scoped local repository subscriptions are preserved, along with install/source approval gates. Windows/Android operator acceptance is pending.
+* Full contract and acceptance notes: `docs/TAVI_SHARED_SETTINGS_0135.adoc`.
+
 ## Tavi 0.3.134 — OpenClaw bridge delivery repair (local-only)
 
 Base 0.3.133. OpenClaw replies no longer silently disappear over 1000 characters:

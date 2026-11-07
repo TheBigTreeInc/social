@@ -28,7 +28,7 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
   try{
    let result=null;
    switch(request.method){
-    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(ziprunnerAllowed?['ziprunner.review/v1']:[]),...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[])]};break;
+    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(ziprunnerAllowed?['ziprunner.review/v1']:[]),...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[]),'tavix.settings-entry/v1'],launchContext:current.launchContext};break;
     case 'ziprunner.importCredential':
     case 'ziprunner.review':
     case 'ziprunner.clear':{
@@ -103,9 +103,9 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
  }
  windowRef.addEventListener('message',onMessage);
  return {
-  mount(frame,{id,permissions,scope,source='tavi:bundled',reviewedBundle=null}){
+  mount(frame,{id,permissions,scope,source='tavi:bundled',reviewedBundle=null,launchContext='app'}){
    if(!frame||!scope||typeof id!=='string'||!Array.isArray(permissions))throw Error('Invalid session');
-   ziprunner.clear();session={frame,id,permissions,scope,source,reviewedBundle,previewCount:0,rate:throttle()};
+   ziprunner.clear();session={frame,id,permissions,scope,source,reviewedBundle,launchContext:launchContext==='settings'?'settings':'app',previewCount:0,rate:throttle()};
   },
   unmount(){ziprunner.clear();session=null;},
   dispose(){ziprunner.clear();session=null;windowRef.removeEventListener('message',onMessage);}

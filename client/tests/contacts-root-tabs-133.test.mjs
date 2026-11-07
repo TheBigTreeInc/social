@@ -61,7 +61,7 @@ test('tab radii override generic utility button selector, on both Games and Apps
 
 test('local TaviX install and normal games discovery are still present',async()=>{
  const src=await read('../src/main.js');
- assert.match(src,/canInstallLocalTavix\(state\)\?`<div class="tavi-local-package-toolbar"/);
+ assert.match(src,/canInstallLocalTavix\(state\)\?`<div class="tavi-local-package-toolbar(?: \w[\w-]*)?"/);
  assert.match(src,/data-games-page="discover"/);
  assert.match(src,/data-action="find-atrium"/);
  assert.match(src,/if\(name==='local-tavix-picker'\)/);

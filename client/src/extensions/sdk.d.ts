@@ -8,7 +8,7 @@ export type MinorUnitAmount = string;
 export interface ResourceCursor { cursor?:string; limit?:number }
 export interface Balance { currencyId: CurrencyId; postedMinor: MinorUnitAmount; availableMinor: MinorUnitAmount; revision:number; cursor:string }
 export interface LedgerReceipt { schema:'tavi.ledger-receipt/v1'; transactionId:string; idempotencyKey:string; currencyId:CurrencyId; amountMinor:MinorUnitAmount; status:'posted'|'rejected'|'pending'; journalRevision:number; eventCursor:string }
-export interface TaviXHostInfo { standard:'tavix/1.0';channel:'tavi.extension/v1';api:string;extensionId:string;mode:'embedded';navigation:'host';features:string[] }
+export interface TaviXHostInfo { standard:'tavix/1.0';channel:'tavi.extension/v1';api:string;extensionId:string;mode:'embedded';navigation:'host';features:string[];launchContext?:'app'|'settings' }
 export interface TaviXSurfaceRequest { schema:'tavix.surface/v1';id:string;kind:'application'|'game';target:string;context?:Record<string,unknown>;presentation?:'embedded'|'external'|'auto' }
 export interface TaviXSDK {
   info(): Promise<TaviXHostInfo>;

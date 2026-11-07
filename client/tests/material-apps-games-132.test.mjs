@@ -44,8 +44,8 @@ test('Apps keeps tile behavior, per-account favorites, and Developer Mode gate',
  assert.match(menu,/role="tabpanel"/);
  assert.match(menu,/launcherTile\(item,favorites\)/);
  assert.match(menu,/data-action="app-store"/);
- assert.match(menu,/canInstallLocalTavix\(state\)\?`<div class="tavi-local-package-toolbar"/);
- assert.match(menu,/data-local-file-picker/);
+ assert.match(menu,/canInstallLocalTavix\(state\)\?`<div class="tavi-local-package-toolbar(?: \w[\w-]*)?"/);
+ assert.match(menu,/id="tavi-local-file"/);
  assert.doesNotMatch(menu,/data-app-favorite=/);
  assert.match(main,/data-app-context=/);
  const css=await source('../src/style.css');

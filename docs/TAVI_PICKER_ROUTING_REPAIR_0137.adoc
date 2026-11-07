@@ -1,0 +1,56 @@
+= Tavi 0.3.137 — Local TaviX picker routing repair
+:revnumber: 0.3.137
+:toc:
+
+== Evidence and diagnosis
+
+Operator reported that Install .tavix stopped working after the 0.3.132
+Material Apps redesign and remained unusable after 0.3.136. Comparing
+versions 0.3.129–0.3.136 shows that 0.3.132 moved the developer installer
+from above the Favorites/All app grid into a tools footer after that grid.
+It did not remove the original button event listener. 0.3.136 then changed
+the control to a direct transparent file input, without resolving the
+operator-observed issue. A Chromium fixture at 355×630 demonstrated that the
+0.3.136 control opens a file picker in Chromium; no native Windows WebView2
+root cause has been reproduced. Therefore the earlier assertion that the
+hidden input was definitively the cause is NOT supported.
+
+== Changes
+
+* Restore the 0.3.129-style explicit `data-local-file-picker` button and
+  `tavi-local-file` input above the swipeable Favorites/All grid, outside the
+  new launcher's footer and carousel. Keep Material styling.
+* Call the native input synchronously from the actual click handler, without
+  awaiting LoopRD or causing an intervening re-render.
+* Expose a `Browse files directly` fallback as a real input on the first
+  click, whether or not the primary chooser opens; no need to guess native
+  picker success from focus events. An inline live status confirms the click
+  was received. If either route returns a file, both use exactly the same
+  existing validation and permission path.
+* Keep all server-authorized Developer Mode checks, current-account storage,
+  exact ZIP verification, protected developer shadow grants and approval gates.
+  No native plugin, filesystem permission expansion, or public release.
+
+== Tests
+
+* `node --test client/tests/local-tavix-picker-136.test.mjs client/tests/local-tavix-launcher-137.test.mjs client/tests/local-tavix-developer-gate-128.test.mjs`
+* Full source verification and exact archive integrity/metadata checks.
+* Browser viewport smoke: 355×630; the actual mainMenu() markup and CSS;
+  click target is the button, and both primary and fallback open filechoosers.
+  The browser test does not establish native WebView2 acceptance.
+
+== Operator acceptance
+
+. Build and launch the exact 0.3.137 package in ZipRunner on Windows.
+. Log in to LoopRD with Developer Mode authorized, enable the Tavi switch.
+. Confirm that Install .tavix is above the Favorites grid.
+. Click once: native picker should open. If it does not, confirm the
+  live hint and click Browse files directly, recording which path works.
+. Select the safe `tavi-local-installer-smoke-test-0.1.0.tavix` package,
+  verify the review dialog, cancel, then select the same package again.
+. Repeat on Android with a similarly safe package.
+. Disable developer permission and prove neither picker nor commit is
+  accessible; existing trusted extensions remain unaffected.
+. Do not use Companion 0.6.37 until preview resource containment is accepted.
+
+Windows and Android native acceptance remain PENDING. No release or push.

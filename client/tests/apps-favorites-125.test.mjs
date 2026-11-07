@@ -92,7 +92,8 @@ test('two tabs support swipe index, click, keyboard and re-render selection',()=
 
 test('App Store icon-only controls have hidden assistive copy without overflow',async()=>{
  const main=await read('../src/main.js'),css=await read('../src/style.css');
- assert.match(main,/data-marketplace-manage/);
+ assert.match(main,/data-action="settings-sources"/);
+ assert.doesNotMatch(main,/data-marketplace-manage/);
  assert.match(main,/class="sr-only">Check for updates/);
  assert.match(css,/\.sr-only\{position:absolute!important/);
 });

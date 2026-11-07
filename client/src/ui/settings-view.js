@@ -3,7 +3,7 @@ import {uiEscape} from './components.js';
 
 const PAGE_TITLES=Object.freeze({
  root:'Settings',account:'Account',notifications:'Notifications',chats:'Chats',devices:'Connected devices',
- appearance:'Appearance',privacy:'Privacy & safety',storage:'Storage',companion:'Companion apps',extensions:'Extensions',about:'About Tavi'
+ appearance:'Appearance',privacy:'Privacy & safety',storage:'Storage',companion:'Companion apps',extensions:'Apps & extensions',sources:'App sources',about:'About Tavi'
 });
 export function settingsPageTitle(page='root'){return PAGE_TITLES[page]||PAGE_TITLES.root;}
 
@@ -44,7 +44,7 @@ function root(model){
    ].join(''))}
    ${group('',[
     navRow({page:'companion',iconName:'games',title:'Companion apps',subtitle:`Reviewed Companion ${model.companionVersion||''}`.trim()}),
-    navRow({page:'extensions',iconName:'extension',title:'Extensions',subtitle:'Installed apps and update checks'}),
+    navRow({page:'extensions',iconName:'extension',title:'Apps & extensions',subtitle:'App Store, trusted sources and app settings'}),
     navRow({page:'about',iconName:'info',title:'About Tavi',subtitle:'Version, updates and diagnostics',trailing:model.updateInfo?`Update ${model.updateInfo.version}`:''})
    ].join(''))}
   </div>
@@ -147,12 +147,27 @@ function companion(model){
  </section>`;
 }
 
-function extensions(){
- return `<section class="utility tavi-material-settings">${pageIntro('Extensions run in reviewed, isolated app surfaces and do not inherit Social credentials.')}
-  ${group('Extensions',[
-   navRow({action:'app-store',iconName:'store',title:'App Store',subtitle:'Browse installed and available extensions'}),
-   navRow({action:'check-extension-updates',iconName:'refresh',title:'Check app updates',subtitle:'Refresh reviewed extension sources'})
+function extensions(model){
+ const linked=(model.appSettings||[]).map(entry=>`<button type="button" class="md-settings-row" data-settings-extension="${safe(entry.id)}">${icon('extension')}<span class="md-settings-copy"><strong>${safe(entry.name)}</strong><small>${safe(entry.label)} · Opens in isolated app</small></span>${chevron()}</button>`).join('');
+ return `<section class="utility tavi-material-settings">${pageIntro('Manage app sources and installed extensions. Apps keep their own preferences and never receive Tavi credentials through Settings.')}
+  ${group('App Store & sources',[
+   navRow({action:'app-store',iconName:'store',title:'Browse App Store',subtitle:'Install and update approved apps'}),
+   navRow({page:'sources',iconName:'extension',title:'App sources',subtitle:'Official and subscribed TaviX repositories',trailing:String(model.repositories?.length||0)+' custom'}),
+   navRow({action:'check-extension-updates',iconName:'refresh',title:'Check for updates',subtitle:'Refresh approved extension sources'})
   ].join(''))}
+  ${linked?group('Installed app settings',linked):group('Installed app settings',`<div class="md-settings-static-note">Apps that publish a Settings entry will appear here after installation. Game character names and match options remain inside their games.</div>`)}
+ </section>`;
+}
+
+function sources(model){
+ const items=(model.repositories||[]).map((url,i)=>`<div class="md-settings-source-item"><code>${safe(url)}</code><button type="button" data-repository-remove="${safe(url)}" aria-label="Remove repository ${safe(url)}">Remove</button></div>`).join('');
+ const suggested=(model.suggestedRepositories||[]).map(safe).join(', ');
+ return `<section class="utility tavi-material-settings" aria-label="App sources">${pageIntro('Repositories determine where Tavi discovers apps and updates. Changing a source does not silently install code or change an installed app’s pinned publisher.')}
+  ${group('Official source',infoRow({iconName:'shield',title:'TaviX repository',subtitle:model.officialRepository||'Configured by Tavi',trailing:'Built-in'}))}
+  ${group('Your repositories',`${items||'<div class="md-settings-static-note">No custom repositories added.</div>'}<form id="extension-repository-form" class="md-settings-form"><label for="settings-repository-url">Repository URL<input id="settings-repository-url" type="url" name="repository" placeholder="https://example.org/tavi.repository.json" maxlength="2048" required autocomplete="off"></label><button type="submit" class="md-primary-button">Add repository</button></form>`)}
+  ${suggested?group('Suggested by your Social server',`<div class="md-settings-static-note">${suggested}</div>`):''}
+  ${model.repositoryErrors?.length?group('Connection checks',model.repositoryErrors.map(x=>`<p class="md-settings-source-error">${safe(x)}</p>`).join('')):''}
+  <p class="md-settings-intro">Custom source subscriptions are stored for this Social server on this device (shared by accounts using the same local client). Tavi verifies repository metadata before subscribing and always requires approval for installation or source switching.</p>
  </section>`;
 }
 
@@ -191,6 +206,7 @@ export function renderSettings(model={}){
   case 'storage':return storage(model);
   case 'companion':return companion(model);
   case 'extensions':return extensions(model);
+  case 'sources':return sources(model);
   case 'about':return about(model);
   default:return root(model);
  }

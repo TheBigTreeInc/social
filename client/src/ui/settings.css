@@ -90,3 +90,13 @@ button.md-settings-row{cursor:pointer;}
 @media(prefers-reduced-motion:reduce){.md-switch>span,.md-switch>span::after{transition:none;}}
 .md-settings-footnote{font-size:11px;line-height:1.45;color:#68706b;margin:0;padding:11px 15px 14px;border-top:1px solid #e6e8e6;}
 :root[data-theme='dark'] .md-settings-footnote{color:#aeb8b1;border-top-color:#303b34;}
+
+/* Component-owned settings pages share host Material surfaces. */
+.md-settings-static-note{padding:15px 16px;color:#626964;font-size:12px;line-height:1.5;overflow-wrap:anywhere;}
+.md-settings-source-item{padding:12px 15px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #e6e8e6;}
+.md-settings-source-item code{flex:1;min-width:0;font-size:11px;overflow-wrap:anywhere;word-break:break-word;}
+.md-settings-source-item button{min-height:40px;flex:none;border:1px solid #bcd3c3;background:#f1f9f3;color:#1c6340;border-radius:20px;padding:5px 12px;cursor:pointer;}
+.md-settings-source-error{padding:10px 14px;font-size:12px;overflow-wrap:anywhere;}
+:root[data-theme='dark'] .md-settings-static-note{color:#aeb8b1;}
+:root[data-theme='dark'] .md-settings-source-item{border-bottom-color:#303b34;}
+:root[data-theme='dark'] .md-settings-source-item button{background:#1c3023;border-color:#456e52;color:#b4e7c1;}
