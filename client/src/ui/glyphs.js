@@ -14,7 +14,7 @@ export const TAVI_ICON_ALIASES=Object.freeze({
  send:'send', help:'circle-question-mark', minimize:'minus',
  refresh:'refresh-cw', messages:'message-square-text', games:'gamepad-2',
  wallet:'wallet', bell:'bell', paw:'paw-print', portrait:'user-round',
- store:'store', apps:'layout-grid', 'person-plus':'user-round-plus',
+ store:'store', apps:'layout-grid', 'person-plus':'user-round-plus', people:'users-round',
  settings:'settings', star:'star', extension:'puzzle', atrium:'landmark',
  notepad:'notebook-pen'
 });

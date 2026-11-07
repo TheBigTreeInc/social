@@ -29,7 +29,11 @@ export async function reconcileInbox({api,checkpoint,onMessage,bootstrap='latest
  if(!ID.test(selfId))throw Error('Tavi session lacks a verified account');
  if(checkpoint&&(checkpoint.selfId!==selfId||checkpoint.origin!==api.origin))throw Error('Inbox checkpoint belongs to another Tavi account or origin');
  const next=checkpoint||{schema:'tavi.openclaw.inbox/v1',origin:api.origin,selfId,peers:{}};
- for(const c of acceptedPeers(roster?.contacts)){
+ next.pendingReads ||= {};
+ if(typeof next.pendingReads!=='object'||Array.isArray(next.pendingReads))throw Error('Invalid pending read receipts');
+ const accepted=acceptedPeers(roster?.contacts);
+ const acceptedIds=new Set(accepted.map(c=>c.id));
+ for(const c of accepted){
   const response=await api.directFeed(c.id);
   if(!Array.isArray(response?.messages))throw Error('Invalid Tavi inbox response');
   const latest=response.messages.reduce((max,m)=>Number.isSafeInteger(m?.id)?Math.max(max,m.id):max,0);
@@ -41,10 +45,20 @@ export async function reconcileInbox({api,checkpoint,onMessage,bootstrap='latest
   }
   const messages=inboundFromFeed(c.id,response.messages,selfId,next.peers[c.id]);
   for(const item of messages){
-   await onMessage({...item,peerName:c.displayName||c.username,peerUsername:c.username});
+   const handled=await onMessage({...item,peerName:c.displayName||c.username,peerUsername:c.username});
    next.peers[c.id]=item.id;
+   if(handled===true)next.pendingReads[c.id]=item.id;
    if(path)await persistCheckpoint(path,next);
   }
+ }
+ // Retry receipts independently of agent dispatch. Delivery is checkpointed first.
+ for(const [peer,id] of Object.entries(next.pendingReads)){
+  if(!ID.test(peer)||!Number.isSafeInteger(id)||id<=0)throw Error('Invalid pending read receipt');
+  if(!acceptedIds.has(peer)){delete next.pendingReads[peer];if(path)await persistCheckpoint(path,next);continue;}
+  if(typeof api.markDirectRead!=='function')throw Error('Tavi SDK has no dm_mark_read operation');
+  await api.markDirectRead(peer,id);
+  delete next.pendingReads[peer];
+  if(path)await persistCheckpoint(path,next);
  }
  return next;
 }

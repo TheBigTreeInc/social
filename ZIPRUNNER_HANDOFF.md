@@ -1,3 +1,25 @@
+## Tavi Social 0.3.134 — OpenClaw DM bridge compatibility (local-only)
+
+Base 0.3.133. Fix 1000-character silent reply drop with bounded numbered DMs,
+server cooldown pacing, safe CLI help-based `--message-file -` versus legacy
+`--message @tempfile`, adjustable 15m timeout, and checkpoint-before-read receipt
+retries. No Social server/schema deployment, no client UI changes.
+
+Operator gates: verify actual OpenClaw CLI 2026.6.10 on supervised bot host,
+long reply and cooldown, read cursor, restart recovery, and unknown-network
+outcome behavior before applying to Pegas. No Git push/publication; retain all
+existing ZipRunner workboard, config and release approval gates.
+
+## Tavi 0.3.133 — Contacts and root-tab navigation (local-only)
+
+Base 0.3.132. The Apps launcher now has Contacts rather than Add friend;
+Contacts displays existing LoopRD friends and requests and contains an Add friend
+action. Apps, Games and Chats root screens use the persistent bottom navigation
+without redundant top Back bars, while deeper panels retain contextual Back.
+The Apps/Games segmented tabs retain fully rounded outlines. No native
+acceptance, device address book access, backend/API change or publication.
+See `docs/TAVI_CONTACTS_ROOT_NAV_0133.adoc`.
+
 ## Tavi 0.3.132 — Compact Games and Material-style Apps (local-only)
 
 Base 0.3.131. Games now uses **My games** and **Discover** tabs; current turns,

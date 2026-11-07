@@ -1,0 +1,35 @@
+= Tavi 0.3.134 — OpenClaw bridge compatibility and delivery repair
+:toc:
+
+== Evidence and scope
+
+Pegas reported production bridge regressions on OpenClaw CLI 2026.6.10: replies over 1000 characters were silently dropped or truncated; `openclaw agent --message-file -` was unsupported; agent turns needed 15 minutes, and DM read cursors were never acknowledged. The local 0.3.133 `tavi-openclaw-service.mjs` source confirms the 1000-character `replyText` rejection, `--message-file -`, 180000-ms timeout, and absent read acknowledgement. The local LoopRD schema 12 has `dm_mark_read`, `dm_conversations`, `dm_send` and a one-second per-sender DM cooldown. The SDK already implements `markDirectRead` and `conversations`.
+
+== Source changes
+
+* `replyText()` now returns any recognized nonempty agent text without the old 1000-character rejection; no automatic truncation.
+* `replyChunks()` prevalidates and numbers longer replies, using 900 Unicode code points per message and a maximum number of chunks. Invalid control bytes or overlarge replies cause an explicit error and no send.
+* The consumer serializes chunks, honoring a 1250-ms interval and retrying only the specific server rejection `Please slow down`. It does not retry ambiguous network outcomes.
+* `invokeAgent()` discovers CLI input flags via a read-only `agent --help` probe. If supported, use `--message-file -` and stdin; otherwise use `--message @<private temporary file>` for the reported older CLI. An unknown CLI fails closed. The prompt is never an ordinary command-line argument. Files are deleted in finally.
+* The default agent invocation timeout is 15 minutes, configurable by `TAVI_OPENCLAW_TIMEOUT_MS`, with a nested CLI timeout when advertised.
+* The watcher commits its message cursor before marking an authorized completed turn as read, and retries pending read receipts after reconnect without rerunning the agent.
+* No database, message-limit, authentication, privileged extension, client UI or release policy change.
+
+== Tests and remaining acceptance
+
+The `compat-134.test.mjs` suite uses fake CLI processes for modern stdin and older `@file` modes. It checks long/unicode chunks, pre-send size rejection, server cooldown pacing, partial send failure, authorized receipts, receipt retries without duplicate agent dispatch, and unauthorized peers. No live OpenClaw/LoopRD operation was performed in author environment. Windows and Android client builds are unrelated and remain operator-gated. CI/source tests do not prove the bot machine's particular CLI behavior.
+
+== Known risks
+
+* The `@file` legacy protocol is based on Pegas's report; it must be validated on the installed OpenClaw 2026.6.10 CLI.
+* Multi-DM replies are not atomic. A network disconnect or crash between a successful send and the next checkpoint can duplicate chunks on retry. True exactly-once sending requires a server idempotency key or durable outbox with delivery receipts.
+* `dm_conversations` can reduce idle-contact requests later but does not replace authoritative per-peer message history.
+* The default bounded reply policy intentionally fails rather than silently truncating messages exceeding 24 chunks.
+
+== Operator acceptance
+
+. In a disposable OpenClaw account, inspect `openclaw agent --help` and verify one sample prompt with the installed CLI.
+. Use an allowlisted test Tavi account; confirm a >1000-character answer arrives as numbered complete chunks.
+. Simulate one server cooldown and one receipt failure; verify retry without restarting the agent or duplicating a successful reply.
+. Check `peerReadId` progresses only for successfully processed messages; unauthorized peers remain unread.
+. Verify source and exact ZIP tests, protected settings, no Git push, and explicit operator approval.

@@ -22,7 +22,7 @@ test('host UI uses shared, scoped design tokens and preserves dark palette',asyn
  assert.match(tokens,/tavi-contact-focus/);
  assert.match(tokens,/--tavi-hit-target-touch: 44px/);
  assert.match(main,/import '\.\/ui\/design-tokens\.css'/);
- assert.equal((main.match(/hostToolbar\(/g)||[]).length,3);
+ assert.equal((main.match(/hostToolbar\(/g)||[]).length,1); // Root tabs intentionally have no redundant header
  assert.match(main,/homeToolbar\(\)/);
  assert.match(main,/frame\.setAttribute\('sandbox','allow-scripts'\)/);
  assert.doesNotMatch(tokens,/iframe\.contentDocument|postMessage|Social bearer/);

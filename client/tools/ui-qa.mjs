@@ -166,19 +166,16 @@ async function testViewport(browser,base,device){
   assert.match(await page.locator('[data-discovered-game="life.loop"]').innerText(),/Not playable yet/);
   assert.equal(await page.locator('[data-discovered-game="life.loop"] [data-launch-game], [data-discovered-game="life.loop"] [data-challenge-game]').count(),0);
   if(device.mobile){
-   stage='Android safe Back and focused header';
-   const layout=await page.evaluate(snapshotSafeLayout,null);
-   assert(layout.toolbar&&layout.back,`${device.name} Back missing: ${JSON.stringify(layout)}`);
-   assert(layout.toolbar.top>=45&&layout.back.top>=layout.toolbar.top-1&&layout.back.height>=44,
-      `${device.name} Back overlaps header or status bar: ${JSON.stringify(layout)}`);
-   assert(layout.back.bottom<=layout.toolbar.bottom+1,
-      `${device.name} Back overlays focused screen text: ${JSON.stringify(layout)}`);
+   stage='Android root Games navigation';
+   assert.equal(await page.locator('.tavi-utility-focus .tavi-shell-bar__back').count(),0,'Games is a bottom-tab root, not a nested panel');
+   const homeTab=page.locator('.tavi-utility-focus .tavi-mobile-tabs [data-action="home"]');
+   assert((await homeTab.boundingBox())?.height>=44,'Bottom Home tab must remain touch-accessible');
   }
   stage='Life withdrawn';await fetch(new URL('__qa/withdraw-life',base),{method:'POST'});
   await page.locator('.tavi-game-title-row [data-action="refresh"]').click();
   await page.locator('[data-discovered-game="life.loop"]').waitFor({state:'detached',timeout:7000});
   assert.match(await page.locator('.tavi-games-browser').innerText(),/No games published yet\./);
-  stage='return from Games through shared Back';await page.locator('.tavi-utility-focus .tavi-shell-bar__back[data-action="back"]').click();
+  stage='return from Games using bottom Home tab';await page.locator('.tavi-utility-focus .tavi-mobile-tabs [data-action="home"]').click();
   await visible(page,'.tavi-home-messenger .tavi-home-identity');
   stage='main-menu';await page.locator('[data-action="main-menu"]').click();
   await visible(page,'.tavi-menu-panel [role="tablist"]');
@@ -201,6 +198,20 @@ async function testViewport(browser,base,device){
   await visible(page,'.tavi-app-context-menu [role="menuitem"]');
   assert.equal(await page.getByRole('menuitem',{name:'Remove from Favorites'}).count(),1);
   await page.keyboard.press('Escape');
+  stage='Contacts directory and Add friend as action';
+  await page.locator('#tavi-app-tab-1').click();
+  await visible(page,'#tavi-app-page-1 [data-action="people-directory"]');
+  assert.equal(await page.locator('#tavi-app-page-1 [data-action="add-friend"]').count(),0,'Add friend must not be an app');
+  await page.locator('#tavi-app-page-1 [data-action="people-directory"]').click();
+  await visible(page,'.tavi-people-directory .tavi-people-add[data-action="add-friend"]');
+  await visible(page,'.tavi-people-directory [data-peer="acct_2"]');
+  await page.locator('.tavi-people-add').click();
+  await visible(page,'#friend-form input[name="username"]');
+  await page.locator('.tavi-utility-focus .tavi-shell-bar__back[data-action="back"]').click();
+  await visible(page,'.tavi-people-directory');
+  await page.locator('.tavi-utility-focus .tavi-shell-bar__back[data-action="back"]').click();
+  await visible(page,'.tavi-menu-panel');
+  assert.equal(await page.locator('.tavi-menu-panel .tavi-shell-bar__back').count(),0,'Root Apps has no redundant toolbar');
   await visible(page,'.tavi-menu-grid [data-action="app-store"]');
   stage='app-store';await page.locator('.tavi-menu-grid [data-action="app-store"]').click();
   await visible(page,'.tavi-app-store');

@@ -14,7 +14,7 @@ export function homeToolbar(){
 }
 /** These are the navigation actions controlled by the messenger host, not by an iframe. */
 export function mobileTabs(panel,{unread=0}={}){
- const current=panel==='messenger'?'contacts':panel==='menu'?'main-menu':panel;
+ const current=panel==='messenger'?'contacts':panel==='menu'||panel==='people-directory'?'main-menu':panel;
  const tabs=[['home','Home','home'],['contacts','Chats','messages'],['games','Games','games'],['main-menu','Apps','apps']];
  return `<nav class="tavi-mobile-tabs" aria-label="Tavi navigation">${tabs.map(([action,label,glyph])=>`<button type="button" data-action="${action}" aria-label="${label}" ${current===action?'aria-current="page"':''}>${uiGlyph(glyph)}<span>${label}</span>${action==='contacts'&&unread?`<b aria-label="${Math.min(unread,99)} unread">${Math.min(unread,99)}</b>`:''}</button>`).join('')}</nav>`;
 }

@@ -63,5 +63,5 @@ test('Browser QA selects Discover before verifying catalog, and keeps other navi
  const visible=qa.indexOf("await visible(page,'[data-discovered-game=",enter);
  assert(enter>=0 && discover>enter && visible>discover);
  assert.match(qa,/stage='favorites personalization'/);
- assert.match(qa,/stage='return from Games through shared Back'/);
+ assert.match(qa,/stage='return from Games using bottom Home tab'/);
 });

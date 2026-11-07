@@ -1,3 +1,29 @@
+## Tavi 0.3.134 — OpenClaw bridge delivery repair (local-only)
+
+Base 0.3.133. OpenClaw replies no longer silently disappear over 1000 characters:
+the bridge splits them into numbered, 900-code-point DM chunks and respects
+LoopRD's one-second sender cooldown. OpenClaw CLI input is selected by a
+read-only help probe, supporting modern `--message-file -` and the legacy
+`--message @file` protocol reported by Pegas. Timeout defaults to 15 minutes.
+The watcher persists read receipt retries separately from delivered replies,
+without claiming exactly-once delivery. See
+`docs/TAVI_OPENCLAW_BRIDGE_COMPATIBILITY_0134.adoc` and
+`integrations/openclaw/README.md`.
+
+No schema, client UI, signing, config, credentials, GitHub, release or public
+catalog modifications. This source update needs real bot-host CLI acceptance
+before restarting Pegas or other production bot processes.
+
+## Tavi 0.3.133 — Contacts and root-tab navigation (local-only)
+
+Base 0.3.132. The Apps launcher now has Contacts rather than Add friend;
+Contacts displays existing LoopRD friends and requests and contains an Add friend
+action. Apps, Games and Chats root screens use the persistent bottom navigation
+without redundant top Back bars, while deeper panels retain contextual Back.
+The Apps/Games segmented tabs retain fully rounded outlines. No native
+acceptance, device address book access, backend/API change or publication.
+See `docs/TAVI_CONTACTS_ROOT_NAV_0133.adoc`.
+
 ## Tavi 0.3.132 — Compact Games and Material-style Apps (local-only)
 
 Base 0.3.131. Games now uses **My games** and **Discover** tabs; current turns,

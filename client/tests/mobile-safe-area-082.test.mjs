@@ -20,7 +20,7 @@ test('Home menu is owned by the common tab bar, not a raised dock',async()=>{
 
 test('five-viewport browser QA measures real simulated Android system-bar geometry',async()=>{
  const qa=await read('../tools/ui-qa.mjs');
- for(const token of ['snapshotSafeLayout','Android simulated safe areas','--tavi-safe-top','--tavi-safe-bottom','Android safe Back and focused header','Main Menu overlaps roster text'])
+ for(const token of ['snapshotSafeLayout','Android simulated safe areas','--tavi-safe-top','--tavi-safe-bottom','Android root Games navigation','Main Menu overlaps roster text'])
   assert.ok(qa.includes(token),token);
 });
 

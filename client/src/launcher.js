@@ -15,7 +15,7 @@ export const BUILTIN_APPS=Object.freeze([
   {action:'companion', label:'Companion', symbol:'paw', tone:'leaf'},
   {action:'portrait', label:'My portrait', symbol:'portrait', tone:'plum'},
   {action:'app-store', label:'App Store', symbol:'store', tone:'teal'},
-  {action:'add-friend', label:'Add friend', symbol:'person-plus', tone:'blue'},
+  {action:'people-directory', label:'Contacts', symbol:'people', tone:'blue'},
   {action:'settings', label:'Settings', symbol:'settings', tone:'slate'}
 ]);
 export const BUNDLED_COMPANION_ID='org.tavi.community.companion';

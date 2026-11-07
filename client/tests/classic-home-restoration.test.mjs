@@ -18,7 +18,8 @@ test('Home is a buddy list with account and companion top corners, not a duplica
 });
 test('all main messenger views use one host-owned navigation policy',async()=>{
  const main=await read('../src/main.js');
- assert.match(main,/if\(nativeDesktop&&chatting\)return[^\n]*hostToolbar\('Messages'/);
+ assert.match(main,/if\(nativeDesktop&&chatting\)return[^\n]*tavi-root-tab/);
+ assert.doesNotMatch(main,/hostToolbar\('Messages'/);
  assert.match(main,/if\(state.panel==='home'\)return[^\n]*homeToolbar\(\)/);
  assert.match(main,/tavi-chat-focus/);
  assert.match(main,/tavi-utility-focus/);

@@ -49,7 +49,8 @@ test('focused chat uses message area without navigation dock and keeps escaped t
 test('mobile navigation state and login are server-scoped and token-free',()=>{
   const html=shell({mobileRoster:true});
   assert(html.includes('tavi-contact-focus'));
-  assert(html.includes('data-action="back"')); // navigates to Home without exiting
+  assert(!html.includes('data-action="back"')); // root Chats uses the persistent bottom tabs
+  assert(html.includes('data-action="main-menu"'));
   const login=shell({connected:false});
   assert(login.includes('Tavi · Sign in'));
   assert(login.includes('LoopRD server address'));

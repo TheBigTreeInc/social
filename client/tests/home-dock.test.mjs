@@ -10,7 +10,7 @@ test('messenger Home and focused pages use the same icon header and bottom tabs'
  assert.doesNotMatch(home,/tavi-home-dock|menuBar\(\)/);
  assert.match(main,/if\(state.panel==='home'\)return[^\n]*homeToolbar\(\)[^\n]*mobileTabs\('home'/);
  assert.match(main,/mobileTabs\(state.panel/);
- assert.match(main,/hostToolbar\('Messages'/);
+ assert.doesNotMatch(main,/hostToolbar\('Messages'/); // Root Chats has bottom navigation
  const header=homeToolbar();
  assert.match(header,/class="tavi-ui-header/);
  assert.match(header,/data-action="inbox"/);

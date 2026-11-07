@@ -1,0 +1,30 @@
+= Tavi 0.3.133 — Contacts directory and root-tab navigation
+:toc:
+
+== Scope
+
+Tavi is a messenger first. Contacts is an *account-backed Social/LoopRD directory*,
+not a phone dialer, device address-book import, or new backend service.
+
+* `client/src/launcher.js`: replace the action-only Add friend tile with a Contacts app.
+* `client/src/main.js`: list accepted contacts and pending requests from existing
+  `state.contacts`, open existing peer conversation, expose Add friend from Contacts,
+  preserve request submission and return to the Contacts directory.
+* Apps, Games and Chats root tabs rely on the persistent bottom navigation and
+  have no duplicate top Back toolbar; nested utility panels, package previews,
+  app store, settings and chat details retain their own Back/navigation.
+* `client/src/style.css`: correct the general utility button selector's override
+  of Materials-style segmented pill radii, including at 355px Windows width.
+* Preserve Favorites per account, long-press/right-click app context menus,
+  developer-gated local TaviX import and restore, and the LoopRD game flows.
+
+== Verification and safety
+
+`node --test client/tests/contacts-root-tabs-133.test.mjs` exercises launcher,
+source routes, Back origin, display semantics, CSS override and protected paths.
+Run `npm run verify`, LoopRD descriptor check, the existing extension integrity
+and release-gate tests from the exact delivery ZIP. Physical Windows/Android
+acceptance for layouts, screenshots and actual server contacts is required.
+
+No device contacts permissions, new Social schema, app privileges, GitHub push,
+public release, deployed component or operator approval are included.
