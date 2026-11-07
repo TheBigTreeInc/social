@@ -19,9 +19,17 @@ export function wireAppPages(root,{initialIndex=0,onChange=()=>{}}={}){
  const controls=[...root.querySelectorAll('[data-app-page]')];
  if(!controls.length)return;
  const bounded=index=>Math.max(0,Math.min(controls.length-1,index));
+ // Keep Favorites compact even when All has several more rows. The horizontal
+ // carousel still includes both panels; only its vertical footprint changes.
+ const sections=pages.querySelectorAll?.('.tavi-app-page')||[];
+ const fitHeight=index=>{
+  const height=sections[bounded(index)]?.scrollHeight;
+  if(pages.style&&Number.isFinite(height)&&height>0)pages.style.height=`${Math.ceil(height)}px`;
+ };
  const activate=index=>{
   const selected=bounded(index);
   controls.forEach((el,i)=>{el.setAttribute('aria-selected',i===selected?'true':'false');el.tabIndex=i===selected?0:-1;});
+  fitHeight(selected);
   onChange(selected);
  };
  const scrollTo=index=>{

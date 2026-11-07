@@ -161,6 +161,7 @@ async function testViewport(browser,base,device){
   await visible(page,'.tavi-home-messenger .tavi-home-identity');
   await visible(page,'.tavi-gold-balance');
   stage='Life discovered Games';await visible(page,'.tavi-unified-home .tavi-mobile-tabs [data-action="games"]');await page.locator('.tavi-unified-home .tavi-mobile-tabs [data-action="games"]').click();
+  await page.locator('[data-games-page="discover"]').click();
   await visible(page,'[data-discovered-game="life.loop"]');
   assert.match(await page.locator('[data-discovered-game="life.loop"]').innerText(),/Not playable yet/);
   assert.equal(await page.locator('[data-discovered-game="life.loop"] [data-launch-game], [data-discovered-game="life.loop"] [data-challenge-game]').count(),0);
@@ -176,7 +177,7 @@ async function testViewport(browser,base,device){
   stage='Life withdrawn';await fetch(new URL('__qa/withdraw-life',base),{method:'POST'});
   await page.locator('.tavi-game-title-row [data-action="refresh"]').click();
   await page.locator('[data-discovered-game="life.loop"]').waitFor({state:'detached',timeout:7000});
-  assert.match(await page.locator('.tavi-games-browser').innerText(),/Connected to Atrium; no published games yet\./);
+  assert.match(await page.locator('.tavi-games-browser').innerText(),/No games published yet\./);
   stage='return from Games through shared Back';await page.locator('.tavi-utility-focus .tavi-shell-bar__back[data-action="back"]').click();
   await visible(page,'.tavi-home-messenger .tavi-home-identity');
   stage='main-menu';await page.locator('[data-action="main-menu"]').click();

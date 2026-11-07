@@ -1017,3 +1017,84 @@ html[data-theme='dark'] .tavi-menu-panel .tavi-app-page-tabs button[aria-selecte
 .tavi-local-package-toolbar button{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:5px 10px;border-radius:9px;border:1px solid var(--tavi-color-border);background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);white-space:nowrap;font-size:11px;font-weight:650;}
 .tavi-local-package-toolbar svg{width:16px;height:16px;}
 @media(pointer:coarse){.tavi-local-package-toolbar button{min-height:44px;}}
+
+/* 0.3.132 — Material-inspired launcher surfaces. App identity, icons, permissions,
+   and account-specific favorites remain owned by Tavi; no remote styles. */
+.tavi-menu-panel{max-width:740px;padding:16px 14px 22px!important;background:var(--tavi-color-background);}
+.tavi-menu-panel .tavi-launcher-header{margin:0 2px 16px;}
+.tavi-menu-panel .tavi-launcher-header h2{font-size:20px;letter-spacing:-.02em;font-weight:680;}
+.tavi-menu-panel .tavi-launcher-count{padding:5px 10px;border-radius:999px;background:var(--tavi-color-surface-raised);color:var(--tavi-color-text-muted);font-size:11px;}
+.tavi-menu-panel .tavi-app-page-tabs{margin:0 0 18px;border:1px solid var(--tavi-color-border);background:var(--tavi-color-surface);border-radius:999px;padding:3px;gap:3px;box-shadow:none;}
+.tavi-menu-panel .tavi-app-page-tabs button{border-radius:999px;font-size:13px;font-weight:600;min-height:44px;transition:background-color 140ms ease,color 140ms ease;}
+.tavi-menu-panel .tavi-app-page-tabs button[aria-selected="true"],html[data-theme='dark'] .tavi-menu-panel .tavi-app-page-tabs button[aria-selected="true"]{background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);box-shadow:inset 0 0 0 1px var(--tavi-color-border);}
+.tavi-menu-panel .tavi-app-pages{align-items:start;}
+.tavi-menu-panel .tavi-app-page{padding:0 0 4px;}
+.tavi-menu-panel .tavi-app-page-heading{padding:0 4px 12px;}
+.tavi-menu-panel .tavi-app-page-heading h3{font-size:14px;font-weight:650;}
+.tavi-menu-panel .tavi-app-page-heading>span{font-size:11px;background:var(--tavi-color-surface-raised);border-radius:999px;padding:4px 8px;}
+.tavi-menu-panel .tavi-menu-grid{row-gap:12px;column-gap:6px;}
+.tavi-menu-panel .tavi-app-card .tavi-app-tile{padding:8px 3px;min-height:104px;border-radius:18px!important;transition:background-color 140ms ease;}
+.tavi-menu-panel .tavi-app-card .tavi-app-tile:hover{background:var(--tavi-color-surface-raised)!important;}
+.tavi-menu-panel .tavi-app-card .tavi-app-tile:active{background:var(--tavi-color-surface-muted)!important;}
+.tavi-menu-panel .tavi-app-icon{width:60px;height:60px;border-radius:21px;box-shadow:0 2px 5px #00000012,inset 0 1px 0 #ffffff32;}
+.tavi-menu-panel .tavi-app-card .tavi-app-caption{font-size:12px;font-weight:530;line-height:1.3;max-width:105px;}
+.tavi-menu-panel .tavi-launcher-tools{margin:16px 0 0;padding:14px 0 0;display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--tavi-color-border);}
+.tavi-menu-panel .tavi-launcher-tools .tavi-explore-apps{width:100%;min-height:65px;display:flex;align-items:center;gap:12px;border-radius:19px;border:1px solid var(--tavi-color-border);background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);padding:10px 13px;text-align:left;cursor:pointer;box-shadow:none;}
+.tavi-menu-panel .tavi-explore-apps>span:first-child{flex:none;width:38px;height:38px;display:grid;place-items:center;border-radius:13px;background:var(--tavi-color-surface);color:var(--tavi-color-text);}
+.tavi-menu-panel .tavi-explore-apps>span:nth-child(2){display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;}
+.tavi-menu-panel .tavi-explore-apps strong{font-size:13px;font-weight:650;}
+.tavi-menu-panel .tavi-explore-apps small{font-size:11px;color:var(--tavi-color-text-muted);}
+.tavi-menu-panel .tavi-explore-apps>span:last-child{width:20px;height:20px;color:var(--tavi-color-text-muted);}
+.tavi-menu-panel .tavi-explore-apps .tavi-ui-glyph{width:21px;height:21px;}
+.tavi-menu-panel .tavi-explore-apps:hover{background:var(--tavi-color-surface-muted);}
+.tavi-menu-panel .tavi-local-package-toolbar{width:100%;padding:0 2px;margin:0;background:transparent;}
+.tavi-menu-panel .tavi-local-package-toolbar>span{font-size:11px;color:var(--tavi-color-text-muted);}
+.tavi-menu-panel .tavi-launcher-tools .tavi-local-package-toolbar button{min-height:40px;border-radius:999px;border:1px solid var(--tavi-color-border);background:transparent;padding:8px 14px;font-size:12px;}
+.tavi-menu-panel .tavi-app-context-hint{margin:0 2px;color:var(--tavi-color-text-muted);font-size:11px;line-height:1.45;}
+@media(pointer:coarse){.tavi-menu-panel .tavi-launcher-tools .tavi-local-package-toolbar button{min-height:44px;}}
+@media(max-width:345px){.tavi-menu-panel{padding-inline:10px!important;}.tavi-menu-panel .tavi-app-icon{width:55px;height:55px;}.tavi-menu-panel .tavi-explore-apps{padding-inline:9px;}}
+@media(prefers-reduced-motion:reduce){.tavi-menu-panel .tavi-app-page-tabs button,.tavi-menu-panel .tavi-app-card .tavi-app-tile{transition:none;}}
+
+/* 0.3.132 — compact, player-facing Games rather than four large admin panels. */
+.tavi-games-browser{padding:14px 12px 20px!important;max-width:740px;margin:0 auto;width:100%;background:var(--tavi-color-background);min-height:100%;}
+.tavi-games-browser>h2{display:none;}
+.tavi-games-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;border:1px solid var(--tavi-color-border);background:var(--tavi-color-surface);border-radius:999px;padding:3px;margin-bottom:18px;}
+.tavi-games-tabs button{min-height:44px;border:0!important;border-radius:999px;background:transparent;color:var(--tavi-color-text-muted);font-size:13px;font-weight:600;box-shadow:none;}
+.tavi-games-tabs button[aria-selected="true"]{background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);box-shadow:inset 0 0 0 1px var(--tavi-color-border);}
+.tavi-games-tabs button:focus-visible{outline:2px solid var(--tavi-color-focus);outline-offset:2px;}
+.tavi-games-page[hidden]{display:none!important;}
+.tavi-games-page{display:flex;flex-direction:column;gap:14px;}
+.tavi-games-browser .tavi-games-group{border:0;background:transparent;border-radius:0;padding:0;margin:0;}
+.tavi-games-section-heading{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:0 2px 10px;}
+.tavi-games-browser .tavi-games-section-heading h3,.tavi-games-browser .tavi-game-title-row h3{margin:0;font-size:13px;font-weight:650;color:var(--tavi-color-text);}
+.tavi-games-section-heading span{font-size:11px;color:var(--tavi-color-text-muted);}
+.tavi-game-empty-state{min-height:180px;padding:25px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;background:var(--tavi-color-surface-raised);border-radius:23px;color:var(--tavi-color-text);}
+.tavi-game-empty-state>span{width:52px;height:52px;display:grid;place-items:center;border-radius:17px;background:var(--tavi-color-surface);color:var(--tavi-color-text-muted);}
+.tavi-game-empty-state .tavi-ui-glyph{height:28px;width:28px;}
+.tavi-game-empty-state strong{font-weight:650;font-size:14px;}
+.tavi-game-empty-state p{margin:0;max-width:240px;color:var(--tavi-color-text-muted);line-height:1.45;font-size:12px;}
+.tavi-game-invitations{width:100%;min-height:62px;padding:10px 12px;border:1px solid var(--tavi-color-border);background:var(--tavi-color-surface);border-radius:18px;display:flex;align-items:center;gap:11px;text-align:left;color:var(--tavi-color-text);}
+.tavi-game-invitations-icon{flex:none;display:grid;place-items:center;width:35px;height:35px;border-radius:12px;background:var(--tavi-color-surface-raised);}
+.tavi-game-invitations-icon .tavi-ui-glyph{width:19px;height:19px;}
+.tavi-game-invitations>span:nth-child(2){display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;}
+.tavi-game-invitations strong{font-weight:650;font-size:13px;}
+.tavi-game-invitations small{font-size:11px;line-height:1.4;color:var(--tavi-color-text-muted);}
+.tavi-games-chevron{width:20px;height:20px;color:var(--tavi-color-text-muted);}
+.tavi-game-invitations:hover{background:var(--tavi-color-surface-raised);}
+.tavi-games-browser .tavi-game-title-row{display:flex;align-items:center;gap:8px;padding:0 2px 10px;}
+.tavi-games-browser .tavi-game-title-row h3{margin-right:auto;}
+.tavi-games-browser .tavi-game-title-row button{min-width:38px;min-height:38px;display:grid;place-items:center;padding:7px;border:1px solid var(--tavi-color-border);background:var(--tavi-color-surface);color:var(--tavi-color-text);border-radius:999px;}
+.tavi-games-browser .tavi-game-title-row button .tavi-ui-glyph{width:17px;height:17px;}
+.tavi-games-browser .tavi-game-list-row{padding:11px 9px;border:1px solid var(--tavi-color-border);background:var(--tavi-color-surface);border-radius:15px;color:var(--tavi-color-text);gap:10px;margin:6px 0;min-height:58px;}
+.tavi-games-browser .tavi-game-list-icon{display:grid;place-items:center;width:37px;height:37px;flex:none;border-radius:13px;background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);font-size:17px;}
+.tavi-games-browser .tavi-game-list-icon .tavi-ui-glyph{width:21px;height:21px;}
+.tavi-games-browser .tavi-game-list-info strong{font-size:13px;color:var(--tavi-color-text);}
+.tavi-games-browser .tavi-game-list-info small,.tavi-games-browser .tavi-game-status{font-size:11px;color:var(--tavi-color-text-muted);}
+.tavi-games-browser .tavi-game-action,.tavi-games-browser .tavi-game-invite button{min-height:38px;padding:7px 12px;border-radius:999px;background:var(--tavi-color-surface-raised);border:1px solid var(--tavi-color-border);color:var(--tavi-color-text);}
+.tavi-games-browser .tavi-game-invite{padding:5px 0 8px 0;gap:8px;}
+.tavi-games-browser .tavi-game-invite select{min-height:38px;max-width:none;min-width:0;font-size:12px;}
+.tavi-game-discovery-empty{padding:14px 12px;border-radius:15px;background:var(--tavi-color-surface-raised);font-size:12px;line-height:1.45;color:var(--tavi-color-text-muted);}
+.tavi-games-atrium-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 3px;}
+.tavi-games-atrium-actions button{min-height:40px;padding:7px 13px;border:1px solid var(--tavi-color-border);border-radius:999px;background:var(--tavi-color-surface);color:var(--tavi-color-text);font-size:12px;}
+@media(pointer:coarse){.tavi-games-atrium-actions button,.tavi-games-browser .tavi-game-title-row button{min-height:44px;}.tavi-games-browser .tavi-game-invite select{min-height:44px;}}
+@media(max-width:345px){.tavi-games-browser{padding-inline:9px!important;}.tavi-games-browser .tavi-game-status{max-width:75px;}}

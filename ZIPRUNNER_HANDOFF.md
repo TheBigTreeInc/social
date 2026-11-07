@@ -1,3 +1,22 @@
+## Tavi 0.3.132 — Compact Games and Material-style Apps (local-only)
+
+Base 0.3.131. Games now uses **My games** and **Discover** tabs; current turns,
+rooms, invitation navigation, trusted launch/invite actions and Atrium
+catalog discovery remain present and retain their permissions. The default
+My games view replaces large empty dashboard boxes with a compact empty state;
+raw Atrium connection diagnostics stay in Developer Mode. Games uses the host
+Back/navigation bar instead of a duplicated page heading.
+
+Apps retains the established Favorites/All swipe, long-press/right-click
+context menu and icon identity. It now uses material-inspired rounded tonal
+tabs, predictable spacing, subtle touch states, a browse-App-Store row and
+compact account-gated developer package control. The swipe area's height
+follows its selected tab to avoid blank space below Favorites.
+
+The source/descriptor and Workboard operator status are unchanged; no
+GitHub push, automated publication, developer privilege change, game backend,
+new migration, or native acceptance. See `docs/TAVI_MATERIAL_APPS_GAMES_0132.adoc`.
+
 ## Tavi 0.3.131 — Release pipeline refactor (local-only)
 
 Base 0.3.130. Replace repeated `workflow_run` release jobs with one manually

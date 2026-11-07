@@ -32,8 +32,9 @@ test('home and Games show discovered titles, not an unapproved play or challenge
 test('Games has explicit trusted-catalog refresh, and browser QA proves discovered Life can disappear',async()=>{
  const main=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
  const qa=await readFile(new URL('../tools/ui-qa.mjs',import.meta.url),'utf8');
- assert.match(main,/Refresh ↻/);
- assert.match(main,/Connected to Atrium; no published games yet./);
+ assert.match(main,/aria-label="Refresh game discovery"/);
+ assert.match(main,/data-games-page="discover"/);
+ assert.match(main,/No games published yet./);
  assert.match(qa,/The Life Loop/);
  assert.match(qa,/__qa\/withdraw-life/);
  assert.match(qa,/Not playable yet/);

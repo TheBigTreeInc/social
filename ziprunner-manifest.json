@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.131",
-    "base_version": "0.3.130"
+    "version": "0.3.132",
+    "base_version": "0.3.131"
   },
   "update": {
-    "id": "TAVI-20261106-RELEASE-CANDIDATE-0131",
+    "id": "TAVI-20261107-MATERIAL-APPS-GAMES-0132",
     "kind": "source_update",
-    "created_at": "2026-11-06T22:39:00+01:00",
-    "summary": "Replace auto-publishing workflow_run storm with one explicit read-only candidate; make Pages manual; fix Windows and context-menu CI QA tests."
+    "created_at": "2026-11-07T09:19:00+01:00",
+    "summary": "Compact Games into My games/Discover tabs; Material-styled Apps launcher and context-safe developer tools. No backend or publishing changes."
   },
   "planned_work": [
     {
@@ -2432,7 +2432,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Import 0.3.131 through local ZipRunner. Verify source and workflow regression tests, and only after separate operator approval of Git push check exact GitHub CI. No auto-publication or Pages deployment; native Windows/Android acceptance pending.",
+    "next_pass": "Import 0.3.132 through local ZipRunner. Verify 355px Windows and 320-390px Android/browser layout, My games/Discover tabs, game discovery/invitations, Favorites/All swipe, account-specific contexts, and developer-only install. Native and live Atrium QA pending. No push, release or server changes.",
     "risks": [
       "Embedded games are opaque-origin sandboxed; current Life may require an adaptation for storage/cookies. Tavi cannot grant allow-same-origin to GitHub Pages games sharing its web origin.",
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
@@ -2591,22 +2591,22 @@
     "notes": "Local ZipRunner QA only. No push, release, tag, public catalog or deployment authorized."
   },
   "release_notes": {
-    "version": "0.3.131",
-    "summary": "Manual read-only exact-SHA candidate preparation, manual Pages, cross-platform QA test repairs. No public release.",
+    "version": "0.3.132",
+    "summary": "Material-style Apps grid and compact player Games tabs, retaining existing permissions and actions; source-only candidate, no public release.",
     "server_unchanged": true,
     "server_release": "0.3.121",
     "database_schema_version": 12,
-    "database_migration": "none; CI/workflow/tests/docs only, schema 12 unchanged",
-    "native_qa": "Windows/Android local operator acceptance remains pending; no native runtime change.",
-    "browser_qa": "Stale Favorites button assertion replaced by context-menu interaction; actual GitHub browser CI pending."
+    "database_migration": "none; client UI only, Social schema 12 unchanged",
+    "native_qa": "Windows 355x630 and Android real device visual/touch acceptance pending.",
+    "browser_qa": "UI QA now selects Discover before checking Atrium; exact browser run pending."
   },
   "verification_summary": {
-    "source_candidate": "0.3.131",
-    "browser_qa": "Stale Favorites UI QA now uses Shift+F10 context menu, remote browser run pending",
-    "native_acceptance": "Windows CRLF source assertion repaired; native Windows/Android installer acceptance pending.",
+    "source_candidate": "0.3.132",
+    "browser_qa": "Source tests updated for Games tabs; real 5-viewport Playwright/browser pass pending.",
+    "native_acceptance": "Windows 355x630 and Android responsive/gesture QA pending; no native build in author environment.",
     "git_push": "No Git push, public release, tag, Pages deployment or approvals authorized.",
     "server_deploy": "unchanged from 0.3.107; LoopRD 0.4 Wallet rollout remains separately pending",
     "database_schema": "12 unchanged; no migration in 0.3.108",
-    "operator_review": "Release candidate flow manually invoked/read-only; verify GitHub env required reviewers before any explicit web publication."
+    "operator_review": "Source tests only; accept Games tab and Material Apps screen in ZipRunner before any publication. Release approval unchanged."
   }
 }

@@ -1,0 +1,55 @@
+= Tavi 0.3.132 — Compact Games and Material-style Apps
+:toc:
+
+== Scope
+
+This is an additive client UI pass based on 0.3.131. Tavi remains a messenger
+first, with games optional. No server, authentication, wallet, extension
+sandbox, database, generated descriptor, publisher assets, release workflow or
+public hosting changes are authorized.
+
+== Games
+
+* Replace four large empty dashboard panels with a two-tab player view.
+* My games: current turns, room chats, selected room and Inbox invitation
+  navigation. A compact empty state is shown only when no active entries exist.
+* Discover: trusted published playable catalog (Play/Invite), separately
+  discovered but non-playable Atrium entries, refresh and Atrium navigation.
+* Discovery connection details remain developer-facing; ordinary users see
+  a brief unavailable/empty state.
+* Tab buttons expose role=tablist/role=tab, aria-selected/aria-controls,
+  keyboard arrow/Home/End navigation and hidden inactive panels.
+* Refresh retains the selected tab; entering Games from another surface
+  defaults to My games. Header title and Back remain shell-owned.
+
+== Apps
+
+* Keep existing icon artwork, 3-column phone/4-column wide grid,
+  account-scoped Favorites and swipeable Favorites/All tabs.
+* Material-like rounded tonal segmentation, app touch feedback, restrained
+  icon elevation, spacing and responsive typography with both themes.
+* A compact Browse App Store row replaces the old thin footer button.
+* Move local .tavix sideload affordance below the app grid, retaining both
+  the LoopRD developer permission gate and local Developer Mode opt-in.
+* App tab swipe container follows the selected content height, preventing
+  the All tab from leaving a large empty gap underneath Favorites.
+* The source-preserved contextual right-click, long-press and Shift+F10
+  actions remain unchanged; no permanently visible stars.
+
+== Validation and operator acceptance
+
+. Run `npm run verify` and
+  `node --test client/tests/material-apps-games-132.test.mjs`.
+. Open Games at 355x630, 320/390-wide Android and desktop widths. Verify
+  My games/Discover keyboard/touch navigation, in-progress turns, Inbox
+  invitation link, catalog game Play/Invite and Atrium discovered-title
+  separation. Refresh must not switch tabs.
+. Open Apps: Favorites initially, swipe to All, add/unfavorite by context
+  menu, browse Store and verify no blank space under the short Favorites grid.
+. Check developer-off and unauthorized users cannot install a local TaviX;
+  developer-on with LoopRD grant still can. No app-specific permissions change.
+. Test both light/dark themes; verify native Windows/Android builds and
+  operator approval via ZipRunner. Preserve prior release approval gates.
+
+Note: Without a complete native Windows/Android runtime and a live Atrium
+server, source tests do not prove pixel layout or game discovery availability.
