@@ -1,3 +1,7 @@
+## 0.3.146 CI entrypoint and Android release-gate repair
+
+CI direct root/client test and web-build routes now execute the same SHA-guarded legacy Companion cleanup before extension integrity checks. This covers Windows, Android, web, browser UI and cross-platform desktop CI without relaxing the approved Companion pin. Android release-candidate Python test now verifies the actual AST inequality and raising guard rather than whitespace formatting. See docs/TAVI_CI_COMPANION_ENTRYPOINT_REPAIR_0146.adoc. Existing assets, Companion, schema-13 operator gate, local data and release restrictions unchanged.
+
 # looprd-social 0.3.145 — Companion ZipRunner overlay repair
 
 Fixes Windows build failure when upgrading from 0.3.143 with ZipRunner's safe `delete_missing=false` overlay. The 0.6.27 Companion `ui/collection.html` and two published mirror copies remained alongside the approved 0.6.43 bundle, changing its SHA-256. ZipRunner and `npm run verify` both run an exact SHA-256-guarded cleanup of only those three obsolete files before verification, including when ZipRunner reuses the previously loaded build command. Modified files and altered publisher pins fail closed; operator/private state is untouched. Includes an exact-Windows-hash regression test. This is a source candidate, not native acceptance; server schema 13 migration still requires explicit approval. See `docs/TAVI_COMPANION_OVERLAY_REPAIR_0145.adoc`.

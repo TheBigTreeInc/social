@@ -63,10 +63,14 @@ test('clean extracted candidate has no obsolete partner files and passes checked
  await syncInternalExtensions({check:true});
 });
 
-test('the already-loaded 0.3.143 build command invokes the overlay cleanup through npm verify',async()=>{
+test('every direct CI test/build entry point prunes only the reviewed stale Companion source',async()=>{
  const pkg=JSON.parse(await readFile(new URL('../../package.json',import.meta.url),'utf8'));
  const project=JSON.parse(await readFile(new URL('../../project.zr',import.meta.url),'utf8'));
+ const client=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
  assert.match(pkg.scripts.verify,/^node tools\/prune-companion-legacy-overlay\.mjs && npm run test/);
+ assert.match(pkg.scripts.test,/^node tools\/prune-companion-legacy-overlay\.mjs && npm run test:server/);
+ assert.equal(client.scripts.pretest,'node ../tools/prune-companion-legacy-overlay.mjs');
+ assert.match(client.scripts['preweb:build'],/^node \.\.\/tools\/prune-companion-legacy-overlay\.mjs && node \.\.\/tools\/sync-internal-extensions\.mjs$/);
  assert.deepEqual(project.build,[
   'node tools/prune-companion-legacy-overlay.mjs','npm run verify','node tools/auto-build.mjs'
  ]);

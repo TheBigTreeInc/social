@@ -1,0 +1,15 @@
+= Tavi Social 0.3.146: exact-commit GitHub CI entrypoint repair
+
+== Evidence
+
+The 0.3.145 GitHub push had five failed and two cancelled workflows. Windows, Android, Web and UI QA failed reviewed Companion 0.6.43 digest checks because direct npm entrypoints bypassed the SHA-pinned cleanup. Verify Source also failed the whitespace-specific Android release-gate test.
+
+== Solution
+
+Root `npm test` executes `tools/prune-companion-legacy-overlay.mjs` first. Client `pretest` and `preweb:build` run the identical script before testing or extension mirror synchronization, respectively. The script only deletes the three pinned 0.6.27 legacy `collection.html` copies, only after verifying all byte hashes and the approved 0.6.43 registry pin. Any modified file stops cleanup; no arbitrary deletion, no weakened authorization. GitHub checkout may still retain old tracked files until deletions are staged in a separately authorized Git push.
+
+The APK test now parses release-gate.py and asserts a single `len(apks) != 1` conditional with a raising branch. Release candidate remains read-only, exact SHA, all eight workflows successful, and operator unverified; the gate is unchanged.
+
+== Verification gates
+
+Focus tests and full root/client tests; clean archive and overlay; exact fresh GitHub SHA across eight workflows; manual native Windows and Android acceptance. No automatic Git action, publication or schema 13 deployment.

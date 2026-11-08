@@ -1,3 +1,7 @@
+## LoopRD Social 0.3.146 — GitHub CI entrypoint repair
+
+Base 0.3.145. Every direct root/client test or build path runs the existing reviewed, byte-hash-guarded Companion legacy cleanup before digest enforcement. Release gate Python test checks AST semantics of the exact-one-APK rejection, not formatting. Do not relax the pin, deploy schema 13, push or publish automatically. GitHub exact-commit CI and native acceptance pending.
+
 ## LoopRD Social 0.3.145 — Companion reviewed bundle overlay repair (source candidate)
 
 Base 0.3.144, whose ZipRunner build failed over installed 0.3.143. Identified the exact source of the bundle hash mismatch: legacy Companion 0.6.27 `ui/collection.html` persisted in `extensions/` and in two published mirror locations because `project.zr` correctly uses `delete_missing=false`. Pre-build, remove only these three files when they match the prior release's exact SHA-256; unknown modifications fail closed. Restore the approved Companion 0.6.43 reviewed digest without changing it. All 0.3.144 Assets/Companion/LoopRD work retained. The schema 13 deployment and native Windows/Android acceptance remain separate operator gates. See `docs/TAVI_COMPANION_OVERLAY_REPAIR_0145.adoc`.

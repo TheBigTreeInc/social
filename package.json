@@ -1,11 +1,11 @@
 {
   "name": "looprd-social",
-  "version": "0.3.145",
+  "version": "0.3.146",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test": "npm run test:server && npm run test:client && npm run test:openclaw",
+    "test": "node tools/prune-companion-legacy-overlay.mjs && npm run test:server && npm run test:client && npm run test:openclaw",
     "verify": "node tools/prune-companion-legacy-overlay.mjs && npm run test && node client/tools/check-package.mjs",
     "start:bridge": "node bridge.mjs",
     "check:looprd": "python tools/generate-looprd.py --check",
