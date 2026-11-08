@@ -14,7 +14,7 @@ const CHANNEL=TAVIX_CHANNEL;
 export const CORE_WALLET_ID='org.tavi.core.wallet';
 const KEY=/^[a-zA-Z0-9._-]{1,80}$/;
 const throttle=()=>({started:Date.now(),count:0});
-export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');},onSurfaceOpen=()=>{throw Error('Game surfaces unavailable');},walletApi=()=>{throw Error('Wallet service unavailable');},onCompanionPreview=()=>{},isReviewedCompanionSession=()=>false,assetService=null,assetGrants=()=>null,approveAssetCustomization=()=>false,isTrustedAtriumSession=()=>false,listInstalledGames=()=>[],onInstalledGameOpen=()=>false}){
+export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');},onSurfaceOpen=()=>{throw Error('Game surfaces unavailable');},walletApi=()=>{throw Error('Wallet service unavailable');},onCompanionPreview=()=>{},isReviewedCompanionSession=()=>false,companionApi=()=>{throw Error('Companion server unavailable');},assetDependencyStatus=()=>{throw Error('Asset dependency service unavailable');},isAssetDependencySession=()=>false,assetService=null,assetGrants=()=>null,approveAssetCustomization=()=>false,isTrustedAtriumSession=()=>false,listInstalledGames=()=>[],onInstalledGameOpen=()=>false}){
  let session=null;const ziprunner=createZipRunnerReview();
  function send(message){session?.frame?.contentWindow?.postMessage({channel:CHANNEL,direction:'response',...message},'*');}
  function onMessage(e){
@@ -32,7 +32,7 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
   try{
    let result=null;
    switch(request.method){
-    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(ziprunnerAllowed?['ziprunner.review/v1']:[]),...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(authorizedAtrium()?[INSTALLED_GAMES_FEATURE]:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[]),'tavix.settings-entry/v1',...(assetsAvailable(assetService,assetSessionGrants())?[ASSETS_FEATURE]:[])],launchContext:current.launchContext};break;
+    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(ziprunnerAllowed?['ziprunner.review/v1']:[]),...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(authorizedAtrium()?[INSTALLED_GAMES_FEATURE]:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1','tavi.companion.cloud/v1']:[]),...(permissions.has('assets.read')&&isAssetDependencySession({id:current.id,scope:current.scope,source:current.source})?['tavi.assets.dependencies/v1']:[]),'tavix.settings-entry/v1',...(assetsAvailable(assetService,assetSessionGrants())?[ASSETS_FEATURE]:[])],launchContext:current.launchContext};break;
     case 'ziprunner.importCredential':
     case 'ziprunner.review':
     case 'ziprunner.clear':{
@@ -88,6 +88,12 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
      result={accepted:true,id:chosen.id,version:chosen.version};
      break;
     }
+    case 'assets.dependencies.status':{
+     if(!permissions.has('assets.read')||!isAssetDependencySession({id:current.id,scope:current.scope,source:current.source})||request.params===undefined||request.params===null||
+        typeof request.params!=='object'||Array.isArray(request.params)||Object.keys(request.params).length)
+       throw Error('Invalid asset dependency request');
+     result=assetDependencyStatus({id:current.id,scope:current.scope,source:current.source});break;
+    }
     case 'assets.packs.list':
     case 'assets.objects.discover':
     case 'assets.composition.resolve':
@@ -115,6 +121,27 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
      if(params!==undefined && (!params||typeof params!=='object'||Array.isArray(params)))throw Error('Invalid wallet arguments');
      // All money operations execute with the verified Social principal in the host.
      result=walletApi(request.method,params||{});break;
+    }
+    case 'companion.get':
+    case 'companion.put':{
+     // The bearer credential is held by the signed-in Tavi host, never posted to the iframe.
+     // Only the pinned first-party reviewed Companion may use its account's cloud slot.
+     if(current.id!==REVIEWED_COMPANION.id||current.source!=='tavi:bundled'||
+        current.reviewedBundle!==REVIEWED_COMPANION.sha256||!permissions.has('ui.panel')||
+        !permissions.has('storage.private')||!isReviewedCompanionSession(current))
+       throw Error('Companion cloud permission denied');
+     if(request.method==='companion.put'){
+      if(typeof request.snapshot!=='string'||new TextEncoder().encode(request.snapshot).length>8192||
+       !Number.isSafeInteger(request.revision)||request.revision<0||typeof request.epoch!=='string'||
+       !/^[A-Za-z0-9_-]{16,64}$/.test(request.epoch))throw Error('Invalid Companion cloud save');
+     }else if(Object.hasOwn(request,'snapshot')||Object.hasOwn(request,'revision')||Object.hasOwn(request,'epoch'))
+       throw Error('Invalid Companion cloud load');
+     result=Promise.resolve(companionApi(request.method,request.method==='companion.get'?{}:
+       {snapshot:request.snapshot,revision:request.revision,epoch:request.epoch},
+       {id:current.id,scope:current.scope,source:current.source})).then(answer=>{
+       if(session!==current||!isReviewedCompanionSession(current))throw Error('Companion session changed');
+       return answer;
+     });break;
     }
     case 'companion.preview':{
      // The trust grant is established by Tavi after digest + *asset* verification

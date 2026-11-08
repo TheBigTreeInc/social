@@ -35,18 +35,19 @@ test('store discovery renders real bundled catalog and distinguishes unavailable
  assert.match(blank,/data-asset-filter="installed"/);
  const installed=renderAssetMarket({assetsAvailable:true,assetsInstalled:[[BUNDLED_ASSET_ITEM.id,BUNDLED_ASSET_ITEM.version]]});
  assert.match(installed,/Available offline for this account/);
- assert.doesNotMatch(installed,/data-action="install-free-asset-pack"/);
+ assert.match(installed,/data-asset-install-id="org.tavi.companion.scenes"/);
+ assert.doesNotMatch(installed,/data-asset-install-id="org.tavi.cards.standard"/);
  const unready=renderAssetMarket({assetsAvailable:false});assert.doesNotMatch(unready,/data-action="install-free-asset-pack"/);
 });
 test('remote catalog entries are metadata-only; untrusted markup is escaped',()=>{
  const rows=assetMarketEntries({onlineEntries:[{id:'org.tavi.test',title:'<img src=x onerror=alert(1)>',summary:'<script>bad</script>',category:'Themes',version:'1.0.0'}]});
- assert.equal(rows.length,2);assert.equal(rows[1].installable,false);
+ assert.equal(rows.length,3);assert.equal(rows[2].installable,false);
  const html=renderAssetMarket({assetsAvailable:true,onlineState:'available',onlineItems:[{id:'org.tavi.test',title:'<img src=x onerror=alert(1)>',summary:'<script>bad</script>',category:'Themes',version:'1.0.0'}]});
  assert.match(html,/&lt;script&gt;bad&lt;\/script&gt;/);
  assert.doesNotMatch(html,/<script>bad<\/script>/);
  assert.doesNotMatch(html,/<img\b/);
  assert.match(html,/Awaiting verified package/);
- assert.equal((html.match(/data-action="install-free-asset-pack"/g)||[]).length,1);
+ assert.equal((html.match(/data-action="install-free-asset-pack"/g)||[]).length,2);
 });
 test('store permissions reuse host grant buttons only for verified compatible packs',()=>{
  const row={id:'org.example.game',name:'My Game',verified:true,dependencies:[{packId:BUNDLED_ASSET_ITEM.id,read:false,customize:false,canCustomize:true,compatible:true,version:'0.1.1'}]};

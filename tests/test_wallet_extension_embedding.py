@@ -27,7 +27,7 @@ class WalletEmbeddingTest(unittest.TestCase):
         routes={x['path']:x for x in parent['handlers']}
         self.assertEqual(parent['component'],'looprd-social')
         self.assertEqual(parent['auth']['realm'],'tavi-social')
-        self.assertEqual(parent['database']['schemaVersion'],12)
+        self.assertEqual(parent['database']['schemaVersion'],13)
         self.assertEqual(routes['/wallet']['source'],source)
         self.assertEqual(routes['/ecosystem/wallet-merchant']['source'],source+'\n\nasync def handle(ctx):\n    return await handle_merchant(ctx)\n')
         self.assertEqual(routes['/ecosystem/wallet-reward']['source'],source+'\n\nasync def handle(ctx):\n    return await handle_reward(ctx)\n')

@@ -98,7 +98,7 @@ test('central TaviX preferred for new Atrium and optional Companion, but existin
  store.install(bundled.find(e=>e.manifest.id==='org.tavi.community.companion').manifest);
  const bundledPinned=mergeRepositoryEntries(bundled,[[...central],[oldAtrium]],{store,hostedOptionalIds:['org.tavi.community.companion']});
  assert.equal(bundledPinned.find(e=>e.manifest.id==='org.tavi.community.companion').remote,undefined);
- assert.equal(bundledPinned.find(e=>e.manifest.id==='org.tavi.community.companion').manifest.version,'0.6.27');
+ assert.equal(bundledPinned.find(e=>e.manifest.id==='org.tavi.community.companion').manifest.version,'0.6.43');
 });
 
 test('foreign or enlarged permissions cannot replace a bundled optional app',async()=>{

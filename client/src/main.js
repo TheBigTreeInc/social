@@ -296,10 +296,24 @@ function assetsConsentRows(){
  });
 }
 const extensionHost=createExtensionHost({storage:localStorage,notify:message=>toast(message),
- assetService:assetsRuntime,assetGrants:activeAssetGrants,approveAssetCustomization:(session,params)=>
+ assetService:assetsRuntime,assetGrants:activeAssetGrants,assetDependencyStatus:caller=>assetPermissions.dependencyStatus(caller),
+ isAssetDependencySession:caller=>!!trustedAssetInstallation(caller)?.manifest?.assetDependencies?.length,approveAssetCustomization:(session,params)=>
   activeAssetGrants(session)?.grants.some(g=>g.packId===params.packId&&g.canCustomize===true&&g.capabilities.includes(params.capability))===true,
  isTrustedAtriumSession:caller=>!!extensionVerified.has(ATRIUM_EXTENSION_ID)&&currentAtriumCaller(caller),
  listInstalledGames:atriumInstalledGames,onInstalledGameOpen:acceptAtriumInstalledGame,
+ companionApi:async(method,params,caller)=>{
+  const currentApi=state.api;
+  if(!currentApi||!state.connected||!state.profile||!extensionStoreScope||caller.scope!==extensionStoreScope||
+     caller.id!==BUNDLED_COMPANION_ID||caller.source!=='tavi:bundled'||
+     !extensionVerified.has(BUNDLED_COMPANION_ID)||!extensionAccountStore()?.enabled(BUNDLED_COMPANION_ID))
+   throw Error('Companion cloud unavailable');
+  const answer=method==='companion.get'?await currentApi.companionGet():
+   method==='companion.put'?await currentApi.companionPut(params.snapshot,params.revision,params.epoch):null;
+  if(!answer||state.api!==currentApi||!state.connected||caller.scope!==extensionStoreScope||
+     !extensionVerified.has(BUNDLED_COMPANION_ID)||!extensionAccountStore()?.enabled(BUNDLED_COMPANION_ID))
+   throw Error('Companion cloud session changed');
+  return answer;
+ },
  onCompanionPreview:(_preview,scope)=>{if(scope===extensionStoreScope&&(state.panel==='home'||state.panel==='messenger'))render();},
  isReviewedCompanionSession:current=>!!state.api&&!!state.profile&&current.id===BUNDLED_COMPANION_ID&&current.scope===extensionStoreScope&&current.source==='tavi:bundled'&&current.reviewedBundle===REVIEWED_COMPANION.sha256&&extensionVerified.has(BUNDLED_COMPANION_ID)&&!!extensionAccountStore()?.enabled(BUNDLED_COMPANION_ID)&&extensionAccountStore()?.source(BUNDLED_COMPANION_ID)==='tavi:bundled'&&extensionCatalog.some(e=>e.manifest.id===BUNDLED_COMPANION_ID&&e.manifest.version===REVIEWED_COMPANION.version&&!e.remote),
  close:()=>{clearPendingLifeLaunch();if(extensionSettingsReturn){extensionSettingsReturn=false;state.panel='settings';state.settingsPage='extensions';}else if(extensionGamesReturn){extensionGamesReturn=false;state.panel='games';}else state.panel=extensionReturnsHome(extensionSelected)?'home':'app-store';state.mobileRoster=state.panel==='home';render();},onGameLaunch:offerLifeLaunch,onSurfaceOpen:offerGameSurface,
@@ -1498,9 +1512,10 @@ async function acceptAssetAction(){
  document.querySelectorAll('[data-asset-approval-accept],[data-asset-approval-cancel]').forEach(button=>button.disabled=true);
  try{
   if(pending.kind==='install'){
-   if(pending.packId!=='org.tavi.cards.standard')throw Error('Unknown bundled asset');
-   const result=await assetsEngine.installSample(pending.scope);
-   toast(result.changed?'Free card pack installed.':'Card pack already installed.');
+   if(!['org.tavi.cards.standard','org.tavi.companion.scenes'].includes(pending.packId))throw Error('Unknown bundled asset');
+   const isScene=pending.packId==='org.tavi.companion.scenes';
+   const result=isScene?await assetsEngine.installScenes(pending.scope):await assetsEngine.installSample(pending.scope);
+   toast(result.changed?(isScene?'Hollow Meadow installed.':'Free card pack installed.'):(isScene?'Hollow Meadow already installed.':'Card pack already installed.'));
   }else if(pending.kind==='grant'){
    const store=extensionAccountStore();
    if(!store||store.source(pending.appId)!==pending.source)throw Error('Application source changed');
@@ -1511,7 +1526,7 @@ async function acceptAssetAction(){
  }catch(error){toast('Asset change failed: '+error.message);}
  finally{assetApprovalBusy=false;pendingAssetAction=null;render();}
 }
-async function action(name){
+async function action(name,requestedPack=null){
  if(name==='back'){goBackInTavi();return;}
  if(name==='assets-store'){assetStoreReturnPanel=state.panel==='settings'?'settings':'menu';pendingAssetAction=null;state.panel='assets-store';state.mobileRoster=false;render();void refreshAssetsCatalog();return;}
  if(name==='settings-assets'){pendingAssetAction=null;state.panel='settings';state.settingsPage='assets';state.mobileRoster=false;render();return;}
@@ -1522,7 +1537,9 @@ async function action(name){
  if(name==='install-free-asset-pack'){
   const scope=extensionAccountStore()&&extensionStoreScope;
   if(!scope||!assetsEngine.ready())return toast('Local Assets storage is unavailable.');
-  pendingAssetAction={kind:'install',packId:'org.tavi.cards.standard',scope};render();
+  if(requestedPack===null)requestedPack='org.tavi.cards.standard';
+  if(!['org.tavi.cards.standard','org.tavi.companion.scenes'].includes(requestedPack))return toast('Unknown bundled asset pack.');
+  pendingAssetAction={kind:'install',packId:requestedPack,scope};render();
   return;
  }
  if(name==='wallet'){await openCoreWallet();return;}
@@ -1657,7 +1674,7 @@ function wire(){
   else if(!event.shiftKey&&document.activeElement===buttons.at(-1)){event.preventDefault();buttons[0].focus();}
  });
  document.querySelector('[data-asset-approval-accept]')?.addEventListener('click',()=>void acceptAssetAction());
- document.querySelectorAll('[data-action]').forEach(el=>el.addEventListener('click',()=>action(el.dataset.action)));
+ document.querySelectorAll('[data-action]').forEach(el=>el.addEventListener('click',()=>action(el.dataset.action,el.dataset.assetInstallId)));
  wireAppPages(document,{initialIndex:appDrawerPage,onChange:index=>{appDrawerPage=index;}});
  disposeAppContexts=wireAppContextMenus(document,{
    resolveApp:id=>{

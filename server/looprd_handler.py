@@ -6,6 +6,7 @@ and push-device ownership are independently enforced by LoopRD's verifier.
 import hashlib
 import hmac
 import json
+import math
 import os
 import re
 import time
@@ -13,6 +14,9 @@ import sqlalchemy as sa
 from contextlib import nullcontext
 from starlette.concurrency import run_in_threadpool
 
+COMPANION_CLOUD_SCHEMA='tavi.companion.cloud/v1'
+COMPANION_SESSION_SCHEMA='tavi.companion.session/v6'
+COMPANION_MAX_BYTES=8192
 SCHEMA = 'looprd.social.profile/v1'
 APPEARANCE_SCHEMA = 'modular-portraits.identity/v1'
 PORTRAIT_NUMBER = re.compile(r'^[1-9][0-9]{0,511}$')
@@ -1029,6 +1033,97 @@ def game_room_send(db,subject,body,now):
     return {'ok':True,'messageId':ident}
 
 
+def _companion_account_id(subject):
+    # The target account is ALWAYS derived from the authenticated Social session.
+    if not isinstance(subject,str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}',subject):
+        raise ValueError('Companion requires an authenticated account')
+    return int(subject[5:])
+
+def companion_get(db,subject):
+    account_id=_companion_account_id(subject)
+    row=db.execute(sa.text('''SELECT "companionSnapshot" AS snapshot,
+        "companionRevision" AS revision, "companionEpoch" AS epoch FROM "SocialAccount"
+        WHERE id=:id'''),{'id':account_id}).mappings().first()
+    if row is None:return error('Account not found')
+    if not row['epoch'] or row['revision'] is None:
+        # First read initializes the reset epoch, including old accounts after migration.
+        epoch=secrets.token_urlsafe(24)
+        db.execute(sa.text('''UPDATE "SocialAccount" SET "companionEpoch"=COALESCE("companionEpoch",:epoch),
+            "companionRevision"=COALESCE("companionRevision",0) WHERE id=:id'''),
+            {'id':account_id,'epoch':epoch})
+        row=db.execute(sa.text('''SELECT "companionSnapshot" AS snapshot,
+            "companionRevision" AS revision, "companionEpoch" AS epoch FROM "SocialAccount"
+            WHERE id=:id'''),{'id':account_id}).mappings().first()
+    return {'ok':True,'schema':COMPANION_CLOUD_SCHEMA,
+        'snapshot':row['snapshot'],'revision':row['revision'],'epoch':row['epoch']}
+
+def _valid_companion_snapshot(doc):
+    # Basic server-side constraints for Companion 0.6.43 v6; the client performs
+    # its more detailed simulation/genetics validation before applying a save.
+    # Reject partial snapshots: they could occupy the singleton slot while
+    # being impossible for a real Companion client to open.
+    if (not isinstance(doc,dict) or set(doc)!={'schema','chosen','name','world'} or
+        doc.get('schema')!=COMPANION_SESSION_SCHEMA or doc.get('chosen') is not True or
+        not isinstance(doc.get('name'),str) or len(doc['name'])>32):
+        return False
+    w=doc.get('world')
+    if not isinstance(w,dict) or not {'form','x','care','genome','needs','preferences',
+            'experience','habits','associations','objectState','scenePlacements',
+            'visits','lastVisited','memories'}<=set(w) or len(w)>15:
+        return False
+    if (w.get('form') not in ('cat','unicorn') or
+        not isinstance(w.get('x'),(int,float)) or isinstance(w['x'],bool) or
+        not math.isfinite(w['x']) or not 0<=w['x']<=2400 or
+        type(w.get('care')) is not bool):
+        return False
+    needs=w.get('needs')
+    if not isinstance(needs,dict) or set(needs)!={'fullness','cleanliness','happiness','energy','affection'} or any(
+        isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) or not 0<=v<=100 for v in needs.values()):
+        return False
+    if any(not isinstance(w.get(key),dict) or len(w[key])>64 for key in
+           ('preferences','experience','habits','associations','objectState','scenePlacements','visits')):
+        return False
+    memories=w.get('memories')
+    if not isinstance(memories,list) or len(memories)>6 or any(not isinstance(m,str) or len(m)>160 for m in memories):
+        return False
+    if w.get('lastVisited') is not None and not isinstance(w['lastVisited'],str):
+        return False
+    genome=w.get('genome')
+    keys=('curiosity','sociability','playfulness','calmness','appetite','stamina')
+    events=('explore','play','rest','nourish','bathe','bond')
+    if (not isinstance(genome,dict) or set(genome)!={'schema','revision','genes','exposures'} or
+        genome.get('schema')!='tavi.companion.genome/v2' or type(genome.get('revision')) is not int or
+        not 0<=genome['revision']<=1_000_000 or not isinstance(genome.get('genes'),dict) or
+        not isinstance(genome.get('exposures'),dict) or
+        set(genome['genes'])!=set(keys) or set(genome['exposures'])!=set(events)):
+        return False
+    if any(type(v) is not int or not 0<=v<=510 for v in genome['genes'].values()):
+        return False
+    if any(type(v) is not int or not 0<=v<=1_000_000 for v in genome['exposures'].values()):
+        return False
+    return sum(genome['exposures'].values())==genome['revision']
+
+def companion_put(db,subject,body):
+    account_id=_companion_account_id(subject)
+    snapshot=body.get('snapshot');revision=body.get('revision');epoch=body.get('epoch')
+    if not isinstance(snapshot,str) or not snapshot or len(snapshot.encode('utf8'))>COMPANION_MAX_BYTES:
+        return error('Invalid Companion snapshot size')
+    if not isinstance(revision,int) or isinstance(revision,bool) or not 0<=revision<2**31 or not isinstance(epoch,str) or not re.fullmatch(r'[A-Za-z0-9_-]{16,64}',epoch):
+        return error('Invalid Companion revision or epoch')
+    try:
+        doc=json.loads(snapshot)
+    except (ValueError,TypeError):return error('Invalid Companion snapshot JSON')
+    if not _valid_companion_snapshot(doc):
+        return error('Invalid Companion session snapshot')
+    # Single atomic conditional update: old devices and stale revisions never overwrite.
+    updated=db.execute(sa.text('''UPDATE "SocialAccount" SET "companionSnapshot"=:snapshot,
+        "companionRevision"="companionRevision"+1 WHERE id=:id
+        AND "companionEpoch"=:epoch AND "companionRevision"=:revision'''),
+        {'snapshot':snapshot,'id':account_id,'epoch':epoch,'revision':revision})
+    if updated.rowcount!=1:
+        return {'ok':False,'code':'COMPANION_CONFLICT','error':'Companion state changed on another device or was reset; reload from the server'}
+    return {'ok':True,'schema':COMPANION_CLOUD_SCHEMA,'revision':revision+1,'epoch':epoch}
+
 def atrium_app_url():
     base=os.getenv('LOOPRD_TAVI_ATRIUM_BASE_URL','')
     if not base or len(base)>512 or not base.endswith('/') or any(ord(c)<33 or c=='\\' for c in base):return None
@@ -1092,6 +1187,10 @@ def execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):
             subject=session_identity(db,body.get('token'),now) or authorize(body.get('token'),tokens)
             if not subject:
                 return error('Sign in to Social first'),None
+            if op=='companion_get':
+                return companion_get(db,subject),None
+            if op=='companion_put':
+                return companion_put(db,subject,body),None
             if op=='recovery_codes_create':
                 return recovery_codes_create(db,subject,body,now),None
             if op=='recovery_codes_status':
@@ -1265,7 +1364,7 @@ async def handle(ctx):
     op=ctx.body.get('op') if isinstance(ctx.body,dict) else None
     changing=op in {'game_challenge_send','interaction_reply','interaction_dismiss','interaction_publish',
                     'contact_request','contact_accept','contact_remove','dm_mark_read',
-                    'dm_send','game_room_send','save_profile','chat_send','recover_account'}
+                    'dm_send','game_room_send','save_profile','chat_send','recover_account','companion_get','companion_put'}
     if changing:
         return await run_in_threadpool(process_event,ctx)
     result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory,principal_subject=ctx.principal.subject)

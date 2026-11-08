@@ -69,6 +69,163 @@ function completeObjectUse(s,id){
 
 return {OBJECT_CATALOG_SCHEMA,validateObjectCatalog,objects,objectById,initialObjectState,isObjectAvailable,refillObject,completeObjectUse};
 })();
+// world/world-geometry.mjs
+__modules["world/world-geometry.mjs"]=(()=>{
+const __moduleURL=new URL("./world/world-geometry.mjs",document.baseURI).href;
+/** Stable physical scene coordinates, independent of painted background assets. */
+const WORLD_WIDTH=2400;
+const FLOOR=346;
+const WALK_MIN=50;
+const WALK_MAX=WORLD_WIDTH-50;
+const DEFAULT_SPAWN=690;
+
+return {WORLD_WIDTH,FLOOR,WALK_MIN,WALK_MAX,DEFAULT_SPAWN};
+})();
+// world/scene-objects.mjs
+__modules["world/scene-objects.mjs"]=(()=>{
+const __moduleURL=new URL("./world/scene-objects.mjs",document.baseURI).href;
+/**
+ * Visual affordances/attachments on top of the existing gameplay object catalog.
+ * No movement, carrying, save-schema change or arbitrary extension script API.
+ */
+const {objects,objectById}=__modules["world/object-catalog.mjs"];
+const {FLOOR,WALK_MIN,WALK_MAX}=__modules["world/world-geometry.mjs"];
+const SCENE_OBJECT_SCHEMA='tavi.companion.scene-objects/v1';
+const SURFACE_SLOTS=Object.freeze(['left','middle','right']);
+const SCENE_OBJECTS=Object.freeze([
+  {id:'snack',kind:'interactive',portable:false,placeable:false,anchor:'ground'},
+  {id:'table',kind:'interactive',portable:false,placeable:false,anchor:'ground',slots:{left:{x:-39,y:296},middle:{x:0,y:296},right:{x:39,y:296}}},
+  {id:'honey',kind:'interactive',portable:true,placeable:true,anchor:'ground'},
+  {id:'bath',kind:'interactive',portable:false,placeable:false,anchor:'ground'},
+  {id:'bed',kind:'interactive',portable:false,placeable:false,anchor:'ground'},
+  {id:'toy',kind:'interactive',portable:true,placeable:true,anchor:'ground'}
+].map(x=>Object.freeze({...x,slots:x.slots?Object.freeze(x.slots):undefined})));
+function validateSceneObjects(entries,catalog=objects){
+  if(!Array.isArray(entries))throw Error('Scene objects must be an array');
+  const byId=new Map(),byCatalog=new Map(catalog.map(x=>[x.id,x]));
+  for(const entry of entries){
+    if(!/^[a-z][a-z0-9-]{1,39}$/.test(entry?.id??'')||byId.has(entry.id))throw Error('Duplicate or invalid scene object');
+    if(!['interactive','decoration'].includes(entry.kind)||typeof entry.portable!=='boolean'||typeof entry.placeable!=='boolean')throw Error('Invalid object affordances');
+    if(entry.kind==='interactive'&&!byCatalog.has(entry.id))throw Error('Unknown gameplay object');
+    if(entry.kind==='decoration'&&byCatalog.has(entry.id))throw Error('Decorative object shadows gameplay object');
+    if(entry.anchor!=='ground'&&entry.anchor!=='slot')throw Error('Unknown scene anchor');
+    if(entry.slots&&(!Object.keys(entry.slots).every(s=>SURFACE_SLOTS.includes(s))||Object.values(entry.slots).some(p=>!Number.isFinite(p.x)||!Number.isFinite(p.y))))throw Error('Invalid support slots');
+    byId.set(entry.id,entry);
+  }
+  for(const entry of entries){
+    if(entry.anchor!=='slot')continue;
+    const parent=byId.get(entry.parent);
+    if(!parent?.slots?.[entry.slot]||entry.parent===entry.id||parent.anchor==='slot')throw Error('Invalid slot parent');
+    if(entries.filter(e=>e.parent===entry.parent&&e.slot===entry.slot).length!==1)throw Error('Occupied surface slot');
+  }
+  for(const obj of catalog)if(!byId.has(obj.id))throw Error('Missing gameplay object visual definition: '+obj.id);
+  return true;
+}
+validateSceneObjects(SCENE_OBJECTS);
+function sceneObjectForId(id){return SCENE_OBJECTS.find(x=>x.id===id)??null;}
+/** Portable items may be returned to their original ground position or placed
+ * on exactly one empty table slot. Fixed furniture can never be moved. */
+const SCENE_PLACEMENT_SCHEMA='tavi.companion.placements/v1';
+const PORTABLE_IDS=Object.freeze(SCENE_OBJECTS.filter(entry=>entry.portable&&entry.placeable).map(entry=>entry.id));
+const PLACEMENT_OPTIONS=Object.freeze(['ground',...SURFACE_SLOTS.map(slot=>'table:'+slot)]);
+const initialScenePlacements=()=>Object.fromEntries(PORTABLE_IDS.map(id=>[id,'ground']));
+function validateScenePlacements(placements){
+  if(!placements||typeof placements!=='object'||Array.isArray(placements))throw Error('Invalid placements');
+  if(Object.keys(placements).length!==PORTABLE_IDS.length||Object.keys(placements).some(id=>!PORTABLE_IDS.includes(id)))throw Error('Unknown portable object placement');
+  const occupied=new Set();
+  for(const id of PORTABLE_IDS){
+    const destination=placements[id];
+    if(!PLACEMENT_OPTIONS.includes(destination))throw Error('Unknown destination for '+id);
+    if(destination!=='ground'){
+      if(occupied.has(destination))throw Error('Occupied surface slot');
+      occupied.add(destination);
+    }
+  }
+  return true;
+}
+function objectWorldPosition(id,state){
+  const object=objectById(id);if(!object)return null;
+  const destination=state?.scenePlacements?.[id]??'ground';
+  if(destination==='ground')return {x:object.x,y:FLOOR,raised:false};
+  if(!PORTABLE_IDS.includes(id)||!PLACEMENT_OPTIONS.includes(destination))throw Error('Invalid scene object destination');
+  const [,slot]=destination.split(':');
+  const anchor=surfaceItemLocationForSlot('table',slot);
+  if(!anchor||anchor.x<WALK_MIN||anchor.x>WALK_MAX)throw Error('Scene object outside walkable lane');
+  return {x:anchor.x,y:anchor.y,raised:true};
+}
+function surfaceItemLocationForSlot(parentId,slot){
+  const parent=sceneObjectForId(parentId),ground=objectById(parentId);
+  if(!parent?.slots?.[slot]||!ground)return null;
+  return {x:ground.x+parent.slots[slot].x,y:parent.slots[slot].y};
+}
+function placeSceneObject(state,id,destination){
+  if(!PORTABLE_IDS.includes(id)||!PLACEMENT_OPTIONS.includes(destination))return false;
+  if(!state?.scenePlacements||state.scenePlacements[id]===destination)return false;
+  if(state.target===id&&state.action!=='walk')return false;
+  const placements={...state.scenePlacements,[id]:destination};
+  try{validateScenePlacements(placements);}catch{return false;}
+  state.scenePlacements=placements;
+  state.message=destination==='ground'?'Put the '+objectById(id).label.toLowerCase()+' back on the ground.':'Placed the '+objectById(id).label.toLowerCase()+' on the table.';
+  return true;
+}
+
+return {SCENE_OBJECT_SCHEMA,SURFACE_SLOTS,SCENE_OBJECTS,validateSceneObjects,sceneObjectForId,SCENE_PLACEMENT_SCHEMA,PORTABLE_IDS,PLACEMENT_OPTIONS,initialScenePlacements,validateScenePlacements,objectWorldPosition,surfaceItemLocationForSlot,placeSceneObject};
+})();
+// world/scene-themes.mjs
+__modules["world/scene-themes.mjs"]=(()=>{
+const __moduleURL=new URL("./world/scene-themes.mjs",document.baseURI).href;
+/** Changeable illustrated scene themes; geometry and simulation never depend on art. */
+const {WORLD_WIDTH,FLOOR,WALK_MIN,WALK_MAX,DEFAULT_SPAWN}=__modules["world/world-geometry.mjs"];
+const SCENE_SCHEMA='tavi.companion.scene/v2';
+const SCENE_HEIGHT=420;
+const scene=(id,title,overlay)=>Object.freeze({id,title,kind:'image',file:'hollow-meadow-test.png',width:WORLD_WIDTH,height:SCENE_HEIGHT,overlay,
+ walk:{minimum:WALK_MIN,maximum:WALK_MAX,y:FLOOR},defaultSpawn:DEFAULT_SPAWN});
+const THEMES=Object.freeze([
+ scene('meadow','Daylight',null),
+ scene('evening','Evening glow','#42314b30'),
+]);
+function validateSceneThemes(scenes){
+ if(!Array.isArray(scenes)||!scenes.length)throw Error('A scene collection is required');
+ const ids=new Set();
+ for(const entry of scenes){
+  if(!/^[a-z][a-z0-9-]{1,30}$/.test(entry?.id??'')||ids.has(entry.id))throw Error('Invalid or duplicate scene ID');
+  ids.add(entry.id);
+  if(typeof entry.title!=='string'||!entry.title.trim()||entry.kind!=='image')throw Error('Only painted image scenes are supported');
+  if(entry.width!==WORLD_WIDTH||entry.height!==SCENE_HEIGHT||entry.walk?.y!==FLOOR||entry.walk.minimum!==WALK_MIN||entry.walk.maximum!==WALK_MAX||entry.defaultSpawn< WALK_MIN||entry.defaultSpawn>WALK_MAX)throw Error('Theme changes playable world coordinates');
+  if(!/^[a-z0-9-]+\.png$/.test(entry.file??''))throw Error('Invalid scene image name');
+  if(entry.overlay!==null&&!/^#[0-9a-fA-F]{8}$/.test(entry.overlay??''))throw Error('Invalid scene overlay');
+ }
+ return true;
+}
+validateSceneThemes(THEMES);
+const themeById=id=>THEMES.find(theme=>theme.id===id)??null;
+const DEFAULT_SCENE_THEME=THEMES[0].id;
+/** Replaced by trusted embedded PNG data during local TaviX packaging. */
+const imageLoads=new Map();
+async function loadSceneImage(file){return __loadBundledImage(file);}
+async function loadThemeImage(id){
+ const theme=themeById(id);
+ if(!theme)throw Error('Unknown home theme');
+ const image=await loadSceneImage(theme.file);
+ if(image.naturalWidth!==theme.width||image.naturalHeight!==theme.height)throw Error('Theme image is not the required world size');
+ return image;
+}
+function drawScene(ctx,{themeId='meadow',image=null,camera=0,viewportWidth=960,viewportHeight=420}={}){
+ const theme=themeById(themeId)??THEMES[0];
+ ctx.save();
+ // Missing art should be visible as a safe static placeholder, never silently
+ // resurrect the old procedural scene or allocate another canvas.
+ ctx.fillStyle='#cedcba';ctx.fillRect(0,0,viewportWidth,viewportHeight);
+ if(image){
+  ctx.translate(-Math.round(camera),0);ctx.drawImage(image,0,0,theme.width,theme.height);
+  if(theme.overlay){ctx.fillStyle=theme.overlay;ctx.fillRect(0,0,theme.width,theme.height);}
+ }
+ ctx.restore();
+ return image?'image':'placeholder';
+}
+
+return {SCENE_SCHEMA,SCENE_HEIGHT,THEMES,validateSceneThemes,themeById,DEFAULT_SCENE_THEME,loadThemeImage,drawScene};
+})();
 // world/genetics.mjs
 __modules["world/genetics.mjs"]=(()=>{
 const __moduleURL=new URL("./world/genetics.mjs",document.baseURI).href;
@@ -375,11 +532,13 @@ return {INVITATION_RULES,evaluateInvitation};
 __modules["world/simulation.mjs"]=(()=>{
 const __moduleURL=new URL("./world/simulation.mjs",document.baseURI).href;
 const {objects,objectById,isObjectAvailable,initialObjectState,completeObjectUse,refillObject}=__modules["world/object-catalog.mjs"];
+const {DEFAULT_SPAWN,WALK_MIN,WALK_MAX}=__modules["world/world-geometry.mjs"];
+const {initialScenePlacements,objectWorldPosition,placeSceneObject}=__modules["world/scene-objects.mjs"];
+const {DEFAULT_SCENE_THEME}=__modules["world/scene-themes.mjs"];
 const {createProfile,rememberExperience,classifyConsequence,selectAutonomousObject}=__modules["world/creature-profile.mjs"];
 const {createGenome,validateGenome,phenotypeFor,traitFor,evolveCompanion}=__modules["world/genetics.mjs"];
 const {evaluateInvitation}=__modules["world/invitation-policy.mjs"];
 
-const WORLD_WIDTH = 2400;
 const rooms = [
   { id:'kitchen', name:'Foraging edge', x:0, color:'#e4d5ac' },
   { id:'dining', name:'Gathering cave', x:480, color:'#d5d8b4' },
@@ -391,10 +550,10 @@ function createWorld({preferences={},genome=null,genomeSeed=0x54415649}={}) {
   const initialGenome=genome??createGenome(genomeSeed);
   validateGenome(initialGenome);
   const safeGenome=structuredClone(initialGenome);
-  return {x:690,facing:1,target:null,action:'idle',time:0,remaining:4,decisionIn:5,
+  return {x:DEFAULT_SPAWN,facing:1,target:null,action:'idle',time:0,remaining:4,decisionIn:5,
     care:false,paused:false,lookUntil:0,nextBondEvolutionAt:0,emotion:'content',message:'Taking in the new home.',
     needs:{fullness:76,cleanliness:86,happiness:82,energy:72,affection:78},
-    form:'cat',genome:safeGenome,phenotype:phenotypeFor(safeGenome),profile:createProfile(preferences),objectState:initialObjectState(),visits:{},memories:[],lastVisited:null,requests:0};
+    form:'cat',genome:safeGenome,phenotype:phenotypeFor(safeGenome),profile:createProfile(preferences),objectState:initialObjectState(),scenePlacements:initialScenePlacements(),sceneTheme:DEFAULT_SCENE_THEME,visits:{},memories:[],lastVisited:null,requests:0};
 }
 const clamp=n=>Math.max(0,Math.min(100,n));
 function remember(s,text) {s.memories=[text,...s.memories.filter(m=>m!==text)].slice(0,6);}
@@ -464,9 +623,10 @@ function tick(s,seconds,random=Math.random) {
   if(s.action==='walk') {
     const object=objectById(s.target);
     if(!object||!isObjectAvailable(s,object.id)){s.action='idle';s.target=null;return;}
-    const delta=object.x-s.x;s.facing=delta<0?-1:1;
-    s.x=Math.max(50,Math.min(WORLD_WIDTH-50,s.x+Math.sign(delta)*Math.min(Math.abs(delta),dt*76)));
-    if(Math.abs(object.x-s.x)<1){s.action=object.action;s.remaining=object.duration;s.message=`Spending a moment at the ${object.label.toLowerCase()}.`;s.emotion=object.action==='sleep'?'sleepy':'happy';}
+    const destination=objectWorldPosition(object.id,s);
+    const delta=destination.x-s.x;s.facing=delta<0?-1:1;
+    s.x=Math.max(WALK_MIN,Math.min(WALK_MAX,s.x+Math.sign(delta)*Math.min(Math.abs(delta),dt*76)));
+    if(Math.abs(destination.x-s.x)<1){s.action=object.action;s.remaining=object.duration;s.message=`Spending a moment at the ${object.label.toLowerCase()}.`;s.emotion=object.action==='sleep'?'sleepy':'happy';}
     return;
   }
   s.remaining-=dt;
@@ -482,7 +642,7 @@ function tick(s,seconds,random=Math.random) {
   }
 }
 
-return {WORLD_WIDTH,rooms,createWorld,requestObject,express,tick,objects,isObjectAvailable,refillObject};
+return {rooms,createWorld,requestObject,express,tick,objects,isObjectAvailable,refillObject};
 })();
 // world/forms.mjs
 __modules["world/forms.mjs"]=(()=>{
@@ -510,8 +670,9 @@ const __moduleURL=new URL("./world/engine-port.mjs",document.baseURI).href;
  */
 const {createWorld,tick,requestObject,express,refillObject}=__modules["world/simulation.mjs"];
 const {applyForm}=__modules["world/forms.mjs"];
+const {placeSceneObject,PLACEMENT_OPTIONS,PORTABLE_IDS}=__modules["world/scene-objects.mjs"];
 const ENGINE_PROTOCOL='tavi.companion.engine/v1';
-const COMMANDS=new Set(['invite','express','choose-form','set-care','set-paused','refill']);
+const COMMANDS=new Set(['invite','express','choose-form','set-care','set-paused','refill','place-object']);
 const EXPRESSIONS=new Set(['look','pet','wave']);
 const ID=/^[a-z][a-z0-9-]{1,39}$/;
 const keysMatch=(request,keys)=>Object.keys(request).every(key=>keys.includes(key));
@@ -526,6 +687,8 @@ function validateEngineRequest(request){
   if(request.op!=='command'||!COMMANDS.has(request.command))throw Error('Unsupported engine operation');
   if(request.command==='invite'||request.command==='refill'){
     if(!keysMatch(request,['schema','op','command','id'])||typeof request.id!=='string'||!ID.test(request.id))throw Error('Invalid object ID');
+  }else if(request.command==='place-object'){
+    if(!keysMatch(request,['schema','op','command','id','destination'])||!PORTABLE_IDS.includes(request.id)||!PLACEMENT_OPTIONS.includes(request.destination))throw Error('Invalid scene object placement');
   }else if(request.command==='express'){
     if(!keysMatch(request,['schema','op','command','action'])||!EXPRESSIONS.has(request.action))throw Error('Invalid expression');
   }else if(request.command==='choose-form'){
@@ -545,6 +708,7 @@ function createLocalCompanionEngine({state=createWorld(),random=Math.random}={})
   function command(type,value){
     let message={schema:ENGINE_PROTOCOL,op:'command',command:type};
     if(type==='invite'||type==='refill')message.id=value;
+    else if(type==='place-object'){message.id=value?.id;message.destination=value?.destination;}
     else if(type==='express')message.action=value;
     else if(type==='choose-form')message.form=value;
     else message.enabled=value;
@@ -557,6 +721,7 @@ function createLocalCompanionEngine({state=createWorld(),random=Math.random}={})
       case 'set-care':state.care=value;accepted=true;break;
       case 'set-paused':state.paused=value;accepted=true;break;
       case 'refill':accepted=refillObject(state,value);break;
+      case 'place-object':accepted=placeSceneObject(state,value.id,value.destination);break;
     }
     if(accepted)revision++;
     return accepted;
@@ -566,7 +731,7 @@ function createLocalCompanionEngine({state=createWorld(),random=Math.random}={})
     let accepted=true;
     if(message.op==='advance')advance(message.seconds);
     if(message.op==='command'){
-      const value=message.command==='express'?message.action:message.command==='choose-form'?message.form:
+      const value=message.command==='place-object'?{id:message.id,destination:message.destination}:message.command==='express'?message.action:message.command==='choose-form'?message.form:
         message.command==='set-care'||message.command==='set-paused'?message.enabled:message.id;
       accepted=command(message.command,value);
     }
@@ -579,79 +744,327 @@ function createLocalCompanionEngine({state=createWorld(),random=Math.random}={})
 
 return {ENGINE_PROTOCOL,validateEngineRequest,createLocalCompanionEngine};
 })();
-// tavi-sdk.mjs
-__modules["tavi-sdk.mjs"]=(()=>{
-const __moduleURL=new URL("./tavi-sdk.mjs",document.baseURI).href;
-/** Public, tokenless Tavi extension-frame SDK.
- * v1 capabilities are discoverable; future data facades deliberately fail closed
- * until the host and authoritative LoopRD component implement that operation.
+// vendor/tavix-sdk-1.0.0/index.js
+__modules["vendor/tavix-sdk-1.0.0/index.js"]=(()=>{
+const __moduleURL=new URL("./vendor/tavix-sdk-1.0.0/index.js",document.baseURI).href;
+/** TaviX 1.0 browser SDK.
+ *
+ * The stable wire channel remains `tavi.extension/v1` for compatibility with
+ * existing Tavi applications. TaviX standardizes that deployed protocol; it
+ * does not expose Social credentials or native privileges to the iframe.
  */
-function createTaviExtensionSDK(target=window.parent,source=window){
+const TAVIX_STANDARD='tavix/1.0';
+const TAVIX_CHANNEL='tavi.extension/v1';
+const TAVIX_HOST_API='1.0.0';
+
+function assertTaviXHostInfo(info){
+ if(!info||typeof info!=='object'||info.standard!==TAVIX_STANDARD||info.channel!==TAVIX_CHANNEL||typeof info.api!=='string'||!/^1\.\d+\.\d+$/.test(info.api)||typeof info.extensionId!=='string'||info.mode!=='embedded'||info.navigation!=='host'||!Array.isArray(info.features))throw Error('Host is not TaviX 1.0 compatible');
+ return info;
+}
+
+function createTaviXSDK(target=window.parent,source=window){
  let nextId=0;
- const pending=new Map();
- const channel='tavi.extension/v1';
+ const pending=new Map(),listeners=new Map();
  const receiver=e=>{
-  if(e.source!==target||e.data?.channel!==channel||e.data?.direction!=='response')return;
+  if(e.source!==target||e.data?.channel!==TAVIX_CHANNEL)return;
+  if(e.data.direction==='event'){
+   const handlers=listeners.get(e.data.event);if(handlers)for(const fn of [...handlers]){try{fn(e.data.payload);}catch{}}
+   return;
+  }
+  if(e.data.direction!=='response')return;
   const item=pending.get(e.data.id);if(!item)return;pending.delete(e.data.id);clearTimeout(item.timer);
-  if(e.data.ok)item.resolve(e.data.result);else item.reject(Error(e.data.error||'Extension request failed'));
+  if(e.data.ok)item.resolve(e.data.result);else item.reject(Error(e.data.error||'TaviX request failed'));
  };
  source.addEventListener('message',receiver);
  const request=(method,args={})=>{
   const id=++nextId;
   return new Promise((resolve,reject)=>{
-   if(pending.size>=20)return reject(Error('Too many extension requests'));
-   const timer=setTimeout(()=>{pending.delete(id);reject(Error('Tavi host did not respond'));},5000);
+   if(pending.size>=20)return reject(Error('Too many TaviX requests'));
+   const timer=setTimeout(()=>{pending.delete(id);reject(Error('TaviX host did not respond'));},10000);
    pending.set(id,{resolve,reject,timer});
-   target.postMessage({channel,direction:'request',id,method,...args},'*');
+   target.postMessage({channel:TAVIX_CHANNEL,direction:'request',id,method,...args},'*');
   });
  };
  const call=(method,params={})=>request(method,{params});
+ const on=(event,handler)=>{
+  if(typeof event!=='string'||!event||typeof handler!=='function')throw Error('Invalid TaviX event listener');
+  const set=listeners.get(event)||new Set();set.add(handler);listeners.set(event,set);
+  return ()=>{set.delete(handler);if(!set.size)listeners.delete(event);};
+ };
  return {
   info:()=>request('host.info'),
+  conformance:async()=>assertTaviXHostInfo(await request('host.info')),
   capabilities:()=>request('host.capabilities'),
+  navigation:{back:()=>request('navigation.back'),close:()=>request('navigation.close')},
   storage:{get:key=>request('storage.get',{key}),set:(key,value)=>request('storage.set',{key,value})},
-  ui:{toast:message=>request('ui.toast',{message}),close:()=>request('ui.close'),requestGameLaunch:handoff=>request('ui.requestGameLaunch',{handoff})},
-  companion:{publishPreview:preview=>request('companion.preview',{preview}),load:()=>request('companion.get'),save:({snapshot,revision,epoch})=>request('companion.put',{snapshot,revision,epoch})},
-  // Future shared-service APIs. Every call is checked by the host broker and
-  // again by the corresponding server; this SDK never stores a Social bearer.
-  wallet:{balance:params=>call('wallet.balance',params),transactions:params=>call('wallet.transactions',params),transfer:params=>call('wallet.transfer',params)},
+  ui:{toast:message=>request('ui.toast',{message}),close:()=>request('ui.close'),
+    // Compatibility only. New integrations should negotiate tavix.surface/v1.
+    requestGameLaunch:handoff=>request('ui.requestGameLaunch',{handoff})},
+  // TaviX optional module. Tavi 0.3.108 deliberately fails closed until the
+  // generic nested surface broker is implemented and advertised by host.info.
+  surfaces:{requestOpen:surface=>request('surface.requestOpen',{surface})},
+  on,
+  wallet:{balance:()=>call('wallet.balance'),transactions:params=>call('wallet.transactions',params),
+    claim:params=>call('wallet.claim',params),convert:params=>call('wallet.convert',params),
+    purchase:params=>call('wallet.purchase',params),orderStatus:params=>call('wallet.orderStatus',params),
+    transfer:params=>call('wallet.transfer',params)},
   pets:{list:params=>call('pets.list',params),get:params=>call('pets.get',params),command:params=>call('pets.command',params)},
   contacts:{list:params=>call('contacts.list',params)},
   messages:{list:params=>call('messages.list',params),send:params=>call('messages.send',params)},
   events:{list:params=>call('events.list',params)},
   services:{list:()=>call('services.list')},
-  dispose:()=>{source.removeEventListener('message',receiver);for(const item of pending.values()){clearTimeout(item.timer);item.reject(Error('Extension disconnected'));}pending.clear();}
+  dispose:()=>{source.removeEventListener('message',receiver);for(const item of pending.values()){clearTimeout(item.timer);item.reject(Error('TaviX disconnected'));}pending.clear();listeners.clear();}
  };
 }
 
-return {createTaviExtensionSDK};
+// Deployed-source compatibility name. Existing apps do not need a rewrite.
+const createTaviExtensionSDK=createTaviXSDK;
+
+return {TAVIX_STANDARD,TAVIX_CHANNEL,TAVIX_HOST_API,assertTaviXHostInfo,createTaviXSDK,createTaviExtensionSDK};
+})();
+// vendor/tavi-assets-0.1.9/client.mjs
+__modules["vendor/tavi-assets-0.1.9/client.mjs"]=(()=>{
+const __moduleURL=new URL("./vendor/tavi-assets-0.1.9/client.mjs",document.baseURI).href;
+/**
+ * Tavi Assets consumer reference SDK v1 (transport-injected).
+ * No direct postMessage, origin assumptions, files, download, wallet or ownership API.
+ * An approved TaviX host SDK must supply a session-bound {info, request} transport.
+ * Tavi has NOT implemented these proposed assets.* methods yet.
+ */
+const FEATURE = 'tavi.assets/v1';
+const DEPENDENCIES_FEATURE = 'tavi.assets.dependencies/v1';
+
+class AssetsUnavailableError extends Error {
+  constructor(message = 'Tavi Assets host feature unavailable') {
+    super(message);
+    this.name = 'AssetsUnavailableError';
+  }
+}
+
+function createTaviAssetsClient(transport) {
+  if (!transport || typeof transport.info !== 'function' || typeof transport.request !== 'function') {
+    throw new TypeError('Session-bound host transport with info() and request() required');
+  }
+  let ready = false;
+  let supportsDependencies = false;
+  async function connect() {
+    const info = await transport.info();
+    if (!info || !Array.isArray(info.features) || !info.features.includes(FEATURE)) {
+      ready = false;
+      supportsDependencies = false;
+      throw new AssetsUnavailableError();
+    }
+    ready = true;
+    supportsDependencies = info.features.includes(DEPENDENCIES_FEATURE);
+    return {feature: FEATURE, api: info.api ?? null};
+  }
+  async function invoke(method, params) {
+    if (!ready) throw new AssetsUnavailableError('Call connect() and negotiate host support first');
+    const result = await transport.request(method, params);
+    if (!result || typeof result !== 'object') throw new Error('Invalid host assets response');
+    return result;
+  }
+  const id = packId => {
+    if (typeof packId !== 'string' || !/^[a-z0-9][a-z0-9._-]{0,126}$/.test(packId)) {
+      throw new TypeError('Invalid packId');
+    }
+    return packId;
+  };
+  return Object.freeze({
+    connect,
+    dependencyStatus: () => {
+      if (!supportsDependencies) throw new AssetsUnavailableError('Dependency status feature unavailable');
+      return invoke('assets.dependencies.status', {});
+    },
+    describe: packId => invoke('assets.describe', {packId: id(packId)}),
+    listObjects: (packId, filters = {}) => invoke('assets.objects.list', {...filters, packId: id(packId)}),
+    // Queries only the installed packs the trusted host grants to this session.
+    listPacks: (filters = {}) => invoke('assets.packs.list', filters),
+    discoverObjects: (filters = {}) => invoke('assets.objects.discover', filters),
+    // Resolves independent customization slots; artwork composition is game-owned.
+    resolveComposition: components => invoke('assets.composition.resolve', {components}),
+    getObject: (packId, objectId) => invoke('assets.objects.get', {packId: id(packId), objectId}),
+    listCollections: (packId, filters = {}) => invoke('assets.collections.list', {...filters, packId: id(packId)}),
+    getCollection: (packId, collectionId) => invoke('assets.collections.get', {packId: id(packId), collectionId}),
+    preferences: packId => invoke('assets.preferences.get', {packId: id(packId)}),
+    select: (packId, capability, variant) => invoke('assets.preferences.set', {packId: id(packId), capability, variant}),
+    resolve: (packId, capability) => invoke('assets.resolve', {packId: id(packId), capability})
+  });
+}
+
+return {AssetsUnavailableError,createTaviAssetsClient};
+})();
+// tavi-sdk.mjs
+__modules["tavi-sdk.mjs"]=(()=>{
+const __moduleURL=new URL("./tavi-sdk.mjs",document.baseURI).href;
+/** TaviX 1.0 runtime plus the narrowly scoped Companion cloud extension.
+ *
+ * The official @tavi/tavix-sdk source is vendored byte-for-byte under
+ * ui/vendor/tavix-sdk-1.0.0. TaviX intentionally keeps the deployed wire
+ * channel at tavi.extension/v1. Companion cloud get/put/preview remain a
+ * reviewed application-specific extension until they become a standard module.
+ */
+const {
+  TAVIX_STANDARD,TAVIX_CHANNEL,TAVIX_HOST_API,assertTaviXHostInfo,
+  createTaviXSDK,createTaviExtensionSDK
+}=__modules["vendor/tavix-sdk-1.0.0/index.js"];
+const {createTaviAssetsClient}=__modules["vendor/tavi-assets-0.1.9/client.mjs"];
+
+function createCompanionBridge(target,source){
+  // The Tavi extension host requires positive request IDs. Reserve a high
+  // positive namespace separate from TaviX's ordinary sequential IDs; the
+  // bridges share a channel but never resolve each other's pending requests.
+  let nextId=2_000_000_000;
+  const pending=new Map();
+  const receiver=e=>{
+    if(e.source!==target||e.data?.channel!==TAVIX_CHANNEL||e.data?.direction!=='response'||typeof e.data.id!=='number'||e.data.id<2_000_000_000)return;
+    const item=pending.get(e.data.id);if(!item)return;pending.delete(e.data.id);clearTimeout(item.timer);
+    if(e.data.ok)item.resolve(e.data.result);else item.reject(Error(e.data.error||'Companion host request failed'));
+  };
+  source.addEventListener('message',receiver);
+  const request=(method,args={})=>{
+    const id=nextId++;
+    return new Promise((resolve,reject)=>{
+      if(pending.size>=8)return reject(Error('Too many Companion host requests'));
+      const timer=setTimeout(()=>{pending.delete(id);reject(Error('Companion host did not respond'));},10000);
+      pending.set(id,{resolve,reject,timer});
+      target.postMessage({channel:TAVIX_CHANNEL,direction:'request',id,method,...args},'*');
+    });
+  };
+  return {
+    request,
+    api:{
+      publishPreview:preview=>request('companion.preview',{preview}),
+      load:()=>request('companion.get'),
+      save:({snapshot,revision,epoch})=>request('companion.put',{snapshot,revision,epoch}),
+    },
+    dispose(){source.removeEventListener('message',receiver);for(const item of pending.values()){clearTimeout(item.timer);item.reject(Error('Companion bridge disconnected'));}pending.clear();}
+  };
+}
+
+function createTaviCompanionSDK(target=window.parent,source=window){
+  const core=createTaviXSDK(target,source);
+  const bridge=createCompanionBridge(target,source);
+  const assets=createTaviAssetsClient({info:core.info,request:(method,params)=>bridge.request(method,{params})});
+  return Object.freeze({
+    ...core,
+    assets,
+    companion:Object.freeze(bridge.api),
+    dispose(){bridge.dispose();core.dispose();}
+  });
+}
+
+return {createTaviCompanionSDK,TAVIX_STANDARD,TAVIX_CHANNEL,TAVIX_HOST_API,assertTaviXHostInfo,createTaviXSDK,createTaviExtensionSDK};
+})();
+// world/scene-assets.mjs
+__modules["world/scene-assets.mjs"]=(()=>{
+const __moduleURL=new URL("./world/scene-assets.mjs",document.baseURI).href;
+/** Companion-only scene selection over the canonical Tavi Assets 0.1.9 consumer SDK.
+ * No local pack registry, grant generation, entitlement or runtime implementation.
+ * The trusted host must validate the TaviX verified manifest + per-pack projection.
+ */
+const SCENE_PACK='org.tavi.companion.scenes';
+const SCENE_CAPABILITY='scene.meadow.background';
+const SCENE_PACK_MIN='0.1.0';
+const SCENE_PACK_MAX_EXCLUSIVE='1.0.0';
+const parts=value=>{
+  if(typeof value!=='string'||!(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/).test(value))return null;
+  return value.split('.').map(Number);
+};
+function compatibleScenePackVersion(value){
+  const v=parts(value),min=parts(SCENE_PACK_MIN),max=parts(SCENE_PACK_MAX_EXCLUSIVE);
+  if(!v||v.some(n=>!Number.isSafeInteger(n)))return false;
+  const compare=(a,b)=>{for(let i=0;i<3;i++){if(a[i]!==b[i])return a[i]-b[i];}return 0;};
+  return compare(v,min)>=0&&compare(v,max)<0;
+}
+// Data URLs are constructed only from bounded, shape-validated, host-granted PNG
+// bytes. Never accept resource URLs, filesystem paths or another pack's content.
+function checkedSceneResource(resource){
+  if(!resource||resource.schema!=='tavi.assets.resource/v1'||resource.packId!==SCENE_PACK||
+    resource.capability!==SCENE_CAPABILITY||!compatibleScenePackVersion(resource.version)||
+    resource.contentType!=='image/png'||resource.encoding!=='base64'||
+    typeof resource.data!=='string'||resource.data.length<32||resource.data.length>4_000_000||
+    !/^[A-Za-z0-9+/]+={0,2}$/.test(resource.data))throw Error('Unapproved scene resource');
+  // A data-only PNG must already have a 2400x420 IHDR before image decoding.
+  // Decode just the first 32 base64 characters to avoid materializing extra bytes.
+  const header=atob(resource.data.slice(0,32));
+  if(header.length<24||header.slice(0,8)!=='\x89PNG\r\n\x1a\n'||header.slice(12,16)!=='IHDR')throw Error('Invalid scene PNG header');
+  const d32=offset=>((header.charCodeAt(offset)*0x1000000)+(header.charCodeAt(offset+1)<<16)+(header.charCodeAt(offset+2)<<8)+header.charCodeAt(offset+3))>>>0;
+  if(d32(16)!==2400||d32(20)!==420)throw Error('Scene artwork changed dimensions');
+  return 'data:image/png;base64,'+resource.data;
+}
+async function connectOptionalSceneAssets(sdk){
+  if(!sdk?.assets?.connect||!sdk?.assets?.describe||!sdk?.assets?.resolve)return null;
+  try{
+    await sdk.assets.connect();
+    const info=await sdk.assets.describe(SCENE_PACK);
+    if(info?.schema!=='tavi.assets.pack-info/v1'||info.packId!==SCENE_PACK||
+      !compatibleScenePackVersion(info.version)||!info.capabilities?.includes(SCENE_CAPABILITY))return null;
+    return {resolve:async()=>{
+      // Every call traverses the trusted host; a revoked or replaced pack must
+      // fail closed even after a prior successful discovery.
+      const resource=await sdk.assets.resolve(SCENE_PACK,SCENE_CAPABILITY);
+      if(resource?.version!==info.version)throw Error('Scene pack changed during session');
+      checkedSceneResource(resource);
+      return resource;
+    }};
+  }catch{return null;}
+}
+async function loadPreferredScene({hostResource,loadBundled,decodeImage}){
+  if(typeof loadBundled!=='function'||typeof decodeImage!=='function')throw TypeError('Scene image loaders required');
+  if(typeof hostResource==='function'){
+    try{const source=checkedSceneResource(await hostResource());return {image:await decodeImage(source),source:'assets'};}
+    catch{/* Only previously authorized, fresh successful host requests may supply a scene. */}
+  }
+  return {image:await loadBundled(),source:'bundled'};
+}
+
+return {SCENE_PACK,SCENE_CAPABILITY,SCENE_PACK_MIN,SCENE_PACK_MAX_EXCLUSIVE,compatibleScenePackVersion,checkedSceneResource,connectOptionalSceneAssets,loadPreferredScene};
 })();
 // world/tavi-host.mjs
 __modules["world/tavi-host.mjs"]=(()=>{
 const __moduleURL=new URL("./world/tavi-host.mjs",document.baseURI).href;
 /**
- * Optional Tavi host connection. Only the existing Tavi extension/v1 bridge is
- * used; this module does not handle Social credentials or game API endpoints.
+ * Optional TaviX 1.0 host connection. Older non-TaviX host shapes are rejected.
+ * No Social credentials or game API endpoints enter the Companion frame.
  */
-const {createTaviExtensionSDK}=__modules["tavi-sdk.mjs"];
-async function connectTaviHost({windowRef,createSDK=createTaviExtensionSDK}={}){
+const {createTaviCompanionSDK,assertTaviXHostInfo,TAVIX_STANDARD}=__modules["tavi-sdk.mjs"];
+const {connectOptionalSceneAssets}=__modules["world/scene-assets.mjs"];
+function identifyHost(info){
+  if(!info||info.extensionId!=='org.tavi.community.companion'||info.mode!=='embedded'||info.standard!==TAVIX_STANDARD)throw Error('Unsupported Companion host');
+  assertTaviXHostInfo(info);
+}
+
+async function connectTaviHost({windowRef,createSDK=createTaviCompanionSDK}={}){
   const win=windowRef??(typeof window!=='undefined'?window:null);
   if(!win||!win.parent||win.parent===win)return null;
   const sdk=createSDK(win.parent,win);
   try{
     const info=await sdk.info();
-    if(info?.api!=='1.0.0'||info?.mode!=='embedded'||info.extensionId!=='org.tavi.community.companion')throw Error('Not the companion host');
+    identifyHost(info);
     const capabilities=await sdk.capabilities();
-    if(!Array.isArray(capabilities)||!capabilities.includes('ui.panel')||!info.features?.includes('tavi.companion.cloud/v1'))throw Error('Companion cloud host unavailable');
+    if(!Array.isArray(capabilities)||!capabilities.includes('ui.panel')||!capabilities.includes('storage.private')||!info.features?.includes('tavi.companion.cloud/v1'))throw Error('Companion cloud host unavailable');
+    if(!sdk.companion?.load||!sdk.companion?.save||!sdk.companion?.publishPreview)throw Error('Companion bridge unavailable');
+    // Host cloud is authoritative; scenery is optional. A missing/revoked pack
+    // must not cause a fallback to a different account or an unsaved companion.
+    const sceneAssets=await connectOptionalSceneAssets(sdk);
+    const canResolveScenes=Boolean(sdk.assets?.connect&&sdk.assets?.describe&&sdk.assets?.resolve);
     return {
       mode:'tavi',
-      canStore:capabilities.includes('storage.private'),
+      standard:TAVIX_STANDARD,
+      canStore:true,
       cloud:true,
+      assets:Boolean(sceneAssets),
+      // Re-negotiate on every scene request: later pack installation, revoke,
+      // update, or account change must not reuse a cached grant or image.
+      resolveScene:canResolveScenes?async()=>{
+        const fresh=await connectOptionalSceneAssets(sdk);
+        if(!fresh)throw Error('Optional Companion scene assets unavailable');
+        return fresh.resolve();
+      }:null,
       load:()=>sdk.companion.load(),
       save:(snapshot,revision,epoch)=>sdk.companion.save({snapshot,revision,epoch}),
-      read:key=>sdk.storage.get(key),
-      write:(key,value)=>sdk.storage.set(key,value),
-      close:()=>sdk.ui.close(),
+      close:()=>sdk.navigation.back(),
       publishPortrait:preview=>sdk.companion.publishPreview(preview),
       dispose:()=>sdk.dispose(),
     };
@@ -666,14 +1079,15 @@ return {connectTaviHost};
 __modules["world/session-codec.mjs"]=(()=>{
 const __moduleURL=new URL("./world/session-codec.mjs",document.baseURI).href;
 /** Portable, bounded session data; no DOM, Tavi account token, or JS class instances. */
-const {createWorld,WORLD_WIDTH}=__modules["world/simulation.mjs"];
+const {createWorld}=__modules["world/simulation.mjs"];
+const {WORLD_WIDTH}=__modules["world/world-geometry.mjs"];
 const {objects,initialObjectState}=__modules["world/object-catalog.mjs"];
 const {startingForms}=__modules["world/forms.mjs"];
 const {validateGenome}=__modules["world/genetics.mjs"];
 const {HABIT_CAP,validateAssociation}=__modules["world/creature-profile.mjs"];
-const SESSION_SCHEMA='tavi.companion.session/v5';
-const PREVIOUS_SESSION_SCHEMA='tavi.companion.session/v4';
-const SESSION_STORAGE_KEY='companion_session_v1';
+const {validateScenePlacements}=__modules["world/scene-objects.mjs"];
+const {DEFAULT_SCENE_THEME,themeById}=__modules["world/scene-themes.mjs"];
+const SESSION_SCHEMA='tavi.companion.session/v6';
 const MAX_BYTES=8192; // Matches the currently deployed Tavi extension storage limit.
 const needNames=['fullness','cleanliness','happiness','energy','affection'];
 const id=/^[a-z][a-z0-9-]{1,39}$/;
@@ -687,6 +1101,7 @@ function encodeSession({chosen,name,state}){
     needs:Object.fromEntries(needNames.map(k=>[k,state.needs[k]])),
     preferences:{...state.profile.preferences},experience:{...state.profile.experience},habits:{...state.profile.habits},associations:{...state.profile.associations},
     objectState:Object.fromEntries(objects.filter(o=>o.capacity).map(o=>[o.id,{usesRemaining:state.objectState?.[o.id]?.usesRemaining??o.capacity}])),
+    scenePlacements:{...state.scenePlacements},sceneTheme:state.sceneTheme??DEFAULT_SCENE_THEME,
     visits:{...state.visits},lastVisited:state.lastVisited,
     memories:state.memories.slice(0,6),
   }};
@@ -697,22 +1112,24 @@ function encodeSession({chosen,name,state}){
   return json;
 }
 
-/** Strict v5 snapshot; one direct v4 upgrade preserves the current companion. */
+/** Current-only v6 snapshot. Older preview saves require a server reset. */
 function decodeSession(raw){
   if(typeof raw!=='string'||raw.length>MAX_BYTES||!raw.length)return null;
   let data;try{data=JSON.parse(raw);}catch{return null;}
-  if(!obj(data)||![SESSION_SCHEMA,PREVIOUS_SESSION_SCHEMA].includes(data.schema)||typeof data.chosen!=='boolean'||typeof data.name!=='string'||data.name.length>32||!obj(data.world))return null;
+  if(!obj(data)||data.schema!==SESSION_SCHEMA||typeof data.chosen!=='boolean'||typeof data.name!=='string'||data.name.length>32||!obj(data.world))return null;
   const w=data.world;
   if(!Object.hasOwn(startingForms,w.form)||!bounded(w.x,0,WORLD_WIDTH)||typeof w.care!=='boolean'||!obj(w.needs)||!obj(w.preferences)||!obj(w.experience)||!obj(w.objectState)||!obj(w.visits)||!Array.isArray(w.memories)||w.memories.length>6)return null;
+  try{validateScenePlacements(w.scenePlacements);}catch{return null;}
+  // The 0.6.42 v6 snapshot predates sceneTheme: keep all saved progress
+  // and placements while defaulting its absent optional cosmetic selection.
+  if(w.sceneTheme!==undefined&&!themeById(w.sceneTheme))return null;
   for(const k of needNames)if(!bounded(w.needs[k],0,100))return null;
   if(Object.keys(w.needs).some(k=>!needNames.includes(k)))return null;
   const validPreference=(key,value)=>id.test(key)&&bounded(value,-1,1);
   if(Object.keys(w.preferences).length>32||Object.entries(w.preferences).some(([k,v])=>!validPreference(k,v)))return null;
   if(Object.keys(w.experience).length>32||Object.entries(w.experience).some(([k,v])=>!id.test(k)||!Number.isSafeInteger(v)||v<0||v>50))return null;
   if(!obj(w.habits)||Object.keys(w.habits).length>32||Object.entries(w.habits).some(([k,v])=>!objects.some(o=>o.id===k)||!Number.isSafeInteger(v)||v<0||v>HABIT_CAP))return null;
-  if(data.schema===SESSION_SCHEMA){
-    if(!obj(w.associations)||Object.keys(w.associations).length>32||Object.entries(w.associations).some(([k,v])=>!objects.some(o=>o.id===k)||!validateAssociation(v)))return null;
-  }else if(Object.hasOwn(w,'associations'))return null;
+  if(!obj(w.associations)||Object.keys(w.associations).length>32||Object.entries(w.associations).some(([k,v])=>!objects.some(o=>o.id===k)||!validateAssociation(v)))return null;
   const capacity=objects.filter(o=>o.capacity);
   if(Object.keys(w.objectState).some(k=>!capacity.some(o=>o.id===k)))return null;
   for(const o of capacity)if(!obj(w.objectState[o.id])||!Number.isSafeInteger(w.objectState[o.id].usesRemaining)||w.objectState[o.id].usesRemaining<0||w.objectState[o.id].usesRemaining>o.capacity)return null;
@@ -726,15 +1143,16 @@ function decodeSession(raw){
   let state;try{state=createWorld({preferences:w.preferences,genome});}catch{return null;}
   state.form=w.form;state.x=w.x;state.care=w.care;
   state.needs={...w.needs};state.profile.experience={...w.experience};state.profile.habits={...w.habits};
-  state.profile.associations=data.schema===SESSION_SCHEMA?structuredClone(w.associations):{};
+  state.profile.associations=structuredClone(w.associations);
+  state.scenePlacements={...w.scenePlacements};state.sceneTheme=w.sceneTheme??DEFAULT_SCENE_THEME;
   state.objectState=initialObjectState();
   for(const o of capacity)state.objectState[o.id]={usesRemaining:w.objectState[o.id].usesRemaining};
   state.visits={...w.visits};state.lastVisited=w.lastVisited;
   state.memories=[...w.memories];state.action='idle';state.target=null;state.remaining=4;
-  return {chosen:data.chosen,name:data.name,state,migrated:data.schema!==SESSION_SCHEMA};
+  return {chosen:data.chosen,name:data.name,state};
 }
 
-return {SESSION_SCHEMA,PREVIOUS_SESSION_SCHEMA,SESSION_STORAGE_KEY,encodeSession,decodeSession};
+return {SESSION_SCHEMA,encodeSession,decodeSession};
 })();
 // world/companion-colors.mjs
 __modules["world/companion-colors.mjs"]=(()=>{
@@ -1139,117 +1557,76 @@ function drawPaintedPortrait(ctx,state,{x=180,y=210,scale=3,reducedMotion=false}
 
 return {paintedSpecies,WORLD_PRESENTATION,worldPresentationFor,drawCompanionGrounding,loadPaintedCharacters,paintedError,paintedReady,clipForAction,drawPaintedWorld,drawPaintedPortrait};
 })();
-// world/scenery.mjs
-__modules["world/scenery.mjs"]=(()=>{
-const __moduleURL=new URL("./world/scenery.mjs",document.baseURI).href;
-// A continuous, strictly side-on cave cross section with daylight at both ends.
-// This module owns ONLY static scenery. Interactable objects are rendered in
-// world-props.mjs and remain anchored by the simulation's object catalog.
-const {rooms,WORLD_WIDTH}=__modules["world/simulation.mjs"];
-const FLOOR=346;
-const CAVE_START=235;
-const CAVE_END=2165;
-const CAVE_PRESENTATION_SCHEMA='tavi.cave-presentation/v2';
-const paint=(ctx,x,y,w,h,color)=>{ctx.fillStyle=color;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));};
-function polygon(ctx,vertices,color){
-  ctx.fillStyle=color;
-  // Minimal Canvas test doubles can still exercise all scenery layers.
-  if(typeof ctx.moveTo!=='function'||typeof ctx.lineTo!=='function'||typeof ctx.fill!=='function'){
-    const xs=vertices.map(p=>p[0]),ys=vertices.map(p=>p[1]);
-    ctx.fillRect(Math.min(...xs),Math.min(...ys),Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys));return;
-  }
-  ctx.beginPath();ctx.moveTo(...vertices[0]);for(const pair of vertices.slice(1))ctx.lineTo(...pair);ctx.closePath();ctx.fill();
+// world/viewport-projection.mjs
+__modules["world/viewport-projection.mjs"]=(()=>{
+const __moduleURL=new URL("./world/viewport-projection.mjs",document.baseURI).href;
+/**
+ * Presentation-only viewport transform for native-sized Tavi panels.
+ * The cave floor and painted character coordinates remain in world space.
+ * Short viewports scale both axes equally (never stretch painted sprites).
+ * Pointer hit-testing and camera panning use the inverse transform.
+ */
+const SCENE_MIN_HEIGHT=420;
+function projectViewport(cssWidth,cssHeight){
+  if(!Number.isFinite(cssWidth)||!Number.isFinite(cssHeight)||cssWidth<=0||cssHeight<=0)
+    throw Error('Viewport dimensions must be finite and positive');
+  const scale=Math.min(1,cssHeight/SCENE_MIN_HEIGHT);
+  return Object.freeze({
+    cssWidth,cssHeight,scale,
+    worldWidth:cssWidth/scale,
+    worldHeight:cssHeight/scale
+  });
 }
-function tree(ctx,x,height=80){
-  paint(ctx,x-6,FLOOR-height+17,12,height-17,'#657557');
-  polygon(ctx,[[x-43,FLOOR-height+45],[x,FLOOR-height-19],[x+44,FLOOR-height+45]],'#507d65');
-  polygon(ctx,[[x-34,FLOOR-height+23],[x,FLOOR-height-39],[x+34,FLOOR-height+23]],'#679579');
-  polygon(ctx,[[x-24,FLOOR-height+2],[x,FLOOR-height-50],[x+24,FLOOR-height+2]],'#85a787');
+function pointerToWorld({clientX,clientY,rect,camera,scale}){
+  if(!Number.isFinite(scale)||scale<=0)throw Error('Invalid viewport scale');
+  return {x:(clientX-rect.left)/scale+camera,y:(clientY-rect.top)/scale};
 }
-function exterior(ctx,left,right){
-  paint(ctx,left,0,right-left,FLOOR,'#b9d9d1');
-  polygon(ctx,[[left,220],[left+90,101],[left+220,242],[right,185],[right,FLOOR],[left,FLOOR]],'#a6b9a2');
-  polygon(ctx,[[left,262],[left+80,171],[left+175,260],[right,226],[right,FLOOR],[left,FLOOR]],'#799e8a');
-  paint(ctx,left,309,right-left,37,'#8bae83');
-  for(let x=left+40;x<right;x+=108)tree(ctx,x,70+(x%3)*12);
+function panDragDelta(clientDeltaX,scale){
+  if(!Number.isFinite(scale)||scale<=0)throw Error('Invalid viewport scale');
+  return clientDeltaX/scale;
 }
-function caveLight(ctx,from,to,side){
-  // Flat translucent bands: light enters horizontally from each opening rather
-  // than using perspective rays or a vanishing point.
-  const width=to-from;
-  paint(ctx,from,66,width,244,'#e7d9b322');
-  paint(ctx,side==='left'?from:to-width*.62,90,width*.62,210,'#f7e8bd20');
-  paint(ctx,side==='left'?from:to-width*.28,126,width*.28,172,'#fff0c928');
-}
-function mossShelf(ctx,x,y,w){
-  paint(ctx,x,y,w,5,'#657b62');
-  for(let i=0;i<Math.max(1,Math.floor(w/28));i++)paint(ctx,x+4+i*27,y-3-(i%2)*2,15,4,'#80946f');
-}
-function rockBand(ctx,from,to,index){
-  const colors=['#978d88','#928985','#a39a8d','#99918e'];
-  paint(ctx,from,50,to-from,296,colors[index%colors.length]);
-  // Three horizontal depth bands keep the cave readable without perspective.
-  polygon(ctx,[[from,64],[from+75,85],[from+205,63],[from+347,100],[to,74],[to,244],[from,249]],'#a7a198');
-  polygon(ctx,[[from,174],[from+130,157],[from+267,194],[to,161],[to,316],[from,316]],'#afa89c');
-  paint(ctx,from,242,to-from,70,'#a29a8f66');
-  // A narrow, continuous side-on rocky walking axis.
-  paint(ctx,from,312,to-from,34,'#968879');
-  paint(ctx,from,336,to-from,10,'#756c64');
-  for(let i=0;i<8;i++){
-    const x=from+25+i*53;
-    polygon(ctx,[[x,120+(i%3)*26],[x+24,130+(i%3)*26],[x+9,156+(i%3)*26]],'#8b8983');
-    paint(ctx,x+((i*7)%17),305,15,3,'#bfb6a0');
-    if(i%3===0)mossShelf(ctx,x-4,303,34);
-  }
-  // Stalagmites and hairline cracks stay behind the walking lane.
-  for(let i=0;i<4;i++){
-    const x=from+90+i*115;
-    polygon(ctx,[[x-13,313],[x,272+(i%2)*15],[x+12,313]],'#7f817c');
-  }
-  for(let i=0;i<3;i++){
-    const x=from+52+i*141,y=118+(i%2)*53;
-    paint(ctx,x,y,2,28,'#766f72');paint(ctx,x+2,y+18,10,2,'#766f72');paint(ctx,x+10,y+18,2,15,'#766f72');
-  }
-}
-function drawScenery(ctx,width,height,camera,time=0,reduced=false){
-  ctx.save();ctx.translate(-Math.round(camera),0);
-  paint(ctx,0,0,WORLD_WIDTH,height,'#b8ccc0');
-  exterior(ctx,0,CAVE_START);exterior(ctx,CAVE_END,WORLD_WIDTH);
-  // Each five-zone block is decor, not a separately enclosed room.
-  for(let i=0;i<rooms.length;i++){
-    const left=rooms[i].x,right=left+480;
-    if(right<camera-100||left>camera+width+100)continue;
-    if(left<CAVE_END&&right>CAVE_START)rockBand(ctx,Math.max(left,CAVE_START),Math.min(right,CAVE_END),i);
-  }
-  // Far cave wall and earth continue uninterrupted across the entire world.
-  paint(ctx,CAVE_START,0,CAVE_END-CAVE_START,37,'#605c65');
-  paint(ctx,CAVE_START,37,CAVE_END-CAVE_START,16,'#817b7c');
-  caveLight(ctx,CAVE_START,CAVE_START+260,'left');caveLight(ctx,CAVE_END-260,CAVE_END,'right');
-  paint(ctx,0,FLOOR,WORLD_WIDTH,Math.max(0,height-FLOOR),'#776b62');
-  // A single contact strip makes characters and props read as standing on the
-  // same axis, without introducing a perspective floor plane.
-  paint(ctx,0,FLOOR-5,WORLD_WIDTH,5,'#a49a82');
-  paint(ctx,0,FLOOR,WORLD_WIDTH,6,'#6d625a');
-  for(let x=CAVE_START;x<CAVE_END;x+=92){
-    const h=23+(x*7%37);
-    polygon(ctx,[[x,53],[x+19,53],[x+10,53+h]],'#69636a');
-  }
-  // Bright, full-height openings at either end; never an overhead/3D view.
-  polygon(ctx,[[CAVE_START-28,0],[CAVE_START+13,25],[CAVE_START+19,80],[CAVE_START+4,177],[CAVE_START+15,310],[CAVE_START-4,346],[CAVE_START+31,346],[CAVE_START+53,213],[CAVE_START+55,85],[CAVE_START+29,0]],'#68656a');
-  polygon(ctx,[[CAVE_END+28,0],[CAVE_END-13,25],[CAVE_END-19,80],[CAVE_END-4,177],[CAVE_END-15,310],[CAVE_END+4,346],[CAVE_END-31,346],[CAVE_END-53,213],[CAVE_END-55,85],[CAVE_END-29,0]],'#68656a');
-  for(let i=0;i<rooms.length;i++){
-    const room=rooms[i],x=room.x;
-    if(x+480<camera||x>camera+width)continue;
-    ctx.fillStyle='#eae1cb';ctx.font='12px Georgia';ctx.fillText(room.name,x+26,394);
-  }
-  if(!reduced)for(let i=0;i<9;i++){
-    const x=260+i*223+Math.sin(time*.3+i)*9;
-    if(x>=CAVE_START&&x<=CAVE_END)paint(ctx,x,94+(i*29)%135+Math.sin(time+i)*5,2,2,'#fff1d7');
-  }
-  ctx.restore();
+function cameraLimit(worldWidth,visibleWidth){return Math.max(0,worldWidth-visibleWidth);}
+
+return {SCENE_MIN_HEIGHT,projectViewport,pointerToWorld,panDragDelta,cameraLimit};
+})();
+// world/canvas-safety.mjs
+__modules["world/canvas-safety.mjs"]=(()=>{
+const __moduleURL=new URL("./world/canvas-safety.mjs",document.baseURI).href;
+/**
+ * Defense in depth for the native Tavix WebView.
+ * Do not allow a content-driven canvas to resize itself when host CSS is absent.
+ * This module has no DOM or Tavi dependency so its limits are testable offline.
+ */
+const MAX_CSS_EDGE=4096;
+const MAX_BACKING_EDGE=2048;
+const MAX_BACKING_PIXELS=2097152; // 8 MiB RGBA before browser overhead
+
+function companionStylesActive({viewport,canvas,worldShell}) {
+  return viewport?.position==='relative' &&
+    canvas?.display==='block' &&
+    worldShell?.display==='flex' &&
+    worldShell?.flexDirection==='column';
 }
 
-return {FLOOR,CAVE_START,CAVE_END,CAVE_PRESENTATION_SCHEMA,drawScenery};
+function boundedCanvasBacking(cssWidth,cssHeight,deviceDensity=1) {
+  if(!Number.isFinite(cssWidth)||!Number.isFinite(cssHeight)||
+     cssWidth<1||cssHeight<1||cssWidth>MAX_CSS_EDGE||cssHeight>MAX_CSS_EDGE)
+    return null;
+  const requestedDensity=Number.isFinite(deviceDensity) ? Math.min(2,Math.max(1,deviceDensity)) : 1;
+  const scale=Math.min(requestedDensity,
+    MAX_BACKING_EDGE/cssWidth,MAX_BACKING_EDGE/cssHeight,
+    Math.sqrt(MAX_BACKING_PIXELS/(cssWidth*cssHeight)));
+  const width=Math.max(1,Math.floor(cssWidth*scale));
+  const height=Math.max(1,Math.floor(cssHeight*scale));
+  // Use one transform scale. Do not distort the painted characters for a subpixel rounding difference.
+  return Object.freeze({width,height,scale:Math.min(width/cssWidth,height/cssHeight)});
+}
+
+function backingChanged(canvas,size){
+  return canvas.width!==size.width||canvas.height!==size.height;
+}
+
+return {MAX_CSS_EDGE,MAX_BACKING_EDGE,MAX_BACKING_PIXELS,companionStylesActive,boundedCanvasBacking,backingChanged};
 })();
 // world/world-props.mjs
 __modules["world/world-props.mjs"]=(()=>{
@@ -1258,7 +1635,8 @@ const __moduleURL=new URL("./world/world-props.mjs",document.baseURI).href;
 // destination and availability; neither the cave background nor these visuals
 // create gameplay objects or modify persisted creature state.
 const {objects,isObjectAvailable}=__modules["world/object-catalog.mjs"];
-const {FLOOR}=__modules["world/scenery.mjs"];
+const {FLOOR}=__modules["world/world-geometry.mjs"];
+const {objectWorldPosition}=__modules["world/scene-objects.mjs"];
 const PROP_LAYOUT=Object.freeze({
   snack:Object.freeze({halfWidth:49,top:263,bottom:FLOOR}),
   table:Object.freeze({halfWidth:70,top:267,bottom:FLOOR}),
@@ -1268,18 +1646,23 @@ const PROP_LAYOUT=Object.freeze({
   toy:Object.freeze({halfWidth:43,top:295,bottom:FLOOR}),
 });
 const fill=(c,x,y,w,h,color)=>{c.fillStyle=color;c.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));};
-function objectHitbox(item){
+function objectHitbox(item,state=null){
   const entry=typeof item==='string'?objects.find(obj=>obj.id===item):item;
   if(!entry||!PROP_LAYOUT[entry.id])return null;
   const layout=PROP_LAYOUT[entry.id];
-  return {id:entry.id,left:entry.x-layout.halfWidth,right:entry.x+layout.halfWidth,top:layout.top,bottom:layout.bottom};
+  const point=objectWorldPosition(entry.id,state);
+  const dy=point.y-FLOOR;
+  return {id:entry.id,left:point.x-layout.halfWidth,right:point.x+layout.halfWidth,top:layout.top+dy,bottom:layout.bottom+dy};
 }
 function hitTestObject(worldX,screenY,state){
   if(!Number.isFinite(worldX)||!Number.isFinite(screenY))return null;
-  return objects.filter(item=>isObjectAvailable(state,item.id)).find(item=>{
-    const bounds=objectHitbox(item);
-    return worldX>=bounds.left&&worldX<=bounds.right&&screenY>=bounds.top&&screenY<=bounds.bottom;
-  })?.id??null;
+  // Raised props sit in front of their support furniture. When adjacent table
+  // slots visually overlap, the item closest to the tap wins (mouse or touch).
+  return objects.filter(item=>isObjectAvailable(state,item.id)).map(item=>({
+    item,point:objectWorldPosition(item.id,state),bounds:objectHitbox(item,state)
+  })).filter(({bounds})=>worldX>=bounds.left&&worldX<=bounds.right&&screenY>=bounds.top&&screenY<=bounds.bottom)
+    .sort((a,b)=>Number(b.point.raised)-Number(a.point.raised)||
+      Math.abs(worldX-a.point.x)-Math.abs(worldX-b.point.x))[0]?.item.id??null;
 }
 function drawPropGrounding(c,obj,state){
   const layout=PROP_LAYOUT[obj.id];if(!layout)return;
@@ -1298,7 +1681,7 @@ function drawObject(c,obj,state){
     }
   }else if(obj.id==='table'){
     fill(c,x-63,300,126,13,'#b3997c');fill(c,x-52,313,12,33,'#775b54');fill(c,x+38,313,12,33,'#775b54');
-    fill(c,x-39,292,79,8,'#e9d5ac');fill(c,x-13,286,27,6,'#fbebc5');
+    fill(c,x-39,292,79,8,'#e9d5ac'); // Surface decorations are separate scene objects.
   }else if(obj.id==='honey'){
     fill(c,x-30,318,60,9,'#796a55');fill(c,x-5,327,10,19,'#75614c');
     const remaining=state?.objectState?.honey?.usesRemaining??10;
@@ -1321,13 +1704,16 @@ function drawObject(c,obj,state){
 }
 function drawWorldObjects(ctx,camera,state,viewportWidth=960){
   ctx.save();ctx.translate(-Math.round(camera),0);
-  for(const obj of objects){
-    const bounds=objectHitbox(obj);
+  for(const obj of [...objects].sort((a,b)=>Number(objectWorldPosition(a.id,state).raised)-Number(objectWorldPosition(b.id,state).raised))){
+    const bounds=objectHitbox(obj,state);
     if(bounds.right<camera||bounds.left>camera+viewportWidth)continue;
-    drawPropGrounding(ctx,obj,state);
+    const point=objectWorldPosition(obj.id,state);
+    ctx.save();ctx.translate(point.x-obj.x,point.y-FLOOR);
+    if(!point.raised)drawPropGrounding(ctx,obj,state);
     drawObject(ctx,obj,state);
     ctx.fillStyle=isObjectAvailable(state,obj.id)?'#f2e6d1':'#d2c6ba';
     ctx.font='11px Georgia';ctx.textAlign='center';ctx.fillText(obj.label,obj.x,253);
+    ctx.restore();
   }
   ctx.restore();
 }
@@ -1410,26 +1796,6 @@ return {PREVIEW_SCHEMA,PREVIEW_PIXEL_SIZE,PREVIEW_DATA_LIMIT,normalizePreviewNam
 // world/host-session.mjs
 __modules["world/host-session.mjs"]=(()=>{
 const __moduleURL=new URL("./world/host-session.mjs",document.baseURI).href;
-/** Companion-side lifecycle helpers. Tavi owns authentication, sandboxing,
- * installed-extension grants and account/server namespacing. No credentials
- * or private simulation state leave this module except via storage.private.
- */
-async function restoreEmbeddedCompanion({host,key,decode,selectionMade,applyRestored,queuePortrait}){
-  if(!host?.canStore)return {status:'storage-unavailable'};
-  try{
-    const saved=decode(await host.read(key));
-    if(!saved)return {status:'no-valid-session'};
-    // A choice made during the asynchronous Tavi handshake must win.
-    if(selectionMade())return {status:'selection-kept'};
-    applyRestored(saved);
-    // An existing portrait in Tavi may be missing or stale (e.g. host update).
-    // Queue only after state and name have been restored; rendering assets may
-    // finish asynchronously, in which case app.mjs queues again on readiness.
-    if(saved.chosen)queuePortrait();
-    return {status:'restored',migrated:!!saved.migrated};
-  }catch{return {status:'storage-error'};}
-}
-
 /** A known-good private-storage session is required before closing when Tavi
  * granted storage.private. Preview is cosmetic and must never block Home.
  */
@@ -1444,7 +1810,7 @@ async function closeEmbeddedCompanion({host,save,publishPortrait}){
   catch{return {closed:false,reason:'close-failed'};}
 }
 
-return {restoreEmbeddedCompanion,closeEmbeddedCompanion};
+return {closeEmbeddedCompanion};
 })();
 // world/cloud-session.mjs
 __modules["world/cloud-session.mjs"]=(()=>{
@@ -1488,33 +1854,96 @@ function createCloudSession({load,save,decode}){
 
 return {CLOUD_SCHEMA,createCloudSession};
 })();
+// world/session-access.mjs
+__modules["world/session-access.mjs"]=(()=>{
+const __moduleURL=new URL("./world/session-access.mjs",document.baseURI).href;
+/** Decide whether embedded sideloading may offer a temporary, unsaved demo.
+ * Only a missing Companion cloud bridge permits preview-only mode.
+ * A failed load/write on an established cloud connection blocks interaction.
+ */
+function sessionAccessMode({embedded,connection,cloudError=false}){
+  if(cloudError)return 'blocked';
+  if(connection?.cloud)return 'account';
+  return embedded?'preview-only':'standalone';
+}
+
+return {sessionAccessMode};
+})();
 // world/app.mjs
 __modules["world/app.mjs"]=(()=>{
 const __moduleURL=new URL("./world/app.mjs",document.baseURI).href;
-const {createWorld,objects,isObjectAvailable,rooms,WORLD_WIDTH}=__modules["world/simulation.mjs"];
+const {createWorld,objects,isObjectAvailable,rooms}=__modules["world/simulation.mjs"];
+const {WORLD_WIDTH}=__modules["world/world-geometry.mjs"];
 const {createLocalCompanionEngine}=__modules["world/engine-port.mjs"];
 const {connectTaviHost}=__modules["world/tavi-host.mjs"];
-const {SESSION_STORAGE_KEY,encodeSession,decodeSession}=__modules["world/session-codec.mjs"];
+const {encodeSession,decodeSession}=__modules["world/session-codec.mjs"];
 const {drawPaintedWorld,drawPaintedPortrait,drawCompanionGrounding,worldPresentationFor,loadPaintedCharacters,paintedReady,paintedError}=__modules["world/studio-renderer.mjs"];
-const {drawScenery,FLOOR}=__modules["world/scenery.mjs"];
+const {FLOOR}=__modules["world/world-geometry.mjs"];
+const {drawScene,loadThemeImage,themeById}=__modules["world/scene-themes.mjs"];
+const {loadPreferredScene}=__modules["world/scene-assets.mjs"];
+const {projectViewport,pointerToWorld,panDragDelta,cameraLimit}=__modules["world/viewport-projection.mjs"];
+const {companionStylesActive,boundedCanvasBacking,backingChanged}=__modules["world/canvas-safety.mjs"];
 const {drawWorldObjects,drawWorldForeground,hitTestObject}=__modules["world/world-props.mjs"];
 const {startingForms,applyForm}=__modules["world/forms.mjs"];
 const {TRAIT_KEYS}=__modules["world/genetics.mjs"];
 const {growthForGenome}=__modules["world/growth.mjs"];
 const {describeHabits,describeConsequences,nextActivityOutlook}=__modules["world/creature-profile.mjs"];
 const {makeCompanionPreview}=__modules["world/companion-preview.mjs"];
-const {restoreEmbeddedCompanion,closeEmbeddedCompanion}=__modules["world/host-session.mjs"];
+const {closeEmbeddedCompanion}=__modules["world/host-session.mjs"];
 const {createCloudSession}=__modules["world/cloud-session.mjs"];
+const {sessionAccessMode}=__modules["world/session-access.mjs"];
 const $=id=>document.getElementById(id);
 // A new individual gets a locally generated genotype; the test engine keeps a
 // deterministic seed for reproducible native-adapter contract tests.
 const freshSeed=globalThis.crypto?.getRandomValues?globalThis.crypto.getRandomValues(new Uint32Array(1))[0]:(Date.now()>>>0);
 let engine=createLocalCompanionEngine({state:createWorld({genomeSeed:freshSeed})});
 let state=engine.state;
-let taviHost=null,cloud=null,cloudPending=typeof window!=='undefined'&&window.parent!==window,cloudFailed=false,saveTimer=null,saveInFlight=null,lastSaved=null,nextAutoSave=20,portraitTimer=null;
-let chosen=false,name='',camera=230,following=true,lastTime=0,viewportWidth=960,viewportHeight=422,drag=null,lastMessage='',lastMemory='',lastTraitRevision=-1,lastHabitSignature='',lastConsequenceSignature='',lastOutlookSignature='';
+let previewOnly=false,taviHost=null,cloud=null,cloudPending=typeof window!=='undefined'&&window.parent!==window,cloudFailed=false,saveTimer=null,saveInFlight=null,lastSaved=null,nextAutoSave=20,portraitTimer=null;
+let chosen=false,name='',camera=230,following=true,lastTime=0,viewportWidth=960,viewportHeight=422,viewportScale=1,drag=null,lastMessage='',lastMemory='',lastTraitRevision=-1,lastHabitSignature='',lastConsequenceSignature='',lastOutlookSignature='';
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const canvas=$('world'),ctx=canvas.getContext('2d');
+const viewport=$('viewport'),worldShell=document.querySelector('.world-shell'),main=document.querySelector('main.world-first'),styleError=$('stylesheet-error');
+let visualRunning=false,visualFrames=0,viewportObserver=null;
+let activeTheme=state.sceneTheme,sceneImage=null,themeLoadToken=0;
+async function chooseTheme(id,{persist=false}={}){
+  if(!themeById(id))return false;
+  activeTheme=id;
+  if(persist&&state.sceneTheme!==id){
+    state.sceneTheme=id;
+    if(chosen)scheduleSave();
+  }
+  sceneImage=null;
+  const token=++themeLoadToken;
+  if(typeof Image==='undefined')return false; // Headless Node UI harness has no bitmap decoder.
+  try{
+    const result=await loadPreferredScene({
+      hostResource:taviHost?.resolveScene,
+      loadBundled:()=>loadThemeImage(id),
+      decodeImage:async url=>{
+        const bitmap=new Image();bitmap.src=url;await bitmap.decode();
+        if(bitmap.naturalWidth!==2400||bitmap.naturalHeight!==420)throw Error('Scene dimensions changed');
+        return bitmap;
+      },
+    });
+    if(token===themeLoadToken){
+      sceneImage=result.image;
+      $('scene-status').textContent=result.source==='bundled'&&taviHost?.assets?'Using bundled scene · optional asset unavailable':'';
+    }
+    return true;
+  }catch{
+    if(token===themeLoadToken)$('scene-status').textContent='Background image unavailable · scene uses a plain safe backdrop.';
+    return false;
+  }
+}
+$('scene-theme').addEventListener('change',()=>{void chooseTheme($('scene-theme').value,{persist:true});});
+// A hidden frame must not retain an account-specific customized resource after
+// the host changes sessions. Foreground always resolves from a fresh host grant
+// (or the locally bundled fallback), never a persisted host media/data URL.
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){themeLoadToken++;sceneImage=null;}
+  else void chooseTheme(activeTheme);
+});
+void chooseTheme(activeTheme);
 const previews=[];
 // Tavi's extension host is OPTIONAL. Standalone preview remains usable and never
 // talks to LoopRD or demands an account token. Host I/O happens out of the frame loop.
@@ -1547,7 +1976,7 @@ async function saveSession(){
   let snapshot;
   try{snapshot=encodeSession({chosen,name,state});}catch{return false;}
   if(snapshot===lastSaved)return true;
-  const current=cloud?cloud.commit(snapshot):taviHost.write(SESSION_STORAGE_KEY,snapshot);
+  const current=cloud.commit(snapshot);
   saveInFlight=current;
   try{await current;lastSaved=snapshot;return true;}
   catch{cloudFailed=true; $('art-status').textContent='Companion could not be saved to the server. Reopen from Tavi to reload the latest authoritative copy.';return false; }
@@ -1569,18 +1998,25 @@ function applyCloudSession(record){
     nextAutoSave=state.time+20;
   }
   lastTraitRevision=-1;lastHabitSignature='';lastConsequenceSignature='';lastOutlookSignature='';
+  $('scene-theme').value=state.sceneTheme;
+  void chooseTheme(state.sceneTheme);
   syncControls();updateText();
   if(chosen)queuePortrait();
 }
 async function initializeTaviHost(){
   const connection=await connectTaviHost();
   if(!connection){
-    if(typeof window!=='undefined'&&window.parent!==window){cloudFailed=true;cloudPending=false;
-      $('art-status').textContent='This Tavi build does not provide secure server Companion storage. Update Tavi and retry.';syncControls();}
-    else cloudPending=false;
+    // A sideloaded Tavix preview may not implement Companion cloud methods.
+    // It may be tried as an EPHEMERAL demo, never as an account-owned save.
+    // A real load/write error AFTER negotiating a cloud host still fails closed.
+    previewOnly=sessionAccessMode({embedded:window.parent!==window,connection:null})==='preview-only';
+    cloudPending=false;syncControls();
     return;
   }
-  taviHost=connection;
+  taviHost=connection;previewOnly=false;
+  // Prefer freshly authorized shared Assets artwork. The bundled original is
+  // always available without the optional service, even in the native bundle.
+  void chooseTheme(activeTheme);
   $('return-to-tavi').hidden=false;
   $('return-to-tavi').disabled=false;
   // There is deliberately no device-local fallback for an embedded account.
@@ -1689,7 +2125,11 @@ function renderActivityOutlook(){
   }
 }
 function syncControls(){
-  $('welcome').hidden=chosen||cloudPending||cloudFailed;
+  $('welcome').hidden=chosen;
+  $('startup-status').textContent=cloudPending?'Checking the Tavi companion connection…':cloudFailed?'Server access failed. Reopen from Tavi to retry; no temporary companion can replace saved data.':previewOnly?'Preview only · not saved to your Tavi account.':'Choose a painted companion to begin.';
+  $('session-mode').textContent=cloudPending?'Connecting…':cloudFailed?'Server unavailable · interaction paused':previewOnly?'Temporary preview · not saved':taviHost?'Account companion · server saved':'Standalone demo · not saved';
+  for(const button of document.querySelectorAll('.starter-choice'))button.disabled=cloudPending||cloudFailed;
+  $('choose').disabled=cloudPending||cloudFailed;
   $('companion-name').textContent=name||'Your companion';
   $('portrait-hint').textContent=chosen?(name||'Your companion'):'? Choose a companion';
   $('portrait-button').setAttribute('aria-label',chosen?`Face portrait of ${name||'your companion'}. Change starting look.`:'Choose your companion');
@@ -1704,9 +2144,13 @@ function syncControls(){
   renderActivityOutlook();
   renderTraits();
   $('form').value=state.form;
+  for(const control of document.querySelectorAll('[data-placement]')){
+    const id=control.dataset?.placement;if(!id)continue;control.value=state.scenePlacements[id];
+    for(const option of control.options??[])option.disabled=option.value!=='ground'&&Object.entries(state.scenePlacements).some(([other,place])=>other!==id&&place===option.value);
+  }
   $('follow').setAttribute('aria-pressed',String(following));
   $('pause').setAttribute('aria-pressed',String(state.paused));$('pause').textContent=state.paused?'Resume world':'Pause world';
-  for(const control of document.querySelectorAll('.below-world button, .below-world input, .below-world select'))control.disabled=!chosen||cloudPending||cloudFailed;
+  for(const control of document.querySelectorAll('.companion-controls button, .companion-controls input, .companion-controls select'))control.disabled=!chosen||cloudPending||cloudFailed;
   for(const button of document.querySelectorAll('[data-object]'))button.disabled=!chosen||cloudPending||cloudFailed||!isObjectAvailable(state,button.dataset.object);
   $('refill-honey').disabled=!chosen||cloudPending||cloudFailed||state.objectState.honey.usesRemaining===10;
 }
@@ -1720,10 +2164,53 @@ function updateText(){
   for(const button of document.querySelectorAll('[data-object]'))button.disabled=!chosen||cloudPending||cloudFailed||!isObjectAvailable(state,button.dataset.object);
   $('refill-honey').disabled=!chosen||cloudPending||cloudFailed||state.objectState.honey.usesRemaining===10;
 }
-function resize(){
-  viewportWidth=Math.max(280,Math.round($('viewport').clientWidth));viewportHeight=$('viewport').clientHeight;
-  const density=Math.min(2,Math.ceil(devicePixelRatio||1));canvas.width=viewportWidth*density;canvas.height=viewportHeight*density;
-  ctx.setTransform(density,0,0,density,0,0);ctx.imageSmoothingEnabled=false;$('pan').max=Math.max(0,WORLD_WIDTH-viewportWidth);
+// The TaviX preview may serve CSS through a URL rejected by its own CSP.
+// Never initialize a content-sized, self-resizing canvas without an applied stylesheet.
+function stylesActive(){
+  return companionStylesActive({
+    viewport:getComputedStyle(viewport),
+    canvas:getComputedStyle(canvas),
+    worldShell:getComputedStyle(worldShell)
+  });
+}
+function pauseForMissingStyles(){
+  visualRunning=false;lastTime=0;
+  main.hidden=true;
+  styleError.hidden=false;
+}
+function resize(rect){
+  if(!stylesActive()){pauseForMissingStyles();return;}
+  // Measure the viewport's CSS containing box, never the canvas's intrinsic pixels.
+  const cssWidth=rect?.width??viewport.getBoundingClientRect().width;
+  const cssHeight=rect?.height??viewport.getBoundingClientRect().height;
+  const backing=boundedCanvasBacking(cssWidth,cssHeight,globalThis.devicePixelRatio);
+  if(!backing){
+    // A zero or implausibly enormous container must never allocate a canvas.
+    // Zero-sized windows can recover when ResizeObserver sees a valid layout.
+    return;
+  }
+  const projected=projectViewport(cssWidth,cssHeight);
+  viewportScale=projected.scale;viewportWidth=projected.worldWidth;viewportHeight=projected.worldHeight;
+  if(backingChanged(canvas,backing)){
+    canvas.width=backing.width;
+    canvas.height=backing.height;
+  }
+  ctx.setTransform(backing.scale*viewportScale,0,0,backing.scale*viewportScale,0,0);
+  ctx.imageSmoothingEnabled=false;$('pan').max=cameraLimit(WORLD_WIDTH,viewportWidth);
+}
+function startVisualRuntime(){
+  if(visualRunning)return;
+  if(!stylesActive()){pauseForMissingStyles();return;}
+  main.hidden=false;styleError.hidden=true;
+  if(!viewportObserver){
+    viewportObserver=new ResizeObserver(entries=>{
+      if(!stylesActive()){pauseForMissingStyles();return;}
+      resize(entries[0]?.contentRect);
+    });
+    viewportObserver.observe(viewport);
+  }
+  visualRunning=true;visualFrames=0;
+  resize();syncControls();requestAnimationFrame(frame);
 }
 function portrait(){
   const p=$('portrait').getContext('2d');p.clearRect(0,0,360,360);p.imageSmoothingEnabled=false;
@@ -1731,13 +2218,16 @@ function portrait(){
   else {p.font='76px Georgia';p.fillStyle='#8c9d77';p.textAlign='center';p.fillText('?',180,185);}
 }
 function frame(timestamp){
+  if(!visualRunning)return;
+  // Checking once per second also catches a stylesheet removed after startup.
+  if(visualFrames++%60===0&&!stylesActive()){pauseForMissingStyles();return;}
   const delta=lastTime?Math.min(.1,(timestamp-lastTime)/1000):0;lastTime=timestamp;
   if(!document.hidden){
     if(chosen&&!cloudPending&&!cloudFailed)engine.advance(delta);
     if(chosen&&state.time>=nextAutoSave){nextAutoSave=state.time+20;scheduleSave();}
     if(chosen && following)camera+=(state.x-viewportWidth/2-camera)*(reduced.matches?1:Math.min(1,delta*3));
-    camera=Math.max(0,Math.min(Math.max(0,WORLD_WIDTH-viewportWidth),camera));
-    ctx.clearRect(0,0,viewportWidth,viewportHeight);drawScenery(ctx,viewportWidth,viewportHeight,camera,state.time,reduced.matches);drawWorldObjects(ctx,camera,state,viewportWidth);
+    camera=Math.max(0,Math.min(cameraLimit(WORLD_WIDTH,viewportWidth),camera));
+    ctx.clearRect(0,0,viewportWidth,viewportHeight);drawScene(ctx,{themeId:activeTheme,image:sceneImage,camera,viewportWidth,viewportHeight,time:state.time,reducedMotion:reduced.matches});drawWorldObjects(ctx,camera,state,viewportWidth);
     if(chosen){
       ctx.save();
       if(state.action==='bathe'&&state.target==='bath'){
@@ -1759,18 +2249,18 @@ function frame(timestamp){
   }
   requestAnimationFrame(frame);
 }
-function pan(value){following=false;camera=Math.max(0,Math.min(WORLD_WIDTH-viewportWidth,value));syncControls();}
+function pan(value){following=false;camera=Math.max(0,Math.min(cameraLimit(WORLD_WIDTH,viewportWidth),value));syncControls();}
 $('pan-left').addEventListener('click',()=>pan(camera-250));$('pan-right').addEventListener('click',()=>pan(camera+250));
 $('pan').addEventListener('input',()=>pan(Number($('pan').value)));
 $('follow').addEventListener('click',()=>{following=!following;syncControls();});
 canvas.addEventListener('pointerdown',event=>{drag={x:event.clientX,y:event.clientY,camera,moved:false};});
 canvas.addEventListener('pointermove',event=>{
   if(!drag)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;
-  if(Math.abs(dx)>8 && Math.abs(dx)>Math.abs(dy)){drag.moved=true;canvas.setPointerCapture(event.pointerId);pan(drag.camera-dx);}
+  if(Math.abs(dx)>8 && Math.abs(dx)>Math.abs(dy)){drag.moved=true;canvas.setPointerCapture(event.pointerId);pan(drag.camera-panDragDelta(dx,viewportScale));}
 });
 canvas.addEventListener('pointerup',event=>{
   if(!drag)return;
-  if(!drag.moved&&chosen){const bounds=canvas.getBoundingClientRect();const x=event.clientX-bounds.left+camera,y=event.clientY-bounds.top;const id=hitTestObject(x,y,state);if(id)sendCommand('invite',id);}
+  if(!drag.moved&&chosen){const worldPoint=pointerToWorld({clientX:event.clientX,clientY:event.clientY,rect:canvas.getBoundingClientRect(),camera,scale:viewportScale});const id=hitTestObject(worldPoint.x,worldPoint.y,state);if(id)sendCommand('invite',id);}
   drag=null;
 });
 canvas.addEventListener('pointercancel',()=>{drag=null;});
@@ -1783,6 +2273,12 @@ $('look').addEventListener('click',()=>{if(chosen)sendCommand('express','look');
 $('name').addEventListener('input',()=>{name=$('name').value.trim().slice(0,32);syncControls();scheduleSave();queuePortrait();});
 $('form').addEventListener('change',()=>{sendCommand('choose-form',$('form').value);syncControls();queuePortrait();});
 $('care').addEventListener('change',()=>{sendCommand('set-care',$('care').checked);syncControls();});
+for(const control of document.querySelectorAll('[data-placement]'))if(control.dataset?.placement)control.addEventListener('change',()=>{
+  const success=sendCommand('place-object',{id:control.dataset.placement,destination:control.value});
+  if(!success)$('scene-status').textContent='Cannot move that object while it is in use or onto an occupied slot.';
+  else $('scene-status').textContent='';
+  syncControls();
+});
 function openSelection(){if(cloudPending||cloudFailed)return;if(!$('selection').open)$('selection').showModal();}
 $('portrait-button').addEventListener('click',openSelection);$('choose').addEventListener('click',openSelection);$('close-selection').addEventListener('click',()=>$('selection').close());
 for(const button of document.querySelectorAll('[data-form]')){
@@ -1791,15 +2287,17 @@ for(const button of document.querySelectorAll('[data-form]')){
   drawPaintedWorld(previewCanvas.getContext('2d'),180,292,preview,{reducedMotion:true,scale:2});
   previews.push({canvas:previewCanvas,state:preview});
   button.setAttribute('aria-label',`${startingForms[button.dataset.form].label}: ${startingForms[button.dataset.form].description}`);
-  button.addEventListener('click',()=>{if(cloudPending||cloudFailed)return;sendCommand('choose-form',button.dataset.form);chosen=true;$('selection').close();syncControls();scheduleSave();queuePortrait();$('wave').focus();});
+  button.addEventListener('click',()=>{if(cloudPending||cloudFailed)return;if(!sendCommand('choose-form',button.dataset.form))return;chosen=true;if($('selection').open)$('selection').close();syncControls();scheduleSave();queuePortrait();$('wave').focus();});
 }
 for(const [key,value]of Object.entries(state.needs)){
   const label=document.createElement('label');label.className='need';label.textContent=key[0].toUpperCase()+key.slice(1);
   const meter=document.createElement('meter');meter.id='need-'+key;meter.min=0;meter.max=100;meter.value=value;meter.setAttribute('aria-label',key);label.append(meter);$('needs').append(label);
 }
-new ResizeObserver(resize).observe($('viewport'));
-document.addEventListener('visibilitychange',()=>{lastTime=0;if(document.hidden)void saveSession();});
-resize();syncControls();requestAnimationFrame(frame);
+document.addEventListener('visibilitychange',()=>{lastTime=0;if(document.hidden)void saveSession();else startVisualRuntime();});
+// This is only a recovery event; missing CSS never starts an animation loop.
+document.querySelector('link[rel="stylesheet"]')?.addEventListener('load',startVisualRuntime);
+window.addEventListener('pageshow',startVisualRuntime);
+startVisualRuntime();
 void initializeTaviHost();
 // Asset loading is explicit. Never substitute an unrelated or generated creature if it fails.
 loadPaintedCharacters().then(ok=>{

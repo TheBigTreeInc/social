@@ -1,0 +1,39 @@
+= Tavi Assets 0.1.9 + Companion 0.6.43 Integration — looprd-social 0.3.144
+:toc:
+
+== Scope and provenance
+
+This is a *source candidate* based on 0.3.143. Tavi is messenger-first; games, companions and the asset storefront are optional. Desktop (Windows) and Android must keep the same trust boundaries and back-to-home navigation.
+
+* Assets engine: the portable service from the supplied `tavi-assets-0.1.9-ziprunner.zip`, embedded under `client/src/assets/vendor/tavi-assets-0.1.9`. The trusted Tavi host wraps its APIs; extensions never get the privileged installer, installed registry, or other applications' grants.
+* Companion: source from `tavi-companion-0.6.43.zip`, built using Companion's `npm run tavi:bundle`, then imported using Social's reviewed-extension process and verified SHA-256 bundle pin in `client/src/extensions/reviewed-companion.js`. The account-local package install/enable gates remain in place. This source candidate is *not* an approved public release.
+* Scene pack: `org.tavi.companion.scenes` version `0.1.0`, hash-listed original Hollow Meadow PNG from Companion. The free installer accepts only the pinned bundled origin and exact pack manifest digest. Reinstall is idempotent; account-local IndexedDB persists installed content.
+* Contract: TaviX 0.1.11 dependencies and host-issued per-pack read/customization consent. The optional `tavi.assets.dependencies/v1` status is advertised only to verified, enabled extensions with declared dependencies; the status request does not install, buy, or grant anything. Without consent, resources appear unavailable.
+
+== Operator steps: local install QA
+
+. Import `looprd-social-0.3.144-ziprunner.zip` through ZipRunner. Do not bypass existing project build or operator acceptance checkpoints.
+. Check source validation: `npm run verify`, `npm run check:looprd`, `npm run extensions:check`, and `python -m unittest discover -s tests -p test_companion_cloud.py -v`. Confirm ZIP integrity and compare the package SHA from the handoff. Some wider Python tests are long-running in the model environment, so their exact Windows outcome must be collected by ZipRunner.
+. On Windows, open the Tavi app at approximately 355x630. Under Apps -> Assets Store install the *Hollow Meadow* free pack using Tavi's in-app confirmation. Confirm that no browser-native `tauri.localhost` dialog appears. Repeat on Android. Restart Tavi and confirm *Installed* still lists the same pack.
+. Install/enable the reviewed Companion version `0.6.43`. In Assets Store -> Permissions approve its optional `org.tavi.companion.scenes` read grant. Confirm `assets.dependencies.status` reports the scene capability available, Companion can render it, and revocation immediately blocks further asset API access without affecting other apps or accounts.
+. Test denied/missing pack: Companion must use its locally bundled offline fallback, not fail silently. No background purchases or downloads may occur.
+. Test Home/Back and message navigation. Do not replace Tavi's main messenger view with the Assets Store.
+
+== LoopRD deployment prerequisite — new database schema 13
+
+*This release contains a server change.* Back up the LoopRD Social database and obtain explicit operator approval before applying the generated schema 13 migration. The migration adds `companionSnapshot`, `companionRevision`, and `companionEpoch` fields to `SocialAccount`. `server/looprd-release.json` updates to the Social backend release `0.3.122`. Verify generated `looprd.yaml`, Wallet subcomponent descriptors and `ziprunner.looprd.json` SHA match before deployment.
+
+The signed-in host calls `companion_get` to fetch a server-owned singleton slot; `companion_put` requires an exact current revision and reset epoch. The server verifies the account from the authenticated principal, rejects oversized/invalid v6 snapshots and stale writes, and never accepts a client-supplied target account. The extension receives only the slot response, never the bearer token. An operator-only `reset-companion` management action clears the snapshot and rotates the epoch to prevent offline devices resurrecting a reset pet.
+
+Acceptance requires two real devices on the *same* account: select Cat, save, close; resume on the other device; change state; verify a stale first-device write receives `COMPANION_CONFLICT` and forces reload. Repeat for a second independent account, then reset using *authorized* LoopRD management and verify the old epoch is rejected. During server outage, Companion must report cloud unavailability rather than silently creating a second local pet. Keep migration/release gates and obtain explicit acceptance before production rollout.
+
+== Other project responsibilities
+
+* Tavi Assets: provide approved official online catalog, digest-pinned remote pack downloads, trusted update policy and store delivery. The read-only HTTPS catalog reader introduced in 0.3.143 is metadata-only. Tavi 0.3.144 does *not* enable arbitrary internet package installation or Gold purchases.
+* Companion: after Windows/Android QA, keep Tavi SDK cloud message shapes (`companion.get` and `companion.put`), schema `tavi.companion.cloud/v1`, and v6 snapshot serialization compatible. The server performs coarse structural constraints; Companion itself validates complete scene/genetics/session semantics before loading or committing.
+* TaviX: no new asset-declaration protocol required; keep 0.1.11 validation and host-only grants.
+* Atrium/Klondike: prior launch/storage fixes and source trust checks are separate. This change should not relax them.
+
+== Release and acceptance
+
+No Git push, tag, LoopRD deployment, online catalog publication, native Windows/Android build approval, or operator acceptance is performed by this ZIP. Preserve existing ZipRunner configuration and per-project approval gates. This is one candidate for supervised testing, not a finished rollout.

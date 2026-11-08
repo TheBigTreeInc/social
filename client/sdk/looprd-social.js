@@ -153,6 +153,13 @@ export function safePushEndpoint(value) {
   catch{return false;}
 }
 
+export function validateCompanionCloudResponse(data){
+ if(data?.schema!=='tavi.companion.cloud/v1'||typeof data.epoch!=='string'||
+   !/^[A-Za-z0-9_-]{16,64}$/.test(data.epoch)||!Number.isSafeInteger(data.revision)||data.revision<0||
+   !(data.snapshot===undefined||data.snapshot===null||typeof data.snapshot==='string'))
+  throw new ProtocolError('Invalid Companion cloud service response');
+ return data;
+}
 export class LooprdSocial {
   constructor(origin, token, fetcher = browserFetch) {
     this.origin = normalizeServer(origin);
@@ -176,6 +183,14 @@ export class LooprdSocial {
       if (error?.name === 'AbortError') throw new ProtocolError('Connection timed out.');
       throw error;
     } finally { clearTimeout(timer); }
+  }
+  /** Server-authoritative Companion slot. Never store or forward this token to the iframe. */
+  companionGet(){return this.command('companion_get').then(validateCompanionCloudResponse);}
+  companionPut(snapshot,revision,epoch){
+    if(typeof snapshot!=='string'||!snapshot.length||new TextEncoder().encode(snapshot).length>8192||
+       !Number.isSafeInteger(revision)||revision<0||typeof epoch!=='string'||!/^[A-Za-z0-9_-]{16,64}$/.test(epoch))
+      throw new ProtocolError('Invalid Companion save request');
+    return this.command('companion_put',{snapshot,revision,epoch}).then(validateCompanionCloudResponse);
   }
   /** Authenticated first-party Wallet endpoint; tokens remain in the host process. */
   async walletCommand(op, fields = {}) {

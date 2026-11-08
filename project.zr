@@ -10,6 +10,7 @@
   "stop": [],
   "stop_ports": [],
   "build": [
+    "node tools/prune-companion-legacy-overlay.mjs",
     "npm run verify",
     "node tools/auto-build.mjs"
   ],
@@ -42,5 +43,5 @@
   "require_clean_git_before_overlay": false,
   "mechanisms_require_build_success": true,
   "post_build_mechanisms": [],
-  "version": "0.3.143"
+  "version": "0.3.145"
 }

@@ -1,3 +1,11 @@
+# looprd-social 0.3.145 — Companion ZipRunner overlay repair
+
+Fixes Windows build failure when upgrading from 0.3.143 with ZipRunner's safe `delete_missing=false` overlay. The 0.6.27 Companion `ui/collection.html` and two published mirror copies remained alongside the approved 0.6.43 bundle, changing its SHA-256. ZipRunner and `npm run verify` both run an exact SHA-256-guarded cleanup of only those three obsolete files before verification, including when ZipRunner reuses the previously loaded build command. Modified files and altered publisher pins fail closed; operator/private state is untouched. Includes an exact-Windows-hash regression test. This is a source candidate, not native acceptance; server schema 13 migration still requires explicit approval. See `docs/TAVI_COMPANION_OVERLAY_REPAIR_0145.adoc`.
+
+# looprd-social 0.3.144 — Assets 0.1.9 and Companion 0.6.43 integration
+
+This candidate updates the trusted Tavi Assets host to the 0.1.9 engine, with filtered/grant-scoped object discovery, a hash-verified Hollow Meadow scene pack, explicit optional dependency-status negotiation, and reviewed Companion 0.6.43 source integration. The server adds authenticated single-Companion saves protected by revision+reset-epoch compare-and-swap and **requires approved LoopRD schema 13 migration**. Windows/Android native and real two-device checks are still pending. No public online asset downloads, Gold purchases, deployment or release. See `docs/TAVI_ASSETS_COMPANION_INTEGRATION_0144.adoc`.
+
 # looprd-social 0.3.143 — Assets Store candidate
 
 Adds a first-party Assets Store under Apps and Settings, responsive in-app approval dialogs for free packs and app grants, searchable local pack cards, Installed/Permissions views, and an optional read-only HTTPS Assets 0.1.7 catalog adapter (`TAVI_ASSETS_CATALOG_URL`). No online source is configured by default; no arbitrary remote installation, Gold charges, automatic updates or cross-device sync are enabled. Existing 0.3.142 per-account IndexedDB, TaviX 0.1.11 grants and sample pack remain intact. Source tests are required; Windows/Android/operator QA pending. See `docs/TAVI_ASSETS_STORE_0143.adoc` and `docs/TAVI_ASSETS_TEAM_HANDOFF_0143.adoc`.

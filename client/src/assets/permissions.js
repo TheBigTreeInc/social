@@ -81,5 +81,33 @@ export function createAssetPermissionController({storage,installation,runtime,ve
   storage.setItem(PREFIX+session.scope,JSON.stringify(data));
   return next;
  };
- return Object.freeze({remember,grantForSession,consentFor,changeConsent});
+ const dependencyStatus=async session=>{
+  const item=installation(session);
+  if(!item||!verified(session)||item.id!==session.id||item.scope!==session.scope||item.source!==session.source||
+     item.metadata!==JSON.stringify(item.manifest)||item.version!==item.manifest.version||
+     JSON.stringify(item.permissions)!==JSON.stringify(item.manifest.permissions)||!runtime.ready())
+    throw Error('Verified asset dependency session unavailable');
+  const deps=validateAssetDependencies(item.manifest);
+  if(!deps.length)throw Error('No declared asset dependencies');
+  const projection=grantForSession(session);
+  const byPack=new Map((projection?.grants??[]).map(g=>[g.packId,g]));
+  const features=[];
+  for(const dep of deps){
+   const grant=byPack.get(dep.packId);
+   const version=runtime.installedVersions()[dep.packId];
+   // Readiness is granted capability availability, NOT an installed-pack or ownership oracle.
+   // Without approved consent a declared pack is always reported unavailable.
+   const granted=!!grant&&isCompatible(version,dep);
+   const caps=granted?await runtime.trustedCapabilities(session.scope,dep.packId):[];
+   const entries=dep.capabilities.map(capability=>({capability,packId:dep.packId,
+     available:granted&&caps.includes(capability),selected:granted&&caps.includes(capability)?{packId:dep.packId,version,capability}:null}));
+   features.push({id:dep.packId,ready:dep.optional||entries.every(e=>e.available),fallback:'bundled',
+     required:dep.optional?[]:entries,optional:dep.optional?entries:[]});
+  }
+  // Grants and installed versions can change during the async inspection.
+  if(!verified(session)||installation(session)?.metadata!==item.metadata||
+     JSON.stringify(grantForSession(session))!==JSON.stringify(projection))throw Error('Asset grants changed');
+  return {schema:'tavi.assets.dependency-status/v1',applicationId:item.id,features};
+ };
+ return Object.freeze({remember,grantForSession,consentFor,changeConsent,dependencyStatus});
 }

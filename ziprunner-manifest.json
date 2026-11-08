@@ -3,8 +3,8 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.143",
-    "base_version": "0.3.142"
+    "version": "0.3.145",
+    "base_version": "0.3.143"
   },
   "update": {
     "id": "TAVI-ASSETS-STORE-0143",
@@ -2712,7 +2712,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Build 0.3.143 on Windows and Android: verify responsive in-app pack/permission approval, app and settings Assets Store navigation, free install persistence; separately integrate Assets remote digest-pinned pack delivery after Assets team supplies it.",
+    "next_pass": "Operator: migrate LoopRD server to database schema 13 only with backup and approval; build 0.3.144 on Windows and Android, validate cloud Companion CAS/reset, offline Hollow Meadow install/consent and grants; no online asset downloads or Gold yet.",
     "risks": [
       "Embedded games are opaque-origin sandboxed; current Life may require an adaptation for storage/cookies. Tavi cannot grant allow-same-origin to GitHub Pages games sharing its web origin.",
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
@@ -2910,23 +2910,23 @@
     "notes": "Local ZipRunner QA only. No push, release, tag, public catalog or deployment authorized."
   },
   "release_notes": {
-    "version": "0.3.143",
-    "summary": "Store-style Assets discovery with responsive host approval and optional read-only HTTPS catalog metadata; online package downloads and Gold remain disabled.",
-    "server_unchanged": true,
-    "database_migration": "none",
-    "native_qa": "Source/Node tests; native Windows and Android build and operator UI acceptance pending",
+    "version": "0.3.145",
+    "summary": "Repair exact Companion 0.6.43 trust pin after non-destructive 0.3.143->0.3.144 ZipRunner overlay; preserve Assets 0.1.9, schema 13 and operator gates.",
+    "server_unchanged": false,
+    "database_migration": "13 — add Companion snapshot/revision/reset epoch fields to SocialAccount; operator-approved migration required",
+    "native_qa": "All source regression tests only; native Windows/Android build, LoopRD migration and two-device Companion acceptance pending",
     "operator_approval": "pending"
   },
   "verification_summary": {
     "source_candidate": "source_candidate_native_pending",
-    "browser_qa": "Node store renderer/catalog/consent tests passed; real viewport browser and native shell QA pending.",
+    "browser_qa": "Source tests for preview/store/Assets 0.1.9 scene and permissions; real 355x630/native device visual QA pending",
     "native_acceptance": "pending",
     "git_push": "No Git push, public release, tag, Pages deployment or approvals authorized.",
-    "server_deploy": "unchanged from 0.3.107; LoopRD 0.4 Wallet rollout remains separately pending",
-    "database_schema": "12 unchanged; no migration in 0.3.108",
-    "operator_review": "0.3.143 candidate, source tests only; Windows/Android manual acceptance required.",
+    "server_deploy": "NOT DEPLOYED: source LoopRD 0.3.122 Companion CAS endpoint must be explicitly approved and migrated; no server deployment authorized",
+    "database_schema": "13 new migration; backup, migration and server smoke test require operator approval",
+    "operator_review": "0.3.145 repair candidate; Windows/Android native builds, migrated server and two-device acceptance pending.",
     "openclaw_bridge": "Local fake-CLI compatibility, reply chunking, cursor/receipt unit tests passed; real bot runtime pending.",
     "package_manifest": "Reconciled preexisting planned vs done/todo ID mismatch without closing or approving any record; legacy operator gates preserved."
   },
-  "version": "0.3.143"
+  "version": "0.3.145"
 }

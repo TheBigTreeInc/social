@@ -123,9 +123,9 @@ class RecoveryFlow(unittest.TestCase):
 
     def test_current_descriptor_and_recovery_diagnostics_agree_on_schema(self):
         from looprd_handler import SOCIAL_SCHEMA_VERSION
-        self.assertEqual(self.spec['database']['schemaVersion'],12)
+        self.assertEqual(self.spec['database']['schemaVersion'],13)
         self.assertEqual(SOCIAL_SCHEMA_VERSION,12)
-        self.assertEqual(max(m['version'] for m in self.spec['database']['migrations']),12)
+        self.assertEqual(max(m['version'] for m in self.spec['database']['migrations']),13)
         a=self.signup()
         with self.sessions.begin() as db:
             db.execute(sa.text('UPDATE "SocialAccount" SET "developerEnabled"=1 WHERE handle=:handle'),
@@ -169,7 +169,7 @@ class RecoveryFlow(unittest.TestCase):
                 self.assertEqual(db.execute(sa.text('SELECT COUNT(*) FROM "SocialRecoveryCode"')).scalar_one(),0)
         finally:engine.dispose()
     def test_additive_schema(self):
-        self.assertEqual(self.spec['database']['schemaVersion'],12)
+        self.assertEqual(self.spec['database']['schemaVersion'],13)
         self.assertIn(9,[m['version'] for m in self.spec['database']['migrations']])
         with self.engine.begin() as db:
             code=db.execute(sa.text('SELECT name FROM sqlite_master WHERE name=\'SocialRecoveryCode\'')).scalar()

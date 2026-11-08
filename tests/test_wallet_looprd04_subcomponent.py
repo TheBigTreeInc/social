@@ -44,7 +44,7 @@ class WalletLoopRD04Test(unittest.TestCase):
         self.assertEqual(self.parent['subcomponents'],[
             {'source':'extensions/org.tavi.core.wallet/looprd/looprd.yaml'}])
         self.assertEqual(self.parent['component'],'looprd-social')
-        self.assertEqual(self.parent['database']['schemaVersion'],12)
+        self.assertEqual(self.parent['database']['schemaVersion'],13)
         self.assertEqual(self.child['apiVersion'],'looprd/v1')
         self.assertEqual(self.child['component'],'tavi-wallet')
         self.assertEqual(self.child['auth'],{
@@ -92,7 +92,7 @@ class WalletLoopRD04Test(unittest.TestCase):
         self.assertEqual(backend['uiBroker']['component'],'looprd-social')
         self.assertEqual(backend['serviceComponent']['component'],'tavi-wallet')
         self.assertEqual(backend['ledger'],{
-            'component':'looprd-social','databaseSchemaVersion':12,
+            'component':'looprd-social','databaseSchemaVersion':13,
             'storageOwnership':'looprd-social','migration':'planned-explicit-storage-split'})
         registry=json.loads((ROOT/'extensions/registry.json').read_text(encoding='utf8'))
         wallet=next(x for x in registry['extensions'] if x['id']=='org.tavi.core.wallet')

@@ -2,9 +2,10 @@
  * Tavi Assets consumer reference SDK v1 (transport-injected).
  * No direct postMessage, origin assumptions, files, download, wallet or ownership API.
  * An approved TaviX host SDK must supply a session-bound {info, request} transport.
- * Tavi 0.3.142 binds a free local Assets 0.1.7 engine behind explicit per-pack TaviX 0.1.11 host grants; paid catalog remains pending.
+ * Tavi 0.3.144 binds the trusted Assets 0.1.9 engine and per-pack TaviX 0.1.11 grants; paid catalog remains pending.
  */
 const FEATURE = 'tavi.assets/v1';
+const DEPENDENCIES_FEATURE = 'tavi.assets.dependencies/v1';
 
 export class AssetsUnavailableError extends Error {
   constructor(message = 'Tavi Assets host feature unavailable') {
@@ -18,13 +19,16 @@ export function createTaviAssetsClient(transport) {
     throw new TypeError('Session-bound host transport with info() and request() required');
   }
   let ready = false;
+  let supportsDependencies = false;
   async function connect() {
     const info = await transport.info();
     if (!info || !Array.isArray(info.features) || !info.features.includes(FEATURE)) {
       ready = false;
+      supportsDependencies = false;
       throw new AssetsUnavailableError();
     }
     ready = true;
+    supportsDependencies = info.features.includes(DEPENDENCIES_FEATURE);
     return {feature: FEATURE, api: info.api ?? null};
   }
   async function invoke(method, params) {
@@ -41,6 +45,10 @@ export function createTaviAssetsClient(transport) {
   };
   return Object.freeze({
     connect,
+    dependencyStatus: () => {
+      if (!supportsDependencies) throw new AssetsUnavailableError('Dependency status feature unavailable');
+      return invoke('assets.dependencies.status', {});
+    },
     describe: packId => invoke('assets.describe', {packId: id(packId)}),
     listPacks: (filters = {}) => invoke('assets.packs.list', filters),
     discoverObjects: (filters = {}) => invoke('assets.objects.discover', filters),

@@ -24,7 +24,7 @@
   },
   "ledger": {
     "component": "looprd-social",
-    "databaseSchemaVersion": 12,
+    "databaseSchemaVersion": 13,
     "storageOwnership": "looprd-social",
     "migration": "planned-explicit-storage-split"
   },

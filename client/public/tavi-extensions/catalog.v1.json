@@ -101,7 +101,7 @@
       "manifest": {
         "schema": "tavi.extension/v1",
         "id": "org.tavi.community.companion",
-        "version": "0.6.27",
+        "version": "0.6.43",
         "name": "Companion",
         "summary": "An individual painted companion with evolving habits, experiences, and server-owned saves in Tavi.",
         "publisher": "tavi-community",
@@ -124,20 +124,34 @@
         "permissions": [
           "ui.panel",
           "ui.toast",
-          "storage.private"
+          "storage.private",
+          "assets.read"
         ],
         "platforms": [
-          "web",
           "windows",
           "android"
         ],
-        "icon": "ui/icon.svg"
+        "icon": "ui/icon.svg",
+        "assetDependencies": [
+          {
+            "packId": "org.tavi.companion.scenes",
+            "compatibility": {
+              "min": "0.1.0",
+              "maxExclusive": "1.0.0"
+            },
+            "capabilities": [
+              "scene.meadow.background"
+            ],
+            "optional": true,
+            "requestCustomization": false
+          }
+        ]
       },
       "files": [
         {
           "path": "ui/cat-study.html",
-          "sha256": "5d468de0146fd6a794325ee62ee6acf2dca33478e554156b9742a920dfa0282e",
-          "size": 4223
+          "sha256": "dc1931fb051206a63b7efa68b5f4692c44cf4b432fd9c18d9c905610f5d89fc0",
+          "size": 4262
         },
         {
           "path": "ui/chunks/000.js",
@@ -185,9 +199,9 @@
           "size": 231471
         },
         {
-          "path": "ui/collection.html",
-          "sha256": "23a70090a94a0cc8be34081721b87a5180bfb62a7efa0f35ebecb9b721131dce",
-          "size": 206
+          "path": "ui/chunks/009.js",
+          "sha256": "1f41adab56ca1a360e18119d3b55a4171baea2f46c876b790be4b34dcd5c31b4",
+          "size": 505770
         },
         {
           "path": "ui/credits.html",
@@ -201,18 +215,18 @@
         },
         {
           "path": "ui/index.html",
-          "sha256": "95c5e7e259b91f0d010ec26a630d7fb7e7412b1d2d3bed95554ace105dd67c13",
-          "size": 8531
+          "sha256": "16aa891af0dbc2c097d62dfe013aa99d2f1cdcd335e191e0b7db36efe317d1f1",
+          "size": 10743
         },
         {
           "path": "ui/studio-main.js",
-          "sha256": "a49ebe0a82e07a9a9f15a336f2df509dc902c848e5d33034225cbc06b406b8bf",
-          "size": 41629
+          "sha256": "ee1034ce6fceb9eef0d9a75d296062bf57579b930b189b1f52400faa9f311378",
+          "size": 54655
         },
         {
           "path": "ui/world-main.js",
-          "sha256": "11229fb4af85eb55c648d518461dde2b559b6dda2c532a86b81ec9f0bb9a23c2",
-          "size": 114398
+          "sha256": "0dfc9f6317fd579303e5eeadafb324d1d7f8f79c348ca27838e6b54746666816",
+          "size": 141830
         },
         {
           "path": "ui/world/studio.css",
@@ -221,8 +235,8 @@
         },
         {
           "path": "ui/world/style.css",
-          "sha256": "d23180a651c692e53970eae08af7814aeb1bcf9314953e8a7b90f355fea236fc",
-          "size": 8502
+          "sha256": "71dc4442c5bba294766c147b92b21cc9e3f3085cd00dd8a8e7c54b6721e29e4d",
+          "size": 13916
         }
       ]
     },

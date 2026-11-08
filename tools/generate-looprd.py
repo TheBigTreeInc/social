@@ -31,7 +31,7 @@ expected_service={'component':'tavi-wallet','source':'looprd.yaml','auth':'datab
     'contracts':{'merchant':'tavi-wallet-merchant','reward':'tavi-wallet-reward'},
     'parentBroker':{'component':'looprd-social','contract':'tavi-wallet-ledger-broker','version':1,
                     'credentialSecret':'tavi-wallet-social-service-key'}}
-expected_ledger={'component':'looprd-social','databaseSchemaVersion':12,'storageOwnership':'looprd-social',
+expected_ledger={'component':'looprd-social','databaseSchemaVersion':13,'storageOwnership':'looprd-social',
                  'migration':'planned-explicit-storage-split'}
 if (wallet_contract.get('schema')!='tavi.looprd-wallet-backend/v2' or
     wallet_contract.get('extensionId')!='org.tavi.core.wallet' or
@@ -64,7 +64,7 @@ spec={
  'push':{'transport':'unifiedpush','scopes':['push:manage'],
          'deviceLifetimeSeconds':86400,'maxDevicesPerPrincipal':8},
  'limits':{'requestsPerMinute':180,'authAttemptsPerMinute':90,'burstPerSecond':15,'maxInFlight':30},
-  'database':{'backend':'sqlite','schemaVersion':12,'migrations':[{'version':2,'statements':[
+  'database':{'backend':'sqlite','schemaVersion':13,'migrations':[{'version':2,'statements':[
   'CREATE TABLE "SocialAccount" ("id" INTEGER PRIMARY KEY, "handle" VARCHAR(32) NOT NULL UNIQUE, "passwordHash" VARCHAR(255) NOT NULL, "created" INTEGER NOT NULL, "failedAttempts" INTEGER NOT NULL, "lockedUntil" INTEGER NOT NULL)',
   'CREATE TABLE "SocialSession" ("id" INTEGER PRIMARY KEY, "subjectId" VARCHAR(72) NOT NULL, "tokenHash" VARCHAR(64) NOT NULL UNIQUE, "created" INTEGER NOT NULL, "expires" INTEGER NOT NULL, "lastSeen" INTEGER NOT NULL, "revoked" BOOLEAN NOT NULL)',
   'CREATE TABLE "SocialContact" ("id" INTEGER PRIMARY KEY, "leftId" VARCHAR(72) NOT NULL, "rightId" VARCHAR(72) NOT NULL, "requestedBy" VARCHAR(72) NOT NULL, "status" VARCHAR(16) NOT NULL, "created" INTEGER NOT NULL)',
@@ -120,12 +120,17 @@ spec={
   'CREATE INDEX "WalletRewardIssue_daily" ON "WalletRewardIssue" ("merchant","recipient","currencyId","created")'
   ]},{'version':12,'statements':[
   'ALTER TABLE "SocialConversationRead" ADD COLUMN "deliveredId" INTEGER NOT NULL DEFAULT 0'
+  ]},{'version':13,'statements':[
+  'ALTER TABLE "SocialAccount" ADD COLUMN "companionSnapshot" TEXT',
+  'ALTER TABLE "SocialAccount" ADD COLUMN "companionRevision" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "SocialAccount" ADD COLUMN "companionEpoch" VARCHAR(64)'
   ]}]},
  'models':{
     'SocialProfile':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True,True),'data':{'type':'json','required':True},'revision':integer(True),'updated':integer(True)}},
     'SocialMessage':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'displayName':string(24,True),'content':string(320,True),'created':integer(True)}},
     'SocialPulse':{'fields':{'id':integer(primary=True,generated=True),'signal':integer(True)}},
-    'SocialAccount':{'fields':{'id':integer(primary=True,generated=True),'handle':string(32,True,True),'passwordHash':string(255,True),'created':integer(True),'failedAttempts':integer(True),'lockedUntil':integer(True),'developerEnabled':{'type':'boolean','required':True},'ecosystemAdmin':{'type':'boolean','required':True},'recoveryFailures':integer(True),'recoveryLockedUntil':integer(True)},'indexes':[{'name':'SocialAccount_created','fields':['created']}]},
+    'SocialAccount':{'fields':{'id':integer(primary=True,generated=True),'handle':string(32,True,True),'passwordHash':string(255,True),'created':integer(True),'failedAttempts':integer(True),'lockedUntil':integer(True),'developerEnabled':{'type':'boolean','required':True},'ecosystemAdmin':{'type':'boolean','required':True},'recoveryFailures':integer(True),'recoveryLockedUntil':integer(True),
+        'companionSnapshot':string(8192),'companionRevision':integer(),'companionEpoch':string(64)},'indexes':[{'name':'SocialAccount_created','fields':['created']}]},
     'SocialRecoveryCode':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'codeHash':string(64,True,True),'created':integer(True),'expires':integer(True)},'indexes':[{'name':'SocialRecoveryCode_subject','fields':['subjectId','expires']}]},
     'SocialSession':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'tokenHash':string(64,True,True),'created':integer(True),'expires':integer(True),'lastSeen':integer(True),'revoked':{'type':'boolean','required':True}}},
     'WalletBalance':{'fields':{'id':integer(primary=True,generated=True),'subjectId':string(72,True),'currencyId':string(48,True),'amount':integer(True)},'indexes':[{'name':'WalletBalance_unique','fields':['subjectId','currencyId'],'unique':True}]},
@@ -170,7 +175,11 @@ spec={
                'revoke-admin':{'label':'Revoke ecosystem admin','resource':'accounts',
               'description':'Stop administrator event access for this Tavi account.',
               'writes':{'accounts':['ecosystemAdmin']},
-              'source':"def handle(ctx):\n    ctx.update('accounts', ctx.recordId, {'ecosystemAdmin': False})\n"}}},
+              'source':"def handle(ctx):\n    ctx.update('accounts', ctx.recordId, {'ecosystemAdmin': False})\n"},
+               'reset-companion':{'label':'Reset companion','resource':'accounts',
+              'description':'Irreversible operator reset of one account Companion slot; rotates reset epoch to reject stale device writes. Confirm account and backup first.',
+              'writes':{'accounts':['companionSnapshot','companionRevision','companionEpoch']},
+              'source':"import secrets\ndef handle(ctx):\n    ctx.update('accounts', ctx.recordId, {'companionSnapshot': None, 'companionRevision': 0, 'companionEpoch': secrets.token_urlsafe(24)})\n"}}},
  'websocket':{'path':'/events','resources':['pulses'],
               'permissions':{'pulses':['events:read']}},
  'handlers':[

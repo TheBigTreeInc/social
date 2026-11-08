@@ -4,79 +4,327 @@ const __modules=Object.create(null);
 const __inlineConfigurations={"cat-clips.json":{"idle":{"schema":1,"rig":"cat-v1","duration":4,"loop":true,"tracks":[{"part":"torso","channel":"y","keys":[[0,0],[2,-1],[4,0]]},{"part":"head","channel":"y","keys":[[0,0],[2,-1],[4,0]]},{"part":"tail","channel":"angle","keys":[[0,-5],[2,7],[4,-5]]},{"part":"earRight","channel":"angle","keys":[[0,0],[2.8,0],[3,12],[3.2,0],[4,0]]}]},"walk":{"schema":1,"rig":"cat-v1","duration":0.8,"loop":true,"tracks":[{"part":"torso","channel":"y","keys":[[0,0],[0.2,-1],[0.4,0],[0.6,-1],[0.8,0]]},{"part":"torso","channel":"angle","keys":[[0,3],[0.8,3]]},{"part":"legLeft","channel":"x","keys":[[0,-7],[0.4,7],[0.8,-7]]},{"part":"legRight","channel":"x","keys":[[0,7],[0.4,-7],[0.8,7]]},{"part":"legLeft","channel":"y","keys":[[0,0],[0.2,-5],[0.4,0],[0.8,0]]},{"part":"legRight","channel":"y","keys":[[0,0],[0.4,0],[0.6,-5],[0.8,0]]},{"part":"armLeft","channel":"angle","keys":[[0,-8],[0.4,8],[0.8,-8]]},{"part":"armRight","channel":"angle","keys":[[0,8],[0.4,-8],[0.8,8]]},{"part":"forearmLeft","channel":"angle","keys":[[0,6],[0.4,-4],[0.8,6]]},{"part":"forearmRight","channel":"angle","keys":[[0,-4],[0.4,6],[0.8,-4]]},{"part":"tail","channel":"angle","keys":[[0,-5],[0.4,5],[0.8,-5]]}]},"wave":{"schema":1,"rig":"cat-v1","duration":2.4,"loop":false,"tracks":[{"part":"armRight","channel":"angle","keys":[[0,0],[0.4,-115],[1.7,-115],[2.4,0]]},{"part":"forearmRight","channel":"angle","keys":[[0,0],[0.4,-40],[0.7,-65],[1,-40],[1.3,-65],[1.6,-40],[1.8,-40],[2.4,0]]},{"part":"head","channel":"angle","keys":[[0,0],[0.5,-6],[1.8,-6],[2.4,0]]},{"part":"tail","channel":"angle","keys":[[0,0],[1,9],[2.4,0]]}]}},"cat-painted-layout.json":{"schema":1,"species":"cat","colors":{"label":"Cat colors","defaultPreset":"ginger","preserveDefaults":true,"defaults":{"coat":"#dba36a","markings":"#ac6038","cream":"#fae4b6","innerEar":"#dca6ab"},"channels":[{"id":"coat","label":"Fur"},{"id":"markings","label":"Stripes"},{"id":"cream","label":"Muzzle & paws"},{"id":"innerEar","label":"Inner ears"}],"presets":{"ginger":{"label":"Ginger","colors":{"coat":"#dba36a","markings":"#ac6038","cream":"#fae4b6","innerEar":"#dca6ab"}},"silver":{"label":"Silver","colors":{"coat":"#a8adb8","markings":"#53606d","cream":"#f2ecdf","innerEar":"#cf9da8"}},"lavender":{"label":"Lavender","colors":{"coat":"#b497ca","markings":"#6d527d","cream":"#f2e8e7","innerEar":"#d6a3bd"}}},"materials":{"fur":[{"channel":"cream","hue":[30,65],"lightness":[0.78,0.98],"saturation":[0.18,1],"sourceLightness":0.85},{"channel":"markings","hue":[0,28],"lightness":[0.26,0.62],"saturation":[0.22,1],"sourceLightness":0.45},{"channel":"coat","hue":[10,58],"lightness":[0.26,0.96],"saturation":[0.2,1],"sourceLightness":0.64}],"earFur":[{"channel":"innerEar","hue":[330,360],"saturation":[0.12,1],"lightness":[0.35,0.94],"sourceLightness":0.76},{"channel":"innerEar","hue":[0,15],"saturation":[0.12,1],"lightness":[0.35,0.94],"sourceLightness":0.76},{"channel":"cream","hue":[30,65],"lightness":[0.78,0.98],"saturation":[0.18,1],"sourceLightness":0.85},{"channel":"markings","hue":[0,28],"lightness":[0.26,0.62],"saturation":[0.22,1],"sourceLightness":0.45},{"channel":"coat","hue":[10,58],"lightness":[0.26,0.96],"saturation":[0.2,1],"sourceLightness":0.64}]}},"width":1254,"height":1254,"parts":{"legSideLeft":{"atlas":"profileLegs","source":[77,19,142,218],"size":[25,32],"pivot":[9,10],"recolor":"fur"},"legSideRight":{"atlas":"profileLegs","source":[310,20,134,218],"size":[25,32],"pivot":[9,10],"recolor":"fur"},"earSideNear":{"atlas":"profileEars","source":[35,29,154,205],"size":[27,24],"pivot":[13.5,20],"recolor":"earFur"},"earSideFar":{"atlas":"profileEars","source":[247,66,104,168],"size":[12,18],"pivot":[6,16],"recolor":"earFur"},"front":{"source":[4,50,310,240],"size":[74,56],"pivot":[37,28],"recolor":"fur","protectedRegions":[{"center":[0.35,0.5],"radius":[0.085,0.14],"hue":[35,150]},{"center":[0.7,0.5],"radius":[0.085,0.14],"hue":[35,150]}]},"side":{"source":[346,49,276,241],"size":[74,56],"pivot":[37,28],"recolor":"fur","protectedRegions":[{"center":[0.73,0.49],"radius":[0.1,0.15],"hue":[35,150]}]},"front-blink":{"source":[627,50,314,238],"size":[74,56],"pivot":[37,28],"recolor":"fur"},"side-blink":{"source":[960,49,286,241],"size":[74,56],"pivot":[37,28],"recolor":"fur"},"torso-front":{"source":[36,324,278,292],"size":[57,66],"pivot":[28.5,33],"recolor":"fur"},"torso-side":{"source":[372,323,241,300],"size":[53,66],"pivot":[26.5,33],"recolor":"fur"},"armLeft":{"source":[704,348,141,253],"size":[20,42],"pivot":[10,5],"recolor":"fur"},"armRight":{"source":[1031,346,141,255],"size":[20,42],"pivot":[10,5],"recolor":"fur"},"legLeft":{"source":[74,635,170,270],"size":[25,32],"pivot":[12.5,10],"recolor":"fur"},"legRight":{"source":[410,635,168,270],"size":[25,32],"pivot":[12.5,10],"recolor":"fur"},"tail":{"source":[640,627,296,285],"size":[66,64],"pivot":[62,55],"recolor":"fur"},"earLeft":{"source":[1010,670,189,225],"size":[24,30],"pivot":[12,26],"recolor":"earFur"},"earRight":{"source":[74,955,194,224],"size":[24,30],"pivot":[12,26],"recolor":"earFur"},"happy":{"source":[314,941,313,245],"size":[74,56],"pivot":[37,28],"recolor":"fur"},"curious":{"source":[630,941,311,247],"size":[74,56],"pivot":[37,28],"recolor":"fur"},"sleepy":{"source":[941,941,313,247],"size":[74,56],"pivot":[37,28],"recolor":"fur"}},"atlases":{"profileLegs":{"width":512,"height":256},"profileEars":{"width":384,"height":256}}},"unicorn-layout.json":{"schema":1,"species":"unicorn","rig":"cat-v1","colors":{"label":"Unicorn colors","defaultPreset":"pearl","defaults":{"coat":"#e9e5df","mane":"#aa89d9","horn":"#e4bd6b","hooves":"#645275"},"channels":[{"id":"coat","label":"Coat"},{"id":"mane","label":"Mane & tail"},{"id":"horn","label":"Horn"},{"id":"hooves","label":"Hooves"}],"presets":{"pearl":{"label":"Pearl","colors":{"coat":"#e9e5df","mane":"#aa89d9","horn":"#e4bd6b","hooves":"#645275"}},"twilight":{"label":"Twilight","colors":{"coat":"#53617c","mane":"#d592bb","horn":"#efc575","hooves":"#40364f"}},"meadow":{"label":"Meadow","colors":{"coat":"#bfd1ae","mane":"#548e94","horn":"#e2c17a","hooves":"#526b57"}}},"materials":{"coat":[{"channel":"coat","chroma":[0,0.18],"lightness":[0.13,1],"sourceLightness":0.86}],"limb":[{"channel":"hooves","hue":[145,205],"saturation":[0.2,1],"lightness":[0.1,1],"sourceLightness":0.42},{"channel":"coat","chroma":[0,0.18],"lightness":[0.13,1],"sourceLightness":0.86}],"mane":[{"channel":"mane","lightness":[0.1,1],"sourceLightness":0.58}],"horn":[{"channel":"horn","lightness":[0.1,1],"sourceLightness":0.62}]}},"width":1280,"height":1024,"parts":{"front":{"source":[25,61,250,188],"size":[74,56],"pivot":[37,28],"recolor":"coat"},"side":{"source":[298,64,255,187],"size":[80,56],"pivot":[40,28],"recolor":"coat"},"front-blink":{"source":[556,62,251,187],"size":[74,56],"pivot":[37,28],"recolor":"coat"},"side-blink":{"source":[819,64,263,189],"size":[80,56],"pivot":[40,28],"recolor":"coat"},"horn":{"source":[1117,45,113,210],"size":[12,30],"pivot":[6,27],"recolor":"horn"},"torso-front":{"source":[25,267,263,253],"size":[57,66],"pivot":[28.5,33],"recolor":"coat"},"torso-side":{"source":[311,266,242,255],"size":[53,66],"pivot":[26.5,33],"recolor":"coat"},"armLeft":{"source":[581,282,155,233],"size":[20,42],"pivot":[10,5],"recolor":"limb"},"armRight":{"source":[809,281,153,234],"size":[20,42],"pivot":[10,5],"recolor":"limb"},"tail":{"source":[998,277,268,256],"size":[42,52],"pivot":[38,26],"recolor":"mane"},"legLeft":{"source":[51,531,164,229],"size":[25,32],"pivot":[12.5,10],"recolor":"limb"},"legRight":{"source":[314,531,166,229],"size":[25,32],"pivot":[12.5,10],"recolor":"limb"},"legSideLeft":{"source":[559,533,169,222],"size":[25,32],"pivot":[9,10],"recolor":"limb","placementOffset":[-7,0]},"legSideRight":{"source":[774,532,169,223],"size":[25,32],"pivot":[9,10],"recolor":"limb","placementOffset":[7,0]},"maneFront":{"atlas":"unicornMane","source":[34,68,224,120],"size":[56,23],"pivot":[28,31],"recolor":"mane","placementOffset":[0,1]},"earLeft":{"source":[39,773,177,216],"size":[16,36],"pivot":[8,32],"recolor":"coat"},"earRight":{"source":[310,772,177,216],"size":[16,36],"pivot":[8,32],"recolor":"coat"},"earSideNear":{"source":[545,767,154,229],"size":[15,32],"pivot":[7.5,28],"recolor":"coat"},"earSideFar":{"source":[782,772,175,224],"size":[11,27],"pivot":[5.5,24],"recolor":"coat"},"maneSide":{"atlas":"unicornMane","source":[59,226,147,252],"size":[31,82],"pivot":[41,27],"recolor":"mane","placementOffset":[2,0]},"maneSideForelock":{"atlas":"unicornMane","source":[294,66,191,132],"size":[44,20],"pivot":[22,32],"recolor":"mane","placementOffset":[0,1]},"maneFrontBack":{"atlas":"unicornMane","source":[297,312,168,133],"size":[60,34],"pivot":[30,14],"recolor":"mane"}},"atlases":{"unicornMane":{"width":512,"height":512}}}};
 const __bundledJSON=async name=>{const key=String(name).replace(/^\.\//,'');if(!Object.hasOwn(__inlineConfigurations,key))throw Error('Unknown painted layout');return structuredClone(__inlineConfigurations[key]);};
 const __loadBundledImage=async name=>{const chunks=globalThis.__taviCompanionImageChunks?.[name];if(!Array.isArray(chunks)||!chunks.length)throw Error('Missing painted artwork: '+name);const img=new Image();img.src='data:image/png;base64,'+chunks.join('');await img.decode();return img;};
-// tavi-sdk.mjs
-__modules["tavi-sdk.mjs"]=(()=>{
-const __moduleURL=new URL("./tavi-sdk.mjs",document.baseURI).href;
-/** Public, tokenless Tavi extension-frame SDK.
- * v1 capabilities are discoverable; future data facades deliberately fail closed
- * until the host and authoritative LoopRD component implement that operation.
+// vendor/tavix-sdk-1.0.0/index.js
+__modules["vendor/tavix-sdk-1.0.0/index.js"]=(()=>{
+const __moduleURL=new URL("./vendor/tavix-sdk-1.0.0/index.js",document.baseURI).href;
+/** TaviX 1.0 browser SDK.
+ *
+ * The stable wire channel remains `tavi.extension/v1` for compatibility with
+ * existing Tavi applications. TaviX standardizes that deployed protocol; it
+ * does not expose Social credentials or native privileges to the iframe.
  */
-function createTaviExtensionSDK(target=window.parent,source=window){
+const TAVIX_STANDARD='tavix/1.0';
+const TAVIX_CHANNEL='tavi.extension/v1';
+const TAVIX_HOST_API='1.0.0';
+
+function assertTaviXHostInfo(info){
+ if(!info||typeof info!=='object'||info.standard!==TAVIX_STANDARD||info.channel!==TAVIX_CHANNEL||typeof info.api!=='string'||!/^1\.\d+\.\d+$/.test(info.api)||typeof info.extensionId!=='string'||info.mode!=='embedded'||info.navigation!=='host'||!Array.isArray(info.features))throw Error('Host is not TaviX 1.0 compatible');
+ return info;
+}
+
+function createTaviXSDK(target=window.parent,source=window){
  let nextId=0;
- const pending=new Map();
- const channel='tavi.extension/v1';
+ const pending=new Map(),listeners=new Map();
  const receiver=e=>{
-  if(e.source!==target||e.data?.channel!==channel||e.data?.direction!=='response')return;
+  if(e.source!==target||e.data?.channel!==TAVIX_CHANNEL)return;
+  if(e.data.direction==='event'){
+   const handlers=listeners.get(e.data.event);if(handlers)for(const fn of [...handlers]){try{fn(e.data.payload);}catch{}}
+   return;
+  }
+  if(e.data.direction!=='response')return;
   const item=pending.get(e.data.id);if(!item)return;pending.delete(e.data.id);clearTimeout(item.timer);
-  if(e.data.ok)item.resolve(e.data.result);else item.reject(Error(e.data.error||'Extension request failed'));
+  if(e.data.ok)item.resolve(e.data.result);else item.reject(Error(e.data.error||'TaviX request failed'));
  };
  source.addEventListener('message',receiver);
  const request=(method,args={})=>{
   const id=++nextId;
   return new Promise((resolve,reject)=>{
-   if(pending.size>=20)return reject(Error('Too many extension requests'));
-   const timer=setTimeout(()=>{pending.delete(id);reject(Error('Tavi host did not respond'));},5000);
+   if(pending.size>=20)return reject(Error('Too many TaviX requests'));
+   const timer=setTimeout(()=>{pending.delete(id);reject(Error('TaviX host did not respond'));},10000);
    pending.set(id,{resolve,reject,timer});
-   target.postMessage({channel,direction:'request',id,method,...args},'*');
+   target.postMessage({channel:TAVIX_CHANNEL,direction:'request',id,method,...args},'*');
   });
  };
  const call=(method,params={})=>request(method,{params});
+ const on=(event,handler)=>{
+  if(typeof event!=='string'||!event||typeof handler!=='function')throw Error('Invalid TaviX event listener');
+  const set=listeners.get(event)||new Set();set.add(handler);listeners.set(event,set);
+  return ()=>{set.delete(handler);if(!set.size)listeners.delete(event);};
+ };
  return {
   info:()=>request('host.info'),
+  conformance:async()=>assertTaviXHostInfo(await request('host.info')),
   capabilities:()=>request('host.capabilities'),
+  navigation:{back:()=>request('navigation.back'),close:()=>request('navigation.close')},
   storage:{get:key=>request('storage.get',{key}),set:(key,value)=>request('storage.set',{key,value})},
-  ui:{toast:message=>request('ui.toast',{message}),close:()=>request('ui.close'),requestGameLaunch:handoff=>request('ui.requestGameLaunch',{handoff})},
-  companion:{publishPreview:preview=>request('companion.preview',{preview}),load:()=>request('companion.get'),save:({snapshot,revision,epoch})=>request('companion.put',{snapshot,revision,epoch})},
-  // Future shared-service APIs. Every call is checked by the host broker and
-  // again by the corresponding server; this SDK never stores a Social bearer.
-  wallet:{balance:params=>call('wallet.balance',params),transactions:params=>call('wallet.transactions',params),transfer:params=>call('wallet.transfer',params)},
+  ui:{toast:message=>request('ui.toast',{message}),close:()=>request('ui.close'),
+    // Compatibility only. New integrations should negotiate tavix.surface/v1.
+    requestGameLaunch:handoff=>request('ui.requestGameLaunch',{handoff})},
+  // TaviX optional module. Tavi 0.3.108 deliberately fails closed until the
+  // generic nested surface broker is implemented and advertised by host.info.
+  surfaces:{requestOpen:surface=>request('surface.requestOpen',{surface})},
+  on,
+  wallet:{balance:()=>call('wallet.balance'),transactions:params=>call('wallet.transactions',params),
+    claim:params=>call('wallet.claim',params),convert:params=>call('wallet.convert',params),
+    purchase:params=>call('wallet.purchase',params),orderStatus:params=>call('wallet.orderStatus',params),
+    transfer:params=>call('wallet.transfer',params)},
   pets:{list:params=>call('pets.list',params),get:params=>call('pets.get',params),command:params=>call('pets.command',params)},
   contacts:{list:params=>call('contacts.list',params)},
   messages:{list:params=>call('messages.list',params),send:params=>call('messages.send',params)},
   events:{list:params=>call('events.list',params)},
   services:{list:()=>call('services.list')},
-  dispose:()=>{source.removeEventListener('message',receiver);for(const item of pending.values()){clearTimeout(item.timer);item.reject(Error('Extension disconnected'));}pending.clear();}
+  dispose:()=>{source.removeEventListener('message',receiver);for(const item of pending.values()){clearTimeout(item.timer);item.reject(Error('TaviX disconnected'));}pending.clear();listeners.clear();}
  };
 }
 
-return {createTaviExtensionSDK};
+// Deployed-source compatibility name. Existing apps do not need a rewrite.
+const createTaviExtensionSDK=createTaviXSDK;
+
+return {TAVIX_STANDARD,TAVIX_CHANNEL,TAVIX_HOST_API,assertTaviXHostInfo,createTaviXSDK,createTaviExtensionSDK};
+})();
+// vendor/tavi-assets-0.1.9/client.mjs
+__modules["vendor/tavi-assets-0.1.9/client.mjs"]=(()=>{
+const __moduleURL=new URL("./vendor/tavi-assets-0.1.9/client.mjs",document.baseURI).href;
+/**
+ * Tavi Assets consumer reference SDK v1 (transport-injected).
+ * No direct postMessage, origin assumptions, files, download, wallet or ownership API.
+ * An approved TaviX host SDK must supply a session-bound {info, request} transport.
+ * Tavi has NOT implemented these proposed assets.* methods yet.
+ */
+const FEATURE = 'tavi.assets/v1';
+const DEPENDENCIES_FEATURE = 'tavi.assets.dependencies/v1';
+
+class AssetsUnavailableError extends Error {
+  constructor(message = 'Tavi Assets host feature unavailable') {
+    super(message);
+    this.name = 'AssetsUnavailableError';
+  }
+}
+
+function createTaviAssetsClient(transport) {
+  if (!transport || typeof transport.info !== 'function' || typeof transport.request !== 'function') {
+    throw new TypeError('Session-bound host transport with info() and request() required');
+  }
+  let ready = false;
+  let supportsDependencies = false;
+  async function connect() {
+    const info = await transport.info();
+    if (!info || !Array.isArray(info.features) || !info.features.includes(FEATURE)) {
+      ready = false;
+      supportsDependencies = false;
+      throw new AssetsUnavailableError();
+    }
+    ready = true;
+    supportsDependencies = info.features.includes(DEPENDENCIES_FEATURE);
+    return {feature: FEATURE, api: info.api ?? null};
+  }
+  async function invoke(method, params) {
+    if (!ready) throw new AssetsUnavailableError('Call connect() and negotiate host support first');
+    const result = await transport.request(method, params);
+    if (!result || typeof result !== 'object') throw new Error('Invalid host assets response');
+    return result;
+  }
+  const id = packId => {
+    if (typeof packId !== 'string' || !/^[a-z0-9][a-z0-9._-]{0,126}$/.test(packId)) {
+      throw new TypeError('Invalid packId');
+    }
+    return packId;
+  };
+  return Object.freeze({
+    connect,
+    dependencyStatus: () => {
+      if (!supportsDependencies) throw new AssetsUnavailableError('Dependency status feature unavailable');
+      return invoke('assets.dependencies.status', {});
+    },
+    describe: packId => invoke('assets.describe', {packId: id(packId)}),
+    listObjects: (packId, filters = {}) => invoke('assets.objects.list', {...filters, packId: id(packId)}),
+    // Queries only the installed packs the trusted host grants to this session.
+    listPacks: (filters = {}) => invoke('assets.packs.list', filters),
+    discoverObjects: (filters = {}) => invoke('assets.objects.discover', filters),
+    // Resolves independent customization slots; artwork composition is game-owned.
+    resolveComposition: components => invoke('assets.composition.resolve', {components}),
+    getObject: (packId, objectId) => invoke('assets.objects.get', {packId: id(packId), objectId}),
+    listCollections: (packId, filters = {}) => invoke('assets.collections.list', {...filters, packId: id(packId)}),
+    getCollection: (packId, collectionId) => invoke('assets.collections.get', {packId: id(packId), collectionId}),
+    preferences: packId => invoke('assets.preferences.get', {packId: id(packId)}),
+    select: (packId, capability, variant) => invoke('assets.preferences.set', {packId: id(packId), capability, variant}),
+    resolve: (packId, capability) => invoke('assets.resolve', {packId: id(packId), capability})
+  });
+}
+
+return {AssetsUnavailableError,createTaviAssetsClient};
+})();
+// tavi-sdk.mjs
+__modules["tavi-sdk.mjs"]=(()=>{
+const __moduleURL=new URL("./tavi-sdk.mjs",document.baseURI).href;
+/** TaviX 1.0 runtime plus the narrowly scoped Companion cloud extension.
+ *
+ * The official @tavi/tavix-sdk source is vendored byte-for-byte under
+ * ui/vendor/tavix-sdk-1.0.0. TaviX intentionally keeps the deployed wire
+ * channel at tavi.extension/v1. Companion cloud get/put/preview remain a
+ * reviewed application-specific extension until they become a standard module.
+ */
+const {
+  TAVIX_STANDARD,TAVIX_CHANNEL,TAVIX_HOST_API,assertTaviXHostInfo,
+  createTaviXSDK,createTaviExtensionSDK
+}=__modules["vendor/tavix-sdk-1.0.0/index.js"];
+const {createTaviAssetsClient}=__modules["vendor/tavi-assets-0.1.9/client.mjs"];
+
+function createCompanionBridge(target,source){
+  // The Tavi extension host requires positive request IDs. Reserve a high
+  // positive namespace separate from TaviX's ordinary sequential IDs; the
+  // bridges share a channel but never resolve each other's pending requests.
+  let nextId=2_000_000_000;
+  const pending=new Map();
+  const receiver=e=>{
+    if(e.source!==target||e.data?.channel!==TAVIX_CHANNEL||e.data?.direction!=='response'||typeof e.data.id!=='number'||e.data.id<2_000_000_000)return;
+    const item=pending.get(e.data.id);if(!item)return;pending.delete(e.data.id);clearTimeout(item.timer);
+    if(e.data.ok)item.resolve(e.data.result);else item.reject(Error(e.data.error||'Companion host request failed'));
+  };
+  source.addEventListener('message',receiver);
+  const request=(method,args={})=>{
+    const id=nextId++;
+    return new Promise((resolve,reject)=>{
+      if(pending.size>=8)return reject(Error('Too many Companion host requests'));
+      const timer=setTimeout(()=>{pending.delete(id);reject(Error('Companion host did not respond'));},10000);
+      pending.set(id,{resolve,reject,timer});
+      target.postMessage({channel:TAVIX_CHANNEL,direction:'request',id,method,...args},'*');
+    });
+  };
+  return {
+    request,
+    api:{
+      publishPreview:preview=>request('companion.preview',{preview}),
+      load:()=>request('companion.get'),
+      save:({snapshot,revision,epoch})=>request('companion.put',{snapshot,revision,epoch}),
+    },
+    dispose(){source.removeEventListener('message',receiver);for(const item of pending.values()){clearTimeout(item.timer);item.reject(Error('Companion bridge disconnected'));}pending.clear();}
+  };
+}
+
+function createTaviCompanionSDK(target=window.parent,source=window){
+  const core=createTaviXSDK(target,source);
+  const bridge=createCompanionBridge(target,source);
+  const assets=createTaviAssetsClient({info:core.info,request:(method,params)=>bridge.request(method,{params})});
+  return Object.freeze({
+    ...core,
+    assets,
+    companion:Object.freeze(bridge.api),
+    dispose(){bridge.dispose();core.dispose();}
+  });
+}
+
+return {createTaviCompanionSDK,TAVIX_STANDARD,TAVIX_CHANNEL,TAVIX_HOST_API,assertTaviXHostInfo,createTaviXSDK,createTaviExtensionSDK};
+})();
+// world/scene-assets.mjs
+__modules["world/scene-assets.mjs"]=(()=>{
+const __moduleURL=new URL("./world/scene-assets.mjs",document.baseURI).href;
+/** Companion-only scene selection over the canonical Tavi Assets 0.1.9 consumer SDK.
+ * No local pack registry, grant generation, entitlement or runtime implementation.
+ * The trusted host must validate the TaviX verified manifest + per-pack projection.
+ */
+const SCENE_PACK='org.tavi.companion.scenes';
+const SCENE_CAPABILITY='scene.meadow.background';
+const SCENE_PACK_MIN='0.1.0';
+const SCENE_PACK_MAX_EXCLUSIVE='1.0.0';
+const parts=value=>{
+  if(typeof value!=='string'||!(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/).test(value))return null;
+  return value.split('.').map(Number);
+};
+function compatibleScenePackVersion(value){
+  const v=parts(value),min=parts(SCENE_PACK_MIN),max=parts(SCENE_PACK_MAX_EXCLUSIVE);
+  if(!v||v.some(n=>!Number.isSafeInteger(n)))return false;
+  const compare=(a,b)=>{for(let i=0;i<3;i++){if(a[i]!==b[i])return a[i]-b[i];}return 0;};
+  return compare(v,min)>=0&&compare(v,max)<0;
+}
+// Data URLs are constructed only from bounded, shape-validated, host-granted PNG
+// bytes. Never accept resource URLs, filesystem paths or another pack's content.
+function checkedSceneResource(resource){
+  if(!resource||resource.schema!=='tavi.assets.resource/v1'||resource.packId!==SCENE_PACK||
+    resource.capability!==SCENE_CAPABILITY||!compatibleScenePackVersion(resource.version)||
+    resource.contentType!=='image/png'||resource.encoding!=='base64'||
+    typeof resource.data!=='string'||resource.data.length<32||resource.data.length>4_000_000||
+    !/^[A-Za-z0-9+/]+={0,2}$/.test(resource.data))throw Error('Unapproved scene resource');
+  // A data-only PNG must already have a 2400x420 IHDR before image decoding.
+  // Decode just the first 32 base64 characters to avoid materializing extra bytes.
+  const header=atob(resource.data.slice(0,32));
+  if(header.length<24||header.slice(0,8)!=='\x89PNG\r\n\x1a\n'||header.slice(12,16)!=='IHDR')throw Error('Invalid scene PNG header');
+  const d32=offset=>((header.charCodeAt(offset)*0x1000000)+(header.charCodeAt(offset+1)<<16)+(header.charCodeAt(offset+2)<<8)+header.charCodeAt(offset+3))>>>0;
+  if(d32(16)!==2400||d32(20)!==420)throw Error('Scene artwork changed dimensions');
+  return 'data:image/png;base64,'+resource.data;
+}
+async function connectOptionalSceneAssets(sdk){
+  if(!sdk?.assets?.connect||!sdk?.assets?.describe||!sdk?.assets?.resolve)return null;
+  try{
+    await sdk.assets.connect();
+    const info=await sdk.assets.describe(SCENE_PACK);
+    if(info?.schema!=='tavi.assets.pack-info/v1'||info.packId!==SCENE_PACK||
+      !compatibleScenePackVersion(info.version)||!info.capabilities?.includes(SCENE_CAPABILITY))return null;
+    return {resolve:async()=>{
+      // Every call traverses the trusted host; a revoked or replaced pack must
+      // fail closed even after a prior successful discovery.
+      const resource=await sdk.assets.resolve(SCENE_PACK,SCENE_CAPABILITY);
+      if(resource?.version!==info.version)throw Error('Scene pack changed during session');
+      checkedSceneResource(resource);
+      return resource;
+    }};
+  }catch{return null;}
+}
+async function loadPreferredScene({hostResource,loadBundled,decodeImage}){
+  if(typeof loadBundled!=='function'||typeof decodeImage!=='function')throw TypeError('Scene image loaders required');
+  if(typeof hostResource==='function'){
+    try{const source=checkedSceneResource(await hostResource());return {image:await decodeImage(source),source:'assets'};}
+    catch{/* Only previously authorized, fresh successful host requests may supply a scene. */}
+  }
+  return {image:await loadBundled(),source:'bundled'};
+}
+
+return {SCENE_PACK,SCENE_CAPABILITY,SCENE_PACK_MIN,SCENE_PACK_MAX_EXCLUSIVE,compatibleScenePackVersion,checkedSceneResource,connectOptionalSceneAssets,loadPreferredScene};
 })();
 // world/tavi-host.mjs
 __modules["world/tavi-host.mjs"]=(()=>{
 const __moduleURL=new URL("./world/tavi-host.mjs",document.baseURI).href;
 /**
- * Optional Tavi host connection. Only the existing Tavi extension/v1 bridge is
- * used; this module does not handle Social credentials or game API endpoints.
+ * Optional TaviX 1.0 host connection. Older non-TaviX host shapes are rejected.
+ * No Social credentials or game API endpoints enter the Companion frame.
  */
-const {createTaviExtensionSDK}=__modules["tavi-sdk.mjs"];
-async function connectTaviHost({windowRef,createSDK=createTaviExtensionSDK}={}){
+const {createTaviCompanionSDK,assertTaviXHostInfo,TAVIX_STANDARD}=__modules["tavi-sdk.mjs"];
+const {connectOptionalSceneAssets}=__modules["world/scene-assets.mjs"];
+function identifyHost(info){
+  if(!info||info.extensionId!=='org.tavi.community.companion'||info.mode!=='embedded'||info.standard!==TAVIX_STANDARD)throw Error('Unsupported Companion host');
+  assertTaviXHostInfo(info);
+}
+
+async function connectTaviHost({windowRef,createSDK=createTaviCompanionSDK}={}){
   const win=windowRef??(typeof window!=='undefined'?window:null);
   if(!win||!win.parent||win.parent===win)return null;
   const sdk=createSDK(win.parent,win);
   try{
     const info=await sdk.info();
-    if(info?.api!=='1.0.0'||info?.mode!=='embedded'||info.extensionId!=='org.tavi.community.companion')throw Error('Not the companion host');
+    identifyHost(info);
     const capabilities=await sdk.capabilities();
-    if(!Array.isArray(capabilities)||!capabilities.includes('ui.panel')||!info.features?.includes('tavi.companion.cloud/v1'))throw Error('Companion cloud host unavailable');
+    if(!Array.isArray(capabilities)||!capabilities.includes('ui.panel')||!capabilities.includes('storage.private')||!info.features?.includes('tavi.companion.cloud/v1'))throw Error('Companion cloud host unavailable');
+    if(!sdk.companion?.load||!sdk.companion?.save||!sdk.companion?.publishPreview)throw Error('Companion bridge unavailable');
+    // Host cloud is authoritative; scenery is optional. A missing/revoked pack
+    // must not cause a fallback to a different account or an unsaved companion.
+    const sceneAssets=await connectOptionalSceneAssets(sdk);
+    const canResolveScenes=Boolean(sdk.assets?.connect&&sdk.assets?.describe&&sdk.assets?.resolve);
     return {
       mode:'tavi',
-      canStore:capabilities.includes('storage.private'),
+      standard:TAVIX_STANDARD,
+      canStore:true,
       cloud:true,
+      assets:Boolean(sceneAssets),
+      // Re-negotiate on every scene request: later pack installation, revoke,
+      // update, or account change must not reuse a cached grant or image.
+      resolveScene:canResolveScenes?async()=>{
+        const fresh=await connectOptionalSceneAssets(sdk);
+        if(!fresh)throw Error('Optional Companion scene assets unavailable');
+        return fresh.resolve();
+      }:null,
       load:()=>sdk.companion.load(),
       save:(snapshot,revision,epoch)=>sdk.companion.save({snapshot,revision,epoch}),
-      read:key=>sdk.storage.get(key),
-      write:(key,value)=>sdk.storage.set(key,value),
-      close:()=>sdk.ui.close(),
+      close:()=>sdk.navigation.back(),
       publishPortrait:preview=>sdk.companion.publishPreview(preview),
       dispose:()=>sdk.dispose(),
     };

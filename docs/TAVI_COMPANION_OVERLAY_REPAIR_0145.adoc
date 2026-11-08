@@ -1,0 +1,28 @@
+= Companion 0.6.43 Overlay-Safe Import Repair — looprd-social 0.3.145
+:toc:
+
+== Failed ZipRunner build and confirmed cause
+
+The 0.3.144 source package passed on a clean extraction, but ZipRunner's existing 0.3.143 working tree retained an obsolete Companion 0.6.27 asset because `project.zr` intentionally sets `delete_missing=false` to protect user data. The 0.6.27 tree contains `ui/collection.html`; the 0.6.43 tree replaces it with `ui/chunks/009.js` and does not include `collection.html`.
+
+The old file's SHA-256 is `23a70090a94a0cc8be34081721b87a5180bfb62a7efa0f35ebecb9b721131dce` (206 bytes). With the obsolete source file present, the reviewed 0.6.43 digest becomes `cb804632192ae7fe72b98bf6455a8e061bd88b587c98a77863f856c137f93c8a` — exactly the reported Windows failure. The correct digest is `0773809d7c61c079f18325f69f3deabf134d8abc34a3c9fd5ef555b80168e948`.
+
+== Source-only, limited pre-build repair
+
+The first `project.zr` build command invokes `node tools/prune-companion-legacy-overlay.mjs`, before `npm run verify`. The root `npm run verify` script also starts with the same idempotent guarded cleanup, because an already-running ZipRunner job may use build commands loaded from the prior 0.3.143 project configuration. The script permits deletion of exactly these three paths, only when all present candidates are regular files matching the old hash and the new reviewed 0.6.43 registry pin/version are intact:
+
+* `extensions/org.tavi.community.companion/ui/collection.html`
+* `client/public/tavi-extensions/org.tavi.community.companion/ui/collection.html`
+* `client/public/tavi-extensions/org.tavi.community.companion/ui/collection.html.bytes`
+
+No other files are deleted. A file with unexpected bytes or a symlink blocks cleanup. The operation is idempotent, prechecks all candidates before deleting, and does not modify `delete_missing`, `ziprunner.config.json`, passwords, accounts, database files, saved Assets, build output, or any approval state. All bundled source, manifests, trust hashes, published content and integration logic from 0.3.144 otherwise remain byte-identical.
+
+The regression suite `client/tests/companion-overlay-repair-145.test.mjs` recreates the exact stale-overlay condition and hash, verifies the approved digest after cleanup, and checks refusal on modified content. Native Windows/Android compilation is still operator-owned.
+
+== Operator acceptance
+
+. Import `looprd-social-0.3.145-ziprunner.zip` using the existing ZipRunner project, retaining its local config and `delete_missing=false` policy.
+. Confirm first build command prints `TAVI_COMPANION_LEGACY_OVERLAY_OK: removed=3` on the original 0.3.143 checkout (or `removed=0` on an already repaired workspace).
+. Confirm all Companion bundle/source mirror checks, `npm run verify`, the Windows build and existing post-update tests complete. Reject a mismatch rather than deleting modified files.
+. Open Tavi at narrow width and Android after native build; test Companion Home navigation and asset permissions. Separate LoopRD schema 13 deployment requires backup and explicit approval before cloud-save acceptance.
+. No push/tag/release/server deploy is authorized by this repair ZIP.

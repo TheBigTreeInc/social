@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.121
+release: 0.3.122
 api:
   version: v1
 cors:
@@ -77,7 +77,7 @@ limits:
   maxInFlight: 30
 database:
   backend: sqlite
-  schemaVersion: 12
+  schemaVersion: 13
   migrations:
   - version: 2
     statements:
@@ -176,6 +176,11 @@ database:
   - version: 12
     statements:
     - ALTER TABLE "SocialConversationRead" ADD COLUMN "deliveredId" INTEGER NOT NULL DEFAULT 0
+  - version: 13
+    statements:
+    - ALTER TABLE "SocialAccount" ADD COLUMN "companionSnapshot" TEXT
+    - ALTER TABLE "SocialAccount" ADD COLUMN "companionRevision" INTEGER NOT NULL DEFAULT 0
+    - ALTER TABLE "SocialAccount" ADD COLUMN "companionEpoch" VARCHAR(64)
 models:
   SocialProfile:
     fields:
@@ -263,6 +268,14 @@ models:
       recoveryLockedUntil:
         type: integer
         required: true
+      companionSnapshot:
+        type: string
+        maxLength: 8192
+      companionRevision:
+        type: integer
+      companionEpoch:
+        type: string
+        maxLength: 64
     indexes:
     - name: SocialAccount_created
       fields:
@@ -910,6 +923,18 @@ management:
         accounts:
         - ecosystemAdmin
       source: "def handle(ctx):\n    ctx.update('accounts', ctx.recordId, {'ecosystemAdmin': False})\n"
+    reset-companion:
+      label: Reset companion
+      resource: accounts
+      description: Irreversible operator reset of one account Companion slot; rotates reset epoch to reject stale
+        device writes. Confirm account and backup first.
+      writes:
+        accounts:
+        - companionSnapshot
+        - companionRevision
+        - companionEpoch
+      source: "import secrets\ndef handle(ctx):\n    ctx.update('accounts', ctx.recordId, {'companionSnapshot':\
+        \ None, 'companionRevision': 0, 'companionEpoch': secrets.token_urlsafe(24)})\n"
 websocket:
   path: /events
   resources:
@@ -925,14 +950,15 @@ handlers:
   - social:api
   source: "\"\"\"Tavi Social native LoopRD handler with verified identities and durable wake hints.\n\nEmbedded\
     \ in looprd.yaml by tools/generate-looprd.py. Account authentication\nand push-device ownership are independently\
-    \ enforced by LoopRD's verifier.\n\"\"\"\nimport hashlib\nimport hmac\nimport json\nimport os\nimport re\nimport\
-    \ time\nimport sqlalchemy as sa\nfrom contextlib import nullcontext\nfrom starlette.concurrency import run_in_threadpool\n\
-    \nSCHEMA = 'looprd.social.profile/v1'\nAPPEARANCE_SCHEMA = 'modular-portraits.identity/v1'\nPORTRAIT_NUMBER\
-    \ = re.compile(r'^[1-9][0-9]{0,511}$')\nSOCIAL = 'looprd-social'\nPROFILE = sa.table('SocialProfile',\n    sa.column('id',\
-    \ sa.Integer), sa.column('subjectId', sa.String),\n    sa.column('data', sa.JSON), sa.column('revision', sa.Integer),\n\
-    \    sa.column('updated', sa.Integer))\nMESSAGE = sa.table('SocialMessage',\n    sa.column('id', sa.Integer),\
-    \ sa.column('subjectId', sa.String),\n    sa.column('displayName', sa.String), sa.column('content', sa.String),\n\
-    \    sa.column('created', sa.Integer))\nPULSE = sa.table('SocialPulse', sa.column('id', sa.Integer),sa.column('signal',\
+    \ enforced by LoopRD's verifier.\n\"\"\"\nimport hashlib\nimport hmac\nimport json\nimport math\nimport os\n\
+    import re\nimport time\nimport sqlalchemy as sa\nfrom contextlib import nullcontext\nfrom starlette.concurrency\
+    \ import run_in_threadpool\n\nCOMPANION_CLOUD_SCHEMA='tavi.companion.cloud/v1'\nCOMPANION_SESSION_SCHEMA='tavi.companion.session/v6'\n\
+    COMPANION_MAX_BYTES=8192\nSCHEMA = 'looprd.social.profile/v1'\nAPPEARANCE_SCHEMA = 'modular-portraits.identity/v1'\n\
+    PORTRAIT_NUMBER = re.compile(r'^[1-9][0-9]{0,511}$')\nSOCIAL = 'looprd-social'\nPROFILE = sa.table('SocialProfile',\n\
+    \    sa.column('id', sa.Integer), sa.column('subjectId', sa.String),\n    sa.column('data', sa.JSON), sa.column('revision',\
+    \ sa.Integer),\n    sa.column('updated', sa.Integer))\nMESSAGE = sa.table('SocialMessage',\n    sa.column('id',\
+    \ sa.Integer), sa.column('subjectId', sa.String),\n    sa.column('displayName', sa.String), sa.column('content',\
+    \ sa.String),\n    sa.column('created', sa.Integer))\nPULSE = sa.table('SocialPulse', sa.column('id', sa.Integer),sa.column('signal',\
     \ sa.Integer))\nSUBJECT = re.compile(r'^[a-zA-Z0-9_-]{8,72}$')\nSLOT = re.compile(r'^[a-z0-9-]{1,64}$')\nCOLOR\
     \ = re.compile(r'^#[a-fA-F0-9]{6}$')\n\n\n# Tavi interactive events: persistent, server-authorized, bounded\
     \ payloads.\nINTERACTION = sa.table('SocialInteraction', sa.column('id', sa.Integer),\n    sa.column('recipient',\
@@ -1434,11 +1460,59 @@ handlers:
     \    if last is not None and now-last<1:return error('Room message cooldown: retry shortly')\n    ident=db.execute(sa.text('''INSERT\
     \ INTO \"SocialGameRoomMessage\"\n      (roomKey,senderId,content,created) VALUES (:room,:sender,:text,:now)\
     \ RETURNING id'''),\n      {'room':room['roomKey'],'sender':subject,'text':content.strip(),'now':now}).scalar_one()\n\
-    \    return {'ok':True,'messageId':ident}\n\n\ndef atrium_app_url():\n    base=os.getenv('LOOPRD_TAVI_ATRIUM_BASE_URL','')\n\
-    \    if not base or len(base)>512 or not base.endswith('/') or any(ord(c)<33 or c=='\\\\' for c in base):return\
-    \ None\n    from urllib.parse import urlsplit\n    import ipaddress\n    try:\n        u=urlsplit(base)\n  \
-    \      if u.scheme!='https' or not u.hostname or u.username or u.password or u.query or u.fragment or u.port\
-    \ not in (None,443):return None\n        if u.hostname in ('localhost','localhost.localdomain') or u.hostname.endswith(('.localhost','.local','.internal')):return\
+    \    return {'ok':True,'messageId':ident}\n\n\ndef _companion_account_id(subject):\n    # The target account\
+    \ is ALWAYS derived from the authenticated Social session.\n    if not isinstance(subject,str) or not re.fullmatch(r'acct_[1-9][0-9]{0,18}',subject):\n\
+    \        raise ValueError('Companion requires an authenticated account')\n    return int(subject[5:])\n\ndef\
+    \ companion_get(db,subject):\n    account_id=_companion_account_id(subject)\n    row=db.execute(sa.text('''SELECT\
+    \ \"companionSnapshot\" AS snapshot,\n        \"companionRevision\" AS revision, \"companionEpoch\" AS epoch\
+    \ FROM \"SocialAccount\"\n        WHERE id=:id'''),{'id':account_id}).mappings().first()\n    if row is None:return\
+    \ error('Account not found')\n    if not row['epoch'] or row['revision'] is None:\n        # First read initializes\
+    \ the reset epoch, including old accounts after migration.\n        epoch=secrets.token_urlsafe(24)\n      \
+    \  db.execute(sa.text('''UPDATE \"SocialAccount\" SET \"companionEpoch\"=COALESCE(\"companionEpoch\",:epoch),\n\
+    \            \"companionRevision\"=COALESCE(\"companionRevision\",0) WHERE id=:id'''),\n            {'id':account_id,'epoch':epoch})\n\
+    \        row=db.execute(sa.text('''SELECT \"companionSnapshot\" AS snapshot,\n            \"companionRevision\"\
+    \ AS revision, \"companionEpoch\" AS epoch FROM \"SocialAccount\"\n            WHERE id=:id'''),{'id':account_id}).mappings().first()\n\
+    \    return {'ok':True,'schema':COMPANION_CLOUD_SCHEMA,\n        'snapshot':row['snapshot'],'revision':row['revision'],'epoch':row['epoch']}\n\
+    \ndef _valid_companion_snapshot(doc):\n    # Basic server-side constraints for Companion 0.6.43 v6; the client\
+    \ performs\n    # its more detailed simulation/genetics validation before applying a save.\n    # Reject partial\
+    \ snapshots: they could occupy the singleton slot while\n    # being impossible for a real Companion client\
+    \ to open.\n    if (not isinstance(doc,dict) or set(doc)!={'schema','chosen','name','world'} or\n        doc.get('schema')!=COMPANION_SESSION_SCHEMA\
+    \ or doc.get('chosen') is not True or\n        not isinstance(doc.get('name'),str) or len(doc['name'])>32):\n\
+    \        return False\n    w=doc.get('world')\n    if not isinstance(w,dict) or not {'form','x','care','genome','needs','preferences',\n\
+    \            'experience','habits','associations','objectState','scenePlacements',\n            'visits','lastVisited','memories'}<=set(w)\
+    \ or len(w)>15:\n        return False\n    if (w.get('form') not in ('cat','unicorn') or\n        not isinstance(w.get('x'),(int,float))\
+    \ or isinstance(w['x'],bool) or\n        not math.isfinite(w['x']) or not 0<=w['x']<=2400 or\n        type(w.get('care'))\
+    \ is not bool):\n        return False\n    needs=w.get('needs')\n    if not isinstance(needs,dict) or set(needs)!={'fullness','cleanliness','happiness','energy','affection'}\
+    \ or any(\n        isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) or not 0<=v<=100\
+    \ for v in needs.values()):\n        return False\n    if any(not isinstance(w.get(key),dict) or len(w[key])>64\
+    \ for key in\n           ('preferences','experience','habits','associations','objectState','scenePlacements','visits')):\n\
+    \        return False\n    memories=w.get('memories')\n    if not isinstance(memories,list) or len(memories)>6\
+    \ or any(not isinstance(m,str) or len(m)>160 for m in memories):\n        return False\n    if w.get('lastVisited')\
+    \ is not None and not isinstance(w['lastVisited'],str):\n        return False\n    genome=w.get('genome')\n\
+    \    keys=('curiosity','sociability','playfulness','calmness','appetite','stamina')\n    events=('explore','play','rest','nourish','bathe','bond')\n\
+    \    if (not isinstance(genome,dict) or set(genome)!={'schema','revision','genes','exposures'} or\n        genome.get('schema')!='tavi.companion.genome/v2'\
+    \ or type(genome.get('revision')) is not int or\n        not 0<=genome['revision']<=1_000_000 or not isinstance(genome.get('genes'),dict)\
+    \ or\n        not isinstance(genome.get('exposures'),dict) or\n        set(genome['genes'])!=set(keys) or set(genome['exposures'])!=set(events)):\n\
+    \        return False\n    if any(type(v) is not int or not 0<=v<=510 for v in genome['genes'].values()):\n\
+    \        return False\n    if any(type(v) is not int or not 0<=v<=1_000_000 for v in genome['exposures'].values()):\n\
+    \        return False\n    return sum(genome['exposures'].values())==genome['revision']\n\ndef companion_put(db,subject,body):\n\
+    \    account_id=_companion_account_id(subject)\n    snapshot=body.get('snapshot');revision=body.get('revision');epoch=body.get('epoch')\n\
+    \    if not isinstance(snapshot,str) or not snapshot or len(snapshot.encode('utf8'))>COMPANION_MAX_BYTES:\n\
+    \        return error('Invalid Companion snapshot size')\n    if not isinstance(revision,int) or isinstance(revision,bool)\
+    \ or not 0<=revision<2**31 or not isinstance(epoch,str) or not re.fullmatch(r'[A-Za-z0-9_-]{16,64}',epoch):\n\
+    \        return error('Invalid Companion revision or epoch')\n    try:\n        doc=json.loads(snapshot)\n \
+    \   except (ValueError,TypeError):return error('Invalid Companion snapshot JSON')\n    if not _valid_companion_snapshot(doc):\n\
+    \        return error('Invalid Companion session snapshot')\n    # Single atomic conditional update: old devices\
+    \ and stale revisions never overwrite.\n    updated=db.execute(sa.text('''UPDATE \"SocialAccount\" SET \"companionSnapshot\"\
+    =:snapshot,\n        \"companionRevision\"=\"companionRevision\"+1 WHERE id=:id\n        AND \"companionEpoch\"\
+    =:epoch AND \"companionRevision\"=:revision'''),\n        {'snapshot':snapshot,'id':account_id,'epoch':epoch,'revision':revision})\n\
+    \    if updated.rowcount!=1:\n        return {'ok':False,'code':'COMPANION_CONFLICT','error':'Companion state\
+    \ changed on another device or was reset; reload from the server'}\n    return {'ok':True,'schema':COMPANION_CLOUD_SCHEMA,'revision':revision+1,'epoch':epoch}\n\
+    \ndef atrium_app_url():\n    base=os.getenv('LOOPRD_TAVI_ATRIUM_BASE_URL','')\n    if not base or len(base)>512\
+    \ or not base.endswith('/') or any(ord(c)<33 or c=='\\\\' for c in base):return None\n    from urllib.parse\
+    \ import urlsplit\n    import ipaddress\n    try:\n        u=urlsplit(base)\n        if u.scheme!='https' or\
+    \ not u.hostname or u.username or u.password or u.query or u.fragment or u.port not in (None,443):return None\n\
+    \        if u.hostname in ('localhost','localhost.localdomain') or u.hostname.endswith(('.localhost','.local','.internal')):return\
     \ None\n        try:\n            if not ipaddress.ip_address(u.hostname).is_global:return None\n        except\
     \ ValueError:pass\n    except (ValueError,TypeError):return None\n    return base\n\ndef execute(body,sessions,tokens=None,now=None,db=None,principal_subject=None):\n\
     \    \"\"\"Returns (response, optional notification), after SQLite commit.\"\"\"\n    if not isinstance(body,dict):\n\
@@ -1466,9 +1540,11 @@ handlers:
     \            if op=='register':\n                return register(db,body,now),None\n            if op=='login':\n\
     \                return login(db,body,now),None\n            if op=='recover_account':\n                return\
     \ recover_account(db,body,now),None\n            subject=session_identity(db,body.get('token'),now) or authorize(body.get('token'),tokens)\n\
-    \            if not subject:\n                return error('Sign in to Social first'),None\n            if op=='recovery_codes_create':\n\
-    \                return recovery_codes_create(db,subject,body,now),None\n            if op=='recovery_codes_status':\n\
-    \                return recovery_codes_status(db,subject,now),None\n            if op=='recovery_codes_revoke':\n\
+    \            if not subject:\n                return error('Sign in to Social first'),None\n            if op=='companion_get':\n\
+    \                return companion_get(db,subject),None\n            if op=='companion_put':\n              \
+    \  return companion_put(db,subject,body),None\n            if op=='recovery_codes_create':\n               \
+    \ return recovery_codes_create(db,subject,body,now),None\n            if op=='recovery_codes_status':\n    \
+    \            return recovery_codes_status(db,subject,now),None\n            if op=='recovery_codes_revoke':\n\
     \                return recovery_codes_revoke(db,subject,body),None\n            if op=='interaction_feed':\n\
     \                return interaction_feed(db,subject,now),None\n            if op=='game_challenge_send':\n \
     \               result=game_challenge_send(db,subject,body,now)\n                return result,event_signal(db)\
@@ -1562,8 +1638,8 @@ handlers:
     \ return result\n\n\nasync def handle(ctx):\n    op=ctx.body.get('op') if isinstance(ctx.body,dict) else None\n\
     \    changing=op in {'game_challenge_send','interaction_reply','interaction_dismiss','interaction_publish',\n\
     \                    'contact_request','contact_accept','contact_remove','dm_mark_read',\n                 \
-    \   'dm_send','game_room_send','save_profile','chat_send','recover_account'}\n    if changing:\n        return\
-    \ await run_in_threadpool(process_event,ctx)\n    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory,principal_subject=ctx.principal.subject)\n\
+    \   'dm_send','game_room_send','save_profile','chat_send','recover_account','companion_get','companion_put'}\n\
+    \    if changing:\n        return await run_in_threadpool(process_event,ctx)\n    result,event=await run_in_threadpool(execute,ctx.body,ctx.session_factory,principal_subject=ctx.principal.subject)\n\
     \    # login/register create an account-specific session; the identity is checked on\n    # the *next* request.\
     \ No push is sent for guest operations or regular reads.\n    return result\n"
 - path: /wallet
@@ -3383,4 +3459,4 @@ handlers:
     - recovery-codes-v1
     - game-session-rooms-v1
     - wallet-v1
-    release: 0.3.121
+    release: 0.3.122

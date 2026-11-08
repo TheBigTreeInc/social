@@ -3,8 +3,8 @@
  * WebViews sharing the same origin cannot silently overwrite each other.
  * Fail closed if the device denies storage (no memory-only fallback).
  */
-import {EMPTY_STATE} from './vendor/tavi-assets-0.1.7/storage.mjs';
-import {cloneJSON} from './vendor/tavi-assets-0.1.7/validation.mjs';
+import {EMPTY_STATE} from './vendor/tavi-assets-0.1.9/storage.mjs';
+import {cloneJSON} from './vendor/tavi-assets-0.1.9/validation.mjs';
 const DB='tavi.assets.runtime/v1',STORE='account-stores';
 const MAX_SNAPSHOT=8*1024*1024;
 const scopeAllowed=s=>typeof s==='string'&&s.startsWith('tavi.extensions.install/v1:')&&s.length<=1024;
