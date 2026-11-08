@@ -72,6 +72,6 @@ test('every direct CI test/build entry point prunes only the reviewed stale Comp
  assert.equal(client.scripts.pretest,'node ../tools/prune-companion-legacy-overlay.mjs');
  assert.match(client.scripts['preweb:build'],/^node \.\.\/tools\/prune-companion-legacy-overlay\.mjs && node \.\.\/tools\/sync-internal-extensions\.mjs$/);
  assert.deepEqual(project.build,[
-  'node tools/prune-companion-legacy-overlay.mjs','npm run verify','node tools/auto-build.mjs'
+  'node tools/ci-parity.mjs --profile prebuild','node tools/auto-build.mjs'
  ]);
 });

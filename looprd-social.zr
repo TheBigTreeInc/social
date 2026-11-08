@@ -14,8 +14,7 @@
     "looprd-social-*-ziprunner.zip"
   ],
   "build_commands": [
-    "node tools/prune-companion-legacy-overlay.mjs",
-    "npm run verify",
+    "node tools/ci-parity.mjs --profile prebuild",
     "node tools/auto-build.mjs"
   ],
   "start_commands": [
@@ -43,5 +42,5 @@
     ".venv"
   ],
   "git_auto_push": false,
-  "version": "0.3.126"
+  "version": "0.3.147"
 }

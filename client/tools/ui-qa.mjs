@@ -195,7 +195,7 @@ async function testViewport(browser,base,device){
   await page.locator('#tavi-app-page-0 [data-app-context="builtin:portrait"]').focus();
   await page.keyboard.press('Shift+F10');
   await visible(page,'.tavi-app-context-menu[role="menu"]');
-  await visible(page,'.tavi-app-context-menu [role="menuitem"]');
+  await visible(page,'.tavi-app-context-menu [role="menuitem"]:text-is("Remove from Favorites")');
   assert.equal(await page.getByRole('menuitem',{name:'Remove from Favorites'}).count(),1);
   await page.keyboard.press('Escape');
   stage='Contacts directory and Add friend as action';

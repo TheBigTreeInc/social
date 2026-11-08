@@ -1,0 +1,105 @@
+{
+  "schema": "tavi.ci-parity-plan/v1",
+  "version": "0.3.147",
+  "project": "looprd-social",
+  "policy": {
+    "environment": "isolated-local-fixture-only",
+    "missing_dependency": "blocked_and_fail",
+    "unsupported_platform": "not_executed_not_passed",
+    "operator_acceptance": "separate_manual_gate",
+    "release": "never_auto_publish"
+  },
+  "checks": [
+    {
+      "id": "source-contracts",
+      "label": "CI parity: exact root JS source and protocol tests",
+      "required": true,
+      "argv": [
+        "npm",
+        "run",
+        "verify"
+      ],
+      "timeoutSeconds": 240,
+      "githubWorkflows": [
+        "Verify Social server and client source",
+        "Windows desktop app",
+        "Android phone app"
+      ]
+    },
+    {
+      "id": "python-full-suite",
+      "label": "CI parity: full Python backend tests",
+      "required": true,
+      "argv": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "timeoutSeconds": 240,
+      "githubWorkflows": [
+        "Verify Social server and client source"
+      ]
+    },
+    {
+      "id": "browser-dependencies",
+      "label": "Install and validate local browser QA dependencies",
+      "required": true,
+      "argv": [
+        "npm",
+        "--prefix",
+        "client",
+        "install",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "timeoutSeconds": 180,
+      "githubWorkflows": [
+        "Tavi browser UI QA"
+      ]
+    },
+    {
+      "id": "browser-five-viewports",
+      "label": "CI parity: 5 real browser UI viewports (disposable fixture)",
+      "required": true,
+      "argv": [
+        "npm",
+        "--prefix",
+        "client",
+        "run",
+        "ui:ci"
+      ],
+      "timeoutSeconds": 180,
+      "githubWorkflows": [
+        "Tavi browser UI QA"
+      ]
+    }
+  ],
+  "remoteOnly": [
+    {
+      "id": "windows-nsis",
+      "os": "windows",
+      "reason": "native installer and manual QA require actual Windows operator host; local CI parity does not assert build"
+    },
+    {
+      "id": "android-apk",
+      "os": "android",
+      "reason": "signing and device installation require CI/Android and operator acceptance"
+    },
+    {
+      "id": "macos-dmg",
+      "os": "macos",
+      "reason": "cannot execute native macOS installer on Windows"
+    },
+    {
+      "id": "linux-deb",
+      "os": "linux",
+      "reason": "cannot execute Linux native build on Windows"
+    }
+  ]
+}

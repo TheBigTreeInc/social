@@ -7,7 +7,7 @@ test('ZipRunner builds and starts native Tavi app',async()=>{
  const legacy=JSON.parse(await read('looprd-social.zr'));
  assert.deepEqual(project.start,['node tools/launch-tavi.mjs']);
  assert.deepEqual(legacy.start_commands,project.start);
- assert.deepEqual(project.build,['node tools/prune-companion-legacy-overlay.mjs','npm run verify','node tools/auto-build.mjs']);
+ assert.deepEqual(project.build,['node tools/ci-parity.mjs --profile prebuild','node tools/auto-build.mjs']);
  const launch=await read('tools/launch-tavi.mjs');
  assert.match(launch,/TAVI_LAUNCH_MISSING/);
  assert.match(launch,/looprd-social-client\.exe/);

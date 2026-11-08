@@ -8,6 +8,13 @@ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 const cargo=readFileSync(new URL('../src-tauri/Cargo.toml',import.meta.url),'utf8');
 const cargoLock=readFileSync(new URL('../src-tauri/Cargo.lock',import.meta.url),'utf8');
 
+// Cargo.lock is TOML, not a stable whitespace layout. Validate the package stanza.
+function lockedTauriClient(text){
+ const packages=text.split(/(?=^\[\[package\]\]\s*$)/m);
+ return packages.find(p=>/^name\s*=\s*"looprd-social-client"\s*$/m.test(p));
+}
+
+
 function fixture(){
  const button=new EventTarget(), primary=new EventTarget(), direct=new EventTarget();
  primary.value='';direct.value='';primary.files=[];direct.files=[];
@@ -29,7 +36,12 @@ test('Windows Tauri command is main-window restricted and OS-native',()=>{
  assert.match(rust,/tavi_session_clear, tavi_native_pick_tavix,/);
  assert.match(main,/nativeSelect:nativeWindowsPet\?\(\)=>invoke\('tavi_native_pick_tavix'\):null/);
  assert.match(cargo,/base64 = "=0.22.1"/);
- assert.ok(cargoLock.includes(`name = "looprd-social-client"\nversion = "${JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8')).version}"\ndependencies = [\n "base64 0.22.1"`));
+ const locked=lockedTauriClient(cargoLock);
+ assert.ok(locked,'Cargo.lock must contain the actual Tauri client package');
+ const expectedVersion=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8')).version;
+ assert.match(locked,new RegExp(`^version\\s*=\\s*"${expectedVersion.replaceAll('.','\\.')}"$`,'m'));
+ const dependencies=locked.match(/^dependencies\s*=\s*\[([\s\S]*?)^\]/m)?.[1]||'';
+ assert.match(dependencies,/^\s*"base64 0\.22\.1",?\s*$/m,'Pinned native picker dependency must remain in Cargo.lock');
 });
 
 test('native returns only filename and bounded package bytes, no path',()=>{

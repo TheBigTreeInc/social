@@ -462,3 +462,7 @@ Documentation: `docs/TAVI_EXTENSION_PLATFORM_V1.adoc` and `docs/TAVI_EXTENSION_P
 Design and SDK foundation for shared wallet, currencies, pets, contacts, messages, notifications and game integration across trusted LoopRD components. Maintains Tavi as the messenger; individual games/apps can deploy their own LoopRD component or an explicitly trusted external instance. No central marketplace or global server directory.
 
 `docs/TAVI_SHARED_SERVICES_LEDGER_SDK_V2.adoc` is the complete spec; `client/extension-sdk` contains ESM and TypeScript browser+trusted service contract packages, and `schemas/tavi.extension.v2.schema.json` is **future**, not an installable 0.3.61 manifest. Only `host.capabilities` is activated in the iframe broker; shared data APIs fail closed until new server services and grants are implemented. Social server and database remain release 0.3.58/schema 10.
+
+## ZipRunner CI parity (0.3.147)
+
+`node tools/ci-parity.mjs --profile prebuild` is required by `project.zr` before native build. The version-controlled `ci-parity-plan.json` maps checks to GitHub workflows. It runs root JavaScript source verification, the complete Python unittest suite, installs the browser dependencies, then Playwright UI smoke at five viewports using only a loopback disposable fixture. Reports/logs are written to `qa-artifacts/ci-parity/` and must remain local, not distributed. Missing dependencies fail closed. Native Windows/Android operator acceptance, exact pushed-commit GitHub CI, and release remain independent gates.

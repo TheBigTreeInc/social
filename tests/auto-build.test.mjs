@@ -6,7 +6,7 @@ test('ZipRunner gates auto-build after verification and enables Windows by defau
   const project=JSON.parse(await read('project.zr'));
   const legacy=JSON.parse(await read('looprd-social.zr'));
   const cfg=JSON.parse(await read('tavi-build.json'));
-  assert.deepEqual(project.build,['node tools/prune-companion-legacy-overlay.mjs','npm run verify','node tools/auto-build.mjs']);
+  assert.deepEqual(project.build,['node tools/ci-parity.mjs --profile prebuild','node tools/auto-build.mjs']);
   assert.deepEqual(legacy.build_commands,project.build);
   assert.deepEqual(cfg.targets,{Windows:true,Web:false,Android:false});
   const script=await read('tools/auto-build.mjs');
