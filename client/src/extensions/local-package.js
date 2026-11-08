@@ -8,7 +8,7 @@ export const LOCAL_TAVIX_SOURCE='tavi:local';
 export const LOCAL_TAVIX_MAX_BYTES=12_000_000;
 const MAX_FILES=60, MAX_FILE_BYTES=1_000_000, MAX_TOTAL_BYTES=12_000_000;
 const SAFE_PATH=/^[A-Za-z0-9_.\-/]+$/;
-const ALLOWED=/\.(?:html|css|js|json|png|svg|webp)$/;
+const ALLOWED=/\.(?:html|css|js|mjs|json|png|svg|webp)$/;
 const PROTECTED=new Set(['.git','node_modules','secrets','runtime','.venv','__pycache__','target']);
 const UTF8=new TextDecoder('utf-8',{fatal:true});
 const ZIP_LOCAL=0x04034b50, ZIP_CENTRAL=0x02014b50, ZIP_END=0x06054b50;

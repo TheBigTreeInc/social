@@ -56,7 +56,8 @@ test('hosted Life approval is a first-party Tavi click, never iframe popup permi
  const sdk=fs.readFileSync(new URL('../src/extensions/sdk.js',import.meta.url),'utf8');
  assert.match(sdk,/requestGameLaunch:handoff=>request\('ui.requestGameLaunch'/);
  const distributed=fs.readFileSync(new URL('../extension-sdk/index.js',import.meta.url),'utf8');
- assert.equal(sdk,distributed,'distributed SDK must include game launch RPC');
+ assert.equal(sdk.replace("from '../../extension-sdk/assets-client.js'","from './assets-client.js'"),distributed,'distributed SDK must include the same game launch and Assets RPC logic');
+ assert.match(distributed,/createTaviAssetsClient/);
 });
 
 test('central first-party TaviX Atrium supports the compatibility broker but other origins do not',()=>{

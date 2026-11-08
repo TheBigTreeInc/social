@@ -1,3 +1,4 @@
+import {createTaviAssetsClient} from '../../extension-sdk/assets-client.js';
 /** TaviX 1.0 browser SDK.
  *
  * The stable wire channel remains `tavi.extension/v1` for compatibility with
@@ -54,6 +55,7 @@ export function createTaviXSDK(target=window.parent,source=window){
   // TaviX optional module. Tavi 0.3.108 deliberately fails closed until the
   // generic nested surface broker is implemented and advertised by host.info.
   surfaces:{requestOpen:surface=>request('surface.requestOpen',{surface})},
+  assets:createTaviAssetsClient({info:()=>request('host.info'),request:(method,params)=>call(method,params)}),
   on,
   wallet:{balance:()=>call('wallet.balance'),transactions:params=>call('wallet.transactions',params),
     claim:params=>call('wallet.claim',params),convert:params=>call('wallet.convert',params),

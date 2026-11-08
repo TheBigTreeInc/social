@@ -1,0 +1,33 @@
+= Tavi 0.3.139 — TaviX 0.1.10 game classification and direct launcher
+:toc:
+
+== Contract source
+
+Implementation is based on the operator-supplied `tavix-0.1.10-game-classification-ziprunner.zip` (TaviX, NOT Atrium). Exact schema and proposed host API reference documents are copied under `docs/contracts`; the sample manifest is under `docs/fixtures`. `kind: app` remains the v1 envelope. Optional `classification.type` is `app` or `game`; missing classification defaults to `app / []`. Categories are limited to eight unique entries from the exact TaviX game/app taxonomy. Classification is descriptive, never authority.
+
+== Implemented
+
+* `client/src/extensions/classification.js` applies the strict TaviX taxonomy to manifests and rejects unknown keys/categories/types.
+* `contract.js` accepts optional classification without loosening `hostApi`, permission, publisher, icon or contribution validation.
+* Local `.tavix` archive validation and hosted repository validation use this same manifest validator; archived files and SHA-256 checks remain intact. The TaviX-supported `.mjs` source asset suffix is accepted and rendered as JavaScript in the opaque local host.
+* Account-scoped installed-extension store persists the normalized approved classification alongside source, version, permissions and manifest. Existing v1 records derive `app / []` from the previously approved manifest without rewriting the original saved data.
+* `installedGameExtensions()` accepts only current, enabled, approved game entries that match the exact installed manifest and source/revision, and checks platform availability and repository staleness.
+* **Apps** still shows every installed app; **Games → My games / Discover** shows classified installed games. Play uses `openInstalledExtension()` with the same verified package, existing iframe sandbox and grants. Back/close from this route returns to Games.
+* Games continues to display Social/LoopRD matches, turns and server-discovered content. No Atrium service is required for a locally installed game.
+
+== Not implemented in 0.3.139
+
+The proposed `tavix.installed-games/v1` privileged Atrium host feature and methods `games.installed.list` / `games.installed.open` remain **unimplemented**. The operator-approved installed-game inventory is used only by Tavi's own UI; ordinary extensions must not receive a cross-extension listing. No multiplayer features, server discovery, contact access or extra wallet permissions are granted by `classification: game`.
+
+== Operator acceptance
+
+. Import source ZIP into ZipRunner (base version 0.3.138), check the Windows build and real native .tavix picker.
+. Have the game developer build a valid classified Klondike `.tavix` under TaviX 0.1.10 with `kind: app`, `classification: {type: game, categories: [cards, solitaire]}` and ordinary `ui.panel` permissions. Existing Klondike packages do not become classified retroactively.
+. On Windows 355x630 (and Android), use Developer Mode with LoopRD grant to install/approve the package.
+. Verify the title appears in Apps and Games; Play opens isolated Klondike; Back returns to Games; no Atrium server required.
+. Disable/uninstall the game, switch accounts, and test stale and altered metadata; Games must fail closed. Verify legacy apps do not unexpectedly appear as games.
+. Repeat native and browser checks. Do not GitHub-push or publish until separately approved.
+
+== Source tests
+
+`node --test client/tests/tavix-game-classification-139.test.mjs` covers exact taxonomy, legacy handling, invalid classifications, a lock-backed .tavix archive, source/revision/platform checks and launcher path contracts. `npm run verify` covers the existing client/server/OpenClaw integrations.

@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.138",
+  "version": "0.3.140",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -2727,6 +2727,24 @@
     {
       "id": "TAVI-EXT-NATIVE-PICKER-0138-WINDOWS",
       "description": "Windows NSIS build and main-window native dialog appears, cancellation works, package approval honored",
+      "mode": "manual",
+      "checks": [
+        "OPERATOR-APPROVAL-REQUIRED"
+      ]
+    },
+    {
+      "id": "TAVI-GAME-CLASSIFICATION-0139-SOURCE",
+      "description": "TaviX 0.1.10 classification manifest, installed registry, local .tavix ZIP and Games routing",
+      "mode": "automated",
+      "checks": [
+        "node --test client/tests/tavix-game-classification-139.test.mjs",
+        "npm run verify",
+        "python tools/generate-looprd.py --check"
+      ]
+    },
+    {
+      "id": "TAVI-GAME-CLASSIFICATION-0139-OPERATOR",
+      "description": "Real classified Klondike package import on Windows and Android; Apps and Games launch; Back; publisher/capability gates",
       "mode": "manual",
       "checks": [
         "OPERATOR-APPROVAL-REQUIRED"

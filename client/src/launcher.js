@@ -6,6 +6,7 @@ import {CORE_WALLET_ID} from './extensions/host.js';
 import {extensionAssetUrl,validateExtensionManifest} from './extensions/contract.js';
 import {extensionSource} from './extensions/repositories.js';
 import {extensionUpdateStatus} from './extensions/updates.js';
+import {resolveTavixClassification} from './extensions/classification.js';
 
 export const BUILTIN_APPS=Object.freeze([
   {action:'contacts', label:'Messages', symbol:'messages', tone:'forest'},
@@ -29,8 +30,31 @@ export function launchableExtensions({catalog,store,platform}){
   if(!m.contributions.some(c=>c.slot==='app.launcher'))return false;
   try{return validateExtensionManifest(m).compatible;}catch{return false;}
  }).map(entry=>({kind:'extension',id:entry.manifest.id,label:entry.manifest.name,entry,
-     symbol:entry.manifest.id==='inc.thebigtree.tavi.atrium'?'atrium':'extension',tone:'forest'}));
+     symbol:entry.manifest.id==='inc.thebigtree.tavi.atrium'?'atrium':resolveTavixClassification(entry.manifest).type==='game'?'games':'extension',tone:'forest'}));
 }
+/** Verified, currently installed TaviX game inventory for *Tavi's own UI*.
+ * Never infer from names, URLs, game APIs or unapproved repository changes.
+ * This does not implement the proposed restricted Atrium host inventory API.
+ */
+export function installedGameExtensions({catalog=[],store=null,platform='web',staleSources=new Set()}={}){
+ if(!store)return [];
+ return launchableExtensions({catalog,store,platform}).filter(item=>{
+  if(item.entry.repositoryUrl&&staleSources.has(item.entry.repositoryUrl))return false;
+  const manifest=item.entry.manifest;
+  try{
+   const approvedText=store.metadata?.(manifest.id);
+   if(typeof approvedText!=='string'||approvedText!==JSON.stringify(manifest))return false;
+   const approved=JSON.parse(approvedText);
+   if(!validateExtensionManifest(approved).compatible)return false;
+   const classification=resolveTavixClassification(approved);
+   if(classification.type!=='game'||store.classification?.(manifest.id)===null)return false;
+   const storedClassification=store.classification?.(manifest.id);
+   if(storedClassification&&JSON.stringify(storedClassification)!==JSON.stringify(classification))return false;
+   return true;
+  }catch{return false;}
+ }).map(item=>({...item,classification:resolveTavixClassification(item.entry.manifest)}));
+}
+
 export function menuApplications({catalog=[],store=null,platform='web',petEnabled=false}={}){
  return [...BUILTIN_APPS.filter(a=>!a.requiresPet||petEnabled||Boolean(store?.enabled(BUNDLED_COMPANION_ID))).map(a=>({...a,kind:'builtin'})),
     ...launchableExtensions({catalog,store,platform})];

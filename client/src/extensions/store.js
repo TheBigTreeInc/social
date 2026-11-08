@@ -1,4 +1,4 @@
-import {validateCatalog,validateExtensionManifest,extensionAssetUrl} from './contract.js';
+import {validateCatalog,validateExtensionManifest,extensionAssetUrl,resolveTavixClassification} from './contract.js';
 const PREFIX='tavi.extensions.install/v1';
 export function extensionStorageScope(origin,account){
  if(typeof origin!=='string'||!/^https?:\/\//.test(origin)||typeof account!=='string'||!account)return null;
@@ -17,18 +17,36 @@ export function createExtensionStore({storage,scope}){
   revision(id){return saved[id]?.revision || null;},
   entrypoint(id){return saved[id]?.entrypoint || null;},
   metadata(id){return saved[id]?.metadata || null;},
-  listInstalled(){return Object.entries(saved).filter(([,value])=>value?.installed===true).map(([id,value])=>({id,version:value.version||null,source:value.source||'tavi:bundled',enabled:value.enabled===true}));},
+  classification(id){
+   if(!saved[id]?.installed||typeof saved[id].metadata!=='string')return null;
+   try{
+    const manifest=JSON.parse(saved[id].metadata);
+    validateExtensionManifest(manifest);
+    if(manifest.id!==id||manifest.version!==saved[id].version)return null;
+    const approved=resolveTavixClassification(manifest);
+    if(saved[id].classification!==undefined&&JSON.stringify(saved[id].classification)!==JSON.stringify(approved))return null;
+    return approved;
+   }catch{return null;}
+  },
+  listInstalled(){return Object.entries(saved).filter(([,value])=>value?.installed===true).map(([id,value])=>({id,version:value.version||null,source:value.source||'tavi:bundled',enabled:value.enabled===true,classification:this.classification(id)}));},
   install(manifest,source='tavi:bundled',revision=null,entrypoint=null){
    validateExtensionManifest(manifest);
    if(revision!==null && !/^[a-f0-9]{64}$/.test(revision))throw Error('Invalid extension release revision');
    if(entrypoint!==null && (typeof entrypoint!=='string'||!entrypoint.startsWith('https://')||entrypoint.length>2048))throw Error('Invalid extension entrypoint');
-   saved[manifest.id]={installed:true,enabled:true,version:manifest.version,revision,entrypoint,metadata:JSON.stringify(manifest),source,permissions:[...manifest.permissions]};persist();
+   saved[manifest.id]={installed:true,enabled:true,version:manifest.version,revision,entrypoint,metadata:JSON.stringify(manifest),classification:resolveTavixClassification(manifest),source,permissions:[...manifest.permissions]};persist();
   },
   disable(id){if(!saved[id]?.installed)return; saved[id].enabled=false;persist();},
   enable(manifest,source='tavi:bundled'){
    if(!saved[manifest.id]?.installed)throw Error('Not installed');
    if((saved[manifest.id].source||'tavi:bundled')!==source)throw Error('Extension repository changed; remove and reinstall');
    if(manifest.permissions.some(p=>!saved[manifest.id].permissions.includes(p)))throw Error('New permissions require reinstallation');
+   if(saved[manifest.id].metadata){
+    // Existing v1 callers may reduce permissions when re-enabling, but must not
+    // use that to change classification/identity/entrypoints without approval.
+    const approved=JSON.parse(saved[manifest.id].metadata);
+    if(JSON.stringify({...manifest,permissions:approved.permissions})!==JSON.stringify(approved))
+     throw Error('Changed extension metadata requires approved update');
+   }
    saved[manifest.id].enabled=true;persist();
   },
   uninstall(id){delete saved[id];persist();}

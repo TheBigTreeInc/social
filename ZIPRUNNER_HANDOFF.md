@@ -1,3 +1,11 @@
+## Tavi 0.3.140 — Tavi Assets host integration seam (source candidate)
+
+Base 0.3.139. Adds only a reviewed, fail-closed host transport and Assets 0.1.4 consumer SDK reference; Assets-owned engine, catalog, installer, storefront, ownership and purchase logic remain external. `host.info` does not advertise the feature in normal Tavi because runtime and approved TaviX dependency grants are pending. Exact source and operator requirements: `docs/TAVI_ASSETS_HOST_INTEGRATION_0140.adoc`. No Windows/Android or live Klondike acceptance yet. No publication.
+
+## Tavi 0.3.139 — TaviX game classification (source candidate)
+
+Base 0.3.138. Strict TaviX 0.1.10 classification validation, pinned account-scoped installed-game list and direct game launch inside Tavi Games. `kind: app` remains valid; classification is not a permission. Preserve Social and Atrium boundaries, existing tests/approval gates and user configuration. Windows/Android/Web manual operator testing pending. No publication. See `docs/TAVI_TAVIX_GAME_CLASSIFICATION_0139.adoc`.
+
 ## Tavi 0.3.138 — Windows-native package chooser (local-only)
 
 Base 0.3.137. The user reproduced a missing file chooser in the native

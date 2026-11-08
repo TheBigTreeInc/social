@@ -8,7 +8,9 @@
     "index.d.ts",
     "service.js",
     "service.d.ts",
-    "README.md"
+    "README.md",
+    "assets-client.js",
+    "assets-client.d.ts"
   ],
   "exports": {
     ".": {
@@ -18,6 +20,10 @@
     "./service": {
       "types": "./service.d.ts",
       "default": "./service.js"
+    },
+    "./assets": {
+      "types": "./assets-client.d.ts",
+      "default": "./assets-client.js"
     }
   },
   "repository": {

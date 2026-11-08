@@ -1,0 +1,17 @@
+= Tavi Assets team — runtime integration request from Tavi 0.3.140
+
+The user is sending the same architectural integration proposal to the Assets project. Tavi's source candidate now offers a strict optional `tavi.assets/v1` transport boundary and SDK consumer. It does not implement another Assets engine; therefore *no production packs or UI work yet*.
+
+Please implement in the Assets repository:
+
+. Portable JS/TS engine exposing `ready()` and `request(method, params, trustedCaller)` (or a reviewed adapter that implements this exact shape). The JS engine must retain all 0.1.4 validator/integrity, persistence, update atomicity and security invariants, using the existing Python tests as conformance fixtures.
+. Windows/Android/web persistent storage adapters without requiring Python on devices. Local installed state must survive restarts and not imply account ownership.
+. A reusable first-party storefront UI module, separate from engine. Tavi mounts it under Apps -> Assets Library and Settings -> Assets; purchases and source changes must remain host-authorized.
+. Host-side approved pack catalog APIs, install/update/remove and global+app-specific variant preferences. These are NOT extension methods; do not grant them through `tavi.assets/v1`.
+. Coordinate with TaviX on explicit *approved package dependencies* and pack capability grants. Tavi refuses to advertise the feature without grants.
+. Integrate authenticated LoopRD entitlements and Wallet purchases only after verified authoritative contracts; no local purchase simulations in production.
+. Provide a zero-cost Ink & Ember card-pack fixture and a Klondike semantic-capability acceptance run; include revoked grants, account switch, offline restart and rollback.
+
+The consumer request/response contract is already present in Assets 0.1.4 `contracts/tavi-assets-consumer-v1.json`. Tavi's implementation details, security gates and acceptance checklist are in `docs/TAVI_ASSETS_HOST_INTEGRATION_0140.adoc`.
+
+Current truth: Tavi 0.3.140 host adapter tests use a mocked engine. Actual Tavi+Assets, Windows/Android, Klondike and LoopRD ownership acceptance are all pending. No publication is authorized.

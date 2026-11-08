@@ -1,3 +1,4 @@
+import type {TaviAssetsClient} from '../../extension-sdk/assets-client.js';
 /** TaviX 1.0 application-host SDK. */
 export declare const TAVIX_STANDARD:'tavix/1.0';
 export declare const TAVIX_CHANNEL:'tavi.extension/v1';
@@ -19,6 +20,8 @@ export interface TaviXSDK {
   ui:{toast(message:string):Promise<void>;/** compatibility alias; prefer navigation.close */close():Promise<void>;/** Legacy first-party Atrium bridge; not part of TaviX core. */requestGameLaunch(handoff:{schema:'atrium.tavi-launch/v1';gameId:'life.loop';target:string;matchContext:{matchId:string}}):Promise<{awaitingApproval:boolean}>};
   /** Optional tavix.surface/v1 module. Call only when host.info().features advertises it. */
   surfaces:{requestOpen(surface:TaviXSurfaceRequest):Promise<unknown>};
+  /** Tavi Assets 0.1.4 reference consumer. Call assets.connect() before use. */
+  assets:TaviAssetsClient;
   on(event:string,handler:(payload:unknown)=>void):()=>void;
   wallet:{
     balance():Promise<{schema:'tavi.wallet/v1';balances:{currencyId:string;amount:string}[];currencies:unknown[];rates:unknown[];offers:unknown[];faucet:unknown}>;

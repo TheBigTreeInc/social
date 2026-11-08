@@ -29,7 +29,7 @@ test('Windows Tauri command is main-window restricted and OS-native',()=>{
  assert.match(rust,/tavi_session_clear, tavi_native_pick_tavix,/);
  assert.match(main,/nativeSelect:nativeWindowsPet\?\(\)=>invoke\('tavi_native_pick_tavix'\):null/);
  assert.match(cargo,/base64 = "=0.22.1"/);
- assert.ok(cargoLock.includes(`name = "looprd-social-client"\nversion = "0.3.138"\ndependencies = [\n "base64 0.22.1"`));
+ assert.ok(cargoLock.includes(`name = "looprd-social-client"\nversion = "${JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8')).version}"\ndependencies = [\n "base64 0.22.1"`));
 });
 
 test('native returns only filename and bounded package bytes, no path',()=>{

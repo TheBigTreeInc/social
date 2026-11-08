@@ -6,13 +6,14 @@ import {ATRIUM_EXTENSION_ID,isOfficialAtriumSource,parseReviewedLifeHandoff} fro
 import {validateCompanionPreview,previewStorageKey} from './companion-preview.js';
 import {REVIEWED_COMPANION} from './reviewed-companion.js';
 import {validateTaviXSurface} from './surface-host.js';
+import {ASSETS_FEATURE,assetsAvailable,dispatchAssetsRequest} from '../assets/host-bridge.js';
 export const TAVIX_STANDARD='tavix/1.0';
 export const TAVIX_CHANNEL='tavi.extension/v1';
 const CHANNEL=TAVIX_CHANNEL;
 export const CORE_WALLET_ID='org.tavi.core.wallet';
 const KEY=/^[a-zA-Z0-9._-]{1,80}$/;
 const throttle=()=>({started:Date.now(),count:0});
-export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');},onSurfaceOpen=()=>{throw Error('Game surfaces unavailable');},walletApi=()=>{throw Error('Wallet service unavailable');},onCompanionPreview=()=>{},isReviewedCompanionSession=()=>false}){
+export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');},onSurfaceOpen=()=>{throw Error('Game surfaces unavailable');},walletApi=()=>{throw Error('Wallet service unavailable');},onCompanionPreview=()=>{},isReviewedCompanionSession=()=>false,assetService=null,assetGrants=()=>null,approveAssetCustomization=()=>false}){
  let session=null;const ziprunner=createZipRunnerReview();
  function send(message){session?.frame?.contentWindow?.postMessage({channel:CHANNEL,direction:'response',...message},'*');}
  function onMessage(e){
@@ -24,11 +25,12 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
   if(++current.rate.count>60){send({id,ok:false,error:'Extension request limit exceeded'});return;}
   const permissions=new Set(current.permissions);
   const ziprunnerAllowed=current.id===ZIPRUNNER_ID&&current.source==='tavi:bundled'&&permissions.has(ZIPRUNNER_PERMISSION)&&permissions.has('ui.panel');
+  const assetSessionGrants=()=>{try{return assetGrants(Object.freeze({id:current.id,scope:current.scope,source:current.source}));}catch{return null;}};
   const reviewedAtrium=current.id===ATRIUM_EXTENSION_ID&&isOfficialAtriumSource(current.source)&&permissions.has('ui.panel');
   try{
    let result=null;
    switch(request.method){
-    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(ziprunnerAllowed?['ziprunner.review/v1']:[]),...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[]),'tavix.settings-entry/v1'],launchContext:current.launchContext};break;
+    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(ziprunnerAllowed?['ziprunner.review/v1']:[]),...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[]),'tavix.settings-entry/v1',...(assetsAvailable(assetService,assetSessionGrants())?[ASSETS_FEATURE]:[])],launchContext:current.launchContext};break;
     case 'ziprunner.importCredential':
     case 'ziprunner.review':
     case 'ziprunner.clear':{
@@ -64,6 +66,17 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
      if(!reviewedAtrium)throw Error('Game surfaces require the reviewed Atrium extension');
      const surface=validateTaviXSurface(request.surface);
      result=onSurfaceOpen(surface,{extensionId:current.id,scope:current.scope,source:current.source});
+     break;
+    }
+    case 'assets.describe':
+    case 'assets.objects.list':
+    case 'assets.objects.get':
+    case 'assets.collections.list':
+    case 'assets.collections.get':
+    case 'assets.preferences.get':
+    case 'assets.preferences.set':
+    case 'assets.resolve':{
+     result=dispatchAssetsRequest({service:assetService,grantForSession:assetSessionGrants,approveCustomization:approveAssetCustomization,isActive:()=>session===current,session:current,method:request.method,params:request.params});
      break;
     }
     case 'wallet.balance':

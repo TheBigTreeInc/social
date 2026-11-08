@@ -1,3 +1,11 @@
+## Tavi 0.3.140 — Tavi Assets host boundary (source only)
+
+Implements the proposed Tavi Assets 0.1.4 gated `tavi.assets/v1` consumer and host adapter, strict approved pack/capability grants, and an honest Assets Library Settings entry. No production Assets engine has been supplied or connected, and no installs, catalog ownership or Wallet purchases are activated. See `docs/TAVI_ASSETS_HOST_INTEGRATION_0140.adoc` and `docs/TAVI_ASSETS_TEAM_HANDOFF_0140.adoc`. Native acceptance pending. No push or release.
+
+## Tavi 0.3.139 — Classified TaviX games in Apps and Games (local-only)
+
+Accepts the operator-provided TaviX 0.1.10 optional manifest classification, persists approved game metadata, and shows current installed games under Tavi Games for direct launch without server Atrium discovery. Existing app permissions and isolated loader are unchanged. Native acceptance and a real Klondike package are pending. No GitHub push or public release. See `docs/TAVI_TAVIX_GAME_CLASSIFICATION_0139.adoc`.
+
 ## Tavi 0.3.138 — Windows-native TaviX file selection (local-only)
 
 Apps > Install .tavix on Windows now calls a dedicated, main-window-only

@@ -8,7 +8,7 @@
  const allowed=/^[A-Za-z0-9_.\-/]+$/;
  let installed=false;
  const created=[];
- const mime=path=>path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':path.endsWith('.svg')?'image/svg+xml':path.endsWith('.png')?'image/png':path.endsWith('.webp')?'image/webp':path.endsWith('.json')?'application/json':'text/html';
+ const mime=path=>/\.m?js$/.test(path)?'text/javascript':path.endsWith('.css')?'text/css':path.endsWith('.svg')?'image/svg+xml':path.endsWith('.png')?'image/png':path.endsWith('.webp')?'image/webp':path.endsWith('.json')?'application/json':'text/html';
  const decode=bytes=>new TextDecoder('utf-8',{fatal:true}).decode(bytes);
  const REPORT_CODES=new Set(['css_missing','css_cycle','css_budget','css_unsafe','css_import_missing','css_import_unsupported','css_asset_missing','css_asset_unsupported','script_missing']);
  const report=code=>{try{parent.postMessage({type:'tavi.local.preview-status/v1',code},'*');}catch{}};
@@ -57,7 +57,7 @@
    code=code.replace(/url\(\s*(['"]?)([^)'"\s]+)\1\s*\)/gi,(_all,_q,target)=>{
     if(target.startsWith('#')||target.startsWith('data:image/'))return `url("${target}")`;
     const asset=resolve(target,path);
-    if(!asset||asset.endsWith('.css')||asset.endsWith('.js')||asset.endsWith('.html'))throw Error('css_asset_missing');
+    if(!asset||asset.endsWith('.css')||/\.m?js$/.test(asset)||asset.endsWith('.html'))throw Error('css_asset_missing');
     return `url("${blobUrl(asset)}")`;
    });
    if(/url\s*\(/i.test(code.replace(/url\(\s*(['"]?)([^)'"\s]+)\1\s*\)/gi,'')))throw Error('css_asset_unsupported');
@@ -69,11 +69,11 @@
    if(making.has(path))throw Error('Cyclic script imports are not supported in local preview');
    making.add(path);
    let body=assets[path];if(!(body instanceof Uint8Array))throw Error('Invalid asset bytes');
-   if(path.endsWith('.js')){
+   if(/\.m?js$/.test(path)){
     // Resolve relative ESM imports. Non-relative imports remain blocked by CSP.
     let code=decode(body);
     code=code.replace(/(\b(?:from\s*|import\s*\(|import\s*))(['"])(\.{1,2}\/[^'"\r\n]+)\2/g,(all,prefix,quote,target)=>{
-     const resolved=resolve(target,path);if(!resolved||!resolved.endsWith('.js'))throw Error('Missing local JavaScript dependency');
+     const resolved=resolve(target,path);if(!resolved||!/\.m?js$/.test(resolved))throw Error('Missing local JavaScript dependency');
      return `${prefix}${quote}${blobUrl(resolved)}${quote}`;
     });
     body=code;
@@ -99,7 +99,7 @@
   for(const el of inlineStyles)el.textContent=inlineCssText(el.textContent||'',entry,new Set());
   for(const el of [...doc.querySelectorAll('script')]){
    const src=el.getAttribute('src');
-   if(src){const path=resolve(src,entry);if(!path||!path.endsWith('.js'))throw Error('script_missing');el.setAttribute('src',blobUrl(path));}
+   if(src){const path=resolve(src,entry);if(!path||!/\.m?js$/.test(path))throw Error('script_missing');el.setAttribute('src',blobUrl(path));}
    else if(el.textContent?.trim()){
     const url=URL.createObjectURL(new Blob([el.textContent],{type:'text/javascript'}));created.push(url);el.textContent='';el.setAttribute('src',url);
    }

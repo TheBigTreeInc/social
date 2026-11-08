@@ -1159,3 +1159,11 @@ html[data-theme='dark'] .tavi-menu-panel .tavi-app-page-tabs button[aria-selecte
 .tavi-menu-panel .tavi-local-picker-fallback:focus-within,.tavi-menu-panel .tavi-local-picker-actions>button:focus-visible{outline:2px solid var(--tavi-color-accent);outline-offset:2px;}
 .tavi-menu-panel #tavi-local-picker-status{margin:0;font-size:11px;line-height:1.4;color:var(--tavi-color-text-muted);}
 .tavi-menu-panel #tavi-local-picker-status[hidden]{display:none!important;}
+
+/* 0.3.139: locally verified games share Material list style, not a separate server card. */
+.tavi-games-browser .tavi-installed-games-group{margin-top:13px!important;}
+.tavi-games-browser .tavi-installed-game{min-width:0;}
+.tavi-games-browser .tavi-installed-game .tavi-game-list-info{min-width:0;flex:1;}
+.tavi-games-browser .tavi-installed-game .tavi-game-list-info strong,
+.tavi-games-browser .tavi-installed-game .tavi-game-list-info small{display:block;overflow-wrap:anywhere;}
+.tavi-games-browser .tavi-installed-game .tavi-game-action{flex:none;min-width:58px;}

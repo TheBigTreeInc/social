@@ -3,7 +3,7 @@ import {uiEscape} from './components.js';
 
 const PAGE_TITLES=Object.freeze({
  root:'Settings',account:'Account',notifications:'Notifications',chats:'Chats',devices:'Connected devices',
- appearance:'Appearance',privacy:'Privacy & safety',storage:'Storage',companion:'Companion apps',extensions:'Apps & extensions',sources:'App sources',about:'About Tavi'
+ appearance:'Appearance',privacy:'Privacy & safety',storage:'Storage',companion:'Companion apps',extensions:'Apps & extensions',sources:'App sources',assets:'Assets Library',about:'About Tavi'
 });
 export function settingsPageTitle(page='root'){return PAGE_TITLES[page]||PAGE_TITLES.root;}
 
@@ -45,6 +45,7 @@ function root(model){
    ${group('',[
     navRow({page:'companion',iconName:'games',title:'Companion apps',subtitle:`Reviewed Companion ${model.companionVersion||''}`.trim()}),
     navRow({page:'extensions',iconName:'extension',title:'Apps & extensions',subtitle:'App Store, trusted sources and app settings'}),
+    navRow({page:'assets',iconName:'storage',title:'Assets Library',subtitle:'Shared content and customization',trailing:model.assetsAvailable?'Connected':'Preparing'}),
     navRow({page:'about',iconName:'info',title:'About Tavi',subtitle:'Version, updates and diagnostics',trailing:model.updateInfo?`Update ${model.updateInfo.version}`:''})
    ].join(''))}
   </div>
@@ -171,6 +172,21 @@ function sources(model){
  </section>`;
 }
 
+function assets(model){
+ // Tavi hosts the first-party Assets storefront when the separate Assets
+ // runtime supplies it. Do not invent local ownership, pack installation,
+ // purchases or update state in this client.
+ const state=model.assetsAvailable?'Asset service connected':'Asset service not connected';
+ return `<section class="utility tavi-material-settings" aria-label="Assets Library">${pageIntro('Card decks, companion decorations, themes and other shared content will be managed by Tavi Assets, not the application store.')}
+  ${group('Shared Assets service',[
+   infoRow({iconName:'storage',title:state,subtitle:model.assetsAvailable?'The installed Assets engine can provide its own management interface.':'Waiting for the portable Tavi Assets engine and its verified install/storage adapter.',trailing:model.assetsAvailable?'Ready':'Pending'}),
+   infoRow({iconName:'shield',title:'Protected content access',subtitle:'Extensions only receive content explicitly granted by the authenticated host.'}),
+   infoRow({iconName:'palette',title:'Customization',subtitle:'Global defaults and app-specific preferences will be resolved by Tavi Assets.'})
+  ].join(''))}
+  <p class="md-settings-intro">Installed apps, Wallet and game progress are not changed here. No asset purchases or installation are available without the authoritative Assets and LoopRD services.</p>
+ </section>`;
+}
+
 function about(model){
  const android=model.platform==='android'&&model.nativeApp;
  const updateCard=model.updateInfo?`<section class="md-update-available"><div>${icon('download')}<span><strong>Update available</strong><small>Tavi ${safe(model.updateInfo.version)} is ready to download.</small></span></div><button type="button" class="md-primary-button" data-action="download-update">${android?'Download and install':'Download update'}</button></section>`:'';
@@ -207,6 +223,7 @@ export function renderSettings(model={}){
   case 'companion':return companion(model);
   case 'extensions':return extensions(model);
   case 'sources':return sources(model);
+  case 'assets':return assets(model);
   case 'about':return about(model);
   default:return root(model);
  }

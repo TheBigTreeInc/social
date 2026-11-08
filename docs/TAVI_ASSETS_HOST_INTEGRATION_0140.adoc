@@ -1,0 +1,77 @@
+= Tavi 0.3.140 — Tavi Assets 0.1.4 host integration boundary
+:toc:
+
+== Source of truth and scope
+
+This is Tavi's source-only integration seam for Tavi Assets 0.1.4. The user-approved project boundary is: *Tavi Assets owns the engine, catalog, installer, local registry, updates, preferences and storefront; Tavi hosts them and gates trusted extension access; LoopRD and Wallet own entitlements and purchases; TaviX owns the distributable package and dependency contracts; applications only consume approved resources.*
+
+This pass does *not* copy the Python asset manager, expose a second pack installer, invent a local entitlement, purchase Gold, grant asset permissions based on arbitrary extension data, or claim a real installed Assets engine.
+
+Reference archive: `tavi-assets-0.1.4-ziprunner.zip`:
+
+* `contracts/tavi-assets-consumer-v1.json`
+* `docs/consumer-contract.adoc`
+* `sdk/client.mjs`, `sdk/index.d.ts` (reference transport-injected consumer)
+* `src/tavi_assets/host.py` (Python demonstration only)
+
+== Tavi implementation
+
+* `client/src/assets/host-bridge.js`: strict eight-method request/response boundary (exact 0.1.4 method names), host-derived extension identity, pack and capability grants, explicit customization consent, bounded media response and fail-closed discovery.
+* `client/src/extensions/host.js`: optional route for `assets.*`. `host.info` advertises `tavi.assets/v1` only if the first-party service reports ready and that session has trusted pack grants. No default asset grant.
+* `client/extension-sdk/assets-client.js` and its `.d.ts`: reference consumer adapted from Assets 0.1.4. `sdk.assets.connect()` negotiates first, and calls use the existing `tavi.extension/v1` host transport. No direct file, HTTP, credentials, Wallet or user identity API.
+* `client/src/extensions/sdk.js`, `client/extension-sdk/index.js`: expose `sdk.assets` on the existing TaviX object.
+* `client/src/main.js`: creates a first-party runtime slot but intentionally has no engine attached and grants no packs until the cross-project contracts are approved. **Production feature is therefore absent** in 0.3.140.
+* `client/src/ui/settings-view.js`: host-owned Assets Library navigation and honest engine-connection status. The real storefront will be a first-party UI module supplied by the Assets project.
+* `client/tests/tavi-assets-host-140.test.mjs`: validates the host boundary with a mocked approved engine, not a production pack install.
+
+== Exact portable runtime boundary required from the Tavi Assets team
+
+Provide an embeddable JavaScript/TypeScript module that can be imported in Tavi's Windows and Android/Web build, with no Python runtime required on devices. Keep the source of truth in the Assets repository, rather than rewriting its engine in the Social repository.
+
+The Tavi-side `createAssetsRuntimeSlot()` accepts a trusted engine with:
+
+[source,javascript]
+----
+// First-party Tavi bootstrap ONLY; never exposed to an extension iframe.
+const engine = {
+  ready() { return true; },  // synchronous; false if engine not usable
+  async request(method, params, caller) {
+    // Delegate to the Tavi Assets engine's contract-checked dispatcher.
+    // Validate the pack is verified, installed and entitled for this user.
+    // caller is HOST-DERIVED, not an application payload.
+    return response;
+  }
+};
+assetsRuntime.attach(engine);
+----
+
+`caller` has `extensionId`, `scope`, `source`, `packs`, `capabilities`, `canCustomize`. It is supplied only by the host. The engine must independently check installed/verified resources and entitlements; grants don't imply ownership. The host passes only methods `assets.describe`, `assets.objects.list`, `assets.objects.get`, `assets.collections.list`, `assets.collections.get`, `assets.preferences.get`, `assets.preferences.set`, and `assets.resolve` with the request shapes in the Assets 0.1.4 contract. Response `schema` and `packId` must match the method and request. A resource is at most 2 MiB decoded and transported as bounded base64. Media must be safe verified content; no HTML, JavaScript, paths or arbitrary URLs. Large packs must remain in the engine's managed storage; do NOT pass entire 128 MiB archives across postMessage.
+
+The engine must supply first-party services for browsing approved catalogs, trusted download, pack validation, atomic install/update, local persistence, preferences and offline resource resolution. These are *not* extension host requests. The eventual host UI must invoke those services through its own privileged adapter and never confuse ownership with installation.
+
+== Missing decisions / blockers
+
+. *Tavi Assets portable runtime.* Assets 0.1.4 has a Python engine, reference SDK and tests, but no embeddable production JS engine or storefront API. Until supplied, `assetsRuntime.ready()` is false.
+. *TaviX package dependency contract.* Approved installed manifests currently lack a standardized asset-pack dependency/capability grant declaration. Tavi's `assetGrants` callback returns null until TaviX and Assets establish the reviewed contract. Do not grant all installed extensions a universal library.
+. *Authenticated service binding.* Tavi must bind the signed-in Social account and its verified per-extension dependency grants to the Assets engine, and invalidate them on account switches, package disable/uninstall and revocation. No user-supplied callerId, permissions, path or local entitlements.
+. *Customization consent.* `assets.preferences.set` is denied without both a host grant and explicit host-owned user approval. Prefer application override -> user global preference -> pack default. Tavi Assets owns persistence/rollback and cross-device sync contracts.
+. *Storefront presentation and native storage.* Assets should deliver a reusable first-party UI plus platform storage adapters for Windows, Android and web, including offline persistence; Tavi only wires navigation, trusted storage and authentication.
+. *LoopRD wallet and ownership.* Production payment and paid downloads are out of scope pending verified, server-authoritative entitlement and atomic purchase contracts. Protect the free-Gold floor; never treat catalog price metadata as a receipt.
+
+== Proposed cross-team milestones
+
+* Tavi Assets 0.2.0: portable engine, separately testable service/UI module and storage adapter plus fixtures from 0.1.4. No real-money payments.
+* TaviX: approved versioned asset dependencies, requested capabilities and host authorization contract; preserve TaviX 0.1.10 game classification independently.
+* Tavi follow-up: wire the imported engine and reviewed grants into the ready slot, mount Assets storefront under Apps/Settings, and test user preferences.
+* Klondike: declare a free card-pack dependency; select deck artwork by semantic capability and verify offline restart/rollback without Atrium.
+* Companion / Atrium: adopt same host API when available, never independent wallet or pack registry.
+
+== Acceptance checklist — not yet completed
+
+. Verify the real Windows and Android engine runs with Tavi's native storage adapters and survives restart.
+. Install the Ink & Ember free pack through the Assets-owned installer and inspect it in Assets Library.
+. Validate that classified Klondike appears under Games, opens, discovers its deck objects and resolves a selected card back through the actual SDK.
+. Reject an extension with no explicit pack grant; revoke access after disable, account switch or uninstall.
+. Preserve global and app-specific customization through an atomic pack update/rollback; demonstrate offline use.
+. Prove no third-party pack purchase, wallet movement, entitlement forgery or executable asset payload.
+. Complete ZipRunner Windows/Android operator acceptance and explicit approval. No Git push or release by source QA alone.
