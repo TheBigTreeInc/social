@@ -1,0 +1,10 @@
+= Tavi 0.3.149: Notepad Back QA contract
+
+== Cause
+The browser QA reaches App Store from Settings > App sources. Back from the Notepad extension closes its surface to App Store. Back again returns to Settings > Apps & extensions because `appStoreReturnPanel` is `settings`. The old QA expected `.tavi-menu-panel` (Apps), which is correct only for Apps-origin App Store.
+
+== Resolution
+The browser smoke now requires `.tavi-material-settings` after the second Back, then uses the persistent Home bottom tab and requires the messenger Home. The existing Apps-origin routing is retained unchanged in the runtime and covered by a source regression check.
+
+== Verification
+Run the full client and server tests, then `npm --prefix client run ui:ci` on Windows with the Playwright dependency and a local Chrome/Chromium installed. The browser fixture must remain disposable and offline; do not use real credentials or production services. Review all five viewport outcomes and screenshots. CI, native Windows/Android acceptance, LoopRD schema 13 deployment, and publication remain independent approval gates.

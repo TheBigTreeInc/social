@@ -258,8 +258,11 @@ async function testViewport(browser,base,device){
   stage='return from Notepad via contextual Back';
   await page.locator('.tavi-utility-focus .tavi-shell-bar__back[data-action="back"]').click();
   await visible(page,'.tavi-app-store');
+  // App Store was reopened from Settings > App sources. Its Back target is
+  // Settings, not the Apps drawer from the earlier (separate) entry path.
+  // Verify the actual return context, then exercise the permanent Home tab.
   await page.locator('.tavi-utility-focus .tavi-shell-bar__back[data-action="back"]').click();
-  await visible(page,'.tavi-menu-panel');
+  await visible(page,'.tavi-material-settings');
   await page.locator('.tavi-utility-focus .tavi-mobile-tabs [data-action="home"]').click();
   await visible(page,'.tavi-home-messenger .tavi-home-identity');
   await visible(page,'.tavi-unified-home .tavi-mobile-tabs [data-action="main-menu"]');

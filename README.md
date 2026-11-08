@@ -1,3 +1,7 @@
+## 0.3.149 — browser QA Notepad navigation repair
+
+`client/tools/ui-qa.mjs` now tests the real Settings-origin App Store Back route after installing Notepad. The previous test incorrectly expected the Apps drawer. Added `client/tests/ui-qa-notepad-back-149.test.mjs` to guard Settings and Apps return contexts. This change is test-only; product navigation and gates are unchanged. Run the five-viewport Playwright QA on ZipRunner's Windows host for operator evidence.
+
 ## 0.3.148 — browser QA strict locator repair
 
 The browser QA `Contacts directory and Add friend as action` flow now opens App Store via `#tavi-app-page-1` (the selected All tab). Favorites and All both retain App Store in the DOM, so the former `.tavi-menu-grid [data-action="app-store"]` selector matched two controls and failed Playwright strict mode on all five viewports. A new source regression ensures the active-tab selector stays explicit. No application behavior or approval gates change.
