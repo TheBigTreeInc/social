@@ -212,8 +212,11 @@ async function testViewport(browser,base,device){
   await page.locator('.tavi-utility-focus .tavi-shell-bar__back[data-action="back"]').click();
   await visible(page,'.tavi-menu-panel');
   assert.equal(await page.locator('.tavi-menu-panel .tavi-shell-bar__back').count(),0,'Root Apps has no redundant toolbar');
-  await visible(page,'.tavi-menu-grid [data-action="app-store"]');
-  stage='app-store';await page.locator('.tavi-menu-grid [data-action="app-store"]').click();
+  // Both Favorites and All retain App Store tiles in the DOM; select the active tab.
+  const allAppsStore=page.locator('#tavi-app-page-1 [data-action="app-store"]');
+  await allAppsStore.waitFor({state:'visible',timeout:6000});
+  assert.equal(await allAppsStore.count(),1,'Exactly one App Store tile in the All apps tab');
+  stage='app-store';await allAppsStore.click();
   await visible(page,'.tavi-app-store');
   assert.equal(await page.locator('[data-extension-install="org.tavi.core.wallet"], [data-extension-remove="org.tavi.core.wallet"], [data-extension-disable="org.tavi.core.wallet"]').count(),0,'Core Wallet must have no install/remove/disable controls');
   assert.equal(await page.locator('.tavi-store-item').filter({hasText:'Core Gold Wallet'}).count(),0,'Core Wallet is not an optional store app');

@@ -1,3 +1,9 @@
+## 0.3.148 — browser QA strict locator repair
+
+The browser QA `Contacts directory and Add friend as action` flow now opens App Store via `#tavi-app-page-1` (the selected All tab). Favorites and All both retain App Store in the DOM, so the former `.tavi-menu-grid [data-action="app-store"]` selector matched two controls and failed Playwright strict mode on all five viewports. A new source regression ensures the active-tab selector stays explicit. No application behavior or approval gates change.
+
+Real five-viewport browser execution remains required in ZipRunner; source tests alone do not prove the browser flow.
+
 ## 0.3.146 CI entrypoint and Android release-gate repair
 
 CI direct root/client test and web-build routes now execute the same SHA-guarded legacy Companion cleanup before extension integrity checks. This covers Windows, Android, web, browser UI and cross-platform desktop CI without relaxing the approved Companion pin. Android release-candidate Python test now verifies the actual AST inequality and raising guard rather than whitespace formatting. See docs/TAVI_CI_COMPANION_ENTRYPOINT_REPAIR_0146.adoc. Existing assets, Companion, schema-13 operator gate, local data and release restrictions unchanged.
