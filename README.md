@@ -1,3 +1,15 @@
+# looprd-social 0.3.143 — Assets Store candidate
+
+Adds a first-party Assets Store under Apps and Settings, responsive in-app approval dialogs for free packs and app grants, searchable local pack cards, Installed/Permissions views, and an optional read-only HTTPS Assets 0.1.7 catalog adapter (`TAVI_ASSETS_CATALOG_URL`). No online source is configured by default; no arbitrary remote installation, Gold charges, automatic updates or cross-device sync are enabled. Existing 0.3.142 per-account IndexedDB, TaviX 0.1.11 grants and sample pack remain intact. Source tests are required; Windows/Android/operator QA pending. See `docs/TAVI_ASSETS_STORE_0143.adoc` and `docs/TAVI_ASSETS_TEAM_HANDOFF_0143.adoc`.
+
+## Tavi 0.3.142 — TaviX 0.1.11 Assets grants and live free-pack engine (source candidate)
+
+Connects the exact Tavi Assets 0.1.7 portable engine to account-scoped persistent IndexedDB, accepts TaviX 0.1.11 `assetDependencies` and issues only per-pack, explicitly consented and reverified host-session grants. Settings -> Assets Library can install the bundled free card pack and allow/revoke extension read/customization. No Gold, external downloads, paid ownership, server migration or public release. Actual Windows/Android persistence, verified TaviX consumer and native gameplay are awaiting operator QA. See `docs/TAVI_TAVIX_ASSETS_RUNTIME_0142.adoc`.
+
+## Tavi 0.3.141 — Atrium installed games and Assets 0.1.7 consumer parity (source only)
+
+Adds official Atrium-only `tavix.installed-games/v1` inventory/open backed by the existing approved TaviX game registry, and extends the gated `tavi.assets/v1` adapter/SDK to the Assets 0.1.7 discovery/composition methods. Source-level cross-package integration smoke passed against Atrium 0.5.77 and Assets 0.1.7 fixtures. The production Assets runtime, trusted grants, native storage and Gold entitlements are **not connected**. Windows/Android/web acceptance, a current installed Atrium build and real classified game remain operator-owned. No push or release. See `docs/TAVI_SHARED_SERVICES_COMPATIBILITY_0141.adoc`.
+
 ## Tavi 0.3.140 — Tavi Assets host boundary (source only)
 
 Implements the proposed Tavi Assets 0.1.4 gated `tavi.assets/v1` consumer and host adapter, strict approved pack/capability grants, and an honest Assets Library Settings entry. No production Assets engine has been supplied or connected, and no installs, catalog ownership or Wallet purchases are activated. See `docs/TAVI_ASSETS_HOST_INTEGRATION_0140.adoc` and `docs/TAVI_ASSETS_TEAM_HANDOFF_0140.adoc`. Native acceptance pending. No push or release.

@@ -34,13 +34,18 @@ export function launchableExtensions({catalog,store,platform}){
 }
 /** Verified, currently installed TaviX game inventory for *Tavi's own UI*.
  * Never infer from names, URLs, game APIs or unapproved repository changes.
- * This does not implement the proposed restricted Atrium host inventory API.
+ * The restricted Atrium host projection consumes this same filtered inventory.
  */
 export function installedGameExtensions({catalog=[],store=null,platform='web',staleSources=new Set()}={}){
  if(!store)return [];
- return launchableExtensions({catalog,store,platform}).filter(item=>{
-  if(item.entry.repositoryUrl&&staleSources.has(item.entry.repositoryUrl))return false;
-  const manifest=item.entry.manifest;
+ // Classification is independent of an optional app.launcher contribution:
+ // some games are intentionally opened only from Games or Atrium.
+ return catalog.filter(entry=>{
+  const manifest=entry?.manifest;
+  if(!manifest||manifest.id===CORE_WALLET_ID||!store.enabled(manifest.id)||
+     extensionUpdateStatus(entry,store)!=='current'||
+     (manifest.platforms&&!manifest.platforms.includes(platform)))return false;
+  if(entry.repositoryUrl&&staleSources.has(entry.repositoryUrl))return false;
   try{
    const approvedText=store.metadata?.(manifest.id);
    if(typeof approvedText!=='string'||approvedText!==JSON.stringify(manifest))return false;
@@ -52,7 +57,7 @@ export function installedGameExtensions({catalog=[],store=null,platform='web',st
    if(storedClassification&&JSON.stringify(storedClassification)!==JSON.stringify(classification))return false;
    return true;
   }catch{return false;}
- }).map(item=>({...item,classification:resolveTavixClassification(item.entry.manifest)}));
+ }).map(entry=>({kind:'extension',id:entry.manifest.id,label:entry.manifest.name,entry,symbol:'games',tone:'forest',classification:resolveTavixClassification(entry.manifest)}));
 }
 
 export function menuApplications({catalog=[],store=null,platform='web',petEnabled=false}={}){

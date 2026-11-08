@@ -1,3 +1,11 @@
+## LoopRD Social 0.3.142 — first-party Assets 0.1.7 runtime and TaviX 0.1.11 grants (source candidate)
+
+Base 0.3.141. Source-embedded unmodified portable Assets engine, atomic account-scoped IndexedDB, explicit confirmed free sample pack install, host-scoped per-pack consent, TaviX 0.1.11 manifest/grant validation, extension SDK boundary and denial on revoke/stale verification. Free local example only; no paid entitlements, external pack installation, native test, backend migration or publication. Cross-project instructions and operator acceptance: `docs/TAVI_TAVIX_ASSETS_RUNTIME_0142.adoc`. Source tests are independent from operator native acceptance. No push, release or approval implied.
+
+## LoopRD Social 0.3.141 — Atrium and Assets cross-project service compatibility (source candidate)
+
+Base 0.3.140. Official Atrium-only installed game inventory/open API with host-controlled navigation and current signed-in, approved package/version/source checks. Assets 0.1.7 host SDK now supports pack list, object discovery and composition in addition to existing methods. Existing messenger, Wallet, server schema, private settings, and TaviX 1.0 protocol stay unchanged. Production Assets engine and entitlement grants remain explicitly disconnected. Exact handoff, supported partner versions, remaining team actions and operator gates: `docs/TAVI_SHARED_SERVICES_COMPATIBILITY_0141.adoc`. Native and actual installed Atrium/game acceptance pending. No push, release or approval implied.
+
 ## Tavi 0.3.140 — Tavi Assets host integration seam (source candidate)
 
 Base 0.3.139. Adds only a reviewed, fail-closed host transport and Assets 0.1.4 consumer SDK reference; Assets-owned engine, catalog, installer, storefront, ownership and purchase logic remain external. `host.info` does not advertise the feature in normal Tavi because runtime and approved TaviX dependency grants are pending. Exact source and operator requirements: `docs/TAVI_ASSETS_HOST_INTEGRATION_0140.adoc`. No Windows/Android or live Klondike acceptance yet. No publication.

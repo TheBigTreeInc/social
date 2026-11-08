@@ -34,7 +34,8 @@ test('settings title and host back integration preserve Settings before Home',()
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
  assert.match(main,/state\.panel==='settings'&&state\.settingsPage!=='root'/);
  assert.match(main,/state\.settingsPage='root'/);
- assert.match(main,/settingsBack=.*\?'Settings':state\.panel==='app-store'/);
+ assert.match(main,/settingsBack=.*\?'Settings':state\.panel==='assets-store'/);
+ assert.match(main,/state\.panel==='assets-store'&&assetStoreReturnPanel==='settings'\?'Assets Library'/);
  assert.match(main,/appStoreReturnPanel==='menu'\?'Apps'/);
  assert.match(main,/appStoreReturnPanel==='settings'\?'Settings':'Home'/);
  assert.match(main,/state.settingsPage==='sources'\?'extensions':'root'/);

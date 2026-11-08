@@ -1,0 +1,73 @@
+= LoopRD Social 0.3.141 — Cross-project TaviX, Atrium and Assets compatibility
+:toc:
+
+== Exact source input and decision
+
+Reviewed the supplied source archives (not a running server or public release):
+
+* `looprd-social-0.3.140-ziprunner (1).zip` — base Social client/host.
+* `atrium-0.5.77-ziprunner.zip` — `extensions/tavi/installed-games.mjs` and the source-built embedded UI.
+* `tavix-0.1.10-game-classification-ziprunner(1).zip` — game classification schema and proposed installed-games/v1 contract.
+* `tavi-assets-0.1.7-ziprunner.zip` — `AssetService`, `TrustedAssetHostBridge`, storage interface and SDK multi-pack operations.
+
+Decisions: keep the existing `tavi.extension/v1` transport and `host.info` feature negotiation; use Social's verified, installed and enabled registry as the *only* installed-game source; provide approved Atrium-only inventory/open, and retain a fail-closed Assets host seam. No direct LoopRD credential, private messages, wallet or native paths are disclosed to apps. Do not invent purchase/entitlement grants or a second registry.
+
+== Implemented in Social 0.3.141
+
+=== TaviX classification and installed games
+
+* `client/src/launcher.js`: reuses the approved current manifest/source/version/revision and category checks; classified games no longer need an `app.launcher` contribution to appear in Games or the Atrium inventory. Disabled, uninstalled, stale or incompatible records do not appear.
+* `client/src/extensions/installed-games-host.js`: validates and restricts `tavix.installed-games.inventory/v1` to id, version, name, classification. Incoming `games.installed.open` accepts only `{id,expectedVersion}` and checks the current inventory; callers cannot choose URLs or file paths.
+* `client/src/extensions/host.js`: advertises `tavix.installed-games/v1` only to the *active official Atrium* session. List and Open are denied before reading inventory for every other extension, origin or inactive/revoked caller.
+* `client/src/main.js`: derives Atrium identity from signed-in account, active verified extension and pinned first-party source. On Open, checks the account and approved game twice, acknowledges that the launch was *accepted*, then navigates through Tavi's existing isolated `openInstalledExtension` path, returning to Games rather than exposing another app's frame to Atrium. A failed verifier may still prevent navigation: acknowledgement is not proof of successful execution.
+* `client/extension-sdk/index.js` and TypeScript declarations: optional `sdk.games.installed.list/open`, with feature negotiation. Existing TaviX 1.0 protocol remains unchanged.
+
+Hosted extensions remain publisher-hosted. A repository's release revision and installed manifest are provenance pins; they do not cryptographically freeze the remote HTML/JS bytes. This remains a publisher-trust limitation, not a new authority silently granted to Atrium. Local `.tavix` packages are SHA-256 revalidated by Tavi at launch. The Social source implementation is not a signed native or device acceptance result.
+
+=== Tavi Assets 0.1.7 consumer parity
+
+* `client/src/assets/host-bridge.js` also permits `assets.packs.list`, `assets.objects.discover` and `assets.composition.resolve`, validating exact request fields, granted packs/capabilities, bounded resources, output pack scoping and session lifetime. Existing 0.3.140 eight methods are retained.
+* `client/extension-sdk/assets-client.js` and `.d.ts`: add `listPacks`, `discoverObjects` and `resolveComposition`, matching the transport-injected SDK in Assets 0.1.7. No new dependency or default access permission.
+* `client/src/main.js`: **still** deliberately does NOT attach an Assets service and supplies `assetGrants:()=>null`. Therefore `tavi.assets/v1` is not advertised to normal extensions. Reference-dispatch compatibility does NOT mean production pack ownership, engine storage or purchasing is online.
+
+=== Verified in supplied sources
+
+A focused integration smoke invoked Atrium 0.5.77's real `installedGamesClient/openInstalledGame` against Social's real host via the existing TaviX transport. A second integration smoke instantiated the real Assets 0.1.7 portable `AssetService` + `TrustedAssetHostBridge` and ran packs.list, resolve and composition through Social with an explicit *test fixture* installation and grants. Neither test proves an installed desktop build or server entitlements.
+
+== Required handoffs to other projects
+
+=== Atrium (`atrium`)
+
+The 0.5.77 source consumer already negotiates `tavix.installed-games/v1` and accepts the DTO. No source rewrite is necessary for List/Open. To see it *inside Tavi*, rebuild/review a new TaviX release and install it with explicit operator approval. Immutable Atrium 1.0.4 in the reviewed source remains unchanged, and the 1.0.7/1.0.8 development-preview artifact is not a published release. A successful source test cannot update the installed view. Test a classified Klondike game, a stale-version rejection, an uninstalled game and Back navigation. Do not count an `accepted` response as a running game.
+
+The empty `gatewayUrl` in Atrium's development preview is unrelated to installed games; configure and verify a real hosted catalog endpoint separately. Do not bypass server authorization or produce a synthetic catalog because the preview is empty.
+
+=== TaviX (`tavix`)
+
+The 0.1.10 classification schema matches Social. No new classification field or package-version bump is necessary in TaviX for this pass. Its `docs/TAVIX_CLASSIFICATION.adoc` and `contracts/tavix-installed-games-v1.json` still call the host interface proposed; after joint native/operator acceptance, update the TaviX documentation/availability matrix to distinguish Social 0.3.141 source implementation from a released client. Ensure future game packages use `kind: app`, optional `classification.type: game`, and an approved `.tavix` manifest/revision. Don't alter immutable Atrium 1.0.4 bytes.
+
+The proposed `contracts/tavix-asset-dependencies-proposal-v1.json` is *not implemented*. TaviX + Assets must agree on a reviewed versioned declaration of pack dependencies and semantic capability grants. Manifest self-claims must never grant access on their own.
+
+=== Tavi Assets (`tavi-assets`)
+
+The portable 0.1.7 engine exists and matched Social's extended wire methods in a fixture test. To activate it for Windows, Android and web, Assets must provide an approved embeddable service adapter with durable, transactional local installed-pack state, integrity validation, a trusted first-party pack-install/update/storefront integration, and per-session grant/entitlement binding. The host's runtime slot accepts `ready()` and `request(method,params,caller)`; the existing `TrustedAssetHostBridge.dispatch(trustedSession,method,params)` can be wrapped by a *trusted* host adapter that derives identity and grants, never by caller-controlled data. Persist application preferences under the correct account and revoke grants on sign-out, uninstall, disable and server-side entitlement changes.
+
+Do not enable Gold purchases, discounts, ownership or local-only purchase receipts until LoopRD/Wallet supplies signed-in, server-authoritative entitlements and idempotent transactions. Rarity is content/game metadata, not pricing or access authority.
+
+=== LoopRD Social server / Wallet
+
+No server handler, database migration, entitlement API or generic messaging/contacts extension bridge is introduced in 0.3.141. Trusted game launch may reuse the existing signed-in Social session, but child safety and private contact/message permissions remain independently gated. A future generic shared-service design should negotiate individual capabilities (e.g. read-only contacts vs notifications vs game events), authorize each operation on LoopRD, and issue scoped responses, not expose a universal token or bypass Wallet/Assets ownership controls.
+
+== Operator acceptance: Windows, Android, web
+
+. Import `looprd-social-0.3.141-ziprunner.zip` under the existing `looprd-social` project; preserve config, account data and private server settings.
+. Build and launch the real Windows client and Android client; no simulated source acceptance should be marked as device acceptance.
+. Install the approved Atrium development build that contains 0.5.77 `installed-games` code; check `host.info.features` on the actual active Atrium frame and My Games compact layout at approximately 355x630.
+. Install a game-classified, approved `.tavix` file (Klondike if available). Confirm it appears under Social Games and Atrium My Games. Launch from Atrium and return to Games/Tavi Home; test another user account and disabled/removed app.
+. Change approved game version/source/revision or uninstall: Atrium's old version must be denied; arbitrary URL, wrong publisher iframe, generic third-party app and expired account must not list or open.
+. Keep `tavi.assets/v1` absent without an approved installed Assets runtime+grants; do not assert the Assets service is live from this source ZIP. After a separate Assets integration, prove persistence, revocation, no executable content, offline pack use and correct signed-in grants.
+. Run ZipRunner automated checks; manual review and explicit approval are required before any push/release/deploy. No self-updater, server, Wallet schema, or public store update was authorized here.
+
+== Rollback
+
+Rollback only the 0.3.141 source files to 0.3.140 after operator review. Stored extensions, pinned source/revision, installed packages, preferences and server configuration are unchanged by this pass. Older Atrium builds will simply not call the newly offered inventory methods. Existing features retain their old wire identifiers.

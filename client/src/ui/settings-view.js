@@ -45,7 +45,8 @@ function root(model){
    ${group('',[
     navRow({page:'companion',iconName:'games',title:'Companion apps',subtitle:`Reviewed Companion ${model.companionVersion||''}`.trim()}),
     navRow({page:'extensions',iconName:'extension',title:'Apps & extensions',subtitle:'App Store, trusted sources and app settings'}),
-    navRow({page:'assets',iconName:'storage',title:'Assets Library',subtitle:'Shared content and customization',trailing:model.assetsAvailable?'Connected':'Preparing'}),
+    navRow({action:'assets-store',iconName:'store',title:'Assets Store',subtitle:'Browse cards, themes and shared content'}),
+    navRow({page:'assets',iconName:'storage',title:'Assets Library',subtitle:'Installed packs and app permissions',trailing:model.assetsAvailable?'Connected':'Preparing'}),
     navRow({page:'about',iconName:'info',title:'About Tavi',subtitle:'Version, updates and diagnostics',trailing:model.updateInfo?`Update ${model.updateInfo.version}`:''})
    ].join(''))}
   </div>
@@ -173,17 +174,27 @@ function sources(model){
 }
 
 function assets(model){
- // Tavi hosts the first-party Assets storefront when the separate Assets
- // runtime supplies it. Do not invent local ownership, pack installation,
- // purchases or update state in this client.
- const state=model.assetsAvailable?'Asset service connected':'Asset service not connected';
- return `<section class="utility tavi-material-settings" aria-label="Assets Library">${pageIntro('Card decks, companion decorations, themes and other shared content will be managed by Tavi Assets, not the application store.')}
+ const online=model.assetsAvailable===true;
+ const installed=(model.assetsInstalled||[]).map(([id,version])=>infoRow({iconName:'storage',title:id,subtitle:'Installed locally for this account on this device',trailing:version})).join('');
+ const rows=(model.assetRequests||[]).map(app=>{
+  const parts=app.dependencies.map(dep=>{
+   const subtitle=dep.version?(dep.compatible?`Installed ${dep.version} · ${dep.optional?'Optional':'Required'}`:`Installed ${dep.version}, but incompatible`):'Not installed';
+   const buttons=app.verified&&dep.compatible?`<div class="md-settings-asset-actions">
+    <button type="button" data-asset-consent="${safe(app.id)}" data-asset-pack="${safe(dep.packId)}" data-asset-kind="read" data-asset-enabled="${!dep.read}">${dep.read?'Revoke read':'Allow read'}</button>
+    ${dep.canCustomize&&dep.read?`<button type="button" data-asset-consent="${safe(app.id)}" data-asset-pack="${safe(dep.packId)}" data-asset-kind="customize" data-asset-enabled="${!dep.customize}">${dep.customize?'Revoke customization':'Allow customization'}</button>`:''}</div>`:'';
+   return `<div class="md-settings-asset-request"><strong>${safe(dep.packId)}</strong><small>${safe(subtitle)} · Read ${dep.read?'approved':'not approved'}${dep.canCustomize?` · Customization ${dep.customize?'approved':'not approved'}`:''}</small>${buttons}</div>`;
+  }).join('');
+  return `<section class="md-settings-asset-app"><h4>${safe(app.name)}</h4>${!app.verified?'<p class="md-settings-static-note">Open the installed app once to verify its package before approving Assets access.</p>':''}${parts}</section>`;
+ }).join('');
+ return `<section class="utility tavi-material-settings" aria-label="Assets Library">${pageIntro('Tavi Assets powers shared card packs and other app content. Packs and preferences are stored on this device for your Social account.')}
   ${group('Shared Assets service',[
-   infoRow({iconName:'storage',title:state,subtitle:model.assetsAvailable?'The installed Assets engine can provide its own management interface.':'Waiting for the portable Tavi Assets engine and its verified install/storage adapter.',trailing:model.assetsAvailable?'Ready':'Pending'}),
-   infoRow({iconName:'shield',title:'Protected content access',subtitle:'Extensions only receive content explicitly granted by the authenticated host.'}),
-   infoRow({iconName:'palette',title:'Customization',subtitle:'Global defaults and app-specific preferences will be resolved by Tavi Assets.'})
+   infoRow({iconName:'storage',title:online?'Local Assets engine connected':'Local Assets engine unavailable',subtitle:online?'Tavi Assets 0.1.7 portable engine with device-persistent storage.':'Device storage could not be opened; no asset access is granted.',trailing:online?'Ready':'Unavailable'}),
+   infoRow({iconName:'shield',title:'Protected content access',subtitle:'Each app receives only the packs and capabilities you explicitly approve.'})
   ].join(''))}
-  <p class="md-settings-intro">Installed apps, Wallet and game progress are not changed here. No asset purchases or installation are available without the authoritative Assets and LoopRD services.</p>
+  ${group('Asset Store',navRow({action:'assets-store',iconName:'store',title:'Browse the Assets Store',subtitle:'Discover and install approved shared content'}))}
+  ${group('Installed packs',`${installed||'<div class="md-settings-static-note">No asset packs installed for this account.</div>'}${online?'<button type="button" class="md-primary-button" data-action="install-free-asset-pack">Install free sample card pack</button>':''}`)}
+  ${rows?group('Application permissions',rows):group('Application permissions','<div class="md-settings-static-note">Apps declaring TaviX 0.1.11 asset dependencies will appear here when installed.</div>')}
+  <p class="md-settings-intro">Free packs do not spend Gold. Paid ownership, verified online downloads and automatic updates require a connected authoritative Assets catalog. Removing a grant takes effect immediately for subsequent asset requests.</p>
  </section>`;
 }
 

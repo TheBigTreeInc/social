@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.140",
-    "base_version": "0.3.139"
+    "version": "0.3.143",
+    "base_version": "0.3.142"
   },
   "update": {
-    "id": "TAVI-ASSETS-HOST-0140",
+    "id": "TAVI-ASSETS-STORE-0143",
     "kind": "source_update",
-    "created_at": "2026-11-08T00:00:00+01:00",
-    "summary": "Gated Tavi Assets 0.1.4 host integration seam, reference consumer SDK, shared Settings entry and cross-team runtime handoff; no invented local pack management or entitlement."
+    "created_at": "2026-11-08T11:59:00+01:00",
+    "summary": "First-party Assets Store UX, native-size in-app approval and optional bounded read-only catalog. Local Assets runtime/verified grants preserved; online delivery and paid entitlements pending."
   },
   "planned_work": [
     {
@@ -39,7 +39,7 @@
       "title": "First-party Gold Wallet, purchase and exchange ledger",
       "priority": "high",
       "status": "review",
-      "acceptance_criteria": "Source and ZipRunner build verification, staging schema 10\u219211 migration, tested exact receipts, first-party host grant isolation, Android/Windows/Web native Wallet acceptance, merchant fulfillment proof and operator approval."
+      "acceptance_criteria": "Source and ZipRunner build verification, staging schema 10→11 migration, tested exact receipts, first-party host grant isolation, Android/Windows/Web native Wallet acceptance, merchant fulfillment proof and operator approval."
     },
     {
       "id": "TAVI-EXT-UPDATES-072",
@@ -727,6 +727,104 @@
       "priority": "high",
       "status": "planned",
       "acceptance_criteria": "Import verified JS/TS Assets engine and storefront supplied by Tavi Assets; verify account-bound pack authorization, capability grants, Windows/Android offline restart and Klondike free-deck use. Do not implement a second engine, Wallet, or local entitlement."
+    },
+    {
+      "id": "TAVI-SHARED-SERVICES-0141",
+      "title": "Atrium installed game host and Assets SDK parity",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Source tests for official-Atrium-only inventory/open and Assets 0.1.7 restricted discovery/composition; verify exact supplied Atrium/Assets reference consumer. Native Windows/Android/web accounts, reviewed Atrium package and classified Klondike operator acceptance still required. Preserve original source pins, session grants, Wallet and LoopRD boundaries; do not release automatically."
+    },
+    {
+      "id": "TAVI-EXT-DEV-SHADOW-129",
+      "title": "Tavi Ext Dev Shadow 129",
+      "priority": "medium",
+      "status": "review",
+      "acceptance_criteria": "Retain this existing manifest done/todo record and its original operator gates; no new approval is inferred by metadata reconciliation."
+    },
+    {
+      "id": "TAVI-LOCAL-PICKER-136",
+      "title": "Tavi Local Picker 136",
+      "priority": "medium",
+      "status": "source-done",
+      "acceptance_criteria": "Retain this existing manifest done/todo record and its original operator gates; no new approval is inferred by metadata reconciliation."
+    },
+    {
+      "id": "TAVI-LOCAL-PICKER-136-OP",
+      "title": "Tavi Local Picker 136 Op",
+      "priority": "medium",
+      "status": "review",
+      "acceptance_criteria": "Retain this existing manifest done/todo record and its original operator gates; no new approval is inferred by metadata reconciliation."
+    },
+    {
+      "id": "TAVI-RELEASE-131",
+      "title": "Tavi Release 131",
+      "priority": "medium",
+      "status": "source-done",
+      "acceptance_criteria": "Retain this existing manifest done/todo record and its original operator gates; no new approval is inferred by metadata reconciliation."
+    },
+    {
+      "id": "TAVI-RELEASE-131-OP",
+      "title": "Tavi Release 131 Op",
+      "priority": "medium",
+      "status": "review",
+      "acceptance_criteria": "Retain this existing manifest done/todo record and its original operator gates; no new approval is inferred by metadata reconciliation."
+    },
+    {
+      "id": "TAVI-SETTINGS-HUB-135",
+      "title": "Tavi Settings Hub 135",
+      "priority": "medium",
+      "status": "source-done",
+      "acceptance_criteria": "Retain this existing manifest done/todo record and its original operator gates; no new approval is inferred by metadata reconciliation."
+    },
+    {
+      "id": "TAVI-SETTINGS-HUB-135-OP",
+      "title": "Tavi Settings Hub 135 Op",
+      "priority": "medium",
+      "status": "review",
+      "acceptance_criteria": "Retain this existing manifest done/todo record and its original operator gates; no new approval is inferred by metadata reconciliation."
+    },
+    {
+      "id": "TAVI-SHARED-SERVICES-0141-OP",
+      "title": "Tavi Shared Services 0141 Op",
+      "priority": "medium",
+      "status": "review",
+      "acceptance_criteria": "Retain this existing manifest done/todo record and its original operator gates; no new approval is inferred by metadata reconciliation."
+    },
+    {
+      "id": "TAVI-SHARED-SERVICES-0141-SOURCE",
+      "title": "Tavi Shared Services 0141 Source",
+      "priority": "medium",
+      "status": "source-done",
+      "acceptance_criteria": "Retain this existing manifest done/todo record and its original operator gates; no new approval is inferred by metadata reconciliation."
+    },
+    {
+      "id": "TAVI-UX-CONTACTS-133",
+      "title": "Tavi Ux Contacts 133",
+      "priority": "medium",
+      "status": "source-done",
+      "acceptance_criteria": "Retain this existing manifest done/todo record and its original operator gates; no new approval is inferred by metadata reconciliation."
+    },
+    {
+      "id": "TAVI-UX-CONTACTS-133-OP",
+      "title": "Tavi Ux Contacts 133 Op",
+      "priority": "medium",
+      "status": "review",
+      "acceptance_criteria": "Retain this existing manifest done/todo record and its original operator gates; no new approval is inferred by metadata reconciliation."
+    },
+    {
+      "id": "TAVI-TAVIX-ASSETS-0142",
+      "title": "Bind TaviX 0.1.11 host asset grant and free Assets 0.1.7 runtime",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Source verified and free sample pack integrated with explicit grant and account-scoped IndexedDB; manually verify Windows and Android: install/restart/resume, TaviX 0.1.11 app read/customization and revoke, account/source/version changes fail closed. No payment, public assets, backend changes or publication."
+    },
+    {
+      "id": "TAVI-ASSETS-STORE-0143",
+      "title": "First-party Assets Store, consent and safe catalog browse",
+      "priority": "high",
+      "status": "review",
+      "acceptance_criteria": "Source and strict catalog reader verified. Windows 355x630/Android test: Apps/Settings entry; Discover/Installed/Permissions, search, cancel/confirm free sample installation, restart, grants/revoke and Back/Home; explicit operator acceptance."
     }
   ],
   "done_work": [
@@ -1750,6 +1848,59 @@
           "description": "Five regression tests for picker behavior and gating"
         }
       ]
+    },
+    {
+      "id": "TAVI-SHARED-SERVICES-0141-SOURCE",
+      "summary": "Implemented official-Atrium-only installed games host and Assets 0.1.7 SDK multi-pack parity; no engine attached, entitlement or generic client auth exposed.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "docs/TAVI_SHARED_SERVICES_COMPATIBILITY_0141.adoc",
+          "description": "Cross-project contract and operator evidence/gates"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/tavi-shared-services-141.test.mjs",
+          "description": "Authorization, schema, stale install, composition and grant tests"
+        }
+      ]
+    },
+    {
+      "id": "TAVI-TAVIX-ASSETS-0142-SOURCE",
+      "summary": "Bound the exact portable Tavi Assets 0.1.7 engine, IndexedDB account storage, explicit free card pack UI, TaviX 0.1.11 request validation and host-reverified per-pack grants. No paid ownership or native acceptance.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "docs/TAVI_TAVIX_ASSETS_RUNTIME_0142.adoc",
+          "description": "Contract provenance, limits and operator acceptance"
+        },
+        {
+          "kind": "source",
+          "ref": "client/src/assets/runtime.js",
+          "description": "Trusted Tavi-owned portable engine wrapper"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/tavix-assets-142.test.mjs",
+          "description": "Verified dependencies, real engine, consent, isolation, SDK, storage and revocation regression"
+        }
+      ]
+    },
+    {
+      "id": "TAVI-ASSETS-STORE-0143-SOURCE",
+      "summary": "Added responsive Assets Store under Apps/Settings, host consent modal for pack install and pack-scoped grants, optional HTTPS read-only catalog metadata adapter. No Gold, arbitrary remote packs, or publish.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "docs/TAVI_ASSETS_STORE_0143.adoc",
+          "description": "Design, limits and acceptance"
+        },
+        {
+          "kind": "test",
+          "ref": "client/tests/assets-store-143.test.mjs",
+          "description": "Catalog validation, injection-safe UI, modal and filter tests"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -2165,7 +2316,7 @@
       "id": "TAVI-UX-CONTACTS-133-OP",
       "status": "review",
       "priority": "medium",
-      "description": "Native acceptance for 355\u00d7630 Windows and Android Apps/Chats/Games root navigation, Contacts list and friend requests, pill rounding and restore/back, dark/light themes; do not infer from source tests."
+      "description": "Native acceptance for 355×630 Windows and Android Apps/Chats/Games root navigation, Contacts list and friend requests, pill rounding and restore/back, dark/light themes; do not infer from source tests."
     },
     {
       "id": "TAVI-SETTINGS-HUB-135-OP",
@@ -2178,6 +2329,41 @@
       "status": "review",
       "priority": "high",
       "description": "On Windows WebView2 and Android, with a LoopRD-authorized developer account and Developer Mode on: click Install .tavix; verify OS file chooser opens, same package can be reselected, permission revocation blocks installation, valid test app presents review, cancel is safe. No Companion 0.6.37 memory-load acceptance on affected PC."
+    },
+    {
+      "id": "TAVI-SHARED-SERVICES-0141-OP",
+      "status": "review",
+      "reason": "Real Windows, Android, web and two-account acceptance, source-built installed Atrium and actual approved .tavix game pending; Assets engine, storage and entitlement integration are explicitly still disconnected."
+    },
+    {
+      "id": "TAVI-ASSETS-0140-RUNTIME",
+      "status": "review",
+      "reason": "Existing planned-work record lacked a matching status entry. Preserve approval requirements; reconcile through operator review."
+    },
+    {
+      "id": "TAVI-LOCAL-PREVIEW-CSP-130",
+      "status": "review",
+      "reason": "Existing planned-work record lacked a matching status entry. Preserve approval requirements; reconcile through operator review."
+    },
+    {
+      "id": "TAVI-SHARED-SERVICES-0141",
+      "status": "review",
+      "reason": "Existing planned-work record lacked a matching status entry. Preserve approval requirements; reconcile through operator review."
+    },
+    {
+      "id": "TAVI-TAVIX-GAME-139",
+      "status": "review",
+      "reason": "Existing planned-work record lacked a matching status entry. Preserve approval requirements; reconcile through operator review."
+    },
+    {
+      "id": "TAVI-TAVIX-ASSETS-0142-NATIVE",
+      "status": "review",
+      "reason": "Windows/Android build, device storage persistence and actual approved TaviX 0.1.11 consumer/optional card packs remain operator acceptance; separately implement full Assets catalog/paid entitlements only after LoopRD/Wallet authorization."
+    },
+    {
+      "id": "TAVI-ASSETS-STORE-0143-NATIVE",
+      "status": "review",
+      "reason": "Windows/Android build and actual 355px/320px/390px viewport QA, native Back, long-lived IndexedDB and opt-in HTTPS catalog server acceptance pending; full remote content release/entitlements require Assets/LoopRD contract."
     }
   ],
   "validation": {
@@ -2350,7 +2536,7 @@
       },
       {
         "id": "TAVI-MULTI-044-PY",
-        "description": "Game room seat roster, revocation, migration 9\u219210, private messages and push content-free wake",
+        "description": "Game room seat roster, revocation, migration 9→10, private messages and push content-free wake",
         "status": "passed_source_only",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Linux Python 3.13",
@@ -2526,7 +2712,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Install a TaviX 0.1.10 classified Klondike package on Windows/Android, verify Apps+Games tiles, launch/back and source pins. Atrium host installed-games API remains proposed.",
+    "next_pass": "Build 0.3.143 on Windows and Android: verify responsive in-app pack/permission approval, app and settings Assets Store navigation, free install persistence; separately integrate Assets remote digest-pinned pack delivery after Assets team supplies it.",
     "risks": [
       "Embedded games are opaque-origin sandboxed; current Life may require an adaptation for storage/cookies. Tavi cannot grant allow-same-origin to GitHub Pages games sharing its web origin.",
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
@@ -2558,9 +2744,12 @@
       "Client-only Android updater 0.3.102 fixes both the known Kotlin import failure and the ZipRunner stale-test overlay failure. Physical Android installation/update remains unverified; source tests are not signed native acceptance.",
       "Sent/Delivered/Seen requires deployed Social release 0.3.103/schema 12; older 0.3.99/schema 11 servers do not expose peer delivery/read receipt metadata.",
       "Companion 0.6.27 source supports a future server-owned cloud save contract, but Tavi 0.3.106 does not yet implement companion.get/companion.put, CAS storage or operator reset; do not claim cross-device Companion persistence.",
-      "LoopRD 0.4 tavi-wallet is a service-authentication fa\u00e7ade in 0.3.107; Gold balances/history remain in Social schema 12. Do not treat the child SQLite file as migrated ledger storage or delete the Social wallet tables.",
+      "LoopRD 0.4 tavi-wallet is a service-authentication façade in 0.3.107; Gold balances/history remain in Social schema 12. Do not treat the child SQLite file as migrated ledger storage or delete the Social wallet tables.",
       "0.3.112 exact-commit Tavi browser QA failed all 5 viewports because a now-collapsed App Store diagnostics form was asserted visible. 0.3.114 changes only the harness; rerun real browser CI before accepting.",
-      "Bridge accepts legacy OpenClaw --message @tempfile per Pegas report; runtime acceptance is required. Multi-DM replies are at-least-once, not transactionally atomic; network ambiguity may duplicate chunks. No automatic bot rollout."
+      "Bridge accepts legacy OpenClaw --message @tempfile per Pegas report; runtime acceptance is required. Multi-DM replies are at-least-once, not transactionally atomic; network ambiguity may duplicate chunks. No automatic bot rollout.",
+      "Tavi Assets portable engine exists, but Social has no native durable storage/approved entitlement binder; feature remains unadvertised without trusted grants. Publisher-hosted TaviX bytes are not locally pinned as immutable executables.",
+      "Assets 0.1.7 free sample engine is connected and tested in Node; Windows/Android IndexedDB persistence, native deployment, source pinning, full catalog and paid entitlements remain operator/other-project work.",
+      "No official Assets online catalog URL or trusted remote pack delivery supplied; default store works with bundled offline sample only; remote metadata never authorizes install or Gold purchase."
     ],
     "blockers": [
       "Windows OS runtime and native NSIS acceptance unavailable to author",
@@ -2606,7 +2795,7 @@
     },
     {
       "id": "TAVI-MULTI-044-OP",
-      "description": "Backup and test schema 9\u219210 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
+      "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
       "status": "required"
     },
     {
@@ -2698,6 +2887,21 @@
       "id": "TAVI-ASSETS-HOST-140-OP",
       "status": "required",
       "description": "Review Tavi Assets 0.2.0 runtime and TaviX dependency/grant contract; on Windows+Android prove signed-in free pack installation, Klondike deck resolution, offline persistence, revoked-grant denial and customization rollback. No production engine is attached in 0.3.140."
+    },
+    {
+      "id": "TAVI-SHARED-SERVICES-0141-OP",
+      "status": "required",
+      "description": "On real Windows/Android/Web clients, sideload operator-approved Atrium build containing 0.5.77 installed-games consumer and a classified game .tavix; verify active Atrium feature negotiation, List/Open, account/source/revision staleness denial, Back and compact UI. Confirm no Assets feature without authorized engine and grants; no Git push/release."
+    },
+    {
+      "id": "TAVI-TAVIX-ASSETS-0142-OP",
+      "status": "required",
+      "description": "On Windows and Android, verify Settings -> Assets Library, bundled sample pack install and restart persistence; install a reviewed TaviX 0.1.11 dependency consumer and approve read/customization separately, then revoke, change app source/revision, and change accounts. No Gold transactions; no publication before explicit acceptance."
+    },
+    {
+      "id": "TAVI-ASSETS-STORE-0143-OP",
+      "status": "required",
+      "description": "Windows 355x630 and Android mobile: open Assets Store from Apps/Settings, test Discover/Installed/Permissions, search and no overflow; cancel/install card pack using in-app consent, restart, verify app read/customization grant and revoke, Back/Home, no Gold; do not publish before approval."
     }
   ],
   "release": {
@@ -2706,22 +2910,23 @@
     "notes": "Local ZipRunner QA only. No push, release, tag, public catalog or deployment authorized."
   },
   "release_notes": {
-    "version": "0.3.140",
-    "summary": "Gated Tavi Assets host adapter and SDK reference plus Settings placeholder; no production asset engine, catalog installation, paid entitlements or store publication",
+    "version": "0.3.143",
+    "summary": "Store-style Assets discovery with responsive host approval and optional read-only HTTPS catalog metadata; online package downloads and Gold remain disabled.",
     "server_unchanged": true,
     "database_migration": "none",
-    "native_qa": "Real Tavi Assets engine, Klondike, Windows and Android pending",
+    "native_qa": "Source/Node tests; native Windows and Android build and operator UI acceptance pending",
     "operator_approval": "pending"
   },
   "verification_summary": {
     "source_candidate": "source_candidate_native_pending",
-    "browser_qa": "Source integration and mock host suite only; real Assets/Windows/Android not tested.",
+    "browser_qa": "Node store renderer/catalog/consent tests passed; real viewport browser and native shell QA pending.",
     "native_acceptance": "pending",
     "git_push": "No Git push, public release, tag, Pages deployment or approvals authorized.",
     "server_deploy": "unchanged from 0.3.107; LoopRD 0.4 Wallet rollout remains separately pending",
     "database_schema": "12 unchanged; no migration in 0.3.108",
-    "operator_review": "Source-only bridge repair; do not restart Pegas until operator accepts staged smoke tests.",
-    "openclaw_bridge": "Local fake-CLI compatibility, reply chunking, cursor/receipt unit tests passed; real bot runtime pending."
+    "operator_review": "0.3.143 candidate, source tests only; Windows/Android manual acceptance required.",
+    "openclaw_bridge": "Local fake-CLI compatibility, reply chunking, cursor/receipt unit tests passed; real bot runtime pending.",
+    "package_manifest": "Reconciled preexisting planned vs done/todo ID mismatch without closing or approving any record; legacy operator gates preserved."
   },
-  "version": "0.3.140"
+  "version": "0.3.143"
 }

@@ -100,3 +100,11 @@ button.md-settings-row{cursor:pointer;}
 :root[data-theme='dark'] .md-settings-static-note{color:#aeb8b1;}
 :root[data-theme='dark'] .md-settings-source-item{border-bottom-color:#303b34;}
 :root[data-theme='dark'] .md-settings-source-item button{background:#1c3023;border-color:#456e52;color:#b4e7c1;}
+/* Assets 0.1.11 pack-scoped, explicit grant controls; responsive WebView. */
+.md-settings-asset-app{padding:12px 14px;border-bottom:1px solid var(--tavi-border,#456b59)}
+.md-settings-asset-app h4{font-size:0.95rem;margin:0 0 9px}
+.md-settings-asset-request{display:flex;flex-direction:column;gap:5px;padding:9px 0}
+.md-settings-asset-request small{opacity:.8}
+.md-settings-asset-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:5px}
+.md-settings-asset-actions button{padding:8px 12px;border-radius:8px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;min-height:40px}
+.md-settings-asset-actions button:focus-visible{outline:3px solid currentColor}

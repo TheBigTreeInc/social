@@ -1,0 +1,13 @@
+{
+  "schema":"tavi.host-services-implementation/v1",
+  "socialVersion":"0.3.141",
+  "wireChannel":"tavi.extension/v1",
+  "hostApi":"1.0.0",
+  "features":[
+    {"feature":"tavix.installed-games/v1","status":"source-implemented-native-unverified","caller":"active-approved-official-atrium-only","methods":["games.installed.list","games.installed.open"],"inventorySchema":"tavix.installed-games.inventory/v1","launchFields":["id","expectedVersion"]},
+    {"feature":"tavi.assets/v1","status":"host-seam-implemented-engine-and-grants-disconnected","caller":"session-and-host-grants","methods":["assets.describe","assets.objects.list","assets.objects.get","assets.collections.list","assets.collections.get","assets.preferences.get","assets.preferences.set","assets.resolve","assets.packs.list","assets.objects.discover","assets.composition.resolve"]}
+  ],
+  "deniedByDefault":["contacts","messages","wallet","entitlements","app-private-storage","local-paths","general-native-bridge"],
+  "noServerOrSchemaChange":true,
+  "requiresOperatorAcceptance":true
+}

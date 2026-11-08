@@ -1,4 +1,4 @@
-/** Tavi Assets 0.1.4 reference consumer contract; engine binding is feature-gated. */
+/** Tavi Assets 0.1.7 reference consumer contract; engine binding is feature-gated. */
 export interface HostTransport {
   info(): Promise<{api?: string; features?: string[]}>;
   request(method: string, params: Record<string, unknown>): Promise<Record<string, unknown>>;
@@ -49,6 +49,9 @@ export declare class AssetsUnavailableError extends Error {}
 export declare function createTaviAssetsClient(transport: HostTransport): Readonly<{
   connect(): Promise<{feature: 'tavi.assets/v1'; api: string | null}>;
   describe(packId: string): Promise<Record<string, unknown>>;
+  listPacks(filters?: {type?: string; tags?: string[]; offset?: number; limit?: number}): Promise<{schema:'tavi.assets.pack-list/v1';total:number;nextOffset:number|null;items:Array<{packId:string;capabilities:string[]}>}>;
+  discoverObjects(filters?: {kind?: string; tags?: string[]; offset?: number; limit?: number}): Promise<{schema:'tavi.assets.discovery/v1';total:number;nextOffset:number|null;items:Array<{packId:string;version:string;object:AssetObject}>}>;
+  resolveComposition(components: Array<{slot:string;packId:string;capability:string}>): Promise<{schema:'tavi.assets.composition/v1';items:Array<AssetResource & {slot:string}>}>;
   listObjects(packId: string, filters?: {kind?: string; rarity?: string; tags?: string[]; offset?: number; limit?: number}): Promise<AssetList>;
   getObject(packId: string, objectId: string): Promise<{schema: 'tavi.assets.object/v1'; packId: string; version: string; object: AssetObject}>;
   listCollections(packId: string, filters?: {kind?: string}): Promise<{schema: 'tavi.assets.collection-list/v1'; items: Array<{id: string; kind: string; name: string; tags: string[]; objectCount: number}>}>;

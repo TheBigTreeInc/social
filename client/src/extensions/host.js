@@ -7,13 +7,14 @@ import {validateCompanionPreview,previewStorageKey} from './companion-preview.js
 import {REVIEWED_COMPANION} from './reviewed-companion.js';
 import {validateTaviXSurface} from './surface-host.js';
 import {ASSETS_FEATURE,assetsAvailable,dispatchAssetsRequest} from '../assets/host-bridge.js';
+import {INSTALLED_GAMES_FEATURE,trustedInstalledGameInventory,requestedInstalledGame} from './installed-games-host.js';
 export const TAVIX_STANDARD='tavix/1.0';
 export const TAVIX_CHANNEL='tavi.extension/v1';
 const CHANNEL=TAVIX_CHANNEL;
 export const CORE_WALLET_ID='org.tavi.core.wallet';
 const KEY=/^[a-zA-Z0-9._-]{1,80}$/;
 const throttle=()=>({started:Date.now(),count:0});
-export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');},onSurfaceOpen=()=>{throw Error('Game surfaces unavailable');},walletApi=()=>{throw Error('Wallet service unavailable');},onCompanionPreview=()=>{},isReviewedCompanionSession=()=>false,assetService=null,assetGrants=()=>null,approveAssetCustomization=()=>false}){
+export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');},onSurfaceOpen=()=>{throw Error('Game surfaces unavailable');},walletApi=()=>{throw Error('Wallet service unavailable');},onCompanionPreview=()=>{},isReviewedCompanionSession=()=>false,assetService=null,assetGrants=()=>null,approveAssetCustomization=()=>false,isTrustedAtriumSession=()=>false,listInstalledGames=()=>[],onInstalledGameOpen=()=>false}){
  let session=null;const ziprunner=createZipRunnerReview();
  function send(message){session?.frame?.contentWindow?.postMessage({channel:CHANNEL,direction:'response',...message},'*');}
  function onMessage(e){
@@ -27,10 +28,11 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
   const ziprunnerAllowed=current.id===ZIPRUNNER_ID&&current.source==='tavi:bundled'&&permissions.has(ZIPRUNNER_PERMISSION)&&permissions.has('ui.panel');
   const assetSessionGrants=()=>{try{return assetGrants(Object.freeze({id:current.id,scope:current.scope,source:current.source}));}catch{return null;}};
   const reviewedAtrium=current.id===ATRIUM_EXTENSION_ID&&isOfficialAtriumSource(current.source)&&permissions.has('ui.panel');
+  const authorizedAtrium=()=>reviewedAtrium&&isTrustedAtriumSession({extensionId:current.id,scope:current.scope,source:current.source})===true;
   try{
    let result=null;
    switch(request.method){
-    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(ziprunnerAllowed?['ziprunner.review/v1']:[]),...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[]),'tavix.settings-entry/v1',...(assetsAvailable(assetService,assetSessionGrants())?[ASSETS_FEATURE]:[])],launchContext:current.launchContext};break;
+    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(ziprunnerAllowed?['ziprunner.review/v1']:[]),...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(authorizedAtrium()?[INSTALLED_GAMES_FEATURE]:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1']:[]),'tavix.settings-entry/v1',...(assetsAvailable(assetService,assetSessionGrants())?[ASSETS_FEATURE]:[])],launchContext:current.launchContext};break;
     case 'ziprunner.importCredential':
     case 'ziprunner.review':
     case 'ziprunner.clear':{
@@ -40,7 +42,9 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
      else{ziprunner.clear();result={cleared:true};}
      break;
     }
-    case 'host.capabilities': result=current.permissions.filter(p=>['ui.panel','ui.toast','storage.private'].includes(p)||(ziprunnerAllowed&&p===ZIPRUNNER_PERMISSION));break;
+    case 'host.capabilities': result=current.permissions.filter(p=>['ui.panel','ui.toast','storage.private'].includes(p)||(ziprunnerAllowed&&p===ZIPRUNNER_PERMISSION)||
+    (p==='assets.read'&&assetsAvailable(assetService,assetSessionGrants()))||
+    (p==='assets.preferences.write'&&assetsAvailable(assetService,assetSessionGrants())&&assetSessionGrants()?.grants.some(g=>g.canCustomize)));break;
     case 'storage.get':{
      if(!permissions.has('storage.private'))throw Error('Permission denied');
      if(typeof request.key!=='string'||!KEY.test(request.key))throw Error('Invalid key');
@@ -68,6 +72,25 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
      result=onSurfaceOpen(surface,{extensionId:current.id,scope:current.scope,source:current.source});
      break;
     }
+    case 'games.installed.list':{
+     if(!authorizedAtrium())throw Error('Installed game inventory permission denied');
+     if(request.params!==undefined&&( !request.params||typeof request.params!=='object'||Array.isArray(request.params)||Object.keys(request.params).length))throw Error('Invalid installed games request');
+     result=trustedInstalledGameInventory(listInstalledGames());
+     break;
+    }
+    case 'games.installed.open':{
+     if(!authorizedAtrium())throw Error('Installed game launch permission denied');
+     // Snapshot only verified, currently enabled, version-pinned games. The
+     // host callback MUST recheck before navigating; never follow iframe URLs.
+     const chosen=requestedInstalledGame(request.params,trustedInstalledGameInventory(listInstalledGames()));
+     if(onInstalledGameOpen(chosen,{extensionId:current.id,scope:current.scope,source:current.source})!==true)
+      throw Error('Installed game launch not accepted');
+     result={accepted:true,id:chosen.id,version:chosen.version};
+     break;
+    }
+    case 'assets.packs.list':
+    case 'assets.objects.discover':
+    case 'assets.composition.resolve':
     case 'assets.describe':
     case 'assets.objects.list':
     case 'assets.objects.get':
@@ -76,6 +99,7 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
     case 'assets.preferences.get':
     case 'assets.preferences.set':
     case 'assets.resolve':{
+     if(!permissions.has('assets.read')||request.method==='assets.preferences.set'&&!permissions.has('assets.preferences.write'))throw Error('Assets permission denied');
      result=dispatchAssetsRequest({service:assetService,grantForSession:assetSessionGrants,approveCustomization:approveAssetCustomization,isActive:()=>session===current,session:current,method:request.method,params:request.params});
      break;
     }

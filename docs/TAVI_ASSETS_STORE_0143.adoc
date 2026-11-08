@@ -1,0 +1,58 @@
+= Tavi Assets Store — 0.3.143 bounded first-party integration
+:toc:
+
+== Goal and authority
+
+Tavi remains messenger-first. Games and apps can consume shared data-only art only after their current
+verified TaviX manifest declares a dependency and the account owner approves a pack-scoped grant.
+The Assets Store is a first-party screen reachable from Apps or Settings; closing it returns to
+its originating screen, and Tavi's Home/messages navigation remains available. This is not a
+third-party TaviX storefront and is not allowed to receive Wallet or Social credentials.
+
+== Implemented
+
+* Apps -> Explore Assets Store; Settings -> Assets Store; Discover, Installed and Permissions sections.
+* Responsive 355x630 Windows WebView/Android-compatible product card, browse/search/filter and a local
+  original card-deck preview; same sample pack verified by Assets 0.1.7 in 0.3.142.
+* Host-owned modal approval for free sample-pack install and explicit app read/customization grants.
+  Escape/Back cancels the modal (unless the install is already committing); no browser `confirm()`.
+* Installed section reads the authoritative local Tavi Assets IndexedDB runtime and keeps all
+  previously installed packs and account-scoped grant records untouched.
+* Optional build-time `TAVI_ASSETS_CATALOG_URL` points to a vetted HTTPS JSON catalog.
+  The host reads `tavi.assets.catalog/v1` metadata (bounded, credential-free, no redirects),
+  validates items, then displays catalog entries as **non-installable** until approved package
+  provenance, digest-pinning and ownership authorization exist.
+* In the default build, no online catalog URL is configured. The Store explicitly says the
+  online catalog is not connected; it does not claim remote products or present Gold payment buttons.
+
+== Explicit limits / next project ownership
+
+Tavi Assets must publish a trusted catalog endpoint and a **separate** signed/digest-pinned
+asset-pack distribution protocol with immutable pack identity/version/files/hash. Production
+cache/update/uninstall behavior belongs to Assets' engine and Tavi's native storage adapter;
+TaviX assetDependencies and pack grants are already defined in TaviX 0.1.11.
+LoopRD/Wallet must authorize paid entitlements transactionally; a catalog offer or displayed
+Gold price is never sufficient to spend Gold or grant ownership. No remote assets downloaded,
+no auto updates, no cross-device state sync, and no new server endpoint in 0.3.143.
+
+== Operator acceptance (pending)
+
+. Import the ZIP with ZipRunner. No push, release, tag or deploy.
+. On Windows with a 355x630 non-resizable client, Apps -> Explore Assets Store shows the
+  Discover card, Installed/Permissions views, search and filters. Text and dialog buttons
+  stay within the viewport; repeat at Android 320/390 widths and with dark mode.
+. Tap Install. Verify the in-app consent modal, not `tauri.localhost` confirm. Cancel and
+  confirm separately. No Gold spent. Reopen Tavi: installed state survives.
+. Settings -> Assets Library: with a verified extension declaring a dependency, approve and
+  revoke read/customization separately. All consent dialogs are in-app. Verify account,
+  extension version/source and grant revocation still gate every call.
+. Back from Assets Store returns to Apps/Settings as appropriate; Home/messages remain one
+  action away and drafts remain intact.
+. With an explicitly build-configured and approved HTTPS Assets catalog URL, test valid JSON,
+  invalid/oversized JSON, redirects and offline failure; remote offers remain non-installable.
+. Approve final release only after source, Windows, Android and operator checks pass.
+
+== Rollback
+
+Revert only 0.3.143 source changes. Existing installed-packs IndexedDB, preferences,
+app approvals and account authentication are retained. No migration or online write occurred.

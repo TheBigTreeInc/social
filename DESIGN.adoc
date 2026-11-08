@@ -54,3 +54,48 @@ Record material decisions with context, alternatives, consequences, migration, a
 
 == API documentation
 If the project exposes an API, maintain `openapi.yaml` or `openapi.yml`. Agents should inspect OpenAPI before changing endpoints, clients, or generated API types.
+
+== ADR TAVI-SHARED-0141 — Account-scoped host service capability parity
+
+=== Context and decision
+
+Governing source review: `docs/TAVI_SHARED_SERVICES_COMPATIBILITY_0141.adoc`.
+Atrium 0.5.77 consumes the TaviX 0.1.10 proposed installed-games contract; Social 0.3.140 had no host implementation. Assets 0.1.7 adds portable discovery/composition methods outside Social's eight-method host adapter. Reuse the existing TaviX 1.0 `host.info` feature negotiation instead of inventing a second unscoped server gateway. Only an active official Atrium frame can read an immutable DTO of the currently approved, installed, compatible classified games and request a host-controlled open. The signed-in Social account and locally reviewed source/version are rechecked before navigation. Assets grants remain explicitly default-denied until a real trusted storage/entitlement/runtime integration is approved.
+
+=== Alternatives and risk
+
+Direct Atrium access to local extension storage or the Social auth token was rejected. A generic all-extension game listing was rejected. Directly launching iframe-supplied URLs was rejected. Reimplementing Assets engine and entitlement logic within Social was rejected. Publisher-hosted executable code is still mutable unless independently content-pinned; a reviewed catalog revision does not prove immutable remote bytes. Keep remote publisher trust explicitly visible in operator acceptance, and preserve child-safe messaging by never exposing general private contacts, messages, wallet or game-authority methods through this bounded pass.
+
+=== Compatibility, release and rollback
+
+No private state migration or new server endpoint. Host SDK adds optional methods while `tavi.extension/v1` and version 1.0.0 remain unchanged. Installed game classification and registered game launching work on desktop, Android and web with the same source rules; real native acceptance remains an operator gate. Revert the optional host modules/entry points to restore 0.3.140; no stored game state or server schema changes are required. Release, Git push and deployment are separate approved operations.
+
+== ADR TAVI-ASSETS-STORE-0143 — First-party storefront with explicit host consent
+
+=== Context and decision
+
+Governing implementation: `docs/TAVI_ASSETS_STORE_0143.adoc` and previous
+`docs/TAVI_TAVIX_ASSETS_RUNTIME_0142.adoc`. The 0.3.142 proof of concept relied
+on JavaScript `confirm()` dialogs which cannot fit or resize reliably in the
+355x630 native shell. Move bundled pack discovery and account-local management
+into a first-party store surface. Keep the asset engine, persistence and
+TaviX 0.1.11 grant checks unchanged. Only first-party click handlers can install
+or approve; no extension message may initiate these privileged actions.
+
+=== Catalog and trust boundary
+
+A build-configured HTTPS `tavi.assets.catalog/v1` catalog may display bounded
+metadata via a credential-free, no-redirect request. It never authorizes an
+installation, purchase or entitlement. No official Assets URL has been supplied,
+so the default build is explicitly offline. Full remote pack delivery is blocked
+pending an approved immutable package distribution/authorization contract from
+Tavi Assets and LoopRD/Wallet, not guessed from the App Store or TaviX registry.
+
+=== Alternatives, migration, rollback
+
+Browser-native dialogs, generic extension network permissions and automatically
+installing packs from untrusted catalog URLs were rejected. This update adds no
+server route or persistent data schema and preserves existing installed packs,
+versions, app grants and settings. Rollback removes the first-party storefront
+and restores the previous Settings entry without touching user data. Native
+Windows/Android rendering and operator acceptance remain mandatory.

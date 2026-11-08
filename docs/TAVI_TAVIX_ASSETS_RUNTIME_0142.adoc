@@ -1,0 +1,80 @@
+= LoopRD Social 0.3.142: TaviX 0.1.11 asset dependencies and Tavi Assets 0.1.7 runtime
+:toc:
+:toclevels: 2
+
+== Scope and source provenance
+
+Base: looprd-social 0.3.141. This is a *source candidate*, not a published release.
+The only supplied portable engine bundled here is Tavi Assets 0.1.7 (the four unmodified ESM files in
+`client/src/assets/vendor/tavi-assets-0.1.7/`). The declaration and projection schemas were taken from
+TaviX 0.1.11 and copied to `docs/contracts/`. The bundled `org.tavi.cards.standard` 0.1.1 sample SVG/manifest
+comes from the Assets package; `client/src/assets/sample-cards.js` serializes those exact files for the web/native build.
+
+== Implemented in Social
+
+* Manifest validation recognizes `assetDependencies`, `assets.read` and `assets.preferences.write`, including required/optional packs,
+  bounded capabilities, strict version ranges and declared customization, following TaviX 0.1.11.
+* A first-party Tavi Assets service is created at application startup, but is *not ready* until authenticated account-scoped
+  IndexedDB storage is successfully opened. The underlying engine is the portable Tavi Assets 0.1.7 code; the extension cannot
+  replace or directly invoke this engine.
+* Settings -> Assets Library shows connected/unavailable state, device-local installed packs, and an explicitly confirmed
+  `Install free sample card pack` host action. This action is locked to the bundled manifest and verified file hashes;
+  extensions cannot use it. No arbitrary URL, external pack, upload, Gold or paid entitlement API was introduced.
+* For an installed, enabled and verified app with declarations, Settings -> Assets Library exposes a per-pack `Allow read` and
+  optional `Allow customization` control. Consent is device-local, account-scoped host state, **not** a grant token.
+* Each request independently reconstructs a temporary `tavix.asset-grants/v1` projection: current authenticated account,
+  verified installation manifest and its digest, enabled state, pinned source, installed revision/version, installed pack version,
+  declared capabilities, and individual user consent must all agree. Permission changes are immediate for subsequent requests.
+* The existing `tavi.assets/v1` consumer SDK and sandbox message bridge remain the only extension-facing asset operations.
+  Single-pack and cross-pack requests filter metadata by the *specific pack's* approved capability set. Composition and media
+  resources are checked again before returning to the extension. Customization requires both declared permission and consent.
+* Device storage is atomic per account in IndexedDB and survives application reload when the WebView retains its database.
+  Storage errors fail closed, with no temporary in-memory state substituted.
+* Sign-out invalidates the connected account runtime; sign-in to a different account constructs a different storage scope.
+
+== Explicit limits
+
+. Only the supplied free example pack can currently be installed through the Tavi Settings UI. The generic Tavi Assets installer,
+  online catalog, automatic update lifecycle and storefront remain work for Tavi Assets + Social integration.
+. No authoritative server-side ownership or Gold purchasing is implemented. LoopRD/Wallet must approve any future paid grants;
+  a local device consent must never substitute for ownership.
+. This is a device-local asset library, not synchronized to the user's other devices. Installation and settings data must be
+  tested on the actual Windows WebView2 and Android WebView; no native compilation or on-device testing was performed here.
+. A TaviX dependency declaration does not install a missing pack automatically. Apps without asset dependencies retain their
+  previous behavior. Official Atrium installed-games trust restrictions have not been relaxed.
+. This change does not modify LoopRD database tables, server auth, messenger, wallet, or game session protocols.
+
+== Manual operator acceptance on real Windows and Android
+
+. Import candidate source into ZipRunner, run `npm run verify` and the post-update tests, and build both native clients.
+. Sign in to account A, navigate to Settings -> Assets Library, confirm engine state; install the free sample pack.
+. Restart Tavi and sign in to A; confirm the sample pack still appears (device persistence).
+. Install a *reviewed and verified* test TaviX 0.1.11 consumer that requests `org.tavi.cards.standard` / `card.back`, and
+  `assets.read` (plus `assets.preferences.write` only if requesting customization). Open it once to verify the exact package.
+. In Assets Library grant only read access and test `host.info`, pack describe, resource resolution and attempted forbidden
+  capabilities. Enable customization separately, change the card back, and verify the choice persists after restart.
+. Revoke consent while the app is open; the next request must fail. Test disabled/removed extensions, package version changes,
+  repository source changes, and reinstallation; none may retain a stale asset grant.
+. Sign out and into account B on the same device: the asset pack and grants from A must not appear. Sign back in to A and verify
+  local data survived. Repeat on Windows and Android and then approve/reject each test in the ZipRunner operator QA gate.
+. Confirm that Atrium -> Klondike -> Home/Back still works where its independently reported integration blockers have been
+  resolved; do not claim Atrium/Klondike end-to-end acceptance from asset tests.
+
+== Other project responsibilities
+
+TaviX 0.1.11:: The dependency/request and host-issued grant schemas are already implemented. No replacement contract is needed.
+Tavi Assets:: Supply a production pack catalog, signed/pinned pack delivery and updates, and an entitlement API/contract when
+  paid packs are introduced; keep pack bytes, validation and resource composition in Assets-owned code.
+Atrium 1.0.8 preview:: `games.installed.open` must send `{params:{id,expectedVersion}}`; its locally imported preview does not
+  earn the official Atrium-only host capability. Use reviewed publication or explicit digest-pinned development approval.
+Klondike 0.1.0:: Fix host storage request arguments to the Social-supported top-level message shape; add Windows to its manifest
+  only after native validation. An asset dependency is optional until it wants shared card decks/themes.
+LoopRD/Wallet:: No server change is required for the *free local sample*. Future paid ownership, account-wide sync and
+  cross-device entitlements need a separate authority-backed integration and its own acceptance tests.
+
+== Automated evidence
+
+Run `node --test client/tests/tavix-assets-142.test.mjs` for the exact TaviX 0.1.11 fixture, real portable engine,
+permission projection, cross-pack isolation, SDK, install/restart/revocation, failure-closed storage and settings tests.
+Run `npm run verify` for the combined server/client/OpenClaw regression suites and package integrity.
+No native Windows build, Android build, physical device session or release approval is implied.

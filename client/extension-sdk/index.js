@@ -56,6 +56,7 @@ export function createTaviXSDK(target=window.parent,source=window){
   // generic nested surface broker is implemented and advertised by host.info.
   surfaces:{requestOpen:surface=>request('surface.requestOpen',{surface})},
   assets:createTaviAssetsClient({info:()=>request('host.info'),request:(method,params)=>call(method,params)}),
+  games:{installed:{list:()=>request('games.installed.list'),open:({id,expectedVersion})=>request('games.installed.open',{params:{id,expectedVersion}})}},
   on,
   wallet:{balance:()=>call('wallet.balance'),transactions:params=>call('wallet.transactions',params),
     claim:params=>call('wallet.claim',params),convert:params=>call('wallet.convert',params),

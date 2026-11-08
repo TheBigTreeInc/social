@@ -86,6 +86,12 @@ test('approved local games appear in Apps and installed games, blocked/uninstall
  store.enable(sample,'tavi:local');assert.equal(installedGameExtensions({catalog:[entry],store,platform:'windows'}).length,1);
  store.uninstall(sample.id);assert.equal(installedGameExtensions({catalog:[entry],store,platform:'windows'}).length,0);
 });
+test('classified games without an app.launcher tile remain visible in the Games inventory',()=>{
+ const m=structuredClone(sample);m.contributions=m.contributions.filter(c=>c.slot!=='app.launcher');
+ const store=makeStore();store.install(m,'tavi:local','c'.repeat(64));
+ assert.equal(menuApplications({catalog:[withGame(m)],store,platform:'windows'}).some(x=>x.id===m.id),false);
+ assert.equal(installedGameExtensions({catalog:[withGame(m)],store,platform:'windows'}).some(x=>x.id===m.id),true);
+});
 test('installed games fail closed on stale source/revision/manifest/platform and forged classification',()=>{
  const store=makeStore(),entry=withGame();store.install(sample,'tavi:local',entry.release.revision);
  const changed=structuredClone(sample);changed.classification={type:'app',categories:['entertainment']};
@@ -109,5 +115,6 @@ test('Games routes use normal isolated extension open and preserve back to Games
  assert.match(source,/if\(state\.panel==='extension'&&extensionGamesReturn\)/);
  assert.match(source,/loadLocalTavix\(scope,id\);await revalidateLocalTavix\(record\)/);
  const host=await readFile(new URL('../src/extensions/host.js',import.meta.url),'utf8');
- assert.doesNotMatch(host,/games\.installed\.list/); // Proposed Atrium cross-app API is not silently made public.
+ assert.match(host,/games\.installed\.list/); // 0.3.141 explicitly implements the reviewed Atrium-only API.
+ assert.match(host,/authorizedAtrium\(\)/);
 });

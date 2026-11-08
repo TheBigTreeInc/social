@@ -1,0 +1,23 @@
+= Tavi Assets developer handoff — online store integration
+
+Tavi/looprd-social 0.3.143 now has a native-compatible Assets Store UI, explicit
+first-party approval, a pinned free pack, local persistence, and an optional
+read-only `tavi.assets.catalog/v1` JSON source (`TAVI_ASSETS_CATALOG_URL` at build time).
+
+== Tavi Assets team owns next
+
+. Publish an official HTTPS catalog URL with proper cross-origin access for the
+  Tavi WebView (the URL is currently NOT configured).
+. Define immutable asset-pack download metadata: pack ID, semantic version,
+  manifest SHA-256, individual file hashes, size limits, source identity and
+  acceptable media formats; provide validation test vectors.
+. Provide the production portable engine's privileged `installVerifiedPack`,
+  update detection and local cache lifecycle; no executable JS in asset packs.
+. Clarify catalog metadata vs entitlement and install rights. Paid content
+  must require LoopRD/Wallet's server-authorized entitlement, not a client flag.
+. Provide at least two free demonstration packs for end-to-end Windows/Android
+  test: e.g. alternate card backs and a companion environment.
+
+Tavi will wire that immutable distribution contract to the host-owned Assets
+runtime and permissions. TaviX 0.1.11 dependency/grant formats already exist;
+do not define a new incompatible contract. Do not loosen the extension sandbox.

@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.140",
+  "version": "0.3.143",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -1840,6 +1840,50 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-TAVIX-ASSETS-0142",
+      "criteria": [
+        {
+          "id": "TAVI-ASSETS-0142-SOURCE",
+          "description": "Source and exact Assets/TaviX 0.1.11 fixture validation",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/tavix-assets-142.test.mjs",
+            "npm run verify"
+          ]
+        },
+        {
+          "id": "TAVI-ASSETS-0142-NATIVE",
+          "description": "Real Windows/Android account, data persistence, app grant and revocation operator acceptance",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-ASSETS-STORE-0143",
+      "criteria": [
+        {
+          "id": "TAVI-ASSETS-STORE-0143-SOURCE",
+          "description": "Source and catalog validation, consent gate and assets runtime",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/assets-store-143.test.mjs",
+            "npm run verify"
+          ]
+        },
+        {
+          "id": "TAVI-ASSETS-STORE-0143-NATIVE",
+          "description": "Native Windows 355x630 and Android browser/OS interface + install persistence/operator signoff",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -2745,6 +2789,60 @@
     {
       "id": "TAVI-GAME-CLASSIFICATION-0139-OPERATOR",
       "description": "Real classified Klondike package import on Windows and Android; Apps and Games launch; Back; publisher/capability gates",
+      "mode": "manual",
+      "checks": [
+        "OPERATOR-APPROVAL-REQUIRED"
+      ]
+    },
+    {
+      "id": "TAVI-SHARED-0141-SOURCE",
+      "description": "Official Atrium host-installed-game gate and Assets 0.1.7 consumer parity",
+      "mode": "automated",
+      "checks": [
+        "node --test client/tests/tavi-shared-services-141.test.mjs client/tests/tavix-game-classification-139.test.mjs client/tests/tavi-assets-host-140.test.mjs",
+        "npm run verify",
+        "python tools/generate-looprd.py --check"
+      ]
+    },
+    {
+      "id": "TAVI-SHARED-0141-NATIVE",
+      "description": "Windows/Android/web two-account Atrium and .tavix launch plus fail-closed Assets settings",
+      "mode": "manual",
+      "checks": [
+        "OPERATOR-APPROVAL-REQUIRED"
+      ]
+    },
+    {
+      "id": "TAVI-ASSETS-0142-SOURCE",
+      "description": "TaviX 0.1.11 manifest/per-pack grant, real Assets 0.1.7 engine, durable local pack, consent/revoke, SDK and regression",
+      "mode": "automated",
+      "checks": [
+        "node --test client/tests/tavix-assets-142.test.mjs client/tests/tavi-assets-host-140.test.mjs client/tests/tavi-shared-services-141.test.mjs",
+        "npm run verify",
+        "python tools/generate-looprd.py --check"
+      ]
+    },
+    {
+      "id": "TAVI-ASSETS-0142-NATIVE",
+      "description": "Windows and Android IndexedDB restart, free pack, verified TaviX 0.1.11 consumer, revoke and account isolation",
+      "mode": "manual",
+      "checks": [
+        "OPERATOR-APPROVAL-REQUIRED"
+      ]
+    },
+    {
+      "id": "TAVI-ASSETS-STORE-0143-SOURCE",
+      "description": "Read-only catalog metadata validation, store rendering, safe approval, TaviX permissions",
+      "mode": "automated",
+      "checks": [
+        "node --test client/tests/assets-store-143.test.mjs client/tests/tavix-assets-142.test.mjs",
+        "npm run verify",
+        "python tools/generate-looprd.py --check"
+      ]
+    },
+    {
+      "id": "TAVI-ASSETS-STORE-0143-NATIVE",
+      "description": "Windows/Android responsive dialog, offline pack persistence and grant review",
       "mode": "manual",
       "checks": [
         "OPERATOR-APPROVAL-REQUIRED"

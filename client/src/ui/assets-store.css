@@ -1,0 +1,51 @@
+/* 0.3.143 — First-party Assets Store. All controls fit a 355px Tauri shell. */
+.tavi-asset-market{box-sizing:border-box;width:100%;min-width:0;max-width:820px;margin:0 auto;padding:13px 14px 32px;color:var(--tavi-color-text,#183828)}
+.tavi-asset-market [hidden]{display:none!important}
+.tavi-asset-market-hero{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:19px 17px;margin-bottom:14px;border-radius:18px;background:linear-gradient(120deg,#174d35,#32845a);color:#fff;overflow:hidden}
+.tavi-asset-market-hero>div{position:relative;z-index:1;min-width:0}.tavi-asset-market-hero h2{margin:3px 0 7px;font-size:20px;line-height:1.15;color:#fff}
+.tavi-asset-market-hero p{font-size:12px;line-height:1.5;margin:0;max-width:420px;color:#e2f7e9}
+.tavi-asset-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#d2f2db}
+.tavi-asset-hero-mark{font-size:76px;line-height:1;opacity:.18;flex:none}
+.tavi-asset-market-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:15px;padding:4px;border-radius:13px;background:var(--tavi-color-surface-raised,#e8eee9)}
+.tavi-asset-market-tabs button{min-width:0;min-height:44px;overflow-wrap:anywhere;border:0;border-radius:10px;background:transparent;color:var(--tavi-color-text,#244d36);font-size:12px;font-weight:650;cursor:pointer;padding:7px 3px}
+.tavi-asset-market-tabs button[aria-pressed=true]{background:var(--tavi-color-surface,#fff);box-shadow:0 1px 4px #0002}
+.tavi-asset-search-label{display:block;font-size:12px;font-weight:650;margin:2px 0 5px}
+.tavi-asset-market #tavi-asset-search{display:block;width:100%;box-sizing:border-box;height:45px;padding:9px 13px;border-radius:13px;border:1px solid var(--tavi-color-border,#b6ceb9);background:var(--tavi-color-surface,#fff);color:var(--tavi-color-text,#183828);font-size:13px}
+.tavi-asset-categories{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 16px}
+.tavi-asset-categories button{min-height:38px;border-radius:999px;padding:7px 12px;border:1px solid var(--tavi-color-border,#b9d5c0);background:var(--tavi-color-surface,#fff);color:var(--tavi-color-text,#214e32);font-size:12px;cursor:pointer}
+.tavi-asset-categories button[aria-pressed=true]{background:#256e48;color:#fff;border-color:#256e48}
+.tavi-asset-products{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:12px}
+.tavi-asset-product{min-width:0;overflow:hidden;border:1px solid var(--tavi-color-border,#ceded1);background:var(--tavi-color-surface,#fff);border-radius:18px;color:var(--tavi-color-text,#183828)}
+.tavi-asset-card-art{height:136px;display:flex;justify-content:center;align-items:center;gap:8px;background:radial-gradient(circle at 25% 35%,#4a916e,#1e553b);overflow:hidden}
+.tavi-asset-playing-card{position:relative;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;width:79px;height:109px;border-radius:9px;background:#fdfdf5;color:#142b1b;box-shadow:1px 5px 15px #0004;transform:rotate(-12deg);border:3px solid #e4eedc}
+.tavi-asset-playing-card b{position:absolute;top:7px;left:8px;font-size:14px}.tavi-asset-playing-card span{font-size:43px;line-height:1}
+.tavi-asset-playing-back{transform:rotate(10deg);background:repeating-linear-gradient(45deg,#246a43 0 5px,#307e56 5px 9px);border:4px double #c4efd0}
+.tavi-asset-remote-art{height:136px;display:grid;place-items:center;font-size:64px;background:#284f42;color:#c0e4cc}
+.tavi-asset-product-body{padding:14px;display:flex;flex-direction:column;gap:7px;min-height:155px}
+.tavi-asset-product-body h3{margin:0;font-size:16px;line-height:1.3;overflow-wrap:anywhere}.tavi-asset-product-body p{margin:0;font-size:12px;line-height:1.5;color:var(--tavi-color-text-muted,#66776a)}
+.tavi-asset-product-body small{font-size:11px;color:var(--tavi-color-text-muted,#66776a)}
+.tavi-asset-category{font-size:11px;font-weight:650;color:var(--tavi-color-accent,#29724d)}
+.tavi-asset-product-foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-top:auto;padding-top:8px}
+.tavi-asset-product-foot strong{font-size:13px}.tavi-asset-product-foot button,.tavi-asset-manage-link{min-height:42px;padding:8px 16px;border:0;border-radius:999px;background:#267649;color:#fff;font-size:12px;font-weight:650;cursor:pointer}
+.tavi-asset-owned,.tavi-asset-not-ready{font-size:11px;color:var(--tavi-color-text-muted,#5c6b60)}.tavi-asset-owned{color:#267649;font-weight:700}
+.tavi-asset-source-note,.tavi-asset-empty-state,.tavi-asset-search-empty{font-size:12px;line-height:1.6;margin:14px 2px;color:var(--tavi-color-text-muted,#5d7366)}
+.tavi-asset-market [data-asset-market-pane] > h3{font-size:16px;margin:14px 0}.tavi-asset-installed-list{display:grid;gap:10px}
+.tavi-asset-installed-row{display:flex;flex-direction:column;gap:4px;min-width:0;overflow-wrap:anywhere;padding:15px;border:1px solid var(--tavi-color-border,#d2e3d6);border-radius:14px;background:var(--tavi-color-surface,#fff)}
+.tavi-asset-installed-row strong{font-size:13px}.tavi-asset-installed-row small{font-size:11px;color:var(--tavi-color-text-muted,#66766a)}
+.tavi-asset-approval{z-index:10100}.tavi-asset-approval .tavi-install-dialog{width:min(440px,100%);max-width:100%;border:1px solid var(--tavi-color-border,#7aab8b);background:var(--tavi-color-surface,#fff);color:var(--tavi-color-text,#173b25);border-radius:22px;padding:20px}
+.tavi-asset-approval .tavi-install-heading{align-items:flex-start}.tavi-asset-approval .tavi-install-heading h2{color:inherit;line-height:1.3}
+.tavi-asset-approval .tavi-install-heading small{color:var(--tavi-color-text-muted,#657568)}
+.tavi-asset-approval .tavi-asset-dialog-icon{display:grid;place-items:center;flex:none;width:45px;height:45px;border-radius:14px;background:#dcf2e2;color:#237246;font-size:24px}
+.tavi-asset-approval .tavi-install-dialog>p{font-size:13px;line-height:1.5}.tavi-asset-approval .tavi-install-dialog dd{overflow-wrap:anywhere}
+.tavi-asset-approval .tavi-install-warning{background:var(--tavi-color-surface-raised,#e9f5ea);color:inherit;border-radius:5px}
+.tavi-asset-approval .tavi-install-buttons{flex-wrap:nowrap}.tavi-asset-approval .tavi-install-buttons button{flex:1;min-width:0;max-width:none;border:1px solid var(--tavi-color-border,#c9d6cd);border-radius:999px;padding:10px 12px;background:var(--tavi-color-surface,#fff);color:var(--tavi-color-text,#183c28);font-size:12px}
+.tavi-asset-approval .tavi-install-buttons .tavi-install-approve{background:#236d45!important;color:#fff!important}
+.tavi-asset-market button:focus-visible,.tavi-asset-approval button:focus-visible,.tavi-asset-market input:focus-visible{outline:3px solid #367cbe;outline-offset:2px}
+@media(max-width:390px){.tavi-asset-market{padding:10px 11px 24px}.tavi-asset-market-hero{padding:15px}.tavi-asset-market-hero h2{font-size:18px}.tavi-asset-market-tabs button{font-size:11px}.tavi-asset-approval{padding:10px}.tavi-asset-approval .tavi-install-dialog{padding:15px;max-height:calc(100dvh - 20px)}}
+@media(prefers-reduced-motion:reduce){.tavi-asset-market *{scroll-behavior:auto!important}}
+
+.tavi-asset-permission-card{padding:14px;margin:9px 0;border-radius:14px;border:1px solid var(--tavi-color-border,#c6d9cb);background:var(--tavi-color-surface,#fff)}
+.tavi-asset-permission-card h4{font-size:14px;margin:0 0 8px;overflow-wrap:anywhere}.tavi-asset-permission-card p{font-size:12px;line-height:1.5}
+.tavi-asset-permission-row{border-top:1px solid var(--tavi-color-border,#d3e2d7);padding:10px 0;display:flex;flex-direction:column;gap:5px;min-width:0}
+.tavi-asset-permission-row strong{font-size:12px;overflow-wrap:anywhere}.tavi-asset-permission-row small{font-size:11px;color:var(--tavi-color-text-muted,#657568)}
+.tavi-asset-permission-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:5px}.tavi-asset-permission-actions button{min-height:42px;padding:8px 12px;border-radius:999px;border:1px solid var(--tavi-color-border,#abc5b4);background:var(--tavi-color-surface-raised,#eef7f0);color:var(--tavi-color-text,#204a2e);font-size:12px;cursor:pointer}

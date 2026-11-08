@@ -2,7 +2,7 @@
  * Tavi Assets consumer reference SDK v1 (transport-injected).
  * No direct postMessage, origin assumptions, files, download, wallet or ownership API.
  * An approved TaviX host SDK must supply a session-bound {info, request} transport.
- * Tavi 0.3.140 provides a gated host adapter; production engine binding remains pending.
+ * Tavi 0.3.142 binds a free local Assets 0.1.7 engine behind explicit per-pack TaviX 0.1.11 host grants; paid catalog remains pending.
  */
 const FEATURE = 'tavi.assets/v1';
 
@@ -42,6 +42,9 @@ export function createTaviAssetsClient(transport) {
   return Object.freeze({
     connect,
     describe: packId => invoke('assets.describe', {packId: id(packId)}),
+    listPacks: (filters = {}) => invoke('assets.packs.list', filters),
+    discoverObjects: (filters = {}) => invoke('assets.objects.discover', filters),
+    resolveComposition: components => invoke('assets.composition.resolve', {components}),
     listObjects: (packId, filters = {}) => invoke('assets.objects.list', {...filters, packId: id(packId)}),
     getObject: (packId, objectId) => invoke('assets.objects.get', {packId: id(packId), objectId}),
     listCollections: (packId, filters = {}) => invoke('assets.collections.list', {...filters, packId: id(packId)}),

@@ -20,8 +20,10 @@ export interface TaviXSDK {
   ui:{toast(message:string):Promise<void>;/** compatibility alias; prefer navigation.close */close():Promise<void>;/** Legacy first-party Atrium bridge; not part of TaviX core. */requestGameLaunch(handoff:{schema:'atrium.tavi-launch/v1';gameId:'life.loop';target:string;matchContext:{matchId:string}}):Promise<{awaitingApproval:boolean}>};
   /** Optional tavix.surface/v1 module. Call only when host.info().features advertises it. */
   surfaces:{requestOpen(surface:TaviXSurfaceRequest):Promise<unknown>};
-  /** Tavi Assets 0.1.4 reference consumer. Call assets.connect() before use. */
+  /** Tavi Assets 0.1.7 reference consumer. Call assets.connect() before use. */
   assets:TaviAssetsClient;
+  /** Official Atrium only; requires tavix.installed-games/v1 in host.info.features. */
+  games:{installed:{list():Promise<{schema:'tavix.installed-games.inventory/v1';games:Array<{id:string;version:string;name:string;classification:{type:'game';categories:string[]}}>}>;open(target:{id:string;expectedVersion:string}):Promise<{accepted:true;id:string;version:string}>}};
   on(event:string,handler:(payload:unknown)=>void):()=>void;
   wallet:{
     balance():Promise<{schema:'tavi.wallet/v1';balances:{currencyId:string;amount:string}[];currencies:unknown[];rates:unknown[];offers:unknown[];faucet:unknown}>;
