@@ -33,8 +33,9 @@ test('client, Tauri, Cargo, root, ZipRunner metadata versions agree', () => {
   assert.equal(json('../../ziprunner-manifest.json').project.version, client.version);
 });
 
-test('Companion cloud migration requires explicit server release and operator approval', () => {
+test('LoopRD management contract repair has a separate server release and operator gate', () => {
   const server = json('../../server/looprd-release.json').release;
-  assert.equal(server, '0.3.122');
+  assert.equal(server, '0.3.123');
   assert.equal(json('../../ziprunner-manifest.json').release_notes.server_unchanged, false);
+  assert.match(json('../../ziprunner-manifest.json').verification_summary.server_deploy, /Not deployed/);
 });

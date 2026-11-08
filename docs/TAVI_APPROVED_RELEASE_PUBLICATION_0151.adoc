@@ -1,0 +1,45 @@
+= Tavi 0.3.151 — Approved Windows + Android release publication
+:toc:
+
+== Purpose
+
+Restore the convenience previously provided by automatic GitHub Releases asset upload, but retain explicit operator acceptance and publication approval. The existing `Prepare Tavi release candidate` workflow is *read-only*. The new independent `Publish approved Tavi release` workflow is manually dispatched and is the only workflow granted release write permission, in its final job.
+
+This implementation does *not* publish anything on import, on push, or after successful CI. It is not an authorization to release unaccepted native clients.
+
+== One-time GitHub configuration
+
+. In GitHub repository Settings > Environments, create `tavi-public-release` and configure *required reviewers* (and restrict deployment branches to `main` as appropriate). Without required reviewers, GitHub's environment by itself does not provide a second review gate; manual workflow dispatch, explicit confirmation and acceptance reference still apply, but the independent reviewer protection is absent. Configure this before real publication.
+. Ensure GitHub Actions permissions permit `contents: write` in the *publish* job and `actions: read` in both jobs. Keep `Prepare Tavi release candidate` read-only.
+. Only grant workflow dispatch access to authorized release operators; keep native Windows/Android acceptance evidence in ZipRunner. No release credentials or Android signing keys belong in the source package.
+
+== Workflow for a prepared candidate
+
+. In ZipRunner, install the signed Android APK and Windows NSIS EXE, test signing/update continuity, registration, messaging, persistent navigation, extensions and intended LoopRD server; record acceptance evidence and any limitations. Do not type `PUBLISH-TAVI-WINDOWS-ANDROID` before acceptance.
+. In GitHub Actions, choose `Publish approved Tavi release` (new workflow). Supply *candidate_sha* (exact commit), *candidate_run_id* (numeric successful `Prepare Tavi release candidate` run ID), *operator_acceptance_ref* (specific ZipRunner acceptance evidence ID), and *publication_confirmation* = `PUBLISH-TAVI-WINDOWS-ANDROID`.
+. The `verify` job downloads that *exact* run's `windows-android` candidate, verifies identity against the source commit's package.json, required CI evidence, original Windows+Android ZIPs, standalone EXE+APK, release manifest and SHA256SUMS, and checks the existing tag. It has no publication permissions.
+. The `publish` job is protected by `tavi-public-release` environment review when configured. After approval it downloads and re-verifies the same candidate and performs the publication operation. This is the only GitHub Release write path.
+. If `v<version>` already exists and the tag resolves to the accepted SHA, upload *only missing assets*; never overwrite existing assets. If files already exist with identical hashes, leave them untouched. If hashes differ, fail closed. Do not rename the existing release or mutate unrelated files.
+. If the release/tag does not exist, allow creation only if the accepted commit is *still* current `main`. Older accepted candidates may fill an already-tagged release if the tag resolves to the exact accepted SHA. This allows the existing `v0.3.150` empty release to be populated without rebuilding 0.3.150, even after pushing 0.3.151 source, provided its tag matches the accepted SHA and the candidate artifact remains available.
+. Output links are the standard GitHub Releases `.exe`, `.apk`, ZIP bundles and `SHA256SUMS.txt` for that version. Linux/macOS are not included in a windows-android candidate.
+
+== Safety boundaries
+
+* No push, tag or GitHub publication is performed by the ZipRunner source package or by candidate preparation.
+* No `--clobber`, automatic re-tagging, overwrite of other releases, or picking a `latest` run.
+* Do not infer Windows/Android operator acceptance from CI success, a signed APK, or the existence of an empty GitHub Release.
+* The operator's acceptance reference is a *manual attestation*; GitHub cannot independently verify local ZipRunner evidence without an integrated signed evidence upload. The protected GitHub environment is recommended as an independent human approval.
+* GitHub Actions artifacts expire. The chosen candidate run must contain an unexpired named artifact.
+* If GitHub Actions has insufficient `contents: write` authorization or runner environment reviewer rules prevent publication, leave the release unchanged and report the error; do not weaken the gate.
+
+== Recovery for v0.3.150 (after explicit acceptance)
+
+Known source SHA: `eadaf20f5fb39e38ff0eb39e85715a7a94dfa3c0`.
+Known successful candidate run ID: `42529963171`.
+The release `v0.3.150` currently exists without assets. The new publisher can append the exact five files from this candidate; it will check the release tag matches the source SHA. Importing 0.3.151 into ZipRunner does not itself publish them.
+
+== Tests
+
+`python -m unittest discover -s tests -p 'test_publish_approved_release.py' -v`
+
+The tests cover exact-request validation, required workflows, installer/checksum fidelity, matching old release tag, mismatch rejection, idempotent append, conflict refusal and independent permissions.

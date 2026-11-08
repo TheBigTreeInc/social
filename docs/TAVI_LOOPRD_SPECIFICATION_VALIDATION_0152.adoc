@@ -1,0 +1,43 @@
+= Tavi Social 0.3.152 — LoopRD specification validation repair
+:toc:
+
+== Incident
+
+The LoopRD management loader reported `looprd-social · specification_invalid`, `type: value_error`, root path `[]`, on 2026-11-09. The generated Social parent descriptor from 0.3.144 through 0.3.151 declared the operator management action `reset-companion`, with write targets `companionSnapshot`, `companionRevision` and `companionEpoch`, but did not list those fields in `management.resources.accounts.fields`.
+
+LoopRD's model-level `check_management` cross-reference (see `pac-labs/dapi/looprd/administration_spec.py`) requires every management action write target to be an exposed managed field. The three missing fields are sufficient to reject the entire specification as a root-level value error. The user-facing report did not include the underlying validation message; this is a demonstrated invalid contract, but a running LoopRD validation is still needed to confirm no other blocker remains.
+
+== Implementation
+
+* Keep client package at `0.3.152` and advance LoopRD server descriptor release from `0.3.122` to `0.3.123`.
+* Keep database `schemaVersion: 13`, all additive migrations and stored Companion data unchanged.
+* Expose the three managed Companion fields as *non-editable* fields. The explicit `reset-companion` action remains the only write path through the operator management contract.
+* Preserve the operator-only `accounts` resource permissions (`social:operator`), action write allowlist and reset-epoch mechanism.
+* Generate `looprd.yaml` and the Wallet subcomponent descriptor from the checked-in generator. Synchronize `ziprunner.looprd.json` with the actual `looprd.yaml` SHA-256.
+* Reject undeclared action writes during descriptor generation and before ZipRunner's build, via `tools/looprd_management_preflight.py`.
+* Add negative regression fixtures that reproduce the original missing-fields rejection.
+* Preserve the separate GitHub `Publish approved Tavi release` workflow; publication never happens from a local build or candidate-preparation job.
+
+== Verification commands
+
+[source,shell]
+----
+python tools/generate-looprd.py --check
+python tools/looprd_management_preflight.py
+python -m unittest discover -s tests -p test_looprd_management_contract_152.py -v
+python -m looprd validate looprd.yaml
+----
+
+The final command requires the same DAPI/LoopRD runtime version deployed to the target server. The preceding local checks do **not** replace that authoritative validation.
+
+== Operator approval gates
+
+. Inspect the new descriptor against the installed LoopRD runtime and check detailed diagnostics before promotion.
+. Back up the current Social database and preserve any running generation and recovery option. Do not reset or downgrade existing data.
+. Approve promotion of LoopRD descriptor release `0.3.123` separately from approval to publish Tavi client `0.3.152`.
+. Confirm that the operator-only `reset-companion` action resets a *test account* and rotates its epoch; an offline old-client write must fail. Check other Social data and all Wallet service contracts continue working.
+. No CI result or ZipRunner source test is evidence that the live server or the native client has been accepted.
+
+== Information exposure
+
+The LoopRD management schema requires write targets to be declared as managed fields. This version keeps them `editable: false`, but the operator management interface may display their values to authorized operators. The `accounts` data resource remains scoped to `social:operator`. Future LoopRD support for write-only action targets or hidden managed fields would allow us to avoid operator presentation of the Companion snapshot while preserving the reset operation.

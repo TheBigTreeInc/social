@@ -1,6 +1,6 @@
 {
   "schema": "tavi.ci-parity-plan/v1",
-  "version": "0.3.150",
+  "version": "0.3.152",
   "project": "looprd-social",
   "policy": {
     "environment": "isolated-local-fixture-only",
@@ -10,6 +10,19 @@
     "release": "never_auto_publish"
   },
   "checks": [
+    {
+      "id": "looprd-management-contract",
+      "label": "LoopRD generated descriptor + operator action permission contract",
+      "required": true,
+      "argv": [
+        "python",
+        "tools/looprd_management_preflight.py"
+      ],
+      "timeoutSeconds": 30,
+      "githubWorkflows": [
+        "Verify Social server and client source"
+      ]
+    },
     {
       "id": "source-contracts",
       "label": "CI parity: exact root JS source and protocol tests",

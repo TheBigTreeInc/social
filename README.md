@@ -1,3 +1,7 @@
+## Tavi 0.3.151 — approved Windows/Android release publication
+
+The source includes a separate, **manual** `Publish approved Tavi release` GitHub Actions workflow. The existing candidate preparation workflow remains read-only. Publication requires the exact successful candidate SHA and workflow-run ID, operator acceptance reference and explicit confirmation; the write job targets the protected `tavi-public-release` GitHub environment (required reviewers must be configured in GitHub Settings). It verifies the accepted Windows EXE, signed Android APK, artifact ZIPs, checksums, tag target and source version before creating a release or appending only missing assets. The existing `v0.3.150` empty release can be filled from its accepted candidate without rebuilding or overwriting other files. See `docs/TAVI_APPROVED_RELEASE_PUBLICATION_0151.adoc`. **No publication is performed by installing this ZIP.**
+
 # looprd-social 0.3.150 — Windows + signed Android candidate first
 
 Base: 0.3.149. Introduced an explicitly scoped, manual `windows-android` release-candidate workflow requiring four exact-commit successful push workflows (source, Windows, Android, browser UI QA). It packages two installer ZIPs and direct Windows EXE + Android APK with checksums and review-only metadata. The original eight-workflow `full` profile remains available for later Linux/macOS/SDK delivery. No automatic push, GitHub tag, release publication or LoopRD deployment. See `docs/TAVI_WINDOWS_ANDROID_CANDIDATE_0150.adoc`.
@@ -482,3 +486,7 @@ Design and SDK foundation for shared wallet, currencies, pets, contacts, message
 ## ZipRunner CI parity (0.3.147)
 
 `node tools/ci-parity.mjs --profile prebuild` is required by `project.zr` before native build. The version-controlled `ci-parity-plan.json` maps checks to GitHub workflows. It runs root JavaScript source verification, the complete Python unittest suite, installs the browser dependencies, then Playwright UI smoke at five viewports using only a loopback disposable fixture. Reports/logs are written to `qa-artifacts/ci-parity/` and must remain local, not distributed. Missing dependencies fail closed. Native Windows/Android operator acceptance, exact pushed-commit GitHub CI, and release remain independent gates.
+
+### LoopRD `specification_invalid` repair (client 0.3.152 / server spec 0.3.123)
+
+The operator `reset-companion` action's three write targets are now explicitly represented as non-editable managed fields. This fixes a root-level LoopRD management contract validation failure introduced in client 0.3.144. CI parity runs the management preflight; operators must still validate with their installed LoopRD runtime and approve descriptor promotion separately. Database schema 13 and the approved-release workflow are unchanged. See `docs/TAVI_LOOPRD_SPECIFICATION_VALIDATION_0152.adoc`.

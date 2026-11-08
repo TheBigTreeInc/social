@@ -1,0 +1,75 @@
+# Exact-candidate publication after independent, explicit operator acceptance.
+# Preparation remains read-only in release.yml; this workflow never auto-runs.
+name: Publish approved Tavi release
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: 'Exact 40-character commit SHA of accepted Windows/Android candidate'
+        required: true
+        type: string
+      candidate_run_id:
+        description: 'Successful Prepare Tavi release candidate workflow RUN ID'
+        required: true
+        type: string
+      operator_acceptance_ref:
+        description: 'ZipRunner native Windows/Android acceptance evidence reference'
+        required: true
+        type: string
+      publication_confirmation:
+        description: 'Type PUBLISH-TAVI-WINDOWS-ANDROID to publish accepted installers'
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: tavi-publication-${{ inputs.candidate_sha }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify exact candidate, tag, checksums and operator confirmation (read-only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          CANDIDATE_SCOPE: windows-android
+          OPERATOR_ACCEPTANCE_REF: ${{ inputs.operator_acceptance_ref }}
+          PUBLICATION_CONFIRMATION: ${{ inputs.publication_confirmation }}
+        run: python tools/publish-approved-release.py
+  publish:
+    needs: verify
+    runs-on: ubuntu-24.04
+    # Configure this GitHub Environment with required reviewers to add a
+    # second, independent publication approval beyond workflow_dispatch.
+    environment:
+      name: tavi-public-release
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reverify immutable candidate and append accepted assets to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          CANDIDATE_SCOPE: windows-android
+          OPERATOR_ACCEPTANCE_REF: ${{ inputs.operator_acceptance_ref }}
+          PUBLICATION_CONFIRMATION: ${{ inputs.publication_confirmation }}
+        run: python tools/publish-approved-release.py --publish

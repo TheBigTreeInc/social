@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.150",
-    "base_version": "0.3.149"
+    "version": "0.3.152",
+    "base_version": "0.3.151"
   },
   "update": {
-    "id": "TAVI-RELEASE-WIN-ANDROID-150",
+    "id": "TAVI-LOOPRD-SPEC-152",
     "kind": "source_update",
-    "created_at": "2026-11-08T20:00:00+01:00",
-    "summary": "Introduce explicitly scoped, manual Windows + Android candidate; keep full cross-platform release candidate and all operator/publication gates."
+    "created_at": "2026-11-09T00:24:59+01:00",
+    "summary": "Repair LoopRD schema 13 operator reset-companion management contract; preserve publication approval workflow. No database migration."
   },
   "planned_work": [
     {
@@ -2960,10 +2960,10 @@
     "notes": "Only review-only Windows/Android candidate created after explicit workflow invocation; no push, auto-release, public release, tags or deployment authorized. Full multi-platform path preserved."
   },
   "release_notes": {
-    "version": "0.3.150",
-    "summary": "Manual candidate workflow supports Windows NSIS + signed Android APK first; four exact-commit successful CI workflows required; full multi-platform path remains available. No application/runtime behavior or database migration changes in this update.",
+    "version": "0.3.152",
+    "summary": "LoopRD 0.3.123 spec validation repair, Tavi client 0.3.152; Windows/Android release publication still approval-gated.",
     "server_unchanged": false,
-    "database_migration": "13 — add Companion snapshot/revision/reset epoch fields to SocialAccount; operator-approved migration required",
+    "database_migration": "None: retain schemaVersion 13, additive migration history and live data.",
     "native_qa": "All source regression tests only; native Windows/Android build, LoopRD migration and two-device Companion acceptance pending",
     "operator_approval": "pending"
   },
@@ -2972,11 +2972,11 @@
     "browser_qa": "Source tests for preview/store/Assets 0.1.9 scene and permissions; real 355x630/native device visual QA pending",
     "native_acceptance": "pending",
     "git_push": "Not pushed here; after operator-approved Git push, exact new SHA must pass four scoped CI workflows before candidate.",
-    "server_deploy": "NOT DEPLOYED: source LoopRD 0.3.122 Companion CAS endpoint must be explicitly approved and migrated; no server deployment authorized",
-    "database_schema": "13 new migration; backup, migration and server smoke test require operator approval",
-    "operator_review": "Windows+Android candidate source tests; actual GitHub exact-SHA candidate, Windows/Android native operator acceptance and publication pending.",
+    "server_deploy": "Not deployed: LoopRD exact-runtime acceptance and separate operator approval pending.",
+    "database_schema": "13 (unchanged from 0.3.151; LoopRD server descriptor release 0.3.123)",
+    "operator_review": "Pending: protect DB and approve server spec update independently of client release.",
     "openclaw_bridge": "Local fake-CLI compatibility, reply chunking, cursor/receipt unit tests passed; real bot runtime pending.",
     "package_manifest": "Reconciled preexisting planned vs done/todo ID mismatch without closing or approving any record; legacy operator gates preserved."
   },
-  "version": "0.3.150"
+  "version": "0.3.152"
 }

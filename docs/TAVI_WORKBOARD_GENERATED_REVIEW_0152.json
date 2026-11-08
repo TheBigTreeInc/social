@@ -1,0 +1,429 @@
+{
+  "schema": "tavi.workboard-archived-import-entries/v1",
+  "note": "Omitted from incoming 0.3.152 update only; ZipRunner local tickets are not deleted. These reviews target generated dependencies or build output, not Tavi authored source.",
+  "entries": [
+    {
+      "id": "engineering-review-utilsbundle-393a8cd4",
+      "title": "Characterize and plan decomposition of client/node_modules/playwright-core/lib/utilsBundle.js",
+      "summary": "Review the 86078-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "suggested",
+      "created_at": "2026-10-19T21:55:49",
+      "updated_at": "2026-10-19T21:55:49",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ]
+    },
+    {
+      "id": "engineering-review-config-1119be2c",
+      "title": "Characterize and plan decomposition of client/node_modules/vite/dist/node/chunks/config.js",
+      "summary": "Review the 36236-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "critical",
+      "status": "deferred",
+      "created_at": "2026-10-16T19:11:01",
+      "updated_at": "2026-10-16T20:40:26",
+      "status_updated_at": "2026-10-16T20:40:26",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-16T20:36:14",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-16T20:40:26",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-build2-5e7a32ab",
+      "title": "Characterize and plan decomposition of client/node_modules/vite/dist/node/chunks/build2.js",
+      "summary": "Review the 5538-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T21:10:23",
+      "updated_at": "2026-10-17T22:27:27",
+      "status_updated_at": "2026-10-17T22:27:27",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T21:27:32",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T22:27:27",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-dist-66cbee98",
+      "title": "Characterize and plan decomposition of client/node_modules/vite/dist/node/chunks/dist.js",
+      "summary": "Review the 6758-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T19:24:51",
+      "updated_at": "2026-10-17T19:52:24",
+      "status_updated_at": "2026-10-17T19:52:24",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T19:47:37",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T19:52:24",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-generated-861a170d",
+      "title": "Characterize and plan decomposition of client/src-tauri/target/release/build/web_atoms-ca77b5b51be7c95b/out/generated.rs",
+      "summary": "Review the 4202-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T22:58:03",
+      "updated_at": "2026-10-17T23:34:53",
+      "status_updated_at": "2026-10-17T23:34:53",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T23:23:13",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T23:34:53",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-index-b33dc2a4",
+      "title": "Characterize and plan decomposition of client/node_modules/rollup/dist/shared/index.js",
+      "summary": "Review the 9615-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T16:04:38",
+      "updated_at": "2026-10-17T17:15:37",
+      "status_updated_at": "2026-10-17T17:15:37",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T16:09:36",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T17:15:37",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-index.d-4484a0e0",
+      "title": "Characterize and plan decomposition of client/node_modules/vite/dist/node/index.d.ts",
+      "summary": "Review the 3717-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-18T01:43:14",
+      "updated_at": "2026-10-18T10:33:52",
+      "status_updated_at": "2026-10-18T10:33:52",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-18T10:04:58",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-18T10:06:45",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-main-fea62b53",
+      "title": "Characterize and plan decomposition of client/node_modules/esbuild/lib/main.js",
+      "summary": "Review the 2536-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-18T16:32:19",
+      "updated_at": "2026-10-18T17:01:42",
+      "status_updated_at": "2026-10-18T17:01:42",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-18T16:41:12",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-18T17:01:42",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-named_entities-f7535bae",
+      "title": "Characterize and plan decomposition of client/src-tauri/target/release/build/web_atoms-ca77b5b51be7c95b/out/named_entities.rs",
+      "summary": "Review the 11844-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T12:01:06",
+      "updated_at": "2026-10-17T13:36:18",
+      "status_updated_at": "2026-10-17T13:36:18",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T12:12:09",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T13:36:18",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-node-entry-a4eea016",
+      "title": "Characterize and plan decomposition of client/node_modules/rollup/dist/es/shared/node-entry.js",
+      "summary": "Review the 25136-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-16T22:32:01",
+      "updated_at": "2026-10-17T01:51:31",
+      "status_updated_at": "2026-10-17T01:51:31",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-16T22:39:50",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T01:51:31",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-parseast-f1ef015d",
+      "title": "Characterize and plan decomposition of client/node_modules/rollup/dist/shared/parseAst.js",
+      "summary": "Review the 2363-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-19T01:14:57",
+      "updated_at": "2026-10-19T02:44:22",
+      "status_updated_at": "2026-10-19T02:44:22",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-19T01:40:17",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-19T02:44:22",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-rollup-8af86f10",
+      "title": "Characterize and plan decomposition of client/node_modules/rollup/dist/shared/rollup.js",
+      "summary": "Characterize oversized Rollup source and plan bounded decomposition; see acceptance criteria.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T07:59:24",
+      "updated_at": "2026-10-17T11:26:32",
+      "status_updated_at": "2026-10-17T11:26:32",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T10:41:52",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T11:26:32",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-watch-9b142110",
+      "title": "Characterize and plan decomposition of client/node_modules/rollup/dist/es/shared/watch.js",
+      "summary": "Review the 9971-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-17T14:25:00",
+      "updated_at": "2026-10-17T15:42:51",
+      "status_updated_at": "2026-10-17T15:42:51",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-17T14:54:28",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-17T15:42:51",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-window-cb205b73",
+      "title": "Characterize and plan decomposition of client/node_modules/@tauri-apps/api/window.js",
+      "summary": "Review the 2483-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-18T17:37:11",
+      "updated_at": "2026-10-18T18:21:40",
+      "status_updated_at": "2026-10-18T18:21:40",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-18T17:44:01",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-18T18:21:40",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    },
+    {
+      "id": "engineering-review-window.d-b443ed6b",
+      "title": "Characterize and plan decomposition of client/node_modules/@tauri-apps/api/window.d.ts",
+      "summary": "Review the 2356-line source file, map its responsibilities and dependencies, add characterization coverage, and define small extraction seams before changing production behavior.",
+      "priority": "high",
+      "status": "deferred",
+      "created_at": "2026-10-19T08:37:42",
+      "updated_at": "2026-10-19T21:45:17",
+      "status_updated_at": "2026-10-19T21:45:17",
+      "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+      "acceptance_criteria": [
+        "No production behavior is changed in this review pass.",
+        "Major responsibilities, public entry points, state boundaries, and dependencies are documented.",
+        "Characterization tests cover the highest-risk current behavior and failure paths.",
+        "DESIGN.adoc records bounded extraction seams, ordering, rollback, and validation requirements.",
+        "The proposed implementation passes are independently reviewable and avoid a broad rewrite."
+      ],
+      "notes": [
+        {
+          "at": "2026-10-19T21:29:05",
+          "note": "ZipRunner parked this generated pass because the global engineering Suggested window is limited to 3 item(s) and 1 item(s) per project. The durable improvement plan is unchanged."
+        },
+        {
+          "at": "2026-10-19T21:45:17",
+          "note": "ZipRunner reopened this pass because a slot became available in the global engineering Suggested window."
+        }
+      ],
+      "ziprunner_status_override": true
+    }
+  ]
+}
