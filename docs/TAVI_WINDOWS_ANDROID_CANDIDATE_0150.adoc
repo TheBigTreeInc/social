@@ -1,0 +1,34 @@
+= Tavi 0.3.150 — Review-only Windows + Android release candidate
+:toc:
+
+== Scope
+
+Tavi is a messenger-first application. Windows (NSIS) and signed Android (APK) are the first public distribution targets. Linux, macOS and the wider SDK test matrix remain future targets; they are not accepted or advertised by a Windows/Android candidate.
+
+This source change does not publish installers, authorize downloads to the public, change app/server behavior, or approve the schema-13 LoopRD migration.
+
+== Operator workflow
+
+. Import `looprd-social-0.3.150-ziprunner.zip` through ZipRunner and complete its local checks and native Windows acceptance. Test a signed Android client on a real Android phone before approving distribution.
+. Explicitly authorize a Git push through the existing operator workflow; do not infer permission from build success.
+. Check the exact *new* pushed `main` SHA. Required success for the Windows/Android candidate: `Verify Social server and client source`, `Windows desktop app`, `Android phone app`, and `Tavi browser UI QA`.
+. On GitHub, open *Actions -> Prepare Tavi release candidate -> Run workflow*. Supply the exact SHA and select `candidate_scope = windows-android` (the explicit default).
+. The read-only workflow checks the SHA is the current main commit and only successful *push* runs for that SHA. It requires the Windows NSIS and signed Android release artifact names, rejects missing/expired artifacts, and fails closed.
+. Download the `tavi-candidate-windows-android-<sha>` artifact for *operator review*. It contains two platform ZIP bundles (Windows NSIS and signed Android), a direct Windows `.exe` and a direct Android `.apk`, `SHA256SUMS.txt`, and `release-candidate.json` recording scope, SHA, required/excluded workflows and acceptance=`pending`.
+. Validate ZIP hashes and the packaged NSIS installer and APK on real devices. Confirm login, messaging, server compatibility, installation/updating, and safe return to Tavi Home.
+. Public distribution is a *separate explicitly approved action*: create a versioned permanent download page or GitHub Release and attach the accepted Windows NSIS installer + Android APK + checksums. Never use expiring GitHub Actions artifacts as permanent public links.
+
+== Release gates
+
+* The manual candidate workflow retains `contents: read` and `actions: read`, no write permissions and no tag, release or deployment actions.
+* The full profile (`candidate_scope = full`) is retained unchanged and still requires all eight CI workflows, including Linux/macOS and SDK cross-platform, and all six bundles.
+* The `windows-android` profile requires four CI workflows and two native installer bundles; cancelled macOS jobs do not count as passes or affect this *separate* scope.
+* Scope is validated against a fixed list. It cannot be forged via a repository file or caller-provided arbitrary value. Invalid scope, missing source SHA, stale `main`, missing jobs, failed jobs, missing artifacts, duplicate/extraneous installers, or candidate output collision block.
+* Existing GitHub Pages publication confirmation and protected reviewer gates are unchanged. `RELEASE_SCOPE` defaults to `full` for existing non-candidate callers; the manual candidate workflow explicitly passes the selected scope.
+* CI green means candidate ready for operator review, *not* accepted, published or deployed.
+
+== Verification evidence
+
+`tests/test_release_scope_150.py` tests both scopes, guards against failed/missing/non-push exact-SHA runs, validates the manual workflow's read-only permissions, and simulates two artifact downloads to test two ZIPs + two direct installers, hashes and review-only manifest. `tests/test_release_gate.py` still protects the original full-profile release gate; `tests/test_android_artifact_workflow.py` still requires exactly one APK.
+
+The actual Windows/Android CI jobs already produced installers for 0.3.149, but their SHA predates this change. They are *not* evidence that the new 0.3.150 candidate passed. Operator approval, exact-SHA CI, signed APK install QA and public release remain pending.

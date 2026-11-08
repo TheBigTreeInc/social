@@ -1,3 +1,9 @@
+# looprd-social 0.3.150 — Windows + signed Android candidate first
+
+Base: 0.3.149. Introduced an explicitly scoped, manual `windows-android` release-candidate workflow requiring four exact-commit successful push workflows (source, Windows, Android, browser UI QA). It packages two installer ZIPs and direct Windows EXE + Android APK with checksums and review-only metadata. The original eight-workflow `full` profile remains available for later Linux/macOS/SDK delivery. No automatic push, GitHub tag, release publication or LoopRD deployment. See `docs/TAVI_WINDOWS_ANDROID_CANDIDATE_0150.adoc`.
+
+Local tests and native acceptance must be reported separately; real GitHub runs for the **next** pushed commit are pending.
+
 ## 0.3.149 — browser QA Notepad navigation repair
 
 `client/tools/ui-qa.mjs` now tests the real Settings-origin App Store Back route after installing Notepad. The previous test incorrectly expected the Apps drawer. Added `client/tests/ui-qa-notepad-back-149.test.mjs` to guard Settings and Apps return contexts. This change is test-only; product navigation and gates are unchanged. Run the five-viewport Playwright QA on ZipRunner's Windows host for operator evidence.

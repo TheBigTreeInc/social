@@ -1,4 +1,4 @@
-"""Read-only exact-commit release candidate preparation.
+"""Read-only, explicitly scoped, exact-commit release candidate preparation.
 
 Called explicitly from workflow_dispatch. This script checks the current main SHA,
 requires all build/test workflows to pass for the same push commit, then collects
@@ -28,6 +28,23 @@ REQUIRED = {
     'Tavi browser UI QA': (),
 }
 
+# A Windows + Android release may be accepted independently of future Linux/macOS
+# deliverables. Keep the original full gate available and strict.
+SCOPES = {
+    'windows-android': {name: REQUIRED[name] for name in (
+        'Verify Social server and client source',
+        'Windows desktop app',
+        'Android phone app',
+        'Tavi browser UI QA',
+    )},
+    'full': REQUIRED,
+}
+
+def requirements_for_scope(scope):
+    if scope not in SCOPES:
+        raise CandidateBlocked('Unsupported release candidate scope')
+    return SCOPES[scope]
+
 
 class CandidateBlocked(RuntimeError):
     """Required verification is missing, incomplete, stale or unsuccessful."""
@@ -46,10 +63,12 @@ def require_exact_sha(sha):
     return sha.lower()
 
 
-def select_successful_push_runs(runs, sha):
+def select_successful_push_runs(runs, sha, required=None):
     """Fail closed on latest attempt of any required workflow; never use PR/manual/tag runs."""
+    if required is None:
+        required = REQUIRED  # existing full-scope caller compatibility
     selected = {}
-    for name in REQUIRED:
+    for name in required:
         candidates = [r for r in runs if r.get('name') == name and r.get('event') == 'push'
                       and r.get('head_sha', '').lower() == sha and r.get('head_branch') == 'main']
         if not candidates:
@@ -64,6 +83,8 @@ def select_successful_push_runs(runs, sha):
 def candidate():
     repo = os.environ['GH_REPO']
     sha = require_exact_sha(os.environ['RELEASE_SHA'])
+    scope = os.environ.get('RELEASE_SCOPE', 'full')
+    required = requirements_for_scope(scope)
     version = json.loads(Path('package.json').read_text())['version']
     if not re.fullmatch(r'\d+\.\d+\.\d+', version):
         raise CandidateBlocked('Candidate version must be stable x.y.z')
@@ -75,11 +96,11 @@ def candidate():
         raise CandidateBlocked('Checked-out source SHA does not match the requested candidate')
 
     response = json.loads(gh('api', f'repos/{repo}/actions/runs?head_sha={sha}&per_page=100'))
-    selected = select_successful_push_runs(response['workflow_runs'], sha)
+    selected = select_successful_push_runs(response['workflow_runs'], sha, required)
 
     # Ensure all artifact metadata exists before downloading anything.
     downloads = []
-    for name, artifacts in REQUIRED.items():
+    for name, artifacts in required.items():
         if not artifacts:
             continue
         run = selected[name]
@@ -91,7 +112,7 @@ def candidate():
             downloads.append((run['id'], artifact_name))
 
     if os.environ.get('CANDIDATE_CHECK_ONLY') == '1':
-        print(f'CI VERIFIED (NOT PUBLISHED): {version} {sha}')
+        print(f'CI VERIFIED (NOT PUBLISHED): {scope} {version} {sha}')
         return 0
 
     out = Path('release-assets')
@@ -115,6 +136,18 @@ def candidate():
             raise CandidateBlocked(f'Invalid bundle {target.name}')
         shutil.rmtree(directory)
 
+    # Check that the actual native installer is present exactly once, not merely
+    # that a successful Actions job uploaded an arbitrarily named file.
+    windows_bundle = out / f'looprd-social-windows-nsis-{version}.zip'
+    with ZipFile(windows_bundle) as bundle:
+        exes = [n for n in bundle.namelist() if n.lower().endswith('.exe') and not n.endswith('/')]
+        if len(exes) != 1:
+            raise CandidateBlocked('Windows NSIS artifact must contain exactly one installer EXE')
+        direct_exe = out / f'tavi-windows-x64-v{version}-setup.exe'
+        direct_exe.write_bytes(bundle.read(exes[0]))
+    if direct_exe.stat().st_size < 1_000_000:
+        raise CandidateBlocked('Windows NSIS installer unexpectedly small')
+
     android_bundle = out / f'tavi-android-arm64-signed-release-{version}.zip'
     with ZipFile(android_bundle) as bundle:
         apks = [n for n in bundle.namelist() if n.endswith('.apk')]
@@ -124,8 +157,9 @@ def candidate():
         direct_apk.write_bytes(bundle.read(apks[0]))
     if direct_apk.stat().st_size < 1_000_000:
         raise CandidateBlocked('Android APK unexpectedly small')
-    if len(list(out.glob('*.zip'))) != 6:
-        raise CandidateBlocked('Expected exactly six candidate ZIP bundles')
+    expected_zips = sum(len(artifacts) for artifacts in required.values())
+    if len(list(out.glob('*.zip'))) != expected_zips:
+        raise CandidateBlocked(f'Expected exactly {expected_zips} candidate ZIP bundles for {scope}')
 
     assets = sorted(p for p in out.iterdir() if p.is_file())
     checksums = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in assets}
@@ -135,6 +169,9 @@ def candidate():
         'repository': repo,
         'commit_sha': sha,
         'version': version,
+        'scope': scope,
+        'required_workflows': list(required),
+        'excluded_workflows': [name for name in REQUIRED if name not in required],
         'status': 'ci_passed_operator_unverified',
         'publication_authorized': False,
         'operator_acceptance': 'pending',
@@ -143,18 +180,22 @@ def candidate():
         'assets_sha256': checksums,
     }
     Path('release-candidate.json').write_text(json.dumps(record, indent=2, sort_keys=True) + '\n')
+    excluded_notice = ('Other platform workflows are outside this candidate scope; they are NOT accepted or released.\n\n'
+                       if scope == 'windows-android' else 'Full eight-workflow candidate scope; no required platform workflow was omitted.\n\n')
     Path('release-assets-notes.md').write_text(
-        f'# Tavi {version} — review-only release candidate\n\n'
-        f'Exact main commit: `{sha}`. All eight required CI workflows passed for this commit.\n\n'
-        'This package has NOT passed native operator acceptance. It is NOT a published release.\n'
-        'Inspect build artifacts and checksums, perform ZipRunner Windows/Android acceptance,\n'
-        'and request separate explicit publication approval if ever required.\n'
+        f'# Tavi {version} — {scope} review-only candidate\n\n'
+        + f'Exact main commit: `{sha}`. Required {scope} CI workflows passed: '
+        + ', '.join(required) + '.\n'
+        + excluded_notice
+        + 'This package has NOT passed native operator acceptance. It is NOT a published release.\n'
+        + 'Inspect build artifacts and checksums, perform ZipRunner Windows/Android acceptance,\n'
+        + 'and request separate explicit publication approval if ever required.\n'
     )
     output = os.environ.get('GITHUB_OUTPUT')
     if output:
         with open(output, 'a', encoding='utf-8') as f:
             f.write('ready=true\n')
-    print(f'CANDIDATE READY (NOT PUBLISHED): {version} {sha}')
+    print(f'CANDIDATE READY (NOT PUBLISHED): {scope} {version} {sha}')
     return 0
 
 

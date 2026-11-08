@@ -1,3 +1,9 @@
+# looprd-social 0.3.150 — Windows + signed Android candidate first
+
+Base: 0.3.149. Introduced an explicitly scoped, manual `windows-android` release-candidate workflow requiring four exact-commit successful push workflows (source, Windows, Android, browser UI QA). It packages two installer ZIPs and direct Windows EXE + Android APK with checksums and review-only metadata. The original eight-workflow `full` profile remains available for later Linux/macOS/SDK delivery. No automatic push, GitHub tag, release publication or LoopRD deployment. See `docs/TAVI_WINDOWS_ANDROID_CANDIDATE_0150.adoc`.
+
+Local tests and native acceptance must be reported separately; real GitHub runs for the **next** pushed commit are pending.
+
 # looprd-social 0.3.149 — Notepad Back browser QA repair
 
 Base: 0.3.148. The App Store was reopened through Settings > App sources before installing and launching Notepad. Back from Notepad returns to App Store, and Back from that App Store correctly returns to Settings, not Apps. The old browser QA asserted Apps. This patch verifies Settings as the parent and the direct Home tab; it does not change the user's navigation, release permissions, or server behavior.
