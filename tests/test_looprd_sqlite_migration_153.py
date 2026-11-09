@@ -47,6 +47,8 @@ class MigrationContractTests(unittest.TestCase):
                     c.exec_driver_sql(stmt)
                 actual={x['name']:x for x in sa.inspect(c).get_columns('SocialAccount')}
                 for name in SNAPSHOT_FIELDS:
+                    self.assertEqual(actual[name]['nullable'],
+                        not account[name].get('required', False), name)
                     kind=account[name]['type']
                     if kind=='string':
                         self.assertEqual(actual[name]['type']._type_affinity,sa.String()._type_affinity)
@@ -81,6 +83,6 @@ class MigrationContractTests(unittest.TestCase):
             result=subprocess.run([sys.executable,*command],cwd=ROOT,text=True,capture_output=True)
             self.assertEqual(result.returncode,0,result.stdout+'\n'+result.stderr)
         self.assertEqual(self.spec['database']['schemaVersion'],13)
-        self.assertEqual(self.spec['release'],'0.3.124')
+        self.assertEqual(self.spec['release'],'0.3.125')
 
 if __name__=='__main__': unittest.main()

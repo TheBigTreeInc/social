@@ -122,7 +122,7 @@ spec={
   'ALTER TABLE "SocialConversationRead" ADD COLUMN "deliveredId" INTEGER NOT NULL DEFAULT 0'
   ]},{'version':13,'statements':[
   'ALTER TABLE "SocialAccount" ADD COLUMN "companionSnapshot" VARCHAR(8192)',
-  'ALTER TABLE "SocialAccount" ADD COLUMN "companionRevision" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "SocialAccount" ADD COLUMN "companionRevision" INTEGER DEFAULT 0',
   'ALTER TABLE "SocialAccount" ADD COLUMN "companionEpoch" VARCHAR(64)'
   ]}]},
  'models':{

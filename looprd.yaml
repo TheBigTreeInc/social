@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.124
+release: 0.3.125
 api:
   version: v1
 cors:
@@ -179,7 +179,7 @@ database:
   - version: 13
     statements:
     - ALTER TABLE "SocialAccount" ADD COLUMN "companionSnapshot" VARCHAR(8192)
-    - ALTER TABLE "SocialAccount" ADD COLUMN "companionRevision" INTEGER NOT NULL DEFAULT 0
+    - ALTER TABLE "SocialAccount" ADD COLUMN "companionRevision" INTEGER DEFAULT 0
     - ALTER TABLE "SocialAccount" ADD COLUMN "companionEpoch" VARCHAR(64)
 models:
   SocialProfile:
@@ -3468,4 +3468,4 @@ handlers:
     - recovery-codes-v1
     - game-session-rooms-v1
     - wallet-v1
-    release: 0.3.124
+    release: 0.3.125

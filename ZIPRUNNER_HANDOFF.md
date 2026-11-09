@@ -1,3 +1,7 @@
+# looprd-social 0.3.154 — LoopRD schema-13 nullability contract repair
+
+Base 0.3.153. Correct SocialAccount companionRevision migration from INTEGER NOT NULL DEFAULT 0 to INTEGER DEFAULT 0 because the model declares `required: false`. Preserve schema target 13, existing Companion lazy initialization and retained schema-12 account data. Strengthen SQLite ADD COLUMN preflight to check type, string length and nullability; add real SQLite row-preservation and negative tests. Server release 0.3.125. No live deployment, database modification, Git push or public release performed; operator and publication approval remain necessary. See `docs/TAVI_LOOPRD_SCHEMA13_NULLABILITY_0154.adoc`.
+
 # looprd-social 0.3.153 — LoopRD schema-13 VARCHAR length correction
 
 Base 0.3.152. Fix migration 13 SocialAccount companionSnapshot TEXT -> VARCHAR(8192) to satisfy pac-labs/dapi strict SQLite reflected string-length contract. Add prebuild migration-length validator and SQLite row-preserving regression test. Increment server spec to 0.3.124 (schemaVersion 13 unchanged), regenerate descriptors and linked hash. No real DB modification, server deployment, Git push or release publication is performed; retain existing approval gates. See `docs/TAVI_LOOPRD_SCHEMA13_VARCHAR_0153.adoc`.

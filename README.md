@@ -1,3 +1,7 @@
+### LoopRD schema-13 nullability repair (0.3.154)
+
+Fixed `SocialAccount.companionRevision` migration to `INTEGER DEFAULT 0` rather than `INTEGER NOT NULL DEFAULT 0`, matching its optional LoopRD model field. Strict SQLite ADD COLUMN preflight now checks reflected SQL type, VARCHAR length and required/nullability for every modeled addition; a schema-12→13 fixture verifies account preservation and Companion initialization. Generated server descriptor release 0.3.125; database target stays 13, and publication remains approval-gated. See `docs/TAVI_LOOPRD_SCHEMA13_NULLABILITY_0154.adoc`.
+
 ## Tavi 0.3.151 — approved Windows/Android release publication
 
 The source includes a separate, **manual** `Publish approved Tavi release` GitHub Actions workflow. The existing candidate preparation workflow remains read-only. Publication requires the exact successful candidate SHA and workflow-run ID, operator acceptance reference and explicit confirmation; the write job targets the protected `tavi-public-release` GitHub environment (required reviewers must be configured in GitHub Settings). It verifies the accepted Windows EXE, signed Android APK, artifact ZIPs, checksums, tag target and source version before creating a release or appending only missing assets. The existing `v0.3.150` empty release can be filled from its accepted candidate without rebuilding or overwriting other files. See `docs/TAVI_APPROVED_RELEASE_PUBLICATION_0151.adoc`. **No publication is performed by installing this ZIP.**

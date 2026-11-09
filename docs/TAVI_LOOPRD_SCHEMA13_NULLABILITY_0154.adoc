@@ -1,0 +1,29 @@
+= Tavi Social 0.3.154 — LoopRD schema-13 nullability repair
+:toc:
+
+== Problem
+
+LoopRD diagnostics showed the last working `looprd-social` generation still at release `0.3.121`, database schema `12`, while a schema-13 candidate failed with `schema_contract_mismatch: Database nullability does not match model.` The preceding VARCHAR length mismatch had been addressed in 0.3.153.
+
+The SocialAccount model declares `companionRevision` as `integer` without `required: true`, so SQLAlchemy expects the reflected column to be nullable. The schema-13 migration incorrectly added it as `INTEGER NOT NULL DEFAULT 0`. LoopRD checks nullability after applying migrations and refuses to activate a mismatched generation.
+
+== Correction
+
+Use `ALTER TABLE "SocialAccount" ADD COLUMN "companionRevision" INTEGER DEFAULT 0` in migration 13. The default initializes existing accounts to revision 0; the nullable column matches the declared model. `companion_get` already uses `COALESCE(companionRevision,0)` on first read, so a NULL value is also handled. Other schema-13 fields, including `VARCHAR(8192)` snapshot and `VARCHAR(64)` epoch, are unchanged. No schemaVersion increase is necessary because schema 13 has not successfully activated on the reported server. Server descriptor release advances to `0.3.125`.
+
+== Verification and safety
+
+* `tools/looprd_sqlite_migration_preflight.py` checks every `ALTER TABLE ... ADD COLUMN` against the model's SQL type, VARCHAR length and required/nullability.
+* `tests/test_looprd_sqlite_migration_154.py` performs the schema-12→13 migration on real SQLite/SQLAlchemy with an existing account, reflects all SocialAccount fields and checks Companion first-read revision initialization.
+* Negative tests reject a non-nullable optional revision, a nullable required field and an incompatible integer type.
+* The previous 0.3.153 string-length regressions remain active.
+
+== Operator acceptance
+
+. Back up the live Social SQLite database and preserve its identity file; do not delete data or clear user accounts.
+. Use an isolated copy of schema 12 with the same installed LoopRD runtime, validate the generated descriptor and review migration diagnostics.
+. Approve server descriptor deployment separately. Confirm `loaded=true`, `release=0.3.125`, `schemaVersion=13` with `lastWorkingRetained=false` or no current load failure.
+. Verify sign-in, existing messages, account records and Companion GET/save/reset with a staging account.
+. Keep GitHub client release publication separately operator-approved; do not automatically publish any installers.
+
+` tavi-assets` is an independent component and this package does not modify its loader.
