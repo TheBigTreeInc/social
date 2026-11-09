@@ -1,8 +1,8 @@
 {
  "schema": "ziprunner.workboard-update.v1",
  "project": "looprd-social",
- "version": "0.3.158",
- "summary": "0.3.158: Repair ZipRunner version parity; keep GitHub one-shot Windows/Android release checks and operator approval. No automatic publication or database change.",
+ "version": "0.3.159",
+ "summary": "0.3.159: Make native Cargo.lock version validation safe on Windows CRLF and Unix LF; preserve the one-shot release workflow and operator approval gate.",
  "implemented": [
   {
    "id": "LRS-004",
@@ -2678,6 +2678,23 @@
    "operator_checks": [
     "Back up Social SQLite and validate 0.3.125 schema 13 using installed LoopRD against an isolated schema-12 copy.",
     "Confirm retained accounts and Companion state work; review diagnostics before separately approving deployment."
+   ]
+  },
+  {
+   "id": "TAVI-CI-CARGO-LOCK-159",
+   "title": "Portable Cargo.lock version-parity regression test",
+   "status": "review",
+   "priority": "high",
+   "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+   "summary": "Fix CI-only failure caused by CRLF conversion of Cargo.lock on Windows: extract one exact looprd-social-client package version using CRLF/LF-safe matching and report concise mismatches. Keep one-shot release approval gates intact.",
+   "acceptance_criteria": [
+    "Check Cargo.lock client version parity on both LF and CRLF formatted content.",
+    "Run npm run verify, Python discovery, and extracted-ZIP tests before ZipRunner import.",
+    "Validate GitHub Windows/Android CI after approved source push; retain required environment approval for releases."
+   ],
+   "operator_checks": [
+    "Import v0.3.159 in ZipRunner and confirm source verification and Windows native build pass.",
+    "After approved GitHub source push, verify Windows and Android Actions CI pass before running the gated Release Tavi workflow."
    ]
   }
  ],

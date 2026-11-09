@@ -1,7 +1,7 @@
-# Tavi 0.3.158 — ZipRunner version parity repair
+# Tavi 0.3.159 — Windows CRLF-safe CI version check
 
-Base: 0.3.157 (previous ZIP failed ZipRunner version-parity verification).
+Base: 0.3.158 (GitHub Windows tests failed because Cargo.lock has CRLF after checkout).
 
-Correct `.ziprunner-workboard-update.json` version and release summary to match the source and source ZIP. Synchronize native/client/package-lock and ZipRunner manifest/verification metadata to 0.3.158, and add regression coverage so the mismatch is caught before delivery.
+Fix the native Cargo.lock client version test to support LF and Windows CRLF without bypassing version consistency checks. Include a regression fixture for both formats, synchronize versioned source and ZipRunner metadata, and keep source-only changes bounded.
 
-The one-shot GitHub release workflow and its approval gates are unchanged. Keep local configuration, private runtime files and stable installers untouched. No direct push, tag, deployment or release. Verify and accept in ZipRunner first.
+The GitHub one-shot Release Tavi workflow remains unchanged and operator-gated. Do not push, tag, publish or release automatically. Preserve local configuration and private data.

@@ -5,6 +5,19 @@ import test from 'node:test';
 const WORKBOARD_UPDATE = new URL('../.ziprunner-workboard-update.json', import.meta.url);
 const ZIPRUNNER_WORKBOARD_LIMIT = 256 * 1024;
 
+// Cargo.lock is checked out with CRLF by some Windows Git configurations.
+// Parse only the exact package stanza, without assuming platform newlines.
+const cargoClientVersions = (content) => [...content.matchAll(
+  /^\[\[package\]\]\r?\nname = "looprd-social-client"\r?\nversion = "([^"\r\n]+)"/gm,
+)].map((match) => match[1]);
+
+test('Cargo.lock client stanza matches with LF and Windows CRLF', () => {
+  const fixture = '[[package]]\nname = "looprd-social-client"\nversion = "1.2.3"\n';
+  assert.deepEqual(cargoClientVersions(fixture), ['1.2.3']);
+  assert.deepEqual(cargoClientVersions(fixture.replaceAll('\n', '\r\n')), ['1.2.3']);
+  assert.deepEqual(cargoClientVersions(fixture.replace('looprd-social-client', 'another-crate')), []);
+});
+
 test('ZipRunner workboard update stays within the 256 KiB ingestion limit', async () => {
   const info = await stat(WORKBOARD_UPDATE);
   assert.ok(
@@ -58,6 +71,7 @@ test('ZipRunner release metadata versions agree with package.json', async () => 
   }
   const cargo = await readFile(new URL('client/src-tauri/Cargo.toml', root), 'utf8');
   const lock = await readFile(new URL('client/src-tauri/Cargo.lock', root), 'utf8');
-  assert.match(cargo, new RegExp(`^version = "${version.replaceAll('.', '\\.')}"$`, 'm'));
-  assert.match(lock, new RegExp(`name = "looprd-social-client"\\nversion = "${version.replaceAll('.', '\\.')}"`));
+  assert.match(cargo, new RegExp(`^version = "${version.replaceAll('.', '\\.')}"\\r?$`, 'm'));
+  assert.deepEqual(cargoClientVersions(lock), [version],
+    'client/src-tauri/Cargo.lock: expected exactly one client package at package.json version');
 });
