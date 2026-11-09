@@ -1,0 +1,3 @@
+= Tavi 0.3.155: Missing GitHub tag publication repair
+
+The approved release verification previously requested `commits/v0.3.154` before the tag existed. GitHub responds with HTTP 422, not the expected 404. Query `git/ref/tags/v0.3.154` with missing-allowed first, resolve the commit only if the tag exists, and permit new tags only when the candidate SHA equals the current main SHA. Retain all checksum, acceptance, protected-environment, and no-overwrite gates.

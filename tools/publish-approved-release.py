@@ -162,7 +162,10 @@ def verify_github_evidence(repo, commit, run_id, version):
 def verify_release_target(repo, commit, version):
     tag = f'v{version}'
     release = api(repo, f'releases/tags/{tag}', missing_ok=True)
-    tagged_commit = api(repo, f'commits/{tag}', missing_ok=True)
+    # GitHub returns HTTP 422 (not 404) for commits/<missing-tag>.
+    # Check the tag ref first, then resolve its commit only when it exists.
+    tag_ref = api(repo, f'git/ref/tags/{tag}', missing_ok=True)
+    tagged_commit = api(repo, f'commits/{tag}') if tag_ref is not None else None
     if tagged_commit is not None:
         if tagged_commit.get('sha', '').lower() != commit:
             raise PublicationBlocked('Existing release tag points at a different commit')

@@ -108,21 +108,41 @@ class PublishApprovedReleaseTests(unittest.TestCase):
                 pub.inspect_candidate(root,REPO,SHA)
 
     def test_existing_wrong_tag_is_rejected(self):
-        with patch.object(pub, 'api', side_effect=[{'tag_name':'v0.3.150','assets':[]}, {'sha':'b'*40}]):
+        with patch.object(pub, 'api', side_effect=[{'tag_name':'v0.3.150','assets':[]}, {'ref':'refs/tags/v0.3.150'}, {'sha':'b'*40}]):
             with self.assertRaisesRegex(pub.PublicationBlocked,'different commit'):
                 pub.verify_release_target(REPO,SHA,VERSION)
 
     def test_existing_matching_tag_can_be_filled_even_when_main_advanced(self):
-        with patch.object(pub, 'api', side_effect=[{'tag_name':'v0.3.150','assets':[]}, {'sha':SHA}]) as call:
+        with patch.object(pub, 'api', side_effect=[{'tag_name':'v0.3.150','assets':[]}, {'ref':'refs/tags/v0.3.150'}, {'sha':SHA}]) as call:
             tag, release=pub.verify_release_target(REPO,SHA,VERSION)
             self.assertEqual(tag,'v0.3.150')
             self.assertIsNotNone(release)
-            self.assertEqual(call.call_count,2)  # No need to compare to current main
+            self.assertEqual(call.call_count,3)  # No need to compare to current main
 
     def test_missing_release_cannot_be_created_for_old_commit(self):
         with patch.object(pub,'api',side_effect=[None,None,{'commit':{'sha':'b'*40}}]):
             with self.assertRaisesRegex(pub.PublicationBlocked,'current main'):
                 pub.verify_release_target(REPO,SHA,VERSION)
+
+    def test_missing_tag_skips_commit_lookup_and_allows_current_main(self):
+        calls = []
+        def fake_api(repo, path, missing_ok=False):
+            calls.append((path, missing_ok))
+            if path == f'releases/tags/v{VERSION}': return None
+            if path == f'git/ref/tags/v{VERSION}':
+                self.assertTrue(missing_ok)
+                return None
+            if path == 'branches/main': return {'commit': {'sha': SHA}}
+            raise AssertionError('Unexpected GitHub API call: ' + path)
+        with patch.object(pub, 'api', side_effect=fake_api):
+            tag, release = pub.verify_release_target(REPO, SHA, VERSION)
+        self.assertEqual((tag, release), (f'v{VERSION}', None))
+        self.assertFalse(any(path.startswith('commits/') for path, _ in calls))
+
+    def test_existing_release_without_tag_is_rejected(self):
+        with patch.object(pub, 'api', side_effect=[{'assets':[]}, None]):
+            with self.assertRaisesRegex(pub.PublicationBlocked, 'no resolvable matching tag'):
+                pub.verify_release_target(REPO, SHA, VERSION)
 
     def test_workflow_manual_and_separate_publish_permissions(self):
         wf=(MODULE.parents[1]/'.github/workflows/publish-approved-release.yml').read_text()
@@ -195,6 +215,7 @@ class PublishApprovedReleaseTests(unittest.TestCase):
                 if path==f'actions/runs/{RUN_ID}/artifacts?per_page=100':return artifact
                 if path==f'contents/package.json?ref={SHA}':return {'encoding':'base64','content':version_contents}
                 if path==f'releases/tags/v{VERSION}':return {'tag_name':f'v{VERSION}', 'assets':[], 'draft':False}
+                if path==f'git/ref/tags/v{VERSION}':return {'ref':f'refs/tags/v{VERSION}'}
                 if path==f'commits/v{VERSION}':return {'sha':SHA}
                 raise AssertionError(path)
             def fake_gh(*args,**kwargs):
@@ -225,6 +246,7 @@ class PublishApprovedReleaseTests(unittest.TestCase):
                 if path==f'actions/runs/{RUN_ID}/artifacts?per_page=100':return {'artifacts':[{'name':f'tavi-candidate-windows-android-{SHA}','expired':False}]}
                 if path==f'contents/package.json?ref={SHA}':return {'encoding':'base64','content':base64.b64encode(json.dumps({'version':VERSION}).encode()).decode()}
                 if path==f'releases/tags/v{VERSION}':return {'tag_name':f'v{VERSION}','assets':[]}
+                if path==f'git/ref/tags/v{VERSION}':return {'ref':f'refs/tags/v{VERSION}'}
                 if path==f'commits/v{VERSION}':return {'sha':'b'*40}
                 raise AssertionError(path)
             def fake_gh(*args,**kwargs):

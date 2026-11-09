@@ -1,0 +1,68 @@
+# One operator-triggered, version-driven Windows/Android release.
+# Does not automatically publish on push. Requires environment approval.
+name: Release Tavi
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: tavi-one-shot-release
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Pin source commit
+        id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Check version, same-commit CI, installers and checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_SHA: ${{ steps.source.outputs.sha }}
+          RELEASE_SCOPE: windows-android
+        run: python tools/release-gate.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tavi-one-shot-candidate
+          path: |
+            release-assets/
+            release-candidate.json
+            release-assets-notes.md
+          retention-days: 7
+          if-no-files-found: error
+  publish:
+    needs: prepare
+    runs-on: ubuntu-24.04
+    environment: tavi-public-release
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: tavi-one-shot-candidate
+          path: downloaded-candidate
+      - name: Revalidate exact source and publish accepted release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          CANDIDATE_SHA: ${{ needs.prepare.outputs.sha }}
+        run: python tools/release-tavi.py --publish

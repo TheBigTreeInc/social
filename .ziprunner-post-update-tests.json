@@ -1,6 +1,6 @@
 {
   "schema": "ziprunner.post-update-tests.v1",
-  "version": "0.3.154",
+  "version": "0.3.156",
   "tests": [
     {
       "kind": "command",

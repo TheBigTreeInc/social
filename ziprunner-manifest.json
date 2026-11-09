@@ -3,11 +3,11 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.154",
-    "base_version": "0.3.153"
+    "version": "0.3.156",
+    "base_version": "0.3.155"
   },
   "update": {
-    "id": "TAVI-LOOPRD-SQLITE-NULLABILITY-154",
+    "id": "TAVI-ONE-SHOT-RELEASE-156",
     "kind": "source_update",
     "created_at": "2026-11-09T00:24:59+01:00",
     "summary": "Match Companion optional revision model with nullable SQLite schema-13 DDL and add full reflected-column compatibility preflight; retain publication and deployment approval gates."
@@ -39,7 +39,7 @@
       "title": "First-party Gold Wallet, purchase and exchange ledger",
       "priority": "high",
       "status": "review",
-      "acceptance_criteria": "Source and ZipRunner build verification, staging schema 10→11 migration, tested exact receipts, first-party host grant isolation, Android/Windows/Web native Wallet acceptance, merchant fulfillment proof and operator approval."
+      "acceptance_criteria": "Source and ZipRunner build verification, staging schema 10\u219211 migration, tested exact receipts, first-party host grant isolation, Android/Windows/Web native Wallet acceptance, merchant fulfillment proof and operator approval."
     },
     {
       "id": "TAVI-EXT-UPDATES-072",
@@ -2383,7 +2383,7 @@
       "id": "TAVI-UX-CONTACTS-133-OP",
       "status": "review",
       "priority": "medium",
-      "description": "Native acceptance for 355×630 Windows and Android Apps/Chats/Games root navigation, Contacts list and friend requests, pill rounding and restore/back, dark/light themes; do not infer from source tests."
+      "description": "Native acceptance for 355\u00d7630 Windows and Android Apps/Chats/Games root navigation, Contacts list and friend requests, pill rounding and restore/back, dark/light themes; do not infer from source tests."
     },
     {
       "id": "TAVI-SETTINGS-HUB-135-OP",
@@ -2618,7 +2618,7 @@
       },
       {
         "id": "TAVI-MULTI-044-PY",
-        "description": "Game room seat roster, revocation, migration 9→10, private messages and push content-free wake",
+        "description": "Game room seat roster, revocation, migration 9\u219210, private messages and push content-free wake",
         "status": "passed_source_only",
         "command": "python -m unittest discover -s tests -p test_*.py -q",
         "environment": "Linux Python 3.13",
@@ -2794,7 +2794,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Operator: retain live Social schema-12 DB; test 12→13 migration with corrected 0.3.125 LoopRD spec on isolated SQLite copy against installed runtime; verify account persistence and Companion revision. Approve descriptor deployment separately. tavi-assets MemoryError requires independent investigation.",
+    "next_pass": "Operator: retain live Social schema-12 DB; test 12\u219213 migration with corrected 0.3.125 LoopRD spec on isolated SQLite copy against installed runtime; verify account persistence and Companion revision. Approve descriptor deployment separately. tavi-assets MemoryError requires independent investigation.",
     "risks": [
       "Embedded games are opaque-origin sandboxed; current Life may require an adaptation for storage/cookies. Tavi cannot grant allow-same-origin to GitHub Pages games sharing its web origin.",
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
@@ -2826,7 +2826,7 @@
       "Client-only Android updater 0.3.102 fixes both the known Kotlin import failure and the ZipRunner stale-test overlay failure. Physical Android installation/update remains unverified; source tests are not signed native acceptance.",
       "Sent/Delivered/Seen requires deployed Social release 0.3.103/schema 12; older 0.3.99/schema 11 servers do not expose peer delivery/read receipt metadata.",
       "Companion 0.6.27 source supports a future server-owned cloud save contract, but Tavi 0.3.106 does not yet implement companion.get/companion.put, CAS storage or operator reset; do not claim cross-device Companion persistence.",
-      "LoopRD 0.4 tavi-wallet is a service-authentication façade in 0.3.107; Gold balances/history remain in Social schema 12. Do not treat the child SQLite file as migrated ledger storage or delete the Social wallet tables.",
+      "LoopRD 0.4 tavi-wallet is a service-authentication fa\u00e7ade in 0.3.107; Gold balances/history remain in Social schema 12. Do not treat the child SQLite file as migrated ledger storage or delete the Social wallet tables.",
       "0.3.112 exact-commit Tavi browser QA failed all 5 viewports because a now-collapsed App Store diagnostics form was asserted visible. 0.3.114 changes only the harness; rerun real browser CI before accepting.",
       "Bridge accepts legacy OpenClaw --message @tempfile per Pegas report; runtime acceptance is required. Multi-DM replies are at-least-once, not transactionally atomic; network ambiguity may duplicate chunks. No automatic bot rollout.",
       "Tavi Assets portable engine exists, but Social has no native durable storage/approved entitlement binder; feature remains unadvertised without trusted grants. Publisher-hosted TaviX bytes are not locally pinned as immutable executables.",
@@ -2877,7 +2877,7 @@
     },
     {
       "id": "TAVI-MULTI-044-OP",
-      "description": "Backup and test schema 9→10 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
+      "description": "Backup and test schema 9\u219210 migration, authorize the Life service caller, verify actual game-seat roster synchronization, role revocation and match close against real Life; test private room conversations on all three clients. No automatic release.",
       "status": "required"
     },
     {
@@ -3002,7 +3002,7 @@
     "notes": "Only review-only Windows/Android candidate created after explicit workflow invocation; no push, auto-release, public release, tags or deployment authorized. Full multi-platform path preserved."
   },
   "release_notes": {
-    "version": "0.3.154",
+    "version": "0.3.156",
     "summary": "LoopRD Social 0.3.125: fix schema-13 companionRevision nullability; Windows/Android release workflow stays approval-gated.",
     "server_unchanged": false,
     "database_migration": "Correct unreleased schema-13 ADD COLUMN companionRevision to INTEGER DEFAULT 0 (nullable) for model parity. Active server reported schema 12; backup/isolated staging required before applying.",
@@ -3020,5 +3020,5 @@
     "openclaw_bridge": "Local fake-CLI compatibility, reply chunking, cursor/receipt unit tests passed; real bot runtime pending.",
     "package_manifest": "Reconciled preexisting planned vs done/todo ID mismatch without closing or approving any record; legacy operator gates preserved."
   },
-  "version": "0.3.154"
+  "version": "0.3.156"
 }

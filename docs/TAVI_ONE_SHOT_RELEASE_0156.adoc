@@ -1,0 +1,13 @@
+= Tavi one-shot Windows/Android release 0.3.156
+
+Run GitHub Actions -> Release Tavi -> Run workflow on main.
+The workflow reads package.json, pins main SHA, verifies same-commit CI,
+collects exact installer artifacts, hashes and publishes the matching vX.Y.Z tag.
+
+The tavi-public-release GitHub environment MUST be configured with required reviewers
+before use. Without required reviewers, GitHub environment declaration alone does
+not create an independent approval gate. Configure it before the first dispatch.
+
+Do not publish from unaccepted builds. Approval in GitHub is the operator acceptance.
+Legacy prepare/publish workflows remain available for rollback; no automatic push publication.
+Linux/macOS are intentionally out of scope.
