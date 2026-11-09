@@ -1,0 +1,139 @@
+= Tavi Asset Studio administration — Social 0.3.160 integration contract
+:toc:
+
+== Scope, status and deployment ownership
+
+Status: *Source candidate; NOT live or published*. This document follows TaviX 0.1.12's strict `assets.registry.admin/v1` interface. It references the *actual* Tavi Assets 0.1.15 registry interfaces from `TheBigTreeInc/tavi-assets`: `/catalog` (published reads), `/admin` (`begin`, `chunk`, `finalize`, `publish`, `revoke`, `inspect`, `audit`), and the component-local migration version 2. That current backend does not implement the Studio v1 archive upload sessions, price ledger or signed delegation verification. The new Social `/asset-studio` broker deliberately fails closed until the separate Tavi Assets component is extended and approved.
+
+Social owns authenticated Tavi account/session verification, live `SocialAccount.ecosystemAdmin` reads on every dispatch, the first-party host trust gate, confirmation surface, and trusted server-to-server delegation. Tavi Assets owns the canonical `.tavia` validator, immutable pack/version lifecycle, pricing, audit and revocation. Neither system owns Wallet purchase or entitlement creation; only existing server-authorized Wallet/Assets grants may perform those actions.
+
+This is an additive server-handler change. The Social schema remains **13**, with no new migration. Its release descriptor advances to 0.3.126. The Tavi Assets owner must deliver its own independently reviewed component migration/handler changes, not append those to Social schema 13.
+
+== Host trust & transport path
+
+Only Tavi's privileged parent document can send the current Social session bearer. A `.tavix` runs in a sandboxed opaque-origin iframe with `allow-scripts`, never `allow-same-origin` and never receives session tokens, service credentials or raw HTTP access.
+
+. The `.tavix` manifest *requests* `ui.panel` and `assets.registry.admin/v1`. The request is not a grant.
+. Tavi verifies an approved installation from the *exact* reviewed HTTPS repository URL, publisher `tavi`, installed revision SHA-256 and account-scoped permission grant. The reviewed release allowlist lives in trusted `client/src/extensions/registry-admin-trust.js`, **empty until explicit operator approval of the real Asset Studio artifact**. Local sideloaded/developer previews cannot grant administration.
+. Tavi checks the current signed-in account has a fresh `ecosystemAdmin` role from `me.permissions` and a successful broker status negotiation. Failure omits the feature from `host.info.features` and `host.capabilities`.
+. The iframe sends a `tavi.extension/v1` `postMessage` to the host, e.g. `{"channel":"tavi.extension/v1","direction":"request","id":21,"method":"assets.registry.admin.status","params":{}}`.
+. The host validates exact parameter schemas, dispatches only through `LooprdSocial.assetStudio()` with bearer in its first-party `Authorization` header, and rechecks the session after async work. `price.propose`, `publish`, `revoke` require a trusted host dialog showing the *fresh* record ID, version, revision and manifest SHA-256.
+. Social DAPI `POST /looprd/looprd-social/v1/asset-studio` (relative component handler path `/asset-studio`) verifies `ctx.principal.kind == "user"` and scope `social:api`; reads `SocialAccount.ecosystemAdmin` directly from the current DB per request; denies a forged actor, extension ID, URL, token, `isAdmin` or unknown fields.
+. Social signs a short-lived 45-second `tavi.assets.studio-delegation/v1` assertion using a server-only shared secret and sends it to the *operator-pinned* Tavi Assets `/studio` DAPI over HTTPS using an independently scoped service bearer. No credentials or delegation secrets enter `.tavix`.
+. The Assets `/studio` handler MUST verify caller type/scope, HMAC in constant time, audience, operation, canonical `params` SHA-256, expiration and one-use nonce before every mutation. A service bearer on its own is not enough to impersonate a human admin. The signer is server-owned; app IDs and confirmation booleans alone carry no authority.
+
+`hostApproved:true` on the first-party Social transport is only a host confirmation indicator; it is not an independently trusted authentication claim. The *server-authenticated admin and signed service delegation* are the authorization mechanisms. A stronger OS-attested confirmation service could be added later; do not claim browser UI confirmation is cryptographically attestable against a caller already holding that administrator's bearer.
+
+== Exact paths and authentication
+
+[cols="3,2,4",options="header"]
+|===
+|Endpoint |Verified principal |Purpose
+|`POST /looprd/looprd-social/v1/asset-studio` |Tavi `user` + `social:api`, DB `ecosystemAdmin=true` |New Social broker; body `tavi.social.asset-studio/v1`; refuses missing backend config
+|`POST /looprd/tavi-assets/v1/studio` |LoopRD `service` + `assets:ingest` or `assets:publish`, plus signed Social delegation |**REQUIRED Assets 0.1.16 implementation**; not present in 0.1.15
+|`POST /looprd/tavi-assets/v1/admin` |LoopRD service `assets:ingest` / `assets:publish` |Existing canonical begin/chunk/finalize/inspect/publish/revoke primitives; must remain protected
+|`POST /looprd/tavi-assets/v1/catalog` |Approved `assets:read` |Published catalog and bytes only; include authoritative offer price after accepted migration
+|===
+
+Paths are examples under the standard LoopRD component URL convention. Operators must verify their deployed DAPI bases. The Social upstream destination is configured as `LOOPRD_TAVI_ASSETS_STUDIO_URL` (absolute HTTPS URL ending in `/studio`), not supplied by a `.tavix` caller. Secret references `LOOPRD_TAVI_ASSETS_INGEST_SECRET_REF`, `LOOPRD_TAVI_ASSETS_PUBLISH_SECRET_REF` and `LOOPRD_TAVI_ASSETS_DELEGATION_SECRET_REF` are environment configuration for LoopRD's mounted `ctx.secret` provider; do not store raw secret values in source or ZipRunner JSON.
+
+The existing registry requires service principals with `assets:ingest` and `assets:publish` respectively. Use separately scoped, revocable credentials; rotate them independently, and bind the delegation secret to Social as the only allowed source. Missing provider/secret/URL must yield `unavailable` and no backend mutation.
+
+== Social broker request/response
+
+Request (trusted Tavi parent to Social):
+
+[source,json]
+----
+{"schema":"tavi.social.asset-studio/v1","operation":"price.propose","params":{"recordId":"abcdefghijklmnopqrstuvwx","expectedRevision":2,"priceGold":0,"idempotencyKey":"ChangeFreePackPrice0000001"},"hostApproved":true}
+----
+
+`hostApproved` is allowed only for `price.propose`, `publish`, `revoke` after host-native confirmation. It cannot appear in `params`. `status` and other requests omit this field. The Social server derives actor and session from `ctx.principal`; it never reads them from the JSON body.
+
+Successful wrapper:
+
+[source,json]
+----
+{"ok":true,"result":{"schema":"tavix.registry-admin.status/v1","apiVersion":"1.0.0","allowedOperations":["status","records.list","records.get"],"maxUploadBytes":16777216,"maxChunkBytes":262144}}
+----
+
+Denial wrapper: `{"ok":false,"error":"permission_denied"}`. Errors are limited to `permission_denied`, `invalid_request`, `confirmation_required`, `confirmation_declined`, `revision_conflict`, `not_found`, `validation_failed`, `not_staged`, `already_published` and `unavailable`; no tracebacks, service URL or tokens. The host converts the wrapper back to the TaviX `response` envelope with its original correlation ID.
+
+== Server-to-server assertion
+
+Social sends the Assets DAPI this body:
+
+[source,json]
+----
+{
+  "schema":"tavi.assets.studio-request/v1",
+  "operation":"records.get",
+  "params":{"recordId":"abcdefghijklmnopqrstuvwx"},
+  "delegation":{
+    "schema":"tavi.assets.studio-delegation/v1",
+    "audience":"tavi-assets/studio/v1",
+    "actor":"acct_2",
+    "sessionDigest":"<sha256-of-verified-LoopRD-Session-ID>",
+    "operation":"records.get",
+    "requestSha256":"<sha256-of-canonical-params>",
+    "issuedAt":1794193000,
+    "expiresAt":1794193045,
+    "nonce":"<random-32-byte-url-safe-token>",
+    "hostApproved":false,
+    "signature":"<hmac-sha256-hex>"
+  }
+}
+----
+
+`signature = HMAC-SHA256(sharedSecret, utf8(JSON.stringify(unsignedDelegation, sortedKeys, compactSeparators)))` represented as lowercase hex. `requestSha256` is SHA-256 over the same sorted-key compact UTF-8 JSON encoding of `params`. All examples with `<...>` are placeholders, not deployable credentials. Assets must compare signatures in constant time, enforce short clock skew, use a transactional unique nonce (and idempotency ledger) for all mutations, and attribute audit events to the signed actor only. The transport sends `Authorization: Bearer <operator-provisioned scoped service credential>` separately; this token is never returned.
+
+== Exact TaviX methods / schemas
+
+The normative v1 machine-readable schemas are bundled in:
+
+* `docs/contracts/tavix-registry-admin-v1.json`
+* `docs/contracts/tavix-registry-admin-request-v1.schema.json`
+* `docs/contracts/tavix-registry-admin-response-v1.schema.json`
+
+The request `postMessage` envelope requires `{channel:"tavi.extension/v1",direction:"request",id:<positive integer>,method:"assets.registry.admin.<operation>",params:<exact shape>}`. `params` rejects any extra keys, including `confirmed`, `actor`, `token`, `url`, `isAdmin` and `endpoint`.
+
+[cols="2,4,4",options="header"]
+|===
+|Operation |Required `params` |Assets behavior (new Studio adapter)
+|`status` |`{}` |Allowed operations and bounded upload limits; no mutation
+|`stage.begin` |`fileName`, `byteLength`, `sha256`, `idempotencyKey` |Create durable, actor-bound upload session, no published asset; max 16 MiB recommended
+|`stage.chunk` |`uploadId`, `offset`, `dataBase64` |Contiguous chunks, max 256 KiB decoded each; strict base64
+|`stage.commit` |`uploadId`, `sha256`, `idempotencyKey` |Reassemble bytes, validate canonical `.tavia`, then map manifest/resources through existing `/admin` begin/chunk/finalize; return staged record
+|`stage.abort` |`uploadId` |Delete uncommitted actor-bound upload data
+|`records.list` |Optional `state`, `limit`, `cursor` |Paginated sanitized staged/published/revoked/failed record summaries
+|`records.get` |`recordId` |Sanitized canonical ID, pack ID/version, manifest SHA-256, current revision, price Gold, state and validation result
+|`price.propose` |`recordId`, `expectedRevision`, `priceGold`, `idempotencyKey` |Host-confirmed staged offer price (0..1,000,000; 0 is free), CAS increment and audit; published prices immutable
+|`publish` |`recordId`, `expectedRevision`, `idempotencyKey` |Host-confirmed transition of fully validated `ready`/staged version to published with digest/price snapshot and audit
+|`revoke` |`recordId`, `expectedRevision`, `reason`, `idempotencyKey` |Host-confirmed published→revoked, audit and catalog disappearance; entitlements handled by separate policy
+|===
+
+For success, the Assets service returns `{ok:true,result:<exact TaviX operation response schema>}`; errors use `{ok:false,error:<allowlisted code>}`. The same rules apply to Windows, Android and browser; no filesystem path or URL supplied by an app is accepted for upload.
+
+== Required Tavi Assets 0.1.15 -> 0.1.16 component changes (independent owner)
+
+Existing v0.1.15 `looprd/handler.py` cannot accept `.tavia` upload sessions nor authoritative Gold price entries. Implement a new `/studio` service handler without weakening `/admin`:
+
+. Add an additive migration **in tavi-assets' own migration namespace** after version 2 (never in Social schema 13): `AssetStudioUpload` and `AssetStudioUploadChunk` for size-capped, actor-bound resumable uploads; `AssetOfferPrice` (unique pack/version and an optimistic revision, 0..1,000,000 priceGold); `AssetStudioAudit` (actor/action, request digest, old/new price, timestamp, idempotency key, reason and manifest SHA-256); `AssetStudioReplay` (unique, consumed nonce with expiry + idempotency mapping). No destructive DDL or existing table updates.
+. Reject archived symlinks, traversal, duplicate case-folded paths, oversized decompression, invalid MIME and hidden active content with the canonical `unpack_tavia()` and `validate()` already present in Assets 0.1.15. Do not store unvalidated archives as ready or published.
+. Ensure `stage.commit` invokes existing audited staging path using canonical manifest/resources; use transaction boundaries so a failed commit cannot publish or leave a falsely ready version. Idempotently record the confirmed result and reject conflicting reuse of the same key.
+. Require `ctx.principal.kind == service`, required *operation-specific* scope (`assets:ingest` for uploads; `assets:publish` for list/inspect/price/publication), verified allowed source `looprd-social`, the valid HMAC assertion, actor-bound ownership, short expiry, transactional nonce consumption, current record digest and revision on every mutation. Deny unsupported operations by default.
+. Include `priceGold` in authorized published offer catalog only; free price `0` is an authoritative offer price, not free Gold currency and not entitlement. Existing Wallet balances/purchases stay untouched. Published price changes require a newly staged version/review, never silent update.
+. Preserve the existing `AssetPublicationAudit` records, and append new distinct Studio audit events; never erase historic records. Consider including the verified Tavi actor in publication audit once delegation verified. Rate-limit expensive uploads; clean expired uncommitted uploads without touching published packs.
+. Update `looprd/generate.py` to embed `/studio` handler and migration, then run `python looprd/generate.py --check`, source tests, LoopRD specification validator, a disposable server schema-2→3 backup/migration test, and exact ZipRunner acceptance before deployment. Both components must be published independently.
+
+Do not issue service credentials, grant admin capability or migrate production data from this Social source package. LoopRD/Assets 0.1.15 is not a drop-in substitute for the missing `/studio` endpoint.
+
+== Acceptance matrix
+
+* Anonymous, guest, non-admin, revoked account and service principals all rejected at Social `/asset-studio` (including direct HTTP calls).
+* Spoofed ID, publisher, manifest permission, local preview, copied digest under wrong source, changed revision, stale account and signed-out iframe fail at host; no feature advertised.
+* TaviX + Social parse rejected unknown methods/fields, actor and service URL injection, negative price, overlong archive and bad base64; free `priceGold:0` accepted as a value.
+* Approved Studio with a provisioned *staging* Assets DAPI validates a known `.tavia`, maintains opaque upload ID, handles interrupted/resumed chunk streams, rejects digest mismatch, shows staged record, requires confirmation for price/publish/revoke.
+* Revoking ecosystemAdmin in DB immediately denies the next privileged request even in an active session; backend denies stale session digest and replay.
+* Price + decisions audited and retrievable by an authorized admin; published catalog includes only approved prices; Wallet purchase/debit and entitlement tests are independent.
+* Configure only operator-owned secrets and reviewed SHA pins, with separate approval, backups and tested migrations. No automatic push, migration or public release.

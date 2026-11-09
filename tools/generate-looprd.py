@@ -11,6 +11,7 @@ source=(root/'server/looprd_handler.py').read_text(encoding='utf8')
 verifier=(root/'server/looprd_verifier.py').read_text(encoding='utf8')
 admin_events=(root/'server/admin_event_service.py').read_text(encoding='utf8')
 admin_role=(root/'server/admin_role_service.py').read_text(encoding='utf8')
+asset_studio=(root/'server/assets_studio_admin_service.py').read_text(encoding='utf8')
 game_events=(root/'server/game_event_service.py').read_text(encoding='utf8')
 challenge_status=(root/'server/challenge_status_service.py').read_text(encoding='utf8')
 atrium_challenge=(root/'server/atrium_challenge_lookup.py').read_text(encoding='utf8')
@@ -191,6 +192,7 @@ spec={
  'handlers':[
     {'path':'/social','method':'POST','kind':'python','scopes':['social:api'],'source':source},
     {'path':'/wallet','method':'POST','kind':'python','scopes':['social:api'],'source':wallet_source},
+    {'path':'/asset-studio','method':'POST','kind':'python','scopes':['social:api'],'source':asset_studio},
     {'path':'/ecosystem/wallet-merchant','method':'POST','kind':'python','scopes':['social:service'],'source':wallet_merchant_source,'contract':{'name':'tavi-wallet-merchant','version':1,'serviceOnly':True,
        'request':{'type':'object','required':['schema','op','orderId','sku'],'additionalProperties':False,
            'properties':{'schema':{'type':'string','enum':['tavi.wallet-fulfillment/v1']},

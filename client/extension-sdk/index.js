@@ -56,6 +56,12 @@ export function createTaviXSDK(target=window.parent,source=window){
   // generic nested surface broker is implemented and advertised by host.info.
   surfaces:{requestOpen:surface=>request('surface.requestOpen',{surface})},
   assets:createTaviAssetsClient({info:()=>request('host.info'),request:(method,params)=>call(method,params)}),
+  registryAdmin:{status:()=>call('assets.registry.admin.status',{}),
+    stage:{begin:params=>call('assets.registry.admin.stage.begin',params),chunk:params=>call('assets.registry.admin.stage.chunk',params),
+      commit:params=>call('assets.registry.admin.stage.commit',params),abort:params=>call('assets.registry.admin.stage.abort',params)},
+    records:{list:(params={})=>call('assets.registry.admin.records.list',params),get:params=>call('assets.registry.admin.records.get',params)},
+    price:{propose:params=>call('assets.registry.admin.price.propose',params)},
+    publish:params=>call('assets.registry.admin.publish',params),revoke:params=>call('assets.registry.admin.revoke',params)},
   games:{installed:{list:()=>request('games.installed.list'),open:({id,expectedVersion})=>request('games.installed.open',{params:{id,expectedVersion}})}},
   on,
   wallet:{balance:()=>call('wallet.balance'),transactions:params=>call('wallet.transactions',params),

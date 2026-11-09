@@ -192,6 +192,24 @@ export class LooprdSocial {
       throw new ProtocolError('Invalid Companion save request');
     return this.command('companion_put',{snapshot,revision,epoch}).then(validateCompanionCloudResponse);
   }
+  /** Host-only Asset Studio operator transport. The iframe never sees the token. */
+  async assetStudio(operation,params={},hostApproved=false){
+    if(typeof operation!=='string'||!operation||!params||typeof params!=='object'||Array.isArray(params)||
+       (hostApproved!==false&&hostApproved!==true))throw new ProtocolError('Invalid Asset Studio request');
+    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),16000);
+    try{
+      const payload={schema:'tavi.social.asset-studio/v1',operation,params,...(hostApproved?{hostApproved:true}:{})};
+      const response=await this.fetcher(componentPath(this.origin,SOCIAL_COMPONENT,'asset-studio'),{
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${this.token}`},
+        body:JSON.stringify(payload),cache:'no-store',signal:controller.signal});
+      const body=await responseJson(response);
+      if(!body||body.ok!==true||!body.result||typeof body.result!=='object')
+        throw new ProtocolError(['permission_denied','invalid_request','confirmation_required',
+          'revision_conflict','not_found','validation_failed','unavailable'].includes(body?.error)?body.error:'unavailable');
+      return body.result;
+    }catch(error){if(error?.name==='AbortError')throw new ProtocolError('Asset Studio request timed out.');throw error;}
+    finally{clearTimeout(timer);}
+  }
   /** Authenticated first-party Wallet endpoint; tokens remain in the host process. */
   async walletCommand(op, fields = {}) {
     const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);

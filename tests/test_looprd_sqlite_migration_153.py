@@ -5,6 +5,7 @@ representative preexisting account data, using SQLite SQLAlchemy reflection
 and the same string length comparison as pac-labs/dapi's Storage.
 """
 import copy
+import json
 import subprocess
 import sys
 import unittest
@@ -83,6 +84,6 @@ class MigrationContractTests(unittest.TestCase):
             result=subprocess.run([sys.executable,*command],cwd=ROOT,text=True,capture_output=True)
             self.assertEqual(result.returncode,0,result.stdout+'\n'+result.stderr)
         self.assertEqual(self.spec['database']['schemaVersion'],13)
-        self.assertEqual(self.spec['release'],'0.3.125')
+        self.assertEqual(self.spec['release'], json.loads((ROOT/'server/looprd-release.json').read_text())['release'])
 
 if __name__=='__main__': unittest.main()

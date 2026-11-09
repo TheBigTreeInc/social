@@ -1,7 +1,7 @@
 # Generated from server/looprd_handler.py. Do not edit by hand.
 apiVersion: looprd/v1
 component: looprd-social
-release: 0.3.125
+release: 0.3.126
 api:
   version: v1
 cors:
@@ -1883,6 +1883,87 @@ handlers:
     \        return {'accepted':False,'reason':'invalid_request'}\n    with ctx.transaction() as db:\n        if\
     \ channel=='merchant':\n            return execute_merchant(db,actor,command.get('op'),command)\n        return\
     \ execute_reward(db,actor,command)\n\n\nasync def handle_service_broker(ctx):\n    return await run_in_threadpool(_run_service_broker,ctx)\n"
+- path: /asset-studio
+  method: POST
+  kind: python
+  scopes:
+  - social:api
+  source: "\"\"\"Trusted Social -> Assets Studio broker. No caller-selected service URL or credentials.\n\nThis\
+    \ handler is designed for a separate user-scoped /asset-studio LoopRD DAPI.\nIt never accepts an app ID, admin\
+    \ flag, service token or actor from the body.\nThe canonical Assets component verifies the signed delegation\
+    \ independently.\n\"\"\"\nimport hashlib\nimport hmac\nimport json\nimport os\nimport re\nimport secrets\nimport\
+    \ time\nfrom urllib.parse import urlsplit\nfrom urllib.request import Request, build_opener, HTTPRedirectHandler\n\
+    from urllib.error import HTTPError, URLError\nimport sqlalchemy as sa\nfrom starlette.concurrency import run_in_threadpool\n\
+    \nOPERATIONS=frozenset(('status','stage.begin','stage.chunk','stage.commit','stage.abort',\n               \
+    \       'records.list','records.get','price.propose','publish','revoke'))\nPUBLISH=frozenset(('price.propose','publish','revoke'))\n\
+    INGEST=frozenset(('stage.begin','stage.chunk','stage.commit','stage.abort'))\nSENSITIVE=PUBLISH\nALNUM=re.compile(r'^[A-Za-z0-9_-]{16,128}$')\n\
+    SHA=re.compile(r'^[a-f0-9]{64}$')\nFILE=re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,119}\\.tavia$')\nSUBJECT=re.compile(r'^acct_[1-9][0-9]{0,18}$')\n\
+    SECRET_REF=re.compile(r'^[A-Za-z0-9_./-]{1,200}$')\nSTATES=frozenset(('staged','published','revoked','failed'))\n\
+    \nclass _NoRedirect(HTTPRedirectHandler):\n    def redirect_request(self,req,fp,code,msg,headers,newurl):\n\
+    \        return None\n\ndef canonical(value):\n    return json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode('utf-8')\n\
+    \ndef _int(v,lower,upper):\n    return type(v) is int and lower<=v<=upper\n\ndef _str(v,pattern):\n    return\
+    \ isinstance(v,str) and bool(pattern.fullmatch(v))\n\ndef validate(operation,params):\n    \"\"\"A strict, auditable\
+    \ projection of TaviX registry-admin request schema v1.\"\"\"\n    if operation not in OPERATIONS or not isinstance(params,dict):\n\
+    \        raise ValueError('invalid_request')\n    patterns={'recordId':lambda v:_str(v,ALNUM),'uploadId':lambda\
+    \ v:_str(v,ALNUM),\n        'idempotencyKey':lambda v:_str(v,ALNUM),'sha256':lambda v:_str(v,SHA),\n       \
+    \ 'fileName':lambda v:_str(v,FILE),'byteLength':lambda v:_int(v,1,67108864),\n        'offset':lambda v:_int(v,0,67108863),'expectedRevision':lambda\
+    \ v:_int(v,1,2147483647),\n        'priceGold':lambda v:_int(v,0,1000000),\n        'dataBase64':lambda v:isinstance(v,str)\
+    \ and 4<=len(v)<=349528 and bool(re.fullmatch(r'[A-Za-z0-9+/]+={0,2}',v)),\n        'reason':lambda v:isinstance(v,str)\
+    \ and 10<=len(v)<=500,\n        'state':lambda v:v in STATES,'limit':lambda v:_int(v,1,100),\n        'cursor':lambda\
+    \ v:isinstance(v,str) and 1<=len(v)<=256}\n    req={\n        'status':(),\n        'stage.begin':('fileName','byteLength','sha256','idempotencyKey'),\n\
+    \        'stage.chunk':('uploadId','offset','dataBase64'),\n        'stage.commit':('uploadId','sha256','idempotencyKey'),\n\
+    \        'stage.abort':('uploadId',),\n        'records.list':(),\n        'records.get':('recordId',),\n  \
+    \      'price.propose':('recordId','expectedRevision','priceGold','idempotencyKey'),\n        'publish':('recordId','expectedRevision','idempotencyKey'),\n\
+    \        'revoke':('recordId','expectedRevision','reason','idempotencyKey')}\n    optional={'records.list':('state','limit','cursor')}\n\
+    \    allowed=set(req[operation])|set(optional.get(operation,()))\n    if not set(req[operation]).issubset(params)\
+    \ or set(params)-allowed:\n        raise ValueError('invalid_request')\n    if any(not patterns[k](v) for k,v\
+    \ in params.items()):\n        raise ValueError('invalid_request')\n    return params\n\ndef current_admin(session_factory,subject):\n\
+    \    if not _str(subject,SUBJECT):return False\n    with session_factory() as db:\n        return db.execute(sa.text('SELECT\
+    \ \"ecosystemAdmin\" FROM \"SocialAccount\" WHERE id=:id'),\n            {'id':int(subject[5:])}).scalar() ==\
+    \ 1\n\ndef _endpoint():\n    url=os.environ.get('LOOPRD_TAVI_ASSETS_STUDIO_URL','')\n    if not isinstance(url,str)\
+    \ or len(url)>1024:return None\n    parsed=urlsplit(url)\n    if (parsed.scheme!='https' or not parsed.hostname\
+    \ or parsed.username or parsed.password or\n            parsed.query or parsed.fragment or parsed.path.endswith('/')\
+    \ or not parsed.path.endswith('/studio')):\n        return None\n    return url\n\ndef _secret(ctx,key):\n \
+    \   ref=os.environ.get(key,'')\n    if not SECRET_REF.fullmatch(ref) or '..' in ref.split('/') or ref.startswith('/'):\n\
+    \        return None\n    try:\n        value=ctx.secret(ref)\n        return value.strip() if isinstance(value,str)\
+    \ and len(value.strip())>=32 else None\n    except (AttributeError,ValueError,OSError,KeyError):return None\n\
+    \ndef _credentials(ctx,op):\n    key=('LOOPRD_TAVI_ASSETS_INGEST_SECRET_REF' if op in INGEST else\n        \
+    \ 'LOOPRD_TAVI_ASSETS_PUBLISH_SECRET_REF')\n    return _secret(ctx,key),_secret(ctx,'LOOPRD_TAVI_ASSETS_DELEGATION_SECRET_REF')\n\
+    \ndef _send(url,token,body):\n    content=canonical(body)\n    if len(content)>400000:return {'ok':False,'error':'invalid_request'}\n\
+    \    request=Request(url,content,{'Content-Type':'application/json',\n                                'Authorization':'Bearer\
+    \ '+token,'Accept':'application/json'},method='POST')\n    try:\n        with build_opener(_NoRedirect()).open(request,timeout=12)\
+    \ as response:\n            if response.status!=200:return {'ok':False,'error':'unavailable'}\n            data=response.read(1_000_001)\n\
+    \            if len(data)>1_000_000:return {'ok':False,'error':'unavailable'}\n            answer=json.loads(data)\n\
+    \            if not isinstance(answer,dict):return {'ok':False,'error':'unavailable'}\n            return answer\n\
+    \    except (HTTPError,URLError,OSError,ValueError,TimeoutError):\n        return {'ok':False,'error':'unavailable'}\n\
+    \ndef dispatch(ctx,now=None,transport=_send):\n    \"\"\"Read principal from LoopRD verifier, recheck administrator\
+    \ row per operation.\"\"\"\n    principal=getattr(ctx,'principal',None)\n    if getattr(principal,'kind',None)!='user':return\
+    \ {'ok':False,'error':'permission_denied'}\n    if 'social:api' not in (getattr(principal,'scopes',()) or ()):\n\
+    \        return {'ok':False,'error':'permission_denied'}\n    subject=getattr(principal,'subject',None)\n  \
+    \  if not current_admin(ctx.session_factory,subject):\n        return {'ok':False,'error':'permission_denied'}\n\
+    \    body=getattr(ctx,'body',None)\n    if not isinstance(body,dict) or set(body)-{'schema','operation','params','hostApproved'}\
+    \ or body.get('schema')!='tavi.social.asset-studio/v1':\n        return {'ok':False,'error':'invalid_request'}\n\
+    \    op=body.get('operation');params=body.get('params')\n    try:validate(op,params)\n    except (ValueError,TypeError):return\
+    \ {'ok':False,'error':'invalid_request'}\n    # A native confirmation is mandatory for the extension-mediated\
+    \ path. The\n    # trusted server never treats this Boolean as an authorization claim: the\n    # Social account\
+    \ role and exact signed service delegation remain necessary.\n    if op in SENSITIVE and body.get('hostApproved')\
+    \ is not True:\n        return {'ok':False,'error':'confirmation_required'}\n    if op not in SENSITIVE and\
+    \ 'hostApproved' in body:\n        return {'ok':False,'error':'invalid_request'}\n    url=_endpoint();token,delegation_secret=_credentials(ctx,op)\n\
+    \    if not url or not token or not delegation_secret or not callable(ctx.session_factory):\n        return\
+    \ {'ok':False,'error':'unavailable'}\n    # Only a verified, non-revoked Social session may sign a delegation.\
+    \ No\n    # browser-provided actor, source, admin flag or service destination is used.\n    session_id=getattr(principal,'sessionId',None)\n\
+    \    if session_id is None:return {'ok':False,'error':'permission_denied'}\n    issued=int(time.time() if now\
+    \ is None else now)\n    delegation={'schema':'tavi.assets.studio-delegation/v1',\n        'audience':'tavi-assets/studio/v1','actor':subject,'sessionDigest':hashlib.sha256(str(session_id).encode()).hexdigest(),\n\
+    \        'operation':op,'requestSha256':hashlib.sha256(canonical(params)).hexdigest(),\n        'issuedAt':issued,'expiresAt':issued+45,'nonce':secrets.token_urlsafe(24),\n\
+    \        'hostApproved':op in SENSITIVE}\n    signed=dict(delegation,signature=hmac.new(delegation_secret.encode(),canonical(delegation),hashlib.sha256).hexdigest())\n\
+    \    result=transport(url,token,{'schema':'tavi.assets.studio-request/v1','operation':op,\n                \
+    \                'params':params,'delegation':signed})\n    if not isinstance(result,dict) or result.get('ok')\
+    \ is not True:\n        error=result.get('error') if isinstance(result,dict) else None\n        return {'ok':False,'error':error\
+    \ if error in {'permission_denied','not_found','invalid_request',\n                'revision_conflict','validation_failed','unavailable','not_staged','already_published'}\
+    \ else 'unavailable'}\n    # Refuse to return backend tokens or unsolicited results. Registry response\n   \
+    \ # schema is contract-validated by the Assets component and TaviX client.\n    value=result.get('result')\n\
+    \    if not isinstance(value,dict) or len(canonical(value))>800000:\n        return {'ok':False,'error':'unavailable'}\n\
+    \    return {'ok':True,'result':value}\n\nasync def handle(ctx):\n    return await run_in_threadpool(dispatch,ctx)\n"
 - path: /ecosystem/wallet-merchant
   method: POST
   kind: python
@@ -3468,4 +3549,4 @@ handlers:
     - recovery-codes-v1
     - game-session-rooms-v1
     - wallet-v1
-    release: 0.3.125
+    release: 0.3.126

@@ -81,9 +81,9 @@ class MigrationNullabilityTests(unittest.TestCase):
 
     def test_current_spec_passes_full_add_column_preflight(self):
         self.assertIsNone(validate_sqlite_migration_columns(self.spec))
-        self.assertEqual(self.spec['release'], '0.3.125')
+        self.assertEqual(self.spec['release'], json.loads((ROOT/'server/looprd-release.json').read_text())['release'])
         self.assertEqual(self.spec['database']['schemaVersion'], 13)
-        self.assertEqual(json.loads((ROOT/'server/looprd-release.json').read_text())['release'], '0.3.125')
+        self.assertRegex(self.spec['release'], r'^0\.3\.[0-9]+$')
         link = json.loads((ROOT/'ziprunner.looprd.json').read_text())
         self.assertEqual(link['specification_sha256'], hashlib.sha256((ROOT/'looprd.yaml').read_bytes()).hexdigest())
 

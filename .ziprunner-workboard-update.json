@@ -1,8 +1,8 @@
 {
  "schema": "ziprunner.workboard-update.v1",
  "project": "looprd-social",
- "version": "0.3.159",
- "summary": "0.3.159: Make native Cargo.lock version validation safe on Windows CRLF and Unix LF; preserve the one-shot release workflow and operator approval gate.",
+ "version": "0.3.160",
+ "summary": "0.3.160: Implement fail-closed Social Asset Studio host+server broker, TaviX 0.1.12 contract and scoped HMAC delegation; Assets 0.1.15 partner component pricing/staging implementation remains blocked until independently approved.",
  "implemented": [
   {
    "id": "LRS-004",
@@ -2693,8 +2693,28 @@
     "Validate GitHub Windows/Android CI after approved source push; retain required environment approval for releases."
    ],
    "operator_checks": [
-    "Import v0.3.159 in ZipRunner and confirm source verification and Windows native build pass.",
+    "Import v0.3.160 in ZipRunner and confirm source verification and Windows native build pass.",
     "After approved GitHub source push, verify Windows and Android Actions CI pass before running the gated Release Tavi workflow."
+   ]
+  },
+  {
+   "id": "TAVI-ASSET-STUDIO-ADMIN-160",
+   "title": "Trusted Asset Studio administration host and Social broker",
+   "status": "review",
+   "priority": "high",
+   "canonical_project_id": "be0bf498-ea5a-461e-a84e-d47f5f449e09",
+   "summary": "Strict TaviX registry-admin permission request, verified exact source/digest, backend current ecosystemAdmin check, user-token-confined parent transport, signed scoped service delegation, confirmation hook and exact cross-team Assets 0.1.15->0.1.16 DAPI contract. No live service activation, schema mutation, local secret or entitlement grant.",
+   "acceptance_criteria": [
+    "Import into ZipRunner and confirm frontend host and Python broker tests pass, with no feature advertised for an unapproved digest.",
+    "Review and implement canonical Tavi Assets /studio DAPI with price audit and approved migration in separate Assets component.",
+    "Prove service principal scopes, signed delegation expiry/replay rejection and authoritative DB role revocation with staging accounts.",
+    "Pin operator-approved official Asset Studio release digest and exact source; confirm native Windows/Android dialogs and permissions.",
+    "Do not publish, deploy, migrate, or approve before independent operator gate."
+   ],
+   "operator_checks": [
+    "Check exact .tavix app ID alone and local sideload cannot activate admin capability; reviewed SHA allowlist intentionally empty.",
+    "Deploy to disposable LoopRD only after operator review, with separate Assets schema migration acceptance and scoped secrets.",
+    "Test stage, priceGold 0, publish, revoke, audit, token privacy, role revocation on Windows and Android before release."
    ]
   }
  ],

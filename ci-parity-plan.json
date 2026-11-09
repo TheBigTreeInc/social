@@ -1,6 +1,6 @@
 {
   "schema": "tavi.ci-parity-plan/v1",
-  "version": "0.3.159",
+  "version": "0.3.160",
   "project": "looprd-social",
   "policy": {
     "environment": "isolated-local-fixture-only",

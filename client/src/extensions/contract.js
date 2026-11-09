@@ -4,7 +4,7 @@ import {resolveTavixClassification} from './classification.js';
 import {validateAssetDependencies} from './asset-dependencies.js';
 export {resolveTavixClassification} from './classification.js';
 export const HOST_API_VERSION = '1.0.0';
-export const PERMISSIONS = Object.freeze(['ui.panel', 'ui.toast', 'storage.private', 'ziprunner.review', 'assets.read', 'assets.preferences.write']);
+export const PERMISSIONS = Object.freeze(['ui.panel', 'ui.toast', 'storage.private', 'ziprunner.review', 'assets.read', 'assets.preferences.write', 'assets.registry.admin/v1']);
 export const SUPPORTED_SLOTS = Object.freeze(['app.store', 'app.launcher', 'settings.app']);
 const ID = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+){2,}$/;
 const FILE = /^(?!\/)(?!.*(?:^|\/)\.\.?\/)[a-zA-Z0-9_/-]+\.(?:html|css|js|mjs|json|png|svg|webp)$/;
