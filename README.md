@@ -490,3 +490,7 @@ Design and SDK foundation for shared wallet, currencies, pets, contacts, message
 ### LoopRD `specification_invalid` repair (client 0.3.152 / server spec 0.3.123)
 
 The operator `reset-companion` action's three write targets are now explicitly represented as non-editable managed fields. This fixes a root-level LoopRD management contract validation failure introduced in client 0.3.144. CI parity runs the management preflight; operators must still validate with their installed LoopRD runtime and approve descriptor promotion separately. Database schema 13 and the approved-release workflow are unchanged. See `docs/TAVI_LOOPRD_SPECIFICATION_VALIDATION_0152.adoc`.
+
+### LoopRD schema-13 string-length compatibility (0.3.153)
+
+Fixed schema-13 `SocialAccount.companionSnapshot` migration: use `VARCHAR(8192)` to match the model, instead of SQLite `TEXT`, which LoopRD rejects on length comparison. Release spec `0.3.124`, database schema target 13. See `docs/TAVI_LOOPRD_SCHEMA13_VARCHAR_0153.adoc`. Approval and staging-db validation required before server deployment; public releases remain separately gated.

@@ -1,6 +1,6 @@
 {
   "schema": "tavi.ci-parity-plan/v1",
-  "version": "0.3.152",
+  "version": "0.3.153",
   "project": "looprd-social",
   "policy": {
     "environment": "isolated-local-fixture-only",
@@ -17,6 +17,19 @@
       "argv": [
         "python",
         "tools/looprd_management_preflight.py"
+      ],
+      "timeoutSeconds": 30,
+      "githubWorkflows": [
+        "Verify Social server and client source"
+      ]
+    },
+    {
+      "id": "looprd-sqlite-migration-contract",
+      "label": "LoopRD SQLite ADD COLUMN VARCHAR length matches declared model",
+      "required": true,
+      "argv": [
+        "python",
+        "tools/looprd_sqlite_migration_preflight.py"
       ],
       "timeoutSeconds": 30,
       "githubWorkflows": [

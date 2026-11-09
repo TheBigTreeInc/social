@@ -1,0 +1,47 @@
+= Tavi Social — LoopRD schema-13 SQLite VARCHAR repair (0.3.153)
+:toc:
+
+== Incident
+
+LoopRD diagnostics reported `schema_contract_mismatch` during `looprd-social` load:
+`Database string length does not match model`. The retained serving generation was
+release `0.3.121`, database `schemaVersion: 12`. The attempted parent spec was
+0.3.123/schema 13, whose `SocialAccount.companionSnapshot` declared
+`type: string; maxLength: 8192` but migration 13 added the column as SQLite `TEXT`.
+LoopRD uses SQLAlchemy SQLite reflection and compares `actual.type.length` with
+`String(8192).length`, so `TEXT` (length None) is incompatible.
+
+== Change
+
+The only schema DDL correction is migration 13 statement 0:
+
+[source,sql]
+----
+ALTER TABLE "SocialAccount" ADD COLUMN "companionSnapshot" VARCHAR(8192)
+----
+
+`companionRevision INTEGER NOT NULL DEFAULT 0` and
+`companionEpoch VARCHAR(64)` remain unchanged. The model declaration remains
+`maxLength: 8192`. The descriptor release increments to `0.3.124`; the database
+schema target remains 13. Existing Tavi accounts and Companion records are not deleted.
+The generated primary and wallet-child `looprd.yaml` documents are re-synchronized.
+
+`tools/looprd_sqlite_migration_preflight.py` catches new string migrations with
+unbounded `TEXT` or incorrect declared `VARCHAR` lengths before build, including
+when the descriptor is generated. `tests/test_looprd_sqlite_migration_153.py`
+replays schema-13 DDL from a representative prior account table and verifies
+SQLite reflection and preservation of an account row.
+
+== Release and operator safety
+
+* Perform a server database backup before any approval of schema-13 migration.
+* Validate the exact candidate against the installed LoopRD runtime using an isolated
+  copy of a schema-12 database. Do not force an automatic schema reset.
+* Inspect diagnostics for `loaded: true`, `schemaVersion: 13`,
+  and `release: 0.3.124` after separate server deployment approval.
+* If schema-13 migrations were committed elsewhere using the incorrect TEXT type,
+  this change alone is not sufficient; stop and plan a separately reviewed data
+  migration (SQLite rebuild is not an additive ALTER operation).
+* Do not confuse source/unit tests with live production database migration acceptance.
+* Windows/Android client release/publishing gates remain independent. Nothing in
+  this revision pushes, tags, publishes a release or deploys the server.

@@ -1,3 +1,7 @@
+# looprd-social 0.3.153 — LoopRD schema-13 VARCHAR length correction
+
+Base 0.3.152. Fix migration 13 SocialAccount companionSnapshot TEXT -> VARCHAR(8192) to satisfy pac-labs/dapi strict SQLite reflected string-length contract. Add prebuild migration-length validator and SQLite row-preserving regression test. Increment server spec to 0.3.124 (schemaVersion 13 unchanged), regenerate descriptors and linked hash. No real DB modification, server deployment, Git push or release publication is performed; retain existing approval gates. See `docs/TAVI_LOOPRD_SCHEMA13_VARCHAR_0153.adoc`.
+
 # looprd-social 0.3.151 — operator-approved GitHub release publication
 
 Base: 0.3.150. Adds `.github/workflows/publish-approved-release.yml` and `tools/publish-approved-release.py` for manually authorized Windows/Android installer publication. Verifies exact candidate run, commit, version, checksums and original installer ZIP bytes. Appends missing EXE/APK, two ZIP bundles and SHA256SUMS to a matching existing release (including `v0.3.150` once accepted); refuses mismatched tag or conflicting files. New releases require the candidate commit to be current main. Candidate preparation remains read-only; no automatic push, tag, release or deployment. Configure GitHub `tavi-public-release` environment reviewers and record ZipRunner acceptance before running the manual publish workflow. See `docs/TAVI_APPROVED_RELEASE_PUBLICATION_0151.adoc`.

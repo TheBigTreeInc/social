@@ -3,14 +3,14 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.152",
-    "base_version": "0.3.151"
+    "version": "0.3.153",
+    "base_version": "0.3.152"
   },
   "update": {
-    "id": "TAVI-LOOPRD-SPEC-152",
+    "id": "TAVI-LOOPRD-SQLITE-VARCHAR-153",
     "kind": "source_update",
     "created_at": "2026-11-09T00:24:59+01:00",
-    "summary": "Repair LoopRD schema 13 operator reset-companion management contract; preserve publication approval workflow. No database migration."
+    "summary": "Correct schema-13 SQLite Companion snapshot DDL from TEXT to VARCHAR(8192); add preflight and row-preservation regressions. Server activation requires separate approval."
   },
   "planned_work": [
     {
@@ -1936,6 +1936,22 @@
           "description": "Catalog validation, injection-safe UI, modal and filter tests"
         }
       ]
+    },
+    {
+      "id": "TAVI-LOOPRD-SQLITE-VARCHAR-153",
+      "summary": "Corrected schema-13 SQLite companionSnapshot ADD COLUMN to VARCHAR(8192), added preflight and SQLite record-preservation regression; operator acceptance remains pending.",
+      "evidence": [
+        {
+          "kind": "source",
+          "ref": "tools/generate-looprd.py",
+          "description": "Schema-13 DDL now specifies VARCHAR(8192), model maxLength unchanged"
+        },
+        {
+          "kind": "test",
+          "ref": "tests/test_looprd_sqlite_migration_153.py",
+          "description": "Real SQLite SQLAlchemy reflection and retained data fixture"
+        }
+      ]
     }
   ],
   "todo_work": [
@@ -2762,7 +2778,7 @@
     ]
   },
   "handover": {
-    "next_pass": "Operator: migrate LoopRD server to database schema 13 only with backup and approval; build 0.3.144 on Windows and Android, validate cloud Companion CAS/reset, offline Hollow Meadow install/consent and grants; no online asset downloads or Gold yet.",
+    "next_pass": "Operator: back up live Social schema 12 database; validate schema 12→13 upgrade to Social server spec 0.3.124 against installed LoopRD on isolated copy; approve deploy separately and inspect diagnostics. Also investigate tavi-assets failures independently. Windows/Android public release remains approval-gated.",
     "risks": [
       "Embedded games are opaque-origin sandboxed; current Life may require an adaptation for storage/cookies. Tavi cannot grant allow-same-origin to GitHub Pages games sharing its web origin.",
       "Native Windows app and DPAPI persistence have not been exercised in this Linux author environment.",
@@ -2952,6 +2968,11 @@
       "id": "TAVI-ASSETS-STORE-0143-OP",
       "status": "required",
       "description": "Windows 355x630 and Android mobile: open Assets Store from Apps/Settings, test Discover/Installed/Permissions, search and no overflow; cancel/install card pack using in-app consent, restart, verify app read/customization grant and revoke, Back/Home, no Gold; do not publish before approval."
+    },
+    {
+      "id": "TAVI-LOOPRD-SQLITE-VARCHAR-153-OP",
+      "description": "Back up Social schema-12 SQLite DB, validate 0.3.124 against installed LoopRD using a staging copy, approve schema13 upgrade separately; check loaded/release/schema diagnostics and Companion persistence.",
+      "status": "required"
     }
   ],
   "release": {
@@ -2960,10 +2981,10 @@
     "notes": "Only review-only Windows/Android candidate created after explicit workflow invocation; no push, auto-release, public release, tags or deployment authorized. Full multi-platform path preserved."
   },
   "release_notes": {
-    "version": "0.3.152",
-    "summary": "LoopRD 0.3.123 spec validation repair, Tavi client 0.3.152; Windows/Android release publication still approval-gated.",
+    "version": "0.3.153",
+    "summary": "LoopRD Social release 0.3.124: repair SQLite schema-13 string-length mismatch; client version 0.3.153; releases remain approval-gated.",
     "server_unchanged": false,
-    "database_migration": "None: retain schemaVersion 13, additive migration history and live data.",
+    "database_migration": "Revise uncommitted schema-13 ADD COLUMN companionSnapshot to VARCHAR(8192). Current active remote schema 12 reported retained; back up and test before applying.",
     "native_qa": "All source regression tests only; native Windows/Android build, LoopRD migration and two-device Companion acceptance pending",
     "operator_approval": "pending"
   },
@@ -2972,11 +2993,11 @@
     "browser_qa": "Source tests for preview/store/Assets 0.1.9 scene and permissions; real 355x630/native device visual QA pending",
     "native_acceptance": "pending",
     "git_push": "Not pushed here; after operator-approved Git push, exact new SHA must pass four scoped CI workflows before candidate.",
-    "server_deploy": "Not deployed: LoopRD exact-runtime acceptance and separate operator approval pending.",
-    "database_schema": "13 (unchanged from 0.3.151; LoopRD server descriptor release 0.3.123)",
-    "operator_review": "Pending: protect DB and approve server spec update independently of client release.",
+    "server_deploy": "Not deployed; data backup, staging with installed LoopRD and approval required. Avoid live reset.",
+    "database_schema": "13 is the target (active server reported schema 12); server descriptor release 0.3.124, migration 13 SQL string length repaired. No live schema applied.",
+    "operator_review": "Pending: validate existing schema-12 data backup/copy and approve corrected schema-13 DDL independently.",
     "openclaw_bridge": "Local fake-CLI compatibility, reply chunking, cursor/receipt unit tests passed; real bot runtime pending.",
     "package_manifest": "Reconciled preexisting planned vs done/todo ID mismatch without closing or approving any record; legacy operator gates preserved."
   },
-  "version": "0.3.152"
+  "version": "0.3.153"
 }
