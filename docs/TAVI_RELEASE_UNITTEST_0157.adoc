@@ -1,0 +1,3 @@
+= Tavi 0.3.157: release test runner compatibility
+
+The 0.3.156 release workflow introduced a pytest-only test in a unittest-only GitHub job. This revision uses unittest.TestCase and tempfile.TemporaryDirectory instead. It preserves the exact-commit, release artifact and environment approval gates. GitHub Windows/Android builds and operator acceptance must run on the resulting new commit before release.

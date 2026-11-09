@@ -1,8 +1,8 @@
 {
  "schema": "ziprunner.workboard-update.v1",
  "project": "looprd-social",
- "version": "0.3.156",
- "summary": "0.3.156: Correct LoopRD Social schema-13 Companion revision nullability, add complete SQLite ADD COLUMN preflight and preserve retained schema-12 data; deployment remains operator-approved.",
+ "version": "0.3.158",
+ "summary": "0.3.158: Repair ZipRunner version parity; keep GitHub one-shot Windows/Android release checks and operator approval. No automatic publication or database change.",
  "implemented": [
   {
    "id": "LRS-004",
