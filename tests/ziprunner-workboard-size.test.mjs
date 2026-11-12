@@ -46,7 +46,7 @@ test('every implemented workboard item has 1 to 20 nonempty operator checks', as
   const review = previous.implemented.find(item => item.id === 'TAVI-STORE-110');
   assert.ok(review, 'Preserve TAVI-STORE-110 workboard item');
   assert.deepEqual(review.operator_checks, review.acceptance_criteria);
-  assert.deepEqual([...board.implemented,...board.remaining].map(item=>item.id).sort(), ['TAVI-STORE-TOUCH-174','TAVI-STORE-TOUCH-174-NATIVE-QA'].sort(), 'Only current new IDs may update local Workboard');
+  assert.deepEqual([...board.implemented,...board.remaining].map(item=>item.id).sort(), ['TAVI-CI-STORE-SELECTOR-175','TAVI-STORE-KLONDIKE-PUBLIC-QA-175'].sort(), 'Only current new IDs may update local Workboard');
 });
 
 // A previous release shipped a stale workboard version even though the app

@@ -221,7 +221,10 @@ async function testViewport(browser,base,device){
   assert.equal(await page.locator('[data-extension-install="org.tavi.core.wallet"], [data-extension-remove="org.tavi.core.wallet"], [data-extension-disable="org.tavi.core.wallet"]').count(),0,'Core Wallet must have no install/remove/disable controls');
   assert.equal(await page.locator('.tavi-store-item').filter({hasText:'Core Gold Wallet'}).count(),0,'Core Wallet is not an optional store app');
   // Store discovery combines both catalogs and hides internal tools.
-  await visible(page,'.tavi-storefront-asset [data-asset-item]');
+  const publicAssets=page.locator('.tavi-storefront-asset [data-asset-item]');
+  // Multiple approved packs can be visible at once; Playwright requires a singular wait target.
+  await publicAssets.first().waitFor({state:'visible',timeout:6000});
+  assert.ok(await publicAssets.count()>=1,'Unified Store discovery includes approved asset packs');
   assert.equal(await page.locator('.tavi-storefront-section [data-extension-install="org.tavi.examples.notepad"]').count(),0,'Internal Notepad must be absent from public discovery');
   // Repository configuration is still host Settings, reached via the profile library.
   stage='Settings app sources';

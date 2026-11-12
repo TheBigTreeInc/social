@@ -1,3 +1,9 @@
+## 0.3.175 — GitHub browser UI QA candidate (not a released client)
+
+After the 0.3.174 GitHub push, the five-viewport UI-QA workflow failed because an unscoped Playwright wait expected one asset card while discovery correctly contains two. The browser smoke now waits on `.first()` of the approved-asset collection, then separately verifies that at least one exists. A regression test protects the fix. It does not alter Store runtime, installation permissions, Wallet, TaviX contracts, native clients, or approved release gates.
+
+Source baseline: 0.3.174; proposed release: 0.3.175 only after exact-commit GitHub source/Windows/signed-Android/UI-QA success and separate operator acceptance. The existing candidate and publication workflows must be invoked with explicit scope and approval; GitHub release publication is not performed by installing this ZIP. TaviX owns publication of Klondike in the official app repository, subject to a verified source/artifact/license and first-time-install acceptance. See `docs/TAVI_0175_CI_RELEASE_AND_KLONDIKE_PUBLICATION.adoc`.
+
 ## Tavi 0.3.174 — Store native interaction polish (source candidate)
 
 At the top of the Store, pulling down refreshes TaviX and Assets discovery without reloading the messenger; keyboard users have a footer Refresh action. Simplified four-category layout fits compact windows, profile is borderless and artwork/title open details. Eligible installed apps offer Open, reviewed uninstalled apps offer Install (existing confirmation required), and only trusted free local asset packs offer Install (existing consent required). No Gold checkout or publisher-grant change. The Workboard update is a two-ID delta: see docs/qa/workboard-0.3.173-source-snapshot.json for the preserved old source snapshot; local 239-ticket operator Workboard is not replayed. Windows/Android native acceptance and exact post-update/CI evidence remain pending. See `docs/TAVI_STORE_TOUCH_INTERACTIONS_0174.adoc`.

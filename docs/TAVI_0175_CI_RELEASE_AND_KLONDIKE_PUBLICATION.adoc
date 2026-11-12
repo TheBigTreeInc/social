@@ -1,0 +1,43 @@
+= Tavi 0.3.175 — CI release readiness and Klondike catalog publication
+:toc:
+:revnumber: 0.3.175
+:revdate: 2026-11-12
+
+== Scope and authority
+
+Tavi Social owns the messenger host, Store UI, native release gate and installation approvals. TaviX (separate repository) owns the official aggregate extension index and distributable artifacts. Klondike/game publisher owns its source, license, immutable package content and approval of publication. This document requests owner work; it makes no cross-project source changes.
+
+== Evidence at 2026-11-12
+
+* Social `main` commit `1a29ca78b82f5e7041c9fbbb9466f9084e7de41b` declares 0.3.174.
+* On that SHA, source/web/SDK-distributions and Windows workflows have passed. The UI-QA workflow failed on all five viewports with a Playwright strict-mode violation because `.tavi-storefront-asset [data-asset-item]` matches two correct asset cards. Android build was in progress at the last inspection. Other-platform cancellation is not a Windows/Android gate.
+* The 0.3.175 correction waits on the first asset element, asserts at least one asset card, and retains separate system-app/permission checks. Regression test: `client/tests/ui-qa-multi-asset-175.test.mjs`.
+* No exact-commit 0.3.175 GitHub workflow evidence or native operator acceptance exists yet.
+
+== Releasing the Windows/Android client (not authorized by this source ZIP)
+
+. Import 0.3.175 through ZipRunner; compare it to the actual local 239-ticket-plus Workboard and preserve all local source/config, especially operator edits.
+. Run focused and full source checks, then operator-authorize a Git push to `TheBigTreeInc/social` main. Record the exact SHA. A successful push is not a release.
+. Require all four `windows-android` push workflows on the SAME main SHA to complete successfully: `Verify Social server and client source`, `Windows desktop app`, `Android phone app`, `Tavi browser UI QA`. Require the named Windows NSIS and signed Android release artifacts.
+. Run `Prepare Tavi release candidate` (`.github/workflows/release.yml`) via explicit workflow_dispatch with that exact `candidate_sha` and `candidate_scope=windows-android`. Verify its immutable candidate artifact, source ref, checksums and one EXE + one signed APK.
+. On actual Windows and Android devices, install/update and verify messenger startup, account state preservation, chat navigation, Store, Klondike detached/embedded behavior, back/close, and Android update signing. Record operator acceptance reference against that exact candidate.
+. Only after approval, invoke `Publish approved Tavi release` using candidate SHA, candidate run ID, operator acceptance reference and exact confirmation. Preserve protected `tavi-public-release` reviewers and all existing GitHub gates. Verify the resulting public GitHub Release assets and download URLs.
+
+== Public Klondike distribution — owner request to TaviX
+
+`client/src/extensions/repositories.js` already defaults to `https://thebigtreeinc.github.io/tavix/tavi.repository.json`; `client/src/ui/storefront.js` displays entries classified as public apps/games. Therefore do not hard-code a second Klondike install path in Social.
+
+The *currently accessible* official TaviX repository index contains Atrium and Companion only; no Klondike entry. A local `.tavix` game is not a remote public release. The uploaded Klondike `.tavix` is Library/Project-backed and could not be byte-materialized from this session; no publisher source repository, approved license or hosted artifact has been independently verified.
+
+TaviX/owner must:
+
+. Obtain the reviewed Klondike source and exact release `.tavix` archive; validate archive manifest, `kind=game`/classification, package integrity, allowed resource references and responsive platform list.
+. Confirm publisher identity and a real source repository URL, SPDX license policy, ownership and public-publishing authorization; do not invent those values.
+. Host the required same-origin static package entrypoint and all hashed resources in the TaviX extension distribution. Publish through existing staged approval, not direct mutation of user installations.
+. Add one authenticated, versioned `tavi.repository/v1` entry to the official TaviX index, with exact `manifest`, HTTPS `entrypoint`, browsable HTTPS `source`, `license` and immutable release `revision` metadata. Verify source path ends with the manifest panel path. Do not advertise a URL until it exists and is accessible.
+. Test first-time install from clean Windows and Android Tavi clients, isolation/cancel/permission flows, source pinning, offline behavior if advertised, public Games filter and consistent icon/detail page. Existing sideload users must not be silently migrated to another source or publisher.
+. If Atrium adds Klondike discovery metadata, prevent duplicate install cards; Atrium owns optional game context, not extension installation.
+
+== Acceptance and evidence
+
+Do not count a source-test PASS as a native or GitHub CI PASS. The release remains blocked while any required workflow lacks a successful exact-SHA result, a signed APK or Windows installer is missing, operator acceptance is absent or the protected publication environment is not approved. Klondike public availability remains blocked until its actual remote catalog and resources are live and first-time install is proven.

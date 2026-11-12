@@ -3,15 +3,15 @@
   "spec_version": "1.0.0",
   "project": {
     "key": "looprd-social",
-    "version": "0.3.174",
-    "base_version": "0.3.173",
-    "summary": "Native-feeling Tavi Store: compact categories, clean profile, pull to refresh and separate details/approved actions."
+    "version": "0.3.175",
+    "base_version": "0.3.174",
+    "summary": "Fix exact-commit GitHub browser UI QA multi-asset Playwright selector; preserve secure catalog and release approval gates."
   },
   "update": {
-    "id": "TAVI-STORE-TOUCH-174",
+    "id": "TAVI-CI-STORE-SELECTOR-175",
     "kind": "source_update",
-    "created_at": "2026-11-12T15:40:00+01:00",
-    "summary": "Source-only Store UX polish; no new payment, authorization, SDK or backend paths."
+    "created_at": "2026-11-12T18:45:00+01:00",
+    "summary": "QA-only correction for Playwright strict-mode on multiple public asset cards; no runtime/app catalog/payment changes."
   },
   "planned_work": [
     {
@@ -3244,11 +3244,11 @@
     "release_notes": null
   },
   "release_notes": {
-    "version": "0.3.174",
-    "summary": "Touch-friendly Store category layout, borderless profile, pull-to-refresh and independent details/install controls.",
+    "version": "0.3.175",
+    "summary": "Correct GitHub browser Store QA strict locator; no runtime changes to apps or assets.",
     "server_unchanged": true,
     "database_migration": "None.",
-    "native_qa": "Pending Windows/Android operator verification and exact post-update QA.",
+    "native_qa": "Pending exact-commit Windows, Android and five-viewport UI QA; release blocked until operator acceptance.",
     "operator_approval": "pending"
   },
   "verification_summary": {
@@ -3262,5 +3262,5 @@
     "openclaw_bridge": "Local fake-CLI compatibility, reply chunking, cursor/receipt unit tests passed; real bot runtime pending.",
     "package_manifest": "Reconciled preexisting planned vs done/todo ID mismatch without closing or approving any record; legacy operator gates preserved."
   },
-  "version": "0.3.174"
+  "version": "0.3.175"
 }

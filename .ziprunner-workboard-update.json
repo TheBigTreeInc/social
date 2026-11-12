@@ -1,31 +1,29 @@
 {
   "schema": "ziprunner.workboard-update.v1",
   "project": "looprd-social",
-  "version": "0.3.174",
-  "summary": "Store interaction pass delta only. Preserves all older local Workboard tickets and operator decisions.",
+  "version": "0.3.175",
+  "summary": "Only 0.3.175 QA regression and public Klondike integration gate. Preserve all previous local Workboard ticket decisions.",
   "implemented": [
     {
-      "id": "TAVI-STORE-TOUCH-174",
-      "title": "Native Store interaction polish: compact category tabs, pull refresh and independent details/action targets",
-      "priority": "medium",
+      "id": "TAVI-CI-STORE-SELECTOR-175",
+      "title": "Make GitHub browser Store QA work with multiple approved asset cards",
       "status": "review",
-      "summary": "Host Store source and regression tests completed; native device acceptance pending. No Gold payment, SDK or authorization change.",
+      "priority": "high",
+      "summary": "Source test corrected to wait for one deterministic card, preserving discovery and approval assertions. Exact-commit GitHub QA not yet passed.",
       "operator_checks": [
-        "Open exact 0.3.174 Windows build at 355px and Android; check four tabs, focus and profile appearance.",
-        "Pull down from Store top and release to refresh; check ordinary scroll/horizontal gestures do not refresh.",
-        "Tap Klondike icon/name to open details, and separate Open to launch its verified installation.",
-        "Install eligible TaviX app and free pinned asset pack; verify old approvals and cancel path.",
-        "Unverified remote asset remains view-only; reconcile failed post-update and missing exact-commit CI before Done."
+        "Push reviewed 0.3.175 candidate through ZipRunner approval and verify Tavi browser UI QA on the exact pushed SHA.",
+        "Check all five viewports and preserved private App Store/Notepad + asset install approval flows.",
+        "Require Windows, signed Android and source CI success on that same pushed commit before release-candidate preparation."
       ]
     }
   ],
   "remaining": [
     {
-      "id": "TAVI-STORE-TOUCH-174-NATIVE-QA",
-      "title": "Windows and Android Store touch/approval acceptance",
-      "priority": "high",
+      "id": "TAVI-STORE-KLONDIKE-PUBLIC-QA-175",
+      "title": "Prove official TaviX Klondike publication and remote first-time install in Tavi Store",
       "status": "planned",
-      "summary": "Operator Windows/Android acceptance and exact 0.3.174 QA outstanding, including stale/failed 0.3.173 post-update checks and missing exact-commit CI."
+      "priority": "high",
+      "summary": "TaviX publisher owns repository index/static artifacts. Obtain authorized game source, exact .tavix package identity, approved source URL/license/manifest; verify fresh device discover/install/open and pinned-source permissions. No public artifact available or publication performed."
     }
   ]
 }
