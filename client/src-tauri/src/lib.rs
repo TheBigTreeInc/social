@@ -1,7 +1,7 @@
 //! Native device-session vault. The Social token never enters browser localStorage
 //! on Windows. Windows DPAPI encrypts it for the current OS account, then the
 //! ciphertext is stored under Tavi's local application-data directory.
-use tauri::{AppHandle, WebviewWindow, Manager};
+use tauri::{AppHandle, WebviewWindow, Manager, Emitter};
 
 fn main_window_only(window: &WebviewWindow) -> Result<(), String> {
     if window.label() == "main" { Ok(()) }
@@ -301,6 +301,20 @@ async fn tavi_native_pick_tavix(window: WebviewWindow) -> Result<serde_json::Val
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Report actual window destruction to the authenticated main window.
+        // Avoid JS onCloseRequested listeners: they prevent the native close
+        // and would require the broader core:window:allow-destroy permission.
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::Destroyed = event {
+                let label = window.label();
+                if let Some(suffix) = label.strip_prefix("workspace-") {
+                    if suffix.len() == 32 && suffix.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) {
+                        let _ = window.app_handle().emit_to("main", "tavi-workspace-native-destroyed",
+                            serde_json::json!({ "label": label }));
+                    }
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![tavi_session_load, tavi_session_save, tavi_session_clear, tavi_native_pick_tavix, tavi_android_install_update, tavi_android_test_update, tavi_android_update_status])
         .plugin(android_updater_plugin())
         .plugin(tauri_plugin_notification::init())

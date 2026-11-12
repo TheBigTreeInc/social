@@ -52,6 +52,6 @@ test('TaviX validator accepts existing v1 package layout and rejects missing ass
 
 test('TaviX standard documents compatibility and non-standard Atrium bridge boundary',async()=>{
  const spec=await readFile(new URL('../../docs/TAVIX_1_0_SPEC.adoc',import.meta.url),'utf8');
- const pkg=JSON.parse(await readFile(new URL('../extension-sdk/package.json',import.meta.url),'utf8'));assert.equal(pkg.name,'@tavi/tavix-sdk');assert.equal(pkg.version,'1.0.0');
+ const pkg=JSON.parse(await readFile(new URL('../extension-sdk/package.json',import.meta.url),'utf8'));assert.equal(pkg.name,'@tavi/tavix-sdk');assert.match(pkg.version,/^1\.0\.\d+$/); // SDK adds backward-compatible modules in patch releases
  assert.match(spec,/existing first-party `atrium\.tavi-launch\/v1`/i);assert.match(spec,/tavix\.surface\/v1/);assert.match(spec,/does NOT advertise `tavix\.surface\/v1`/);
 });

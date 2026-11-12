@@ -1,0 +1,142 @@
+= TaviX UI/UX Developer Contract — Tavi 0.3.162
+:revnumber: 0.1.0
+:revdate: 2026-11-09
+:toc:
+:sectnums:
+
+[IMPORTANT]
+====
+This is a Tavi host + TaviX SDK *first implementation*, not a declaration that tablet window management or Android orientation lock works on physical devices. The host, server and operator approval requirements remain unchanged. Windows native startup and Android acceptance are pending.
+====
+
+== Product and ownership
+
+Tavi is a messenger first, apps and games second. The host owns the user's navigation (Home, Chats, Games, Apps, Notifications), window placement, Android Back and the path back to messaging. Apps own their tabs, editor/reader panels, dialogs and game controls *inside* their allocated surface. No app should add a second Tavi Back bar, copy a Tavi account header or manipulate Tauri windows directly.
+
+TaviX apps may be normal productivity tools, browsers/editors, or visually custom games. An app may occupy a native desktop window without moving chat out of the Tavi messenger. Windows can host several explicitly detached conversations and a detached app at once. A game can use its own visual design and still obey host navigation and capability discovery.
+
+== Presentation-mode vocabulary (canonical public contract)
+
+[cols="1,3,2",options="header"]
+|===
+|Mode |Meaning |0.3.162 state
+|`embedded` |The normal host app viewport |Implemented
+|`native-window` |Independent desktop OS window, host-authenticated TaviX relay |Implemented in 0.3.161; physical acceptance pending
+|`split-pane` |Tablet-side pane within host workspace |Specified, not yet implemented
+|`floating-panel` |Movable tablet panel within host workspace, potentially several |Specified, not yet implemented
+|===
+
+`detached` is *only* a deployed compatibility alias for `native-window` (the 0.3.161 contract). To avoid breaking Atrium or Asset Studio, `host.info().mode` and `workspace.info().mode` keep their `embedded` / `detached` wire values until a separately negotiated major protocol change. New consumers use `workspace.info().presentation.current` and `supported` to discover canonical names. A presentation declaration does not create a new permission. The host may select `embedded` if a requested mode is unsupported or unsafe.
+
+[source,json]
+----
+{
+  "schema": "tavix.presentation/v1",
+  "preferred": "native-window",
+  "supported": ["embedded", "native-window"],
+  "minimumSize": {"width": 420, "height": 480},
+  "preferredSize": {"width": 1000, "height": 720},
+  "responsive": true
+}
+----
+
+This is the supported first-pass manifest subset; do not copy still-proposed `resumable` fields from the future workspace design into a v1 manifest. Existing installed packages declaring `detached` remain compatible. `split-pane` and `floating-panel` are valid declarations but not advertised as available by this version of the host.
+
+== Read-only UI discovery
+
+A TaviX app calls `sdk.info()` and tests for `tavix.ui/v1` in `features` *before* using `sdk.uiContext()`. The request goes to the same sandboxed `tavi.extension/v1` host bridge as current modules. It creates no native permissions and never returns a token, account or server role. The response uses this shape:
+
+[source,json]
+----
+{
+  "schema": "tavix.ui/v1",
+  "theme": "dark",
+  "device": "tablet",
+  "orientation": "landscape",
+  "presentation": "embedded",
+  "chat": {"orientation": "adaptive", "placement": "left"},
+  "games": {"orientations": ["portrait", "landscape"]},
+  "viewport": {"width": 1024, "height": 768},
+  "components": "tavix.ui-components/v1"
+}
+----
+
+`theme` is `light` or `dark`. `device` is `phone`, `tablet` or `desktop`. `orientation` reflects the currently reported viewport aspect; it is *not* evidence that the host has locked an OS device orientation. `viewport` is `null` for detached Windows surfaces until the dedicated child-window size channel exists; applications must use CSS viewport units and ResizeObserver locally. The host broadcasts `ui.contextChanged` for its embedded viewport resize and theme changes; a detached window receives theme changes via the authenticated relay but does not yet receive its own resized viewport measurements. Avoid putting identity/security decisions in UI feature-detection.
+
+The host may change `device`, theme or presentation independently of the app's declared preferred layout. App developers must not infer window authority from user-agent sniffing or CSS media queries.
+
+== Device/orientation rules (product requirement)
+
+[cols="1,2,2,3",options="header"]
+|===
+|Device |Chat |Apps |Games
+|Phone |Portrait/default orientation, host-navigation access at all times |Single embedded responsive view |Portrait *or landscape*, opted into by the game
+|Tablet portrait |Conversation centered; panels stack on insufficient room |Adaptive host panes |Either orientation
+|Tablet landscape |Conversation center *or left* (left is default while space supports second pane) |Split and multiple floating panels are future host operations |Either orientation
+|Desktop |Chats open separately only on explicit request |Embedded/native-window, remember last mode per app |Custom game window permitted
+|===
+
+0.3.162 implements the *read-only policy metadata* and initial centered/left tablet CSS treatment. It does *not* yet change Android Activity orientation at runtime. Enforcing phone portrait lock for chats while allowing landscape for games needs an Android-native host lifecycle and rotation acceptance pass. Third-party apps must not call platform-specific orientation control themselves. Normal desktop width 355 is still `desktop`, not automatically a phone.
+
+== Reusable app components
+
+Import the add-on stylesheet `@tavi/tavix-sdk/ui.css` into your *own* sandboxed app build. Host CSS cannot cross the iframe boundary. Import `applyTaviUI` from `@tavi/tavix-sdk/ui`, then call it on your `.tavix-app` element after checking the feature. The following contract classes are available:
+
+* `.tavix-app` — app root with semantic light/dark tokens and sane typography
+* `.tavix-app-header` — application title/actions *only*, no Tavi Back button
+* `.tavix-panel`, `.tavix-stack`, `.tavix-grid` — card and responsive content structures
+* `.tavix-button`, `.tavix-button--primary` — buttons
+* `.tavix-tabs`, `.tavix-tab` — app-owned tabs; selected tab uses `aria-selected`
+* `.tavix-field`, `.tavix-input` — labeled fields
+* `.tavix-dialog` — app-owned dialog surface; use native `dialog` or equivalent focus handling
+
+The companion stylesheet provides semantic `--tavix-bg`, `--tavix-surface`, `--tavix-raised`, `--tavix-text`, `--tavix-muted`, `--tavix-accent`, `--tavix-contrast`, `--tavix-border`, `--tavix-focus`, `--tavix-space` and `--tavix-radius`. Applications can extend these as appropriate. The stylesheet includes light/dark colors, 44px touch targets on phone/tablet, visible keyboard focus and reduced-motion handling. Games may opt out of this stylesheet for gameplay rendering, but should use host discovery, lifecycle rules and accessible controls.
+
+[source,javascript]
+----
+import {createTaviXSDK} from '@tavi/tavix-sdk';
+import {applyTaviUI} from '@tavi/tavix-sdk/ui';
+import '@tavi/tavix-sdk/ui.css';
+
+const sdk = createTaviXSDK();
+const host = await sdk.info();
+if (host.features.includes('tavix.ui/v1')) {
+  applyTaviUI(document.querySelector('.tavix-app'), await sdk.uiContext());
+  sdk.on('ui.contextChanged', context => {
+    applyTaviUI(document.querySelector('.tavix-app'), context);
+  });
+}
+// Internal application tabs are app-owned. Host exit/back is not:
+// await sdk.navigation.back();
+// await sdk.navigation.close();
+----
+
+Ordinary apps should use these semantic components in their own content, not inject Tavi's shell or extension toolbar. App browser/content panes should each have a clearly identified scroll container to avoid double vertical scrollbars. Never repackage a second host Settings/Home/Back UI as application chrome.
+
+== Host/SDK lifecycle and permissions
+
+* `sdk.workspace.info()` remains read-only and reports the modes actually supported by the host.
+* The `ui.contextChanged` event is advisory; new calls to `uiContext()` return the current trusted host UI context.
+* `sdk.navigation.back()` and `sdk.navigation.close()` remain requests to the host, not direct app-stack writes.
+* TaviX background execution, lifecycle checkpoints, `workspace.surface.present`, tablet panels, window geometry and native orientation switching are *not* implemented APIs in this pass. Do not call them without capability negotiation from a future contract.
+* The app package's reviewed source, digest, installation state, account scope and grant validation remain required; window presentation must never change them.
+* Permissions such as Assets customizations and registry administration are granted separately and need their own approval, regardless of `ui.info()` success.
+
+== QA and adoption gates
+
+. Client-only tests must prove the mode alias, account-local preferences, UI discovery response, no privileged data, and notification relay.
+. Import the ZIP through ZipRunner. A Windows native WebView2 build and manual launch must demonstrate that `main.js` renders a real sign-in/dashboard rather than only the native background. A timeout/recovery screen is diagnostic, not proof of the original startup defect being fixed.
+. Review Asset Studio and Atrium first as UI consumers. They may adopt the stylesheet incrementally; changes to the independent TaviX repository/packager require their owners' approval.
+. Verify 355x630 desktop, Android phone portrait chat and landscape game, portrait/landscape tablet chat placement and dark mode on physical devices. The native Android orientation policy is still pending.
+. Keep unknown CSS renderer issues, unverified API claims and operator acceptance on the Workboard in Review/Planned, never auto-Done.
+
+== Machine-readable contract files
+
+* `docs/contracts/tavix-presentation-v1.schema.json`: current manifest presentation subset and legacy `detached` alias; runtime performs extra compatibility checks.
+* `docs/contracts/tavix-ui-v1.schema.json`: strictly bounded, read-only `ui.info` response shape.
+* `client/extension-sdk/index.d.ts`, `client/extension-sdk/ui.d.ts`: public TypeScript application interfaces.
+* `examples/tavix-ui-contract-162/`: application-authored tabs/resource browser proof-of-concept source for bundler integration, not an approved signed `.tavix` bundle.
+
+== Public icon and font standard (0.3.165)
+
+Read link:TAVI_UI_KIT_001.adoc[tavix.ui-kit/v1] and link:contracts/tavix-ui-kit-v1.json[machine-readable icon and typography catalog]. The packaged, locally bundled `client/extension-sdk/icons.js` and `ui.css` provide 50 curated vector icons, consistent sizes and native OS font fallbacks. App identity images remain manifest-defined; no icon font, CDN or privileged host method is required. Independent TaviX 0.1.14 provides the matching self-contained developer example. Native Windows launch and Android interface/orientation checks remain independent operator gates.

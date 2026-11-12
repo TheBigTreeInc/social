@@ -10,7 +10,7 @@ export const TAVIX_CHANNEL='tavi.extension/v1';
 export const TAVIX_HOST_API='1.0.0';
 
 export function assertTaviXHostInfo(info){
- if(!info||typeof info!=='object'||info.standard!==TAVIX_STANDARD||info.channel!==TAVIX_CHANNEL||typeof info.api!=='string'||!/^1\.\d+\.\d+$/.test(info.api)||typeof info.extensionId!=='string'||info.mode!=='embedded'||info.navigation!=='host'||!Array.isArray(info.features))throw Error('Host is not TaviX 1.0 compatible');
+ if(!info||typeof info!=='object'||info.standard!==TAVIX_STANDARD||info.channel!==TAVIX_CHANNEL||typeof info.api!=='string'||!/^1\.\d+\.\d+$/.test(info.api)||typeof info.extensionId!=='string'||!['embedded','detached'].includes(info.mode)||info.navigation!=='host'||!Array.isArray(info.features))throw Error('Host is not TaviX 1.0 compatible');
  return info;
 }
 
@@ -47,6 +47,9 @@ export function createTaviXSDK(target=window.parent,source=window){
   info:()=>request('host.info'),
   conformance:async()=>assertTaviXHostInfo(await request('host.info')),
   capabilities:()=>request('host.capabilities'),
+  workspace:{info:()=>request('workspace.info')},
+  /** Read-only theme, orientation and layout from the trusted Tavi host. */
+  uiContext:()=>request('ui.info'),
   navigation:{back:()=>request('navigation.back'),close:()=>request('navigation.close')},
   storage:{get:key=>request('storage.get',{key}),set:(key,value)=>request('storage.set',{key,value})},
   ui:{toast:message=>request('ui.toast',{message}),close:()=>request('ui.close'),

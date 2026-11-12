@@ -17,7 +17,9 @@ class WorkboardSummaryGateTests(unittest.TestCase):
         rows=board['implemented']+board['remaining']
         expected=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))['version']
         self.assertEqual(board['version'],expected)
-        self.assertGreaterEqual(len(rows),121)
+        self.assertEqual(len(rows),2)
+        legacy=json.loads((ROOT/'docs/qa/workboard-0.3.173-source-snapshot.json').read_text(encoding='utf-8'))
+        self.assertGreaterEqual(len(legacy['implemented'])+len(legacy['remaining']),121)
         self.assertEqual(len({row['id'] for row in rows}),len(rows))
         for row in rows:
             self.assertIsInstance(row.get('summary'),str,row['id'])

@@ -1,0 +1,246 @@
+/* TAVI-STORE-001: one catalog surface for TaviX apps and Tavi Assets packs. */
+.tavi-app-store.tavi-marketplace.tavi-storefront{box-sizing:border-box;width:100%;max-width:1100px;margin:0 auto;padding:14px 14px 30px;overflow-x:clip;color:var(--tavi-color-text)}
+.tavi-storefront [hidden]{display:none!important}
+.tavi-storefront-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+.tavi-storefront-header h2{font-size:23px;letter-spacing:-.035em;line-height:1.15;margin:2px 0 0;color:var(--tavi-color-text)}
+.tavi-storefront-eyebrow{font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:750;color:var(--tavi-color-text-muted,#506e5b)}
+.tavi-storefront-profile{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-width:44px;padding:0;border:2px solid var(--tavi-color-accent,#2f845f);border-radius:50%;background:var(--tavi-color-surface-raised,#e6f0e9);overflow:hidden;cursor:pointer}
+.tavi-storefront-profile .avatar{width:38px;height:38px;min-width:38px;min-height:38px;border-radius:50%;display:grid;place-items:center;font-size:16px}
+.tavi-storefront-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:0 0 8px;margin:0 0 9px}
+.tavi-storefront-tabs button{flex:1 0 auto;min-height:41px;min-width:64px;padding:8px 13px;background:var(--tavi-color-surface-raised,#eef5f0);border:1px solid var(--tavi-color-border,#d0ddd4);border-radius:999px;color:var(--tavi-color-text);font-size:12px;font-weight:700;cursor:pointer}
+.tavi-storefront-tabs button[aria-current=page]{background:var(--tavi-color-accent,#27714e);border-color:var(--tavi-color-accent,#27714e);color:var(--tavi-color-accent-contrast,#fff)}
+.tavi-storefront-search{display:block;margin:7px 0 15px}.tavi-storefront-search input{display:block;width:100%;height:45px;box-sizing:border-box;border:1px solid var(--tavi-color-border,#b8d1c1);border-radius:13px;background:var(--tavi-color-surface,#fff);padding:10px 13px;color:var(--tavi-color-text);font-size:13px}
+.tavi-storefront-hero{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(125deg,#194f3a,#327f61);border-radius:18px;color:#fff;padding:22px 20px;min-height:142px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:7px;margin:0 0 23px}
+.tavi-storefront-hero:after{content:'✦';position:absolute;right:-10px;bottom:-85px;font-size:220px;line-height:1;opacity:.13;z-index:-1;pointer-events:none}
+.tavi-storefront-hero .tavi-storefront-eyebrow{color:#b9ebd3}.tavi-storefront-hero h3{margin:0;font-size:22px;line-height:1.15;color:#fff}.tavi-storefront-hero p{font-size:12px;line-height:1.55;max-width:420px;color:#e6f7eb;margin:0 0 4px}
+.tavi-storefront-hero button{min-height:40px;padding:9px 17px;border:0;border-radius:999px;background:#fff;color:#174b34;font-size:12px;font-weight:750;cursor:pointer}
+.tavi-storefront-section{margin:0 0 22px;min-width:0}.tavi-storefront-section>header{display:block;margin:0 0 11px}.tavi-storefront-section>header h3{font-size:16px;letter-spacing:-.01em;margin:0;color:var(--tavi-color-text)}.tavi-storefront-section>header p{margin:3px 0 0;font-size:11px;color:var(--tavi-color-text-muted,#63806f);line-height:1.5}
+.tavi-storefront-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,145px),1fr));gap:11px;min-width:0}
+.tavi-storefront .tavi-store-item.tavi-marketplace-item{display:flex;flex-direction:column;align-items:stretch;gap:8px;min-width:0;min-height:192px;box-sizing:border-box;border:1px solid var(--tavi-color-border,#cfdfd3);border-radius:15px;background:var(--tavi-color-surface,#fff);padding:13px 11px;overflow:hidden}
+.tavi-storefront .tavi-store-icon{width:52px;height:52px;min-width:52px;min-height:52px;border-radius:14px;align-self:flex-start;margin:0}
+.tavi-storefront .tavi-marketplace-copy{flex:1 1 auto;min-height:0;width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:3px;white-space:normal;text-align:left;overflow:visible;padding:0}
+.tavi-storefront .tavi-marketplace-copy strong{font-size:13px;line-height:1.3;white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.tavi-storefront .tavi-marketplace-copy small{font-size:10px;line-height:1.4;white-space:normal;overflow-wrap:anywhere}
+.tavi-storefront .tavi-store-actions{flex:0 0 auto;width:100%;max-width:none;display:flex;flex-direction:row;justify-content:flex-start;flex-wrap:wrap;margin-top:auto}
+.tavi-storefront .tavi-store-actions button{min-height:36px;min-width:68px;max-width:100%;font-size:11px;border-radius:10px}
+.tavi-storefront-asset{min-width:0}
+.tavi-storefront-asset .tavi-asset-product{height:100%;display:flex;flex-direction:column;box-sizing:border-box;border-radius:15px}
+.tavi-storefront-asset .tavi-asset-card-art,.tavi-storefront-asset .tavi-asset-remote-art{height:92px;min-height:92px}
+.tavi-storefront-asset .tavi-asset-playing-card{width:52px;height:73px}.tavi-storefront-asset .tavi-asset-playing-card span{font-size:26px}.tavi-storefront-asset .tavi-asset-product-body{padding:11px;min-height:0;flex:1;gap:5px}
+.tavi-storefront-asset .tavi-asset-product-body h3{font-size:13px}.tavi-storefront-asset .tavi-asset-product-body p{font-size:11px;line-height:1.35;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}.tavi-storefront-asset .tavi-asset-product-foot{padding-top:6px}.tavi-storefront-asset .tavi-asset-product-foot button{min-height:35px;padding:6px 11px}
+.tavi-storefront-account{display:flex;gap:5px;flex-direction:column;margin:5px 0 17px;padding:14px;border-radius:13px;background:var(--tavi-color-surface-raised,#e9f2ec)}
+.tavi-storefront-account strong{font-size:16px}.tavi-storefront-account span{font-size:12px;color:var(--tavi-color-text-muted,#63806f)}.tavi-storefront-account button{align-self:flex-start;padding:7px 0;border:0;background:transparent;color:var(--tavi-color-accent,#26774f);font-size:12px;font-weight:700;cursor:pointer}
+.tavi-storefront-library-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:9px;margin:17px 0}
+.tavi-storefront-library-nav button{min-height:46px;padding:10px;border-radius:12px;border:1px solid var(--tavi-color-border,#c9dbc9);background:var(--tavi-color-surface,#fff);color:var(--tavi-color-text);font-weight:650;text-align:left;cursor:pointer}
+.tavi-storefront-note,.tavi-storefront-footer{font-size:11px;line-height:1.5;color:var(--tavi-color-text-muted,#587565);margin:12px 0}.tavi-storefront-footer{border-top:1px solid var(--tavi-color-border,#d1e2d6);padding-top:8px}.tavi-storefront-footer p{margin:5px 0}
+.tavi-storefront .tavi-marketplace-filters{margin:0 0 17px}
+.tavi-storefront button:focus-visible,.tavi-storefront input:focus-visible{outline:3px solid var(--tavi-color-focus,#5a9cdc);outline-offset:2px}
+@media(min-width:650px){.tavi-app-store.tavi-marketplace.tavi-storefront{padding:24px 28px 36px}.tavi-storefront-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:15px}.tavi-storefront-tabs{justify-content:flex-start}.tavi-storefront-tabs button{flex:0 0 auto;padding-inline:20px}.tavi-storefront-hero{min-height:178px;padding:30px}.tavi-storefront-hero h3{font-size:27px}.tavi-storefront .tavi-store-item.tavi-marketplace-item{min-height:206px}}
+@media(max-width:345px){.tavi-app-store.tavi-marketplace.tavi-storefront{padding:11px 10px 22px}.tavi-storefront-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.tavi-storefront .tavi-store-item.tavi-marketplace-item{padding:10px 8px}.tavi-storefront-tabs{gap:5px}.tavi-storefront-tabs button{padding-inline:8px;min-width:59px}}
+@media(prefers-reduced-motion:reduce){.tavi-storefront *{scroll-behavior:auto!important}}
+
+.tavi-storefront-refresh{display:grid;place-items:center;flex:none;min-height:42px;min-width:42px;padding:7px;border:1px solid var(--tavi-color-border,#d0ddd4);border-radius:11px;background:var(--tavi-color-surface,#fff);color:var(--tavi-color-text);cursor:pointer}.tavi-storefront-refresh .tavi-ui-glyph{width:20px;height:20px}
+@media(pointer:coarse){.tavi-storefront .tavi-store-actions button,.tavi-storefront-asset .tavi-asset-product-foot button,.tavi-storefront-tabs button{min-height:44px}}
+/* TAVI-STORE-DETAIL-171: accessible product pages within the host Store viewport. */
+.tavi-storefront-details{min-width:0}
+.tavi-product-detail{min-width:0;display:flex;flex-direction:column;gap:16px;padding:2px 0 18px;color:var(--tavi-color-text)}
+.tavi-product-back{align-self:flex-start;border:0;background:transparent;color:var(--tavi-color-accent,#27714e);padding:9px 0;font-size:12px;font-weight:700;min-height:40px;cursor:pointer}
+.tavi-product-header{display:flex;align-items:center;gap:15px;min-width:0}
+.tavi-product-cover{width:82px;height:82px;flex:none;display:grid;place-items:center;overflow:hidden;border-radius:19px;background:var(--tavi-color-surface-raised,#e7f3ea);border:1px solid var(--tavi-color-border,#d3e2d6)}
+.tavi-product-cover>img{display:block;width:100%;height:100%;object-fit:contain}
+.tavi-product-cover>svg{width:54px;height:54px}
+.tavi-product-cover .tavi-asset-card-art,.tavi-product-cover .tavi-asset-remote-art{width:100%;height:100%;min-height:0}
+.tavi-product-cover .tavi-asset-playing-card{width:35px;height:49px;border-width:2px;border-radius:4px}
+.tavi-product-cover .tavi-asset-playing-card b{font-size:9px;top:2px;left:3px}
+.tavi-product-cover .tavi-asset-playing-card span{font-size:16px}
+.tavi-product-identity{min-width:0}
+.tavi-product-kind{text-transform:uppercase;letter-spacing:.1em;font-size:10px;font-weight:750;color:var(--tavi-color-text-muted,#62806c)}
+.tavi-product-identity h2{margin:5px 0 0;line-height:1.15;font-size:clamp(19px,4vw,29px);overflow-wrap:anywhere}
+.tavi-product-status{display:flex;flex-direction:column;gap:4px;background:var(--tavi-color-surface-raised,#eaf4ed);border:1px solid var(--tavi-color-border,#d0e2d7);padding:13px 14px;border-radius:13px}
+.tavi-product-status strong{font-size:18px}.tavi-product-status span{font-size:11px;line-height:1.5;color:var(--tavi-color-text-muted,#587566)}
+.tavi-product-overview h3,.tavi-product-information h3,.tavi-product-previews h3{font-size:16px;line-height:1.3;margin:0 0 8px;color:var(--tavi-color-text)}
+.tavi-product-overview p,.tavi-product-previews p,.tavi-product-safety,.tavi-product-notice{font-size:12px;line-height:1.6;color:var(--tavi-color-text-muted,#587566);margin:0;overflow-wrap:anywhere}
+.tavi-product-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tavi-product-actions button{min-height:44px;border:0;border-radius:11px;background:var(--tavi-color-accent,#27714e);color:var(--tavi-color-accent-contrast,#fff);padding:9px 17px;font-size:12px;font-weight:700;cursor:pointer}
+.tavi-product-actions button:disabled{opacity:.45;cursor:not-allowed}
+.tavi-product-actions .tavi-marketplace-review{border:1px solid var(--tavi-color-border,#acc9b4);background:var(--tavi-color-surface,#fff);color:var(--tavi-color-text)}
+.tavi-product-installed,.tavi-product-unavailable{font-size:12px;line-height:1.5;color:var(--tavi-color-text-muted,#587566)}
+.tavi-product-installed{font-weight:700;color:var(--tavi-color-accent,#27714e)}
+.tavi-product-facts{display:grid;gap:0;margin:0;border:1px solid var(--tavi-color-border,#d0e2d7);background:var(--tavi-color-surface,#fff);border-radius:13px;overflow:hidden}
+.tavi-product-facts>div{display:grid;grid-template-columns:minmax(90px,32%) minmax(0,1fr);gap:10px;padding:11px 12px;border-bottom:1px solid var(--tavi-color-border,#d0e2d7)}
+.tavi-product-facts>div:last-child{border-bottom:0}
+.tavi-product-facts dt{font-size:11px;font-weight:750;color:var(--tavi-color-text-muted,#587566)}
+.tavi-product-facts dd{min-width:0;margin:0;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.tavi-product-previews{padding:14px;border:1px solid var(--tavi-color-border,#d0e2d7);background:var(--tavi-color-surface,#fff);border-radius:15px}
+.tavi-product-artwork{max-width:540px;margin-bottom:10px;overflow:hidden;border-radius:12px}
+.tavi-product-artwork .tavi-asset-card-art,.tavi-product-artwork .tavi-asset-remote-art{height:170px}
+.tavi-product-safety{background:var(--tavi-color-surface-raised,#eaf4ed);padding:13px 14px;border-radius:13px}
+.tavi-product-notice{border-left:3px solid var(--tavi-color-accent,#27714e);padding:7px 12px}
+.tavi-storefront-asset .tavi-asset-product-foot strong{font-size:12px}
+.tavi-storefront button:focus-visible{outline:3px solid var(--tavi-color-focus,#5a9cdc);outline-offset:3px}
+@media(min-width:690px){.tavi-product-header{gap:22px}.tavi-product-cover{width:118px;height:118px}.tavi-product-cover .tavi-asset-playing-card{width:49px;height:70px}.tavi-product-cover .tavi-asset-playing-card span{font-size:21px}.tavi-product-detail{gap:20px}}
+@media(max-width:360px){.tavi-product-header{gap:10px}.tavi-product-cover{width:66px;height:66px}.tavi-product-facts>div{grid-template-columns:minmax(76px,32%) minmax(0,1fr);padding:10px}}
+
+
+/* TAVI-STORE-DELIGHT-173: friendly, touch-first storefront. Decorative elements
+   are CSS/emoji only; no fabricated product imagery, ratings or endorsement. */
+.tavi-app-store.tavi-marketplace.tavi-storefront,
+.tavi-storefront button,.tavi-storefront input,.tavi-storefront summary{
+ font-family:"Segoe UI Variable","Segoe UI",Roboto,system-ui,-apple-system,sans-serif;
+}
+.tavi-app-store.tavi-marketplace.tavi-storefront{
+ --store-play-surface:var(--tavi-color-surface,#fcfdf8);
+ padding:18px 16px 34px;line-height:1.45;
+}
+.tavi-storefront-header{margin-bottom:18px;gap:10px}
+.tavi-storefront-header h2{font-size:clamp(24px,4.5vw,32px);font-weight:800;letter-spacing:-.045em}
+.tavi-storefront-title-star{color:#e6ae41;font-size:.75em}
+.tavi-storefront-eyebrow{font-size:10px;font-weight:800;letter-spacing:.13em}
+.tavi-storefront-profile{box-shadow:0 4px 0 #a4cbb0;border-width:3px;width:49px;height:49px;flex-basis:49px;min-width:49px}
+.tavi-storefront-profile .avatar{width:40px;height:40px;min-width:40px;min-height:40px}
+.tavi-storefront-refresh{width:46px;height:46px;border-radius:16px;background:var(--store-play-surface);box-shadow:0 3px 0 color-mix(in srgb,var(--tavi-color-border) 65%,transparent)}
+.tavi-storefront-tabs{gap:8px;padding:4px 1px 9px;margin-bottom:9px}
+.tavi-storefront-tabs button{min-height:53px;border-radius:18px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--tavi-color-border,#d0ddd4);transition:transform .16s ease,background .16s ease,box-shadow .16s ease}
+.tavi-storefront-tabs button[aria-current=page]{box-shadow:0 4px 0 color-mix(in srgb,var(--tavi-color-accent) 60%,transparent)}
+.tavi-storefront-tab-art{font-size:17px;line-height:1}
+.tavi-storefront-search{position:relative;margin:9px 0 20px}
+.tavi-storefront-search:before{content:"⌕";position:absolute;left:16px;top:50%;transform:translateY(-53%);font-size:27px;color:var(--tavi-color-text-muted);pointer-events:none}
+.tavi-storefront-search input{border-radius:19px;min-height:52px;height:52px;font-size:14px;padding-left:45px;border-width:1.5px;box-shadow:0 3px 0 color-mix(in srgb,var(--tavi-color-border) 55%,transparent)}
+.tavi-storefront-hero{min-height:208px;display:grid;grid-template-columns:minmax(0,1fr) 95px;padding:20px 15px 19px 21px;gap:6px;background:linear-gradient(125deg,#18573f 0%,#2d8f6b 53%,#5eae87 100%);border-radius:27px;margin-bottom:27px;box-shadow:0 6px 0 rgba(28,98,67,.13)}
+.tavi-storefront-hero:after{right:-60px;bottom:-100px;opacity:.08}
+.tavi-storefront-hero-copy{position:relative;z-index:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px;justify-content:center}
+.tavi-storefront-hero .tavi-storefront-eyebrow{font-size:9px;color:#d4f9dc}
+.tavi-storefront-hero h3{font-size:clamp(22px,5.6vw,32px);letter-spacing:-.035em;line-height:1.04;max-width:295px;font-weight:850}
+.tavi-storefront-hero p{font-size:12px;line-height:1.45;color:#effff4;max-width:290px;margin:0}
+.tavi-storefront-hero button{min-height:44px;background:#fff6d5;color:#17462f;padding:9px 17px;border-radius:16px;font-size:13px;font-weight:800;box-shadow:0 4px 0 #d7c48a}
+.tavi-storefront-hero-art{position:relative;align-self:stretch;display:flex;align-items:center;justify-content:center;min-width:0}
+.tavi-storefront-hero-art span{position:absolute;display:grid;place-items:center;width:70px;height:70px;font-size:33px;border-radius:23px;border:3px solid rgba(255,255,255,.53);box-shadow:0 8px 15px #15483050;transform:rotate(10deg);background:#e4f7e5}
+.tavi-storefront-hero-art span:nth-child(1){right:0;top:4px;transform:rotate(12deg);background:#b7caff}
+.tavi-storefront-hero-art span:nth-child(2){width:44px;height:44px;font-size:22px;right:52px;top:59px;transform:rotate(-18deg);background:#ffeaa5}
+.tavi-storefront-hero-art span:nth-child(3){right:5px;bottom:0;transform:rotate(-14deg);background:#ffd6b9}
+.tavi-storefront-section{margin-bottom:30px}.tavi-storefront-section>header{margin-bottom:14px}
+.tavi-storefront-section>header h3{font-size:20px;font-weight:800;letter-spacing:-.035em}
+.tavi-storefront-section>header p{font-size:12px;line-height:1.5;margin-top:4px}
+.tavi-storefront-grid{gap:14px;grid-template-columns:repeat(auto-fill,minmax(min(100%,142px),1fr))}
+.tavi-storefront .tavi-store-item.tavi-marketplace-item{position:relative;min-height:211px;gap:9px;padding:15px 13px 13px;background:var(--store-play-surface);border-radius:24px;border:1px solid color-mix(in srgb,var(--tavi-color-border) 75%,transparent);box-shadow:0 5px 0 color-mix(in srgb,var(--tavi-color-border) 48%,transparent)}
+.tavi-storefront .tavi-store-item.tavi-marketplace-item:nth-child(4n+1){background:color-mix(in srgb,#c5e8d3 47%,var(--store-play-surface))}
+.tavi-storefront .tavi-store-item.tavi-marketplace-item:nth-child(4n+2){background:color-mix(in srgb,#ffe9bb 44%,var(--store-play-surface))}
+.tavi-storefront .tavi-store-item.tavi-marketplace-item:nth-child(4n+3){background:color-mix(in srgb,#ded5fd 46%,var(--store-play-surface))}
+.tavi-storefront .tavi-store-item.tavi-marketplace-item:nth-child(4n){background:color-mix(in srgb,#bde7ea 43%,var(--store-play-surface))}
+.tavi-storefront .tavi-store-icon{width:76px;height:76px;min-height:76px;min-width:76px;align-self:center;border-radius:22px;box-shadow:0 6px 12px rgba(0,40,20,.11)}
+.tavi-storefront .tavi-store-icon img{width:100%;height:100%;object-fit:cover}
+.tavi-storefront .tavi-marketplace-copy{gap:5px;text-align:center;align-items:center;overflow:visible}
+.tavi-storefront .tavi-marketplace-copy strong{font-size:15px;font-weight:800;line-height:1.22}
+.tavi-storefront .tavi-marketplace-copy small{font-size:11px;line-height:1.35}
+.tavi-storefront .tavi-store-actions{justify-content:center}
+.tavi-storefront .tavi-store-actions button{min-height:39px;border:0;background:var(--tavi-color-accent,#27714e);color:var(--tavi-color-accent-contrast,#fff);font-weight:750;font-size:12px;border-radius:13px;padding:7px 14px}
+.tavi-storefront-asset .tavi-asset-product{border-radius:24px;overflow:hidden;box-shadow:0 5px 0 color-mix(in srgb,var(--tavi-color-border) 48%,transparent);border:1px solid var(--tavi-color-border)}
+.tavi-storefront-asset .tavi-asset-card-art,.tavi-storefront-asset .tavi-asset-remote-art{height:135px;min-height:135px}
+.tavi-storefront-asset .tavi-asset-product-body{padding:14px;gap:8px}
+.tavi-storefront-asset .tavi-asset-product-body h3{font-size:15px;font-weight:800}
+.tavi-storefront-asset .tavi-asset-product-body p{font-size:12px}
+.tavi-storefront-asset .tavi-asset-product-foot button{min-height:42px;border-radius:13px;font-weight:750}
+.tavi-storefront-account{padding:19px 18px;border-radius:22px;background:var(--tavi-color-surface-raised)}
+.tavi-storefront-library-nav button{border-radius:17px;font-size:13px;min-height:52px}
+.tavi-storefront-footer{opacity:.8;margin-top:25px}
+/* Product pages have a real visual hierarchy instead of a full-screen settings table. */
+.tavi-product-detail{gap:18px}
+.tavi-product-back{font-size:13px;padding:8px 12px;border-radius:999px;background:var(--tavi-color-surface-raised);min-height:42px}
+.tavi-product-header{position:relative;isolation:isolate;min-height:176px;align-items:center;padding:24px 17px;border-radius:26px;overflow:hidden;background:linear-gradient(120deg,#dbf0d5,#b5e6cf 58%,#b8dfec);color:#193b2d}
+.tavi-product-asset .tavi-product-header{background:linear-gradient(120deg,#fce6c1,#f8d8b7 58%,#d6ccef)}
+.tavi-product-game .tavi-product-header{background:linear-gradient(120deg,#e2defd,#cad9fc 58%,#b3e8dd)}
+.tavi-product-header:before{content:"";position:absolute;border:2px solid #fff8;border-radius:50%;width:185px;height:185px;right:-72px;top:-50px;z-index:-1}
+.tavi-product-header:after{content:"";position:absolute;background:#fff6;width:100px;height:100px;left:-40px;bottom:-70px;transform:rotate(25deg);border-radius:27px;z-index:-1}
+.tavi-product-cover{width:94px;height:94px;border-radius:24px;border:3px solid #fff9;background:#fff;box-shadow:0 8px 18px rgba(29,75,48,.17)}
+.tavi-product-cover>img{object-fit:contain}
+.tavi-product-identity h2{font-size:clamp(23px,6vw,35px);line-height:1.1;font-weight:850}
+.tavi-product-kind{font-size:11px;font-weight:800;color:#335b47}
+.tavi-product-sparkle{position:absolute;right:20px;top:14px;font-size:24px;color:#fff;filter:drop-shadow(0 2px 2px #24614950)}
+.tavi-product-status{border:0;border-radius:19px;gap:3px;padding:15px 17px;background:var(--tavi-color-surface-raised)}
+.tavi-product-status strong{font-size:18px;font-weight:800}
+.tavi-product-status span{font-size:12px;line-height:1.5}
+.tavi-product-overview h3,.tavi-product-previews h3{font-size:19px;font-weight:800;letter-spacing:-.035em}
+.tavi-product-overview p{font-size:14px;line-height:1.6}
+.tavi-product-actions{gap:9px}.tavi-product-actions button{border-radius:15px;min-height:48px;padding:11px 20px;font-size:14px;font-weight:800;box-shadow:0 3px 0 color-mix(in srgb,var(--tavi-color-accent) 45%,transparent)}
+.tavi-product-actions button[data-extension-remove]{background:var(--tavi-color-surface);color:var(--tavi-color-text);border:1px solid var(--tavi-color-border);box-shadow:none}
+.tavi-product-actions button[data-extension-disable]{background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);border:1px solid var(--tavi-color-border);box-shadow:none}
+.tavi-product-information{border:1px solid var(--tavi-color-border);border-radius:19px;overflow:hidden;background:var(--tavi-color-surface);padding:0}
+.tavi-product-information summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:16px;min-height:54px;cursor:pointer;list-style:none}
+.tavi-product-information summary::-webkit-details-marker{display:none}
+.tavi-product-information summary:after{content:"⌄";font-size:19px;font-weight:800;color:var(--tavi-color-text-muted)}
+.tavi-product-information[open] summary:after{content:"⌃"}
+.tavi-product-information summary strong{font-size:15px;font-weight:800}
+.tavi-product-information summary span{font-size:11px;color:var(--tavi-color-text-muted);margin-left:auto}
+.tavi-product-facts{border:0;border-top:1px solid var(--tavi-color-border);border-radius:0}
+.tavi-product-previews{border-radius:18px;background:var(--tavi-color-surface-raised)}
+.tavi-product-previews p{font-size:12px}
+.tavi-product-safety{font-size:12px;border-radius:18px;line-height:1.6}
+.tavi-storefront :is(button,summary,[role=button]):active{transform:scale(.985)}
+@media(min-width:650px){.tavi-storefront-grid{gap:20px}.tavi-storefront .tavi-store-item.tavi-marketplace-item{min-height:228px}.tavi-storefront-hero{grid-template-columns:minmax(0,1fr) 195px}.tavi-storefront-hero-art span{width:95px;height:95px;font-size:43px}.tavi-storefront-hero-art span:nth-child(2){width:62px;height:62px;font-size:30px;right:105px}.tavi-product-header{min-height:215px;padding:30px}.tavi-product-cover{width:122px;height:122px}}
+@media(max-width:380px){.tavi-storefront-tabs{gap:5px}.tavi-storefront-tabs button{padding:7px 8px;font-size:11px;min-width:0}.tavi-storefront-tab-art{font-size:15px}.tavi-storefront-hero{grid-template-columns:minmax(0,1fr) 78px;padding:18px 12px 18px 17px}.tavi-storefront-hero-art span{width:60px;height:60px;font-size:26px}.tavi-storefront-hero-art span:nth-child(2){width:39px;height:39px;font-size:20px;right:38px}.tavi-storefront-section>header h3{font-size:18px}.tavi-storefront-grid{gap:9px}.tavi-storefront .tavi-store-item.tavi-marketplace-item{padding:11px 8px}.tavi-storefront .tavi-store-icon{width:65px;height:65px;min-width:65px;min-height:65px}.tavi-product-header{padding:18px 12px;min-height:146px}.tavi-product-cover{width:74px;height:74px}.tavi-product-identity h2{font-size:23px}}
+@media(prefers-reduced-motion:reduce){.tavi-storefront-tabs button{transition:none}.tavi-storefront :is(button,summary,[role=button]):active{transform:none}}
+/* In dark mode preserve readable contrast instead of mixing bright pastels
+   against light text. Retain a subtle per-card hue with the host surface. */
+:root[data-theme='dark'] .tavi-storefront .tavi-store-item.tavi-marketplace-item:nth-child(4n+1){background:color-mix(in srgb,var(--tavi-color-surface-raised) 85%,#3e9567)}
+:root[data-theme='dark'] .tavi-storefront .tavi-store-item.tavi-marketplace-item:nth-child(4n+2){background:color-mix(in srgb,var(--tavi-color-surface-raised) 85%,#c29847)}
+:root[data-theme='dark'] .tavi-storefront .tavi-store-item.tavi-marketplace-item:nth-child(4n+3){background:color-mix(in srgb,var(--tavi-color-surface-raised) 85%,#8b74ca)}
+:root[data-theme='dark'] .tavi-storefront .tavi-store-item.tavi-marketplace-item:nth-child(4n){background:color-mix(in srgb,var(--tavi-color-surface-raised) 85%,#44979d)}
+
+/* TAVI-STORE-TOUCH-174: comfortably native controls at phone and desktop sizes. */
+.tavi-storefront-header{align-items:center}
+.tavi-storefront-profile{
+ width:43px;height:43px;min-width:43px;flex-basis:43px;
+ border:0;box-shadow:none;background:transparent;border-radius:50%;
+ padding:2px;overflow:visible;
+}
+.tavi-storefront-profile .avatar{width:39px;height:39px;min-width:39px;min-height:39px;border-radius:50%}
+.tavi-storefront-profile:focus-visible{outline:3px solid var(--tavi-color-focus,#5a9cdc);outline-offset:3px}
+.tavi-storefront-tabs{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;
+ overflow:visible;padding:1px 0 11px;margin-bottom:10px;
+}
+.tavi-storefront-tabs button{
+ flex:none;width:100%;min-width:0;min-height:44px;padding:7px 3px;
+ border-radius:999px;font-size:11px;box-shadow:none!important;gap:4px;
+ white-space:nowrap;min-inline-size:0;
+}
+.tavi-storefront-tabs button[aria-current=page]{box-shadow:none!important}
+.tavi-storefront-tab-art{font-size:14px}
+.tavi-store-pull-indicator{
+ width:max-content;max-width:100%;margin:-8px auto 12px;padding:8px 15px;
+ border-radius:999px;background:var(--tavi-color-surface-raised);color:var(--tavi-color-text);
+ font-size:12px;font-weight:700;text-align:center;
+}
+.tavi-storefront-footer-refresh{
+ min-height:40px;background:transparent;border:0;border-radius:10px;
+ color:var(--tavi-color-accent,#26774f);font-size:12px;font-weight:750;
+ padding:8px 12px;cursor:pointer;
+}
+.tavi-storefront .tavi-store-card-open{
+ display:flex;flex-direction:column;gap:11px;align-items:center;justify-content:flex-start;
+ flex:1 1 auto;width:100%;min-width:0;min-height:0;padding:0;
+ border:0;background:transparent;color:inherit;text-align:center;cursor:pointer;
+}
+.tavi-storefront .tavi-store-card-open:hover .tavi-store-icon,
+.tavi-storefront .tavi-asset-card-open:hover .tavi-asset-card-art{filter:brightness(1.07)}
+.tavi-storefront .tavi-store-card-open .tavi-marketplace-copy{width:100%;flex:0 1 auto;pointer-events:none}
+.tavi-storefront .tavi-store-actions{margin-top:auto;min-height:42px}
+.tavi-storefront .tavi-store-actions button{min-height:42px}
+.tavi-storefront-asset .tavi-asset-card-open{
+ display:flex;flex-direction:column;align-items:stretch;flex:1 1 auto;
+ width:100%;min-width:0;min-height:0;margin:0;padding:0;border:0;
+ background:transparent;color:inherit;cursor:pointer;text-align:left;
+}
+.tavi-storefront-asset .tavi-asset-card-open .tavi-asset-card-art,
+.tavi-storefront-asset .tavi-asset-card-open .tavi-asset-remote-art{width:100%;flex:0 0 auto}
+.tavi-storefront-asset .tavi-asset-card-open .tavi-asset-product-body{min-height:0;flex:1;padding:13px;gap:7px}
+.tavi-storefront-asset .tavi-asset-card-name{font-size:15px;font-weight:800;line-height:1.25;overflow-wrap:anywhere}
+.tavi-storefront-asset .tavi-asset-card-description{
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
+ font-size:12px;line-height:1.4;color:var(--tavi-color-text-muted);
+}
+.tavi-storefront-asset .tavi-asset-product-foot{margin:0;padding:8px 12px 12px;gap:6px;min-height:42px}
+.tavi-storefront-asset .tavi-asset-product-foot button{min-height:42px;padding:7px 12px}
+@media(min-width:650px){.tavi-storefront-tabs{display:flex;gap:8px}.tavi-storefront-tabs button{width:auto;padding:9px 17px;min-width:86px;font-size:13px}}
+@media(max-width:380px){.tavi-storefront-tabs{gap:4px}.tavi-storefront-tabs button{padding:7px 2px;font-size:10px;gap:3px}.tavi-storefront-tab-art{font-size:12px}}
+@media(pointer:coarse){.tavi-storefront .tavi-store-card-open,.tavi-storefront-asset .tavi-asset-card-open{min-height:44px}}

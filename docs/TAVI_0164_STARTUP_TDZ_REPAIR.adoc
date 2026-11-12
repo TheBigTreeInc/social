@@ -1,0 +1,31 @@
+= Tavi 0.3.164: Windows startup ReferenceError repair
+:toc:
+
+== Operator evidence
+
+The Windows 0.3.163 startup recovery screen reported:
+
+----
+TAVI_STARTUP_RUNTIME_ERROR ReferenceError asset=main-DmRoCT7x.js :85:1481 · client 0.3.163
+----
+
+This establishes an exception during main bundle startup. The bundle coordinate has not been mapped to a source map in this workspace and must not be treated as a line-accurate source trace.
+
+== Defect in source
+
+In `client/src/main.js` the `nativeDesktop` branch constructs the detached workspace manager before `const toast` is initialized. The original 0.3.161 source passes `notify:toast` directly, causing an immediate `ReferenceError` on Windows. Android and embedded web clients do not enter this constructor branch.
+
+0.3.164 changes the binding to a deferred `notify:message=>toast(message)` callback. When a detached workspace emits an error after the application initializes, the callback still calls Tavi's existing toast function. Other navigation and host SDK logic are unchanged.
+
+== Reproduction and test
+
+. Run `node --test client/tests/windows-startup-tdz-164.test.mjs` against the new exact source.
+. Substitute the previous literal `notify:toast` in a disposable copy and confirm the focused test fails on the Windows-initialization case.
+. Build and start the exact ZIP using ZipRunner on Windows, without bypassing operator gates.
+. Verify the main messenger or sign-in UI appears, without `Tavi could not start`.
+. Detach a verified TaviX application and test failure notification handling without a new `ReferenceError`.
+. Confirm account/session and local data survived. If the recovery panel still appears, report its sanitized code and asset position.
+
+== Acceptance
+
+This is a source repair candidate. An automated test cannot certify a native Windows WebView2 startup. Keep `TAVI-WIN-BLANK-162` open until native operator acceptance; do not mark either task Done based only on source checks. Backend schema, TaviX access privileges and Android orientation are outside this change.

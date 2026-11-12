@@ -22,7 +22,7 @@ test('App Store QA still covers user-confirmed installation, cancellation and Ho
 });
 
 test('App Store browser QA uses central Settings for repositories, never a duplicate App Store form',()=>{
- const open=source.indexOf("await page.locator('.tavi-marketplace-settings-help [data-action=\"settings-sources\"]').click()");
+ const open=source.indexOf("await page.locator('.tavi-storefront-library-nav [data-action=\"settings-sources\"]').click()");
  const form=source.indexOf("await visible(page,'#extension-repository-form input[name=\"repository\"]')");
  assert(open>0&&form>open);
  assert.match(source,/Settings app sources/);

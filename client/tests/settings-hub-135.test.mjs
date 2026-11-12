@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -59,7 +60,7 @@ test('App Store repositories now live only in host Settings and escape suggested
  assert.doesNotMatch(html,/<unsafe.example>/);
  assert.doesNotMatch(html,/<untrusted error>/);
  assert.match(html,/Social server on this device/);
- assert.match(main,/data-action="settings-sources"/);
+ assert.match(readFileSync(new URL('../src/ui/storefront.js',import.meta.url),'utf8'),/data-action="settings-sources"/);
  assert.doesNotMatch(main,/data-marketplace-manage|tavi-marketplace-repositories/);
  assert.match(main,/page:state.settingsPage/);
  assert.match(main,/appSettings:extensionSettingsEntries/);

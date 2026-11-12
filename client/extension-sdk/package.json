@@ -1,6 +1,6 @@
 {
   "name": "@tavi/tavix-sdk",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "TaviX 1.0 SDK for isolated Tavi applications and typed service adapters",
   "type": "module",
   "files": [
@@ -10,7 +10,14 @@
     "service.d.ts",
     "README.md",
     "assets-client.js",
-    "assets-client.d.ts"
+    "assets-client.d.ts",
+    "ui.js",
+    "ui.d.ts",
+    "ui.css",
+    "icons.js",
+    "icons.d.ts",
+    "icon-shapes.js",
+    "LUCIDE_LICENSE.txt"
   ],
   "exports": {
     ".": {
@@ -24,6 +31,15 @@
     "./assets": {
       "types": "./assets-client.d.ts",
       "default": "./assets-client.js"
+    },
+    "./ui": {
+      "types": "./ui.d.ts",
+      "default": "./ui.js"
+    },
+    "./ui.css": "./ui.css",
+    "./icons": {
+      "types": "./icons.d.ts",
+      "default": "./icons.js"
     }
   },
   "repository": {

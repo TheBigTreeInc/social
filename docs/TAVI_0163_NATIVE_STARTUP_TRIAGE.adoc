@@ -1,0 +1,31 @@
+= Tavi 0.3.163 — precise Windows startup diagnostics
+:revdate: 2026-11-09
+
+== Observed operator result
+
+0.3.162 Windows opens a native shell but displays `TAVI_STARTUP_SCRIPT_ERROR`. The screenshot proves the 0.3.162 pre-module recovery guard ran; it does not establish whether the main JavaScript module loaded, threw, or was blocked. The original native startup defect remains open; tests on source-only stubs do not substitute for WebView2 proof.
+
+== Changes in this candidate
+
+* The guard no longer mistakes image/favicon errors for JavaScript failures.
+* `TAVI_STARTUP_SCRIPT_LOAD`: script element failed to load. Inspect the packaged `assets/*.js` file and native Network/CSP.
+* `TAVI_STARTUP_RUNTIME_ERROR`: a JavaScript exception occurred. Diagnostic includes the error type, a safe same-origin basename and, when available, line/column.
+* `TAVI_STARTUP_PROMISE_REJECTION`: an unhandled rejection occurred before first render.
+* `TAVI_STARTUP_MODULE_TIMEOUT`: the entry module never marked startup and no qualifying load/error event was captured.
+* `TAVI_STARTUP_RENDER_TIMEOUT`: the main entry executed but first render never finished.
+* `TAVI_STARTUP_STYLESHEET_LOAD`: stylesheet failed to load; this is not mislabeled as a script failure.
+
+No raw JS error messages, full URLs, query strings, cookies, auth tokens or storage content are put on screen. State and account storage are unchanged. TaviX permissions and presentation behavior are unchanged.
+
+== Native operator procedure
+
+. Import the exact `looprd-social-0.3.163-ziprunner.zip` candidate into ZipRunner. Perform normal managed build and launch; record the installed candidate bytes separately from source test status.
+. Open the **Windows native Tavi window** at its default compact size. The acceptance outcome is a fully rendered login/roster/Home view, not merely a title bar or recovery panel.
+. If recovery still appears, capture a screenshot containing the full line starting `Diagnostic:`. Share that line with the client version. Do not send session storage, cookies, auth tokens or unsanitized console dumps.
+. If code is `RUNTIME_ERROR`, next inspect the corresponding JS asset and line/column in the exact Windows distribution. If `SCRIPT_LOAD`, inspect module URL/status/CSP and source bytes. If `MODULE_TIMEOUT`, check WebView2 requests and module evaluation. If `RENDER_TIMEOUT`, inspect first-render execution.
+. Press Reload Tavi and verify a reload occurs without resetting account/session state; repeat with an existing remembered session and a disposable fresh profile.
+. Do not approve or publish until native messaging actually starts and operator acceptance is recorded.
+
+== Verification limits
+
+The focused classic-script tests exercise all reported failure categories and safe sanitization, and the complete JavaScript source suite is run against the package. Linux here does not provide Windows WebView2 or native NSIS builder. NPM dependency fetch and native build are not proven in this environment; platform verification remains pending.

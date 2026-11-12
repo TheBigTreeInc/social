@@ -1,6 +1,6 @@
 /** Personal, local-only Apps drawer preferences. Never registers, enables or trusts an extension. */
 export const DEFAULT_APP_FAVORITES=Object.freeze([
- 'builtin:contacts','builtin:inbox','builtin:games','builtin:app-store'
+ 'builtin:inbox','builtin:wallet','builtin:app-store'
 ]);
 const PREFIX='tavi.apps.favorites/v1:';
 const VALID_ID=/^(?:builtin:[a-z][a-z0-9-]{0,63}|extension:[a-z0-9][a-z0-9.-]{0,190})$/;

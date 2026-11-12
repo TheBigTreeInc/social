@@ -1,4 +1,8 @@
 import {extensionFrameIdentity} from './extensions/frame-identity.js';
+import {allowDetached,desktopLaunchPresentation,deviceWindowDefault,setDeviceWindowDefault,rememberPresentation,forgetPresentation,savedPresentation} from './extensions/workspace-presentation.js';
+import {resolveTavixClassification} from './extensions/classification.js';
+import {uiContext,workspaceContext} from './extensions/ui-context.js';
+import {createNativeWorkspaceManager} from './extensions/workspace-native-host.js';
 import {sendBugReport} from './bug-report.js';
 import {createDiagnosticEvents,classifyFetchFailure,diagnosticsQuickSummary} from './diagnostic-events.js';
 import {loadBundledCatalog,verifyBundledExtension,createExtensionStore,extensionStorageScope} from './extensions/store.js';
@@ -16,7 +20,7 @@ import {coreWalletFromBundle,filterOptionalApps,goldStatusLabel} from './wallet/
 import {ATRIUM_EXTENSION_ID,isOfficialAtriumSource} from './extensions/game-launch.js';
 import {FIRST_PARTY_REPOSITORIES,TAVIX_REPOSITORY_URL,LEGACY_ATRIUM_REPOSITORY_URL,createRepositorySubscriptions,fetchRepository,fetchServerRepositories,mergeRepositoryEntries,extensionSource,remoteOrigin} from './extensions/repositories.js';
 import {atriumLauncher,reviewedAtriumBase} from './atrium-launch.js';
-import {menuApplications,installedGameExtensions,appGlyph,uiGlyph,extensionIconUrl,BUNDLED_COMPANION_ID} from './launcher.js';
+import {menuApplications,drawerApplications,installedGameExtensions,appGlyph,uiGlyph,extensionIconUrl,BUNDLED_COMPANION_ID} from './launcher.js';
 import './style.css';
 import './ui/design-tokens.css';
 import './ui/components.css';
@@ -28,7 +32,12 @@ import {applyInboxFilter} from './ui/message-inbox.js';
 import {composerState,messageLimit,messageReceipt} from './message-ui.js';
 import {uiHeader} from './ui/components.js';
 import {renderSettings,settingsPageTitle} from './ui/settings-view.js';
-import {renderAssetMarket,renderAssetApproval,wireAssetMarket} from './ui/asset-market.js';
+import {renderAssetMarket,renderAssetApproval,wireAssetMarket,assetMarketEntries} from './ui/asset-market.js';
+import {renderStorefront,storeKind,storeProjection} from './ui/storefront.js';
+import {wireStorePullToRefresh} from './ui/store-pull-refresh.js';
+import {renderAppProductDetail,renderAssetProductDetail} from './ui/store-detail.js';
+import './ui/storefront.css';
+import './ui/launcher-root.css';
 import {extensionSettingsEntries} from './ui/settings-registry.js';
 import {extensionPanelUrl} from './ui/companion-world-entry.js';
 import {wireAppPages,wireElasticScroll} from './ui/touch-navigation.js';
@@ -67,6 +76,7 @@ import {petById} from './companions/catalog.js';
 import {createSurfaceRegistry,safeSurfaceId} from './surfaces.js';
 import {canShowFloating,parsePetWindowCommand,normalizePetPosition,petWindowSnapshot,PET_WINDOW_LABEL,PET_SIZE} from './companions/native.js';
 
+globalThis.taviBootStarted?.();
 const CLIENT_VERSION=__TAVI_CLIENT_VERSION__;
 const app=document.getElementById('app');
 const nativeDesktop=isTauri() && !/Android|iPad|iPhone/i.test(navigator.userAgent);
@@ -96,7 +106,8 @@ let extensionCatalog=[],coreWalletEntry=null,extensionCatalogError='',extensionS
 let extensionInstallApproval=null,extensionSwitchApproval=null,pendingLocalTavix=null,activeLocalTavix=null;
 let developerOverlays=new Map(),activeDeveloperOverlay=null,developerOverlayGeneration=0;
 let extensionDiscoveredCatalog=[];
-let marketplaceQuery='',marketplaceFilter='all',marketplaceSelected='';
+let marketplaceCategory='discover';
+let marketplaceQuery='',marketplaceFilter='all',marketplaceSelected='',marketplaceSelectedAsset='';
 let pendingAssetAction=null,assetApprovalBusy=false,assetStoreReturnPanel='menu';
 let assetCatalogState='not-configured',assetCatalogItems=[],assetCatalogTicket=0;
 let assetMarketSection='discover',assetMarketQuery='',assetMarketFilter='all';
@@ -296,7 +307,9 @@ function assetsConsentRows(){
     }catch{return false;}})()}))};
  });
 }
-const extensionHost=createExtensionHost({storage:localStorage,notify:message=>toast(message),
+const extensionHostOptions={storage:localStorage,notify:message=>toast(message),
+ workspaceInfo:()=>workspaceContext({desktop:nativeDesktop}),
+ uiInfo:()=>uiContext({platform:clientPlatform,width:window.innerWidth,height:window.innerHeight,theme:state.theme}),
  assetService:assetsRuntime,assetGrants:activeAssetGrants,assetDependencyStatus:caller=>assetPermissions.dependencyStatus(caller),
  isAssetDependencySession:caller=>!!trustedAssetInstallation(caller)?.manifest?.assetDependencies?.length,approveAssetCustomization:(session,params)=>
   activeAssetGrants(session)?.grants.some(g=>g.packId===params.packId&&g.canCustomize===true&&g.capabilities.includes(params.capability))===true,
@@ -351,7 +364,26 @@ const extensionHost=createExtensionHost({storage:localStorage,notify:message=>to
   const answer=await run(state.api,params);
   if(method!=='wallet.balance'&&method!=='wallet.transactions'&&method!=='wallet.orderStatus')void refreshGoldBalance(state.api);
   return answer;
- }});
+ }};
+const extensionHost=createExtensionHost(extensionHostOptions);
+const detachedWorkspaces=nativeDesktop?createNativeWorkspaceManager({desktop:nativeDesktop,WebviewWindow,listen,emitTo,createHost:createExtensionHost,
+ getHostOptions:()=>extensionHostOptions,storage:localStorage,notify:message=>toast(message),
+ getInstallation:id=>{
+  const store=extensionAccountStore(),entry=extensionEntry(id);return {connected:!!state.connected&&!!state.api&&!!state.profile,
+   accountScope:extensionStoreScope,entry,store,verified:extensionVerified.has(id),source:entry?extensionSource(entry):null};
+ },
+ assetUrl:entry=>entry.local?new URL('local-extension-host.html',extensionBase()).href:extensionPanelUrl(entry.remote?entry.remote.entrypoint:extensionAssetUrl(entry.manifest.id,entry.manifest.entrypoints.panel,extensionBase()),{companion:false}),
+ onEmbed:id=>{
+  const entry=extensionEntry(id),scope=extensionStoreScope,store=extensionAccountStore();
+  const present=()=>{extensionSelected=id;extensionSettingsReturn=false;extensionGamesReturn=false;state.panel='extension';state.mobileRoster=false;render();};
+  if(entry?.local){
+   void loadLocalTavix(scope,id).then(record=>{
+    if(!record||scope!==extensionStoreScope||store!==extensionAccountStore()||!store.enabled(id)||store.revision(id)!==record.revision)return;
+    activeLocalTavix=record;present();
+   }).catch(()=>toast('Local application changed. Reopen it from Apps.'));
+  }else present();
+ }
+}):{open:async()=>{throw Error('Desktop workspace unavailable');},closeAll:async()=>{},publishUIContext:()=>{}};
 const extensionBase=()=>new URL('./',document.baseURI);
 const optionalCatalog=()=>filterOptionalApps(extensionCatalog);
 const optionalUpdateSummary=(entries,store,options)=>{
@@ -622,39 +654,52 @@ function marketplaceCard({entry,installed,alternative}){
  const status=extensionUpdateStatus(entry,extensionAccountStore());
  const update=alternative?`New ${alternative.manifest.version} from TaviX`:status==='update-available'?`Update ${m.version} available`:installed?`Installed ${current}`:`${m.version} · ${storeSourceLabel(extensionSource(entry))}`;
  const keywords=[m.name,m.publisher,m.summary,m.id].join(' ').toLocaleLowerCase();
- return `<article class="tavi-store-item tavi-marketplace-item" data-marketplace-installed="${installed?'true':'false'}" data-marketplace-update="${alternative||status==='update-available'?'true':'false'}" data-marketplace-search="${esc(keywords)}"><span class="tavi-store-icon tone-forest" aria-hidden="true">${appGlyph(m.id===ATRIUM_EXTENSION_ID?'atrium':'extension')}${iconSrc?`<img src="${esc(iconSrc)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}</span><button type="button" class="tavi-marketplace-copy" data-extension-details="${esc(m.id)}" aria-label="Details for ${esc(m.name)}"><strong>${esc(m.name)}</strong><small>${esc(update)}</small></button><div class="tavi-store-actions">${marketplaceItemActions(entry)}</div></article>`;
+ return `<article class="tavi-store-item tavi-marketplace-item" data-store-item data-store-kind="${storeKind(entry)}" data-marketplace-installed="${installed?'true':'false'}" data-marketplace-update="${alternative||status==='update-available'?'true':'false'}" data-marketplace-search="${esc(keywords)}"><button type="button" class="tavi-store-card-open" data-extension-details="${esc(m.id)}" aria-label="View details for ${esc(m.name)}"><span class="tavi-store-icon tone-forest" aria-hidden="true">${appGlyph(m.id===ATRIUM_EXTENSION_ID?'atrium':'extension')}${iconSrc?`<img src="${esc(iconSrc)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}</span><span class="tavi-marketplace-copy"><strong>${esc(m.name)}</strong><small>${esc(update)}</small></span></button><div class="tavi-store-actions">${marketplaceItemActions(entry)}</div></article>`;
 }
 function marketplaceDetail(entry){
- const m=entry.manifest,store=extensionAccountStore(),installed=store?.installed(m.id),alt=alternateStoreRelease(entry),status=extensionUpdateStatus(entry,store);
- const source=extensionSource(entry);const remote=entry.remote;
- return `<section class="tavi-marketplace-details"><button class="tavi-marketplace-return" data-marketplace-back type="button">${uiGlyph('back')} All apps</button><h2>${esc(m.name)}</h2><p>${esc(m.summary)}</p><p class="tavi-marketplace-meta">${esc(m.publisher)} · ${esc(m.version)} · ${esc(storeSourceLabel(source))}</p>${installed?`<p>Installed ${esc(store.version(m.id)||'unknown')} · ${esc(status==='current'?'Current at pinned source':status==='update-available'?'Update available':status)}</p>`:''}${alt?`<p class="tavi-marketplace-alt"><strong>Different source offers ${esc(alt.manifest.version)}</strong><span>Published by ${esc(alt.manifest.publisher)} through the central TaviX catalog. Source switching is not automatic.</span></p>`:''}<div class="tavi-marketplace-detail-actions">${marketplaceItemActions(entry,{detailed:true})}</div><h3>Access and publisher</h3><dl><dt>Permissions</dt><dd>${esc(m.permissions.join(', ')||'None')}</dd><dt>Publisher</dt><dd>${esc(m.publisher)}</dd><dt>Current source</dt><dd>${esc(source)}</dd>${remote?`<dt>Source code</dt><dd><a href="${esc(remote.source)}" rel="noopener noreferrer" target="_blank">Publisher repository</a></dd><dt>License</dt><dd>${esc(remote.license)}</dd>`:''}</dl><p class="fineprint">Tavi keeps your account credentials outside extensions. App state is separate from the publisher's hosted code.</p></section>`;
+ const m=entry.manifest,store=extensionAccountStore();
+ let iconSrc=null;try{iconSrc=extensionIconUrl(entry,extensionBase());}catch{}
+ // Only the validated, package-local icon URL is used; never inline publisher HTML.
+ const icon=iconSrc?`<img src="${esc(iconSrc)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:appGlyph(m.id===ATRIUM_EXTENSION_ID?'atrium':'extension');
+ return renderAppProductDetail({manifest:m,kind:storeKind(entry)==='games'?'Game':'App',icon,
+  installedVersion:store?.installed(m.id)?store.version(m.id):null,
+  source:storeSourceLabel(extensionSource(entry)),status:extensionUpdateStatus(entry,store),
+  actions:marketplaceItemActions(entry,{detailed:true}),platform:clientPlatform,
+  license:entry.remote?.license||'',alternativeVersion:alternateStoreRelease(entry)?.manifest.version||null});
 }
+
 function appStorePanel(){
  const store=extensionAccountStore();
  const summary=optionalUpdateSummary(extensionCatalog,store,{staleSources:extensionStaleSources});
  const rows=marketplaceRows(optionalCatalog(),store,extensionDiscoveredCatalog,{staleSources:extensionStaleSources});
- const alternativeCount=rows.filter(r=>r.alternative).length;
  const offers=rows.filter(r=>r.alternative||extensionUpdateStatus(r.entry,store)==='update-available').length;
  const when=extensionLastCheckedAt?new Date(extensionLastCheckedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'Not checked yet';
  const detail=rows.find(row=>row.entry.manifest.id===marketplaceSelected);
- return `<section class="utility tavi-app-store tavi-marketplace" aria-label="App Store">
- <header class="tavi-marketplace-header"><h2>Discover apps</h2><button type="button" data-action="store-refresh" class="tavi-marketplace-refresh" aria-label="Check for app updates" title="Check for updates">${uiGlyph('refresh')}<span class="sr-only">Check for updates</span></button></header>
- ${detail?marketplaceDetail(detail.entry):`<div class="tavi-marketplace-find"><label for="tavi-store-search" class="sr-only">Search apps</label><input id="tavi-store-search" type="search" placeholder="Search apps" autocomplete="off" value="${esc(marketplaceQuery)}"></div>
- <nav class="tavi-marketplace-filters" aria-label="Filter apps"><button data-marketplace-filter="all" type="button" aria-pressed="${marketplaceFilter==='all'}">All</button><button data-marketplace-filter="installed" type="button" aria-pressed="${marketplaceFilter==='installed'}">Installed</button><button data-marketplace-filter="updates" type="button" aria-pressed="${marketplaceFilter==='updates'}">Updates${offers?` (${offers})`:''}</button></nav>
- ${extensionCatalogError?`<p role="alert" class="notice">${esc(extensionCatalogError)}</p>`:''}
- <div class="tavi-marketplace-list">${rows.map(marketplaceCard).join('')}</div><p class="tavi-marketplace-empty" id="tavi-marketplace-empty" hidden>No apps match this filter.</p>`}
- <p class="tavi-marketplace-status" role="status">${rows.length} apps · ${offers?`${offers} newer release${offers===1?'':'s'}`:'No newer releases found'}${summary.missing.length?` · ${summary.missing.length} missing source`:''}${extensionStaleSources.size?' · Some sources unavailable':''} · Checked ${esc(when)}</p>
- <p class="tavi-marketplace-settings-help">App sources and repository checks are managed in <button type="button" data-action="settings-sources">Settings → Apps &amp; extensions</button>.</p>
- </section>`;
+ const assets=assetMarketEntries({installedVersions:assetsEngine.installedVersions(),onlineEntries:assetCatalogItems});
+ const selectedAsset=assets.find(item=>item.id===marketplaceSelectedAsset);
+ const publicCount=storeProjection(rows,assets,'discover').apps.length;
+ const label=state.profile?.displayName||'Your account';
+ return renderStorefront({rows,assets,assetsAvailable:assetsRuntime.ready(),onlineState:assetCatalogState,
+  view:marketplaceCategory,query:marketplaceQuery,filter:marketplaceFilter,displayName:label,portrait:avatar(label,true),
+  offers,checked:when,status:`${publicCount} public apps and games · ${assets.length} asset packs${summary.missing.length?` · ${summary.missing.length} unavailable sources`:''}${extensionStaleSources.size?' · Some app sources unavailable':''}`,
+  error:extensionCatalogError,detailHtml:detail?marketplaceDetail(detail.entry):selectedAsset?renderAssetProductDetail(selectedAsset,{ready:assetsRuntime.ready()}):'',appCard:marketplaceCard});
+}
+let storeRefreshPending=false;
+async function refreshUnifiedStore(){
+ if(storeRefreshPending||state.panel!=='app-store')return;
+ storeRefreshPending=true;
+ try{await Promise.allSettled([loadExtensionStore({manual:true}),refreshAssetsCatalog()]);}
+ finally{storeRefreshPending=false;if(state.panel==='app-store')render();}
 }
 function marketplaceApplySearch(){
- const items=[...document.querySelectorAll('.tavi-marketplace-item')];let shown=0;
+ const items=[...document.querySelectorAll('.tavi-storefront [data-store-item]')];let shown=0;
  for(const item of items){
-  const matchText=(item.dataset.marketplaceSearch||'').includes(marketplaceQuery.toLocaleLowerCase().trim());
-  const matchFilter=marketplaceFilter==='all'||marketplaceFilter==='installed'&&item.dataset.marketplaceInstalled==='true'||marketplaceFilter==='updates'&&item.dataset.marketplaceUpdate==='true';
-  item.hidden=!(matchText&&matchFilter);if(!item.hidden)shown++;
+  const text=item.dataset.marketplaceSearch||'';
+  const matchesText=text.includes(marketplaceQuery.toLocaleLowerCase().trim());
+  const matchesFilter=marketplaceCategory!=='library'||marketplaceFilter!=='updates'||item.dataset.marketplaceUpdate==='true';
+  item.hidden=!(matchesText&&matchesFilter);if(!item.hidden)shown++;
  }
- const empty=document.getElementById('tavi-marketplace-empty');if(empty)empty.hidden=shown>0;
+ const empty=document.getElementById('tavi-marketplace-empty');if(empty)empty.hidden=shown>0||items.length===0||Boolean(marketplaceSelected||marketplaceSelectedAsset);
  document.querySelectorAll('[data-marketplace-filter]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.marketplaceFilter===marketplaceFilter)));
 }
 function extensionInstallDialog(){
@@ -677,11 +722,21 @@ function extensionInstallDialog(){
  const oldVersion=extensionAccountStore()?.version(m.id);
  return `<div class="tavi-install-overlay" role="presentation"><section class="tavi-install-dialog" role="dialog" aria-modal="true" aria-labelledby="tavi-install-heading" aria-describedby="tavi-install-description"><div class="tavi-install-heading"><span class="tavi-store-icon tone-forest" aria-hidden="true">${icon}</span><div><h2 id="tavi-install-heading">${esc(extensionAccountStore()?.installed(m.id)?'Update':'Install')} ${esc(m.name)}?</h2><small>${esc(m.publisher)} · ${esc(m.version)}</small></div></div><p id="tavi-install-description">${esc(m.summary)}</p><dl><dt>Permissions</dt><dd>${esc(m.permissions.join(', ')||'None')}</dd>${oldVersion?`<dt>Installed</dt><dd>${esc(oldVersion)}</dd><dt>Available</dt><dd>${esc(m.version)}${releaseRevision(entry)?` · revision ${esc(releaseRevision(entry).slice(0,12))}`:''}</dd>`:''}<dt>Extension source</dt><dd>${esc(entry.remote?'Remote repository':'Bundled with Tavi')}</dd>${origin?`<dt>Hosted origin</dt><dd>${esc(origin)}</dd><dt>Repository</dt><dd>${esc(source)}</dd>`:''}</dl><p class="tavi-install-warning">${entry.remote?'The publisher can update hosted code. ':''}Your Tavi sign-in token and messages are not shared.</p><div class="tavi-install-buttons"><button type="button" data-extension-install-cancel>Cancel</button><button type="button" class="tavi-install-approve" data-extension-install-approve="${esc(m.id)}">${esc(extensionAccountStore()?.installed(m.id)?'Approve update':'Install extension')}</button></div></section></div>`;
 }
+function canDetachExtension(entry){
+ if(entry?.manifest?.id===BUNDLED_COMPANION_ID)return false;
+ return allowDetached({desktop:nativeDesktop,verified:extensionVerified.has(entry?.manifest?.id),entry,store:extensionAccountStore(),scope:extensionStoreScope,source:entry?extensionSource(entry):''});
+}
+async function detachExtension(id,{remember=true}={}){
+ const entry=extensionEntry(id);if(!canDetachExtension(entry))return toast('This application cannot open separately.');
+ try{await detachedWorkspaces.open(entry,{remember});
+  if(state.panel==='extension'&&extensionSelected===id){extensionHost.unmount();state.panel='home';state.mobileRoster=true;render();}
+ }catch(error){toast('Could not open separate window: '+error.message);}
+}
 function extensionPanel(){
  const preview=activeDeveloperOverlay?.manifest.id===extensionSelected&&canInstallLocalTavix(state)?activeDeveloperOverlay:null;
  const manifest=preview?.manifest||extensionEntry(extensionSelected)?.manifest;
- if(!manifest||!(preview||extensionEnabled(manifest.id)))return `<section class="utility"><p>${extensionSelected===CORE_WALLET_ID?'Wallet is temporarily unavailable.':'Extension is not enabled.'}</p><button data-action="${extensionSettingsReturn?'settings-extensions':extensionGamesReturn?'games':extensionReturnsHome(extensionSelected)?'home':'app-store'}">Return to ${extensionSettingsReturn?'Settings':extensionGamesReturn?'Games':extensionReturnsHome(extensionSelected)?'Home':'App Store'}</button></section>`;
- return `<section class="tavi-extension-panel ${manifest.id===BUNDLED_COMPANION_ID?'tavi-companion-world-host':''}"><div class="tavi-extension-toolbar"><strong>${esc(manifest.name)}</strong><button data-action="${extensionSettingsReturn?'settings-extensions':extensionGamesReturn?'games':extensionReturnsHome(manifest.id)?'home':'app-store'}" type="button">${uiGlyph('back')} ${extensionSettingsReturn?'Settings':extensionGamesReturn?'Games':extensionReturnsHome(manifest.id)?'Home':'App Store'}</button></div><div id="tavi-extension-surface" data-extension-id="${esc(manifest.id)}" class="tavi-extension-frame"></div></section>`;
+ if(!manifest||!(preview||extensionEnabled(manifest.id)))return `<section class="utility"><p>${extensionSelected===CORE_WALLET_ID?'Wallet is temporarily unavailable.':'Extension is not enabled.'}</p><button data-action="${extensionSettingsReturn?'settings-extensions':extensionGamesReturn?'games':extensionReturnsHome(extensionSelected)?'home':'app-store'}">Return to ${extensionSettingsReturn?'Settings':extensionGamesReturn?'Games':extensionReturnsHome(extensionSelected)?'Home':'Tavi Store'}</button></section>`;
+ return `<section class="tavi-extension-panel ${manifest.id===BUNDLED_COMPANION_ID?'tavi-companion-world-host':''}"><div class="tavi-extension-toolbar"><strong>${esc(manifest.name)}</strong>${canDetachExtension(extensionEntry(manifest.id))?`<details class="tavi-workspace-menu"><summary aria-label="Application window options">Window</summary><div class="tavi-workspace-menu-options"><button type="button" class="tavi-workspace-detach" data-workspace-detach="${esc(manifest.id)}" aria-label="Open ${esc(manifest.name)} in separate window">Open in separate window</button></div></details><span class="tavi-workspace-drag" data-workspace-drag="${esc(manifest.id)}" role="button" tabindex="0" aria-label="Drag to open in separate window" title="Drag to detach">⠿</span>`:''}<button data-action="${extensionSettingsReturn?'settings-extensions':extensionGamesReturn?'games':extensionReturnsHome(manifest.id)?'home':'app-store'}" type="button">${uiGlyph('back')} ${extensionSettingsReturn?'Settings':extensionGamesReturn?'Games':extensionReturnsHome(manifest.id)?'Home':'Tavi Store'}</button></div><div id="tavi-extension-surface" data-extension-id="${esc(manifest.id)}" class="tavi-extension-frame"></div></section>`;
 }
 function attachExtensionFrame(previous){
  const slot=document.getElementById('tavi-extension-surface');
@@ -732,7 +787,7 @@ async function openInstalledExtension(id,{fromSettings=false,fromGames=false}={}
  const entry=extensionCatalog.find(e=>e.manifest.id===id);
  if(!entry||!extensionAccountStore()?.enabled(id))return toast('Extension is not installed or enabled.');
  if(extensionAccountStore()?.source(id)!==extensionSource(entry))return toast('Extension repository changed. Remove and reinstall before opening.');
- if(extensionUpdateStatus(entry,extensionAccountStore())!=='current')return toast('Extension metadata has changed. Review it in the App Store before opening.');
+ if(extensionUpdateStatus(entry,extensionAccountStore())!=='current')return toast('Extension metadata has changed. Review it in the Tavi Store before opening.');
  try{
   if(entry.local){
    const scope=extensionStoreScope,store=extensionAccountStore();
@@ -745,6 +800,10 @@ async function openInstalledExtension(id,{fromSettings=false,fromGames=false}={}
   }
   extensionVerified.add(id);
   if(entry.manifest.assetDependencies?.length)await assetPermissions.remember(entry.manifest);
+  const gameKind=resolveTavixClassification(entry.manifest).type==='game'?'game':'app';
+  if(desktopLaunchPresentation(localStorage,extensionStoreScope,id,entry.manifest,{kind:gameKind,detachable:canDetachExtension(entry)})==='detached'){
+   await detachExtension(id,{remember:false});return;
+  }
   extensionSettingsReturn=fromSettings;
   extensionGamesReturn=fromGames;
   clearPendingLifeLaunch();clearPendingGameSurface();closeNestedGameSurface();extensionSelected=id;state.panel='extension';state.mobileRoster=false;render();
@@ -860,7 +919,7 @@ const displayNameOf=contact=>contact?.displayName||contact?.username||contact?.i
 const sortContacts=list=>[...list].sort((a,b)=>displayNameOf(a).localeCompare(displayNameOf(b),undefined,{sensitivity:'base'}));
 const extensionUpdateCount=()=>optionalUpdateSummary(extensionCatalog,extensionAccountStore(),{staleSources:extensionStaleSources}).count;
 const appUpdateCount=()=>extensionUpdateCount()+(updateInfo?1:0);
-function setTheme(theme){state.theme=normalizeTheme(theme);config.theme=state.theme;writeConfig(config);applyTheme();if(nativeDesktop)for(const label of nativeChildLabels)void emitTo(label,'tavi-ui-theme',{theme:state.theme}).catch(()=>{});render();}
+function setTheme(theme){state.theme=normalizeTheme(theme);config.theme=state.theme;writeConfig(config);applyTheme();extensionHost.publishUIContext();detachedWorkspaces.publishUIContext?.();if(nativeDesktop)for(const label of nativeChildLabels)void emitTo(label,'tavi-ui-theme',{theme:state.theme}).catch(()=>{});render();}
 const isSafeAtriumUrl=value=>!!reviewedAtriumBase(value);
 const pushKey=()=>pushPreferencesKey(state.api.origin,state.profile.profileId);
 applyTheme();
@@ -914,7 +973,7 @@ function companionPortraitButton(){
  const label=installed?'Open '+(preview?.name||'Companion'):'Install Companion';
  return `<button type="button" data-action="companion" class="tavi-profile-pet tavi-companion-portrait" title="${esc(label)}" aria-label="${esc(label)}">${preview?`<img class="tavi-companion-portrait-img" src="${esc(preview.image)}" alt="">`:'<span class="tavi-companion-portrait-empty" aria-hidden="true">'+uiGlyph('paw')+'</span>'}<small>${esc(preview?.name||'Companion')}</small></button>`;
 }
-function menuBar(compact=false){return `<nav class="menubar" aria-label="Messenger menu"><details class="menu-drop"><summary>File</summary><div class="menu-options"><button data-action="settings">Options…</button><button data-action="signout">Sign out</button></div></details><details class="menu-drop"><summary>Contacts</summary><div class="menu-options"><button data-action="contacts">Contact list</button><button data-action="add-friend">Add a contact…</button></div></details><details class="menu-drop"><summary>Actions</summary><div class="menu-options"><button data-action="messenger">Conversations</button><button data-action="games">Games &amp; alerts</button><button data-action="atrium">Open Atrium ↗</button><button data-action="inbox">Interactive inbox</button><button data-action="notifications">Enable alerts</button></div></details><details class="menu-drop"><summary>Tools</summary><div class="menu-options"><button data-action="portrait">Change portrait…</button><button data-action="companion">Companions…</button><button data-action="settings">Settings…</button><button data-action="app-store">App Store…</button>${state.developerAllowed&&state.developerVisible?'<button data-action="developer">Admin / Debug</button>':''}</div></details><details class="menu-drop"><summary>Help</summary><div class="menu-options"><button data-action="about">About Tavi</button><button data-action="copy-diagnostics">Copy diagnostics…</button><button data-action="check-updates">Check Tavi updates…</button><button data-action="check-extension-updates">Check app updates…</button>${updateInfo?'<button data-action="download-update">Download Tavi '+esc(updateInfo.version)+'</button>':''}</div></details></nav>`;}
+function menuBar(compact=false){return `<nav class="menubar" aria-label="Messenger menu"><details class="menu-drop"><summary>File</summary><div class="menu-options"><button data-action="settings">Options…</button><button data-action="signout">Sign out</button></div></details><details class="menu-drop"><summary>Contacts</summary><div class="menu-options"><button data-action="contacts">Contact list</button><button data-action="add-friend">Add a contact…</button></div></details><details class="menu-drop"><summary>Actions</summary><div class="menu-options"><button data-action="messenger">Conversations</button><button data-action="games">Games &amp; alerts</button><button data-action="atrium">Open Atrium ↗</button><button data-action="inbox">Interactive inbox</button><button data-action="notifications">Enable alerts</button></div></details><details class="menu-drop"><summary>Tools</summary><div class="menu-options"><button data-action="portrait">Change portrait…</button><button data-action="companion">Companions…</button><button data-action="settings">Settings…</button><button data-action="app-store">Tavi Store…</button>${state.developerAllowed&&state.developerVisible?'<button data-action="developer">Admin / Debug</button>':''}</div></details><details class="menu-drop"><summary>Help</summary><div class="menu-options"><button data-action="about">About Tavi</button><button data-action="copy-diagnostics">Copy diagnostics…</button><button data-action="check-updates">Check Tavi updates…</button><button data-action="check-extension-updates">Check app updates…</button>${updateInfo?'<button data-action="download-update">Download Tavi '+esc(updateInfo.version)+'</button>':''}</div></details></nav>`;}
 function windowCaption(title,actions=''){return `<div class="window-titlebar"><span class="caption-mark" aria-hidden="true"></span><strong>${esc(title)}</strong><span class="window-actions">${actions}</span></div>`;}
 function signIn(){return `<div class="login-desktop"><section class="welcome classic-window" aria-label="Sign in to Tavi">${uiHeader({title:'Tavi · Sign in',actions:[{label:'Help',icon:'help',action:'about'}]})}<div class="welcome-body"><div class="welcome-icon" aria-hidden="true"><span class="welcome-mark"></span></div><div class="welcome-brand">Tavi</div><p class="welcome-caption">Games. Friends. Together.</p><form id="server-form" class="auth-form"><label>LoopRD server address<input name="server" type="url" placeholder="https://your-server.example" required value="${esc(config.server)}" autocomplete="url"></label><div class="right-actions"><button class="solid" ${connecting?'disabled':''}>Connect…</button></div></form>${state.serverStatus?`<div class="notice" role="status">${esc(state.serverStatus)}</div>`:''}${state.retryAvailable?`<div class="session-retry" role="group" aria-label="Saved device sign-in"><span>Remembered account on ${esc(new URL(state.retryOrigin).host)}</span><button type="button" data-action="retry-session" ${state.restoring?'disabled':''}>${state.restoring?'Connecting…':'Retry saved sign-in'}</button><button type="button" data-action="switch-account">Use another account</button></div>`:''}${state.step==='account'?`<div class="loginbox"><div class="switch"><button type="button" data-auth="login" class="${state.authTab==='login'?'picked':''}">Sign in</button><button type="button" data-auth="register" class="${state.authTab==='register'?'picked':''}">Create account</button>${state.recoverySupported?`<button type="button" data-auth="recover" class="${state.authTab==='recover'?'picked':''}">Recover account</button>`:''}</div><form id="auth-form" class="auth-form"><label>Username<input name="username" minlength="3" maxlength="24" required autocomplete="username" placeholder="Username"></label>${state.authTab==='recover'?`<label>Recovery code<input name="recoveryCode" required maxlength="44" spellcheck="false" autocomplete="off" placeholder="TAVI-XXXX-..."></label>`:''}<label>${state.authTab==='recover'?'New password':'Password'}<input name="password" type="password" minlength="12" maxlength="128" required autocomplete="${state.authTab==='login'?'current-password':'new-password'}"></label><label class="remember-device"><input name="remember" type="checkbox" value="yes"> Keep me signed in on this device</label><p class="small-help">Use 3–24 lowercase letters, digits or underscores; start with a letter. Password: 12–128 characters.</p>${state.authError?`<p class="notice" role="alert">${esc(state.authError)}</p>`:''}<div class="right-actions"><button class="solid" ${connecting?'disabled':''}>${state.authTab==='register'?'Create account':state.authTab==='recover'?'Recover account':'Sign in'}</button></div></form><p class="small-help">Windows encrypts the remembered session in a file protected by your Windows account. Only enable remembering on a trusted device.</p>${state.recoverySupported?'<p class="small-help">Lost your password? Use a recovery code saved earlier under Settings &amp; account. Recovery signs out your other devices.</p>':''}<p class="small-help">Accounts and chats belong to the Social component on this server. No developer token or external identity provider needed.</p></div>`:''}</div><div class="report-login"><details ${state.reportStatus?'open':''}><summary>Report a login problem to LoopRD</summary><p class="small-help">Sends Tavi version, platform and a generic failure code to your LoopRD server. Do not include passwords, usernames, tokens or personal details.</p><label>Optional description<textarea id="bug-report-note" maxlength="400" placeholder="What happened? (no personal information)"></textarea></label><button type="button" data-action="send-bug-report" ${state.reportSending?'disabled':''}>${state.reportSending?'Sending…':'Send report to LoopRD'}</button>${state.reportStatus?`<p class="small-help" role="status">${esc(state.reportStatus)}</p>`:''}</details></div><div class="window-status">${state.step==='account'?'Server found — sign in or create an account':'Enter your community server to continue'}</div></section></div>`;}
 function buddyRow(peer){const isCurrent=state.peer===peer.id&&state.panel==='messenger';const badge=peer.status==='pending'?peer.direction==='incoming'?'Wants to add you':'Invitation sent':peer.online?'Online':'Offline';const unread=peer.status==='accepted'?(state.unread[peer.id]||0):0;const summary=state.conversationSummaries.find(x=>x.peer===peer.id);const preview=summary?.latest?(state.notifyPrefs.preview?String(summary.latest.text).slice(0,65):'Recent message · '+stamp(summary.latest.at)):'';return `<button class="buddy ${isCurrent?'chosen':''}" data-peer="${esc(peer.id)}" data-contact-name="${esc(peer.username.toLowerCase())}">${avatar(peer.username,peer.online&&peer.status==='accepted')}<span class="buddy-copy"><strong><span class="tavi-inline-presence ${peer.online&&peer.status==='accepted'?'online':'offline'}" role="img" aria-label="${peer.online&&peer.status==='accepted'?'Online':'Offline'}"></span>${esc(peer.username)}</strong><small>${esc(preview||badge)}</small></span>${unread?`<span class="unread-badge" aria-label="${unread} unread messages">${unread===99?'99+':unread}</span>`:''}${peer.status==='pending'&&peer.direction==='incoming'?'<span class="req-badge">!</span>':''}</button>`;}
@@ -1045,7 +1104,12 @@ function settings(){
   officialRepository:TAVIX_REPOSITORY_URL,repositories:extensionRepoSubscriptions()?.list()||[],
   suggestedRepositories:extensionSuggested,repositoryErrors:extensionRepoStatuses,
   appSettings:extensionSettingsEntries(extensionCatalog,extensionAccountStore(),{platform:clientPlatform}),
-  developerVisible:state.developerVisible
+  developerVisible:state.developerVisible,
+  workspaceDesktop:nativeDesktop,
+  windowDefaults:extensionStoreScope?{game:deviceWindowDefault(localStorage,extensionStoreScope,'game'),app:deviceWindowDefault(localStorage,extensionStoreScope,'app')}:{game:'detached',app:'embedded'},
+  windowApps:extensionStoreScope&&extensionAccountStore()?extensionCatalog.filter(entry=>{
+   const m=entry?.manifest,store=extensionAccountStore();return m&&store.enabled(m.id)&&store.source(m.id)===extensionSource(entry)&&store.version(m.id)===m.version&&m.id!==CORE_WALLET_ID&&m.id!==BUNDLED_COMPANION_ID;
+  }).map(entry=>({id:entry.manifest.id,name:entry.manifest.name,kind:resolveTavixClassification(entry.manifest).type==='game'?'game':'app',choice:savedPresentation(localStorage,extensionStoreScope,entry.manifest.id),canDetach:!entry.manifest.presentation?.supported||entry.manifest.presentation.supported.some(mode=>mode==='detached'||mode==='native-window')})):[]
  });
 }
 function developerPanel(){
@@ -1121,11 +1185,11 @@ function launcherTile(item,favorites){
  return `<div class="tavi-app-card"><button type="button" class="tavi-app-tile" ${open} data-app-context="${esc(identity)}" aria-label="Open ${esc(item.label)}; right-click or hold for options" title="${esc(item.label)} — right-click or hold for options"><span class="tavi-app-icon tone-${esc(item.tone)}">${appGlyph(item.symbol)}${image}</span><span class="tavi-app-caption">${esc(item.label)}</span></button></div>`;
 }
 function mainMenu(){
- const apps=launcherApps();
+ const apps=drawerApplications(launcherApps());
  const favorites=extensionStoreScope?readAppFavorites(localStorage,extensionStoreScope):[];
  const favoriteApps=favoriteApplications(apps,favorites);
  const sections=[{label:'Favorites',apps:favoriteApps},{label:'All',apps}];
- return `<section class="utility tavi-menu-panel" aria-label="Tavi apps"><div class="tavi-launcher-header"><h2>Apps</h2><span class="tavi-launcher-count">${apps.length} available</span></div><nav class="tavi-app-page-tabs" role="tablist" aria-label="App views">${sections.map((group,i)=>`<button type="button" role="tab" id="tavi-app-tab-${i}" data-app-page="${i}" aria-controls="tavi-app-page-${i}" aria-selected="${i===appDrawerPage?'true':'false'}" tabindex="${i===appDrawerPage?'0':'-1'}">${esc(group.label)}</button>`).join('')}</nav>${canInstallLocalTavix(state)?`<div class="tavi-local-package-toolbar tavi-local-package-shortcut"><span>Developer tools</span><div class="tavi-local-picker-actions"><button type="button" data-local-file-picker>${uiGlyph('extension')} Install .tavix</button><input type="file" id="tavi-local-file" accept=".tavix,application/zip" hidden aria-label="Select a local TaviX package"><label data-local-file-direct-fallback class="tavi-local-picker-fallback" hidden>Browse files directly<input type="file" id="tavi-local-file-direct" accept=".tavix,application/zip" aria-label="Browse local TaviX packages directly"></label></div><p id="tavi-local-picker-status" role="status" aria-live="polite" hidden></p></div>`:''}<div class="tavi-app-pages" aria-label="Swipe between Favorites and All">${sections.map((group,i)=>`<section class="tavi-app-page" id="tavi-app-page-${i}" role="tabpanel" aria-labelledby="tavi-app-tab-${i}"><div class="tavi-app-page-heading"><h3>${esc(group.label==='All'?'All apps':'Your favorites')}</h3><span>${group.apps.length} apps</span></div>${group.apps.length?`<div class="tavi-menu-grid">${group.apps.map(item=>launcherTile(item,favorites)).join('')}</div>`:`<div class="tavi-app-empty"><span aria-hidden="true">${uiGlyph('star')}</span><strong>No favorites yet</strong><p>Open All, then right-click or hold an app to add it here.</p></div>`}</section>`).join('')}</div><div class="tavi-launcher-tools"><button type="button" class="tavi-explore-apps" data-action="assets-store"><span aria-hidden="true">${uiGlyph('palette')}</span><span><strong>Explore Assets Store</strong><small>Discover cards, themes and shared content</small></span><span aria-hidden="true">${uiGlyph('chevron')}</span></button><button type="button" class="tavi-explore-apps" data-action="app-store"><span aria-hidden="true">${uiGlyph('store')}</span><span><strong>Explore App Store</strong><small>Discover more apps for Tavi</small></span><span aria-hidden="true">${uiGlyph('chevron')}</span></button><p class="tavi-app-context-hint">Right-click or hold an app for options</p></div></section>`;
+ return `<section class="utility tavi-menu-panel" aria-label="Tavi apps"><div class="tavi-launcher-header"><h2>Apps</h2><span class="tavi-launcher-count">${apps.length} available</span></div><nav class="tavi-app-page-tabs" role="tablist" aria-label="App views">${sections.map((group,i)=>`<button type="button" role="tab" id="tavi-app-tab-${i}" data-app-page="${i}" aria-controls="tavi-app-page-${i}" aria-selected="${i===appDrawerPage?'true':'false'}" tabindex="${i===appDrawerPage?'0':'-1'}">${esc(group.label)}</button>`).join('')}</nav>${canInstallLocalTavix(state)?`<div class="tavi-local-package-toolbar tavi-local-package-shortcut"><span>Developer tools</span><div class="tavi-local-picker-actions"><button type="button" data-local-file-picker>${uiGlyph('extension')} Install .tavix</button><input type="file" id="tavi-local-file" accept=".tavix,application/zip" hidden aria-label="Select a local TaviX package"><label data-local-file-direct-fallback class="tavi-local-picker-fallback" hidden>Browse files directly<input type="file" id="tavi-local-file-direct" accept=".tavix,application/zip" aria-label="Browse local TaviX packages directly"></label></div><p id="tavi-local-picker-status" role="status" aria-live="polite" hidden></p></div>`:''}<div class="tavi-app-pages" aria-label="Swipe between Favorites and All">${sections.map((group,i)=>`<section class="tavi-app-page" id="tavi-app-page-${i}" role="tabpanel" aria-labelledby="tavi-app-tab-${i}"><div class="tavi-app-page-heading"><h3>${esc(group.label==='All'?'All apps':'Your favorites')}</h3><span>${group.apps.length} apps</span></div>${group.apps.length?`<div class="tavi-menu-grid">${group.apps.map(item=>launcherTile(item,favorites)).join('')}</div>`:`<div class="tavi-app-empty"><span aria-hidden="true">${uiGlyph('star')}</span><strong>No favorites yet</strong><p>Open All, then right-click or hold an app to add it here.</p></div>`}</section>`).join('')}</div><div class="tavi-launcher-tools"><p class="tavi-app-context-hint">Right-click or hold an app for options</p></div></section>`;
 }
 function homeScreen(){
  // Home owns the classic buddy list and profile/Companion strip; the host owns chrome.
@@ -1140,7 +1204,7 @@ function dashboard(){
  if(!nativeDesktop&&chatting&&state.mobileRoster)return `<div class="tavi-single-workspace tavi-contact-focus tavi-root-tab">${messageInbox()}${mobileTabs('messenger',{unread:unreadTotal()})}</div>`;
  if(!nativeDesktop&&chatting)return `<div class="tavi-single-workspace tavi-chat-focus">${focusedConversation()}</div>`;
  const content=state.panel==='people-directory'?peopleDirectory():state.panel==='assets-store'?renderAssetMarket({assetsAvailable:assetsRuntime.ready(),assetsInstalled:Object.entries(assetsEngine.installedVersions()),assetRequests:assetsConsentRows(),onlineItems:assetCatalogItems,onlineState:assetCatalogState,section:assetMarketSection,query:assetMarketQuery,filter:assetMarketFilter}):state.panel==='app-store'?appStorePanel():state.panel==='extension'?extensionPanel():state.panel==='menu'?mainMenu():state.panel==='add-friend'?addFriend():state.panel==='inbox'?inbox():state.panel==='games'?gameSettings():state.panel==='companion'?companion():state.panel==='portrait'?portrait():state.panel==='settings'?settings():developerPanel();
- const utilityTitle=state.panel==='settings'?settingsPageTitle(state.settingsPage):({'people-directory':'Contacts',games:'Games',inbox:'Notifications',portrait:'Your portrait',companion:'My pet',developer:'Developer tools',menu:'Main menu','app-store':'App Store','assets-store':'Assets Store',extension:activeDeveloperOverlay?.manifest.id===extensionSelected&&canInstallLocalTavix(state)?activeDeveloperOverlay.manifest.name+' · Preview':extensionEntry(extensionSelected)?.manifest?.name||'App'})[state.panel]||'Tavi';
+ const utilityTitle=state.panel==='settings'?settingsPageTitle(state.settingsPage):({'people-directory':'Contacts',games:'Games',inbox:'Notifications',portrait:'Your portrait',companion:'My pet',developer:'Developer tools',menu:'Main menu','app-store':'Tavi Store','assets-store':'Tavi Store',extension:activeDeveloperOverlay?.manifest.id===extensionSelected&&canInstallLocalTavix(state)?activeDeveloperOverlay.manifest.name+' · Preview':extensionEntry(extensionSelected)?.manifest?.name||'App'})[state.panel]||'Tavi';
  const settingsBack=state.panel==='people-directory'?'Apps':state.panel==='settings'&&state.settingsPage==='sources'?'Apps & extensions':state.panel==='settings'&&state.settingsPage!=='root'?'Settings':state.panel==='assets-store'&&assetStoreReturnPanel==='settings'?'Assets Library':state.panel==='assets-store'?'Apps':state.panel==='app-store'&&appStoreReturnPanel==='menu'?'Apps':state.panel==='app-store'&&appStoreReturnPanel==='settings'?'Settings':'Home';
  const topLevelTab=state.panel==='menu'||state.panel==='games';
  return `<div class="tavi-single-workspace tavi-utility-focus ${topLevelTab?'tavi-root-tab':''}"><section class="classic-window auxiliary-window">${topLevelTab?'':hostToolbar(utilityTitle,{action:'back',backLabel:settingsBack})}<div class="aux-content">${content}</div></section>${mobileTabs(state.panel==='add-friend'&&friendReturnPanel==='people-directory'?'people-directory':state.panel,{unread:unreadTotal()})}</div>`;
@@ -1201,7 +1265,7 @@ function render(){
  disposeAppContexts();disposeAppContexts=()=>{};
  if(state.panel!=='extension'&&pendingLifeLaunch)clearPendingLifeLaunch();
  if(state.panel!=='extension'){clearPendingGameSurface();if(activeGameSurface)closeNestedGameSurface();}
- if(state.panel!=='app-store'){extensionInstallApproval=null;extensionSwitchApproval=null;marketplaceSelected='';}
+ if(state.panel!=='app-store'){extensionInstallApproval=null;extensionSwitchApproval=null;marketplaceSelected='';marketplaceSelectedAsset='';}
  // Keep an active sandbox frame mounted across chat/notification polling.
  // Moving an iframe through a detached DOM tree reloads it in some WebViews.
  const existingSlot=document.getElementById('tavi-extension-surface');
@@ -1214,7 +1278,7 @@ function render(){
  }
  document.querySelector('body > .toast')?.remove();if(state.panel!=='settings')state.recoveryCodes=null;const entry=document.getElementById('message');if(entry&&document.activeElement===entry)state.draft=entry.value;const oldFrame=document.getElementById('portrait-frame');const oldExtensionFrame=document.querySelector('#tavi-extension-surface iframe');if(oldExtensionFrame)oldExtensionFrame.remove();const filter=document.getElementById('roster-filter');const search=filter?.value||'';const focused=document.activeElement===entry?{start:entry.selectionStart,end:entry.selectionEnd}:null;const settingsScroll=document.querySelector('.aux-content')?.scrollTop||0;const oldScroll=document.getElementById('chat-scroll');const nearBottom=!oldScroll||oldScroll.scrollHeight-oldScroll.scrollTop-oldScroll.clientHeight<90;const oldTop=oldScroll?.scrollTop;document.title=unreadTotal()?`(${unreadTotal()}) Tavi`:'Tavi';applyTheme();app.innerHTML=(!state.connected&&!nativeDesktop?header():'')+(state.connected?dashboard():signIn())+(state.toast?`<div class="toast" role="status">${esc(state.toast)}</div>`:'')+(state.connected?companionBadge(state.companion):'')+(state.connected?extensionInstallDialog():'')+(state.connected?renderAssetApproval(pendingAssetAction||{}):'');if(oldFrame&&state.panel==='portrait')document.getElementById('portrait-frame')?.replaceWith(oldFrame);attachExtensionFrame(oldExtensionFrame);wire();if(pendingAssetAction){document.querySelector('.tavi-asset-approval .tavi-install-dialog')?.focus();}const newSettings=document.querySelector('.aux-content');if(newSettings&&state.panel==='settings')newSettings.scrollTop=settingsScroll;const newFilter=document.getElementById('roster-filter');if(newFilter){newFilter.value=search;applyContactFilter(search);}if(focused){const field=document.getElementById('message');if(field){field.focus();field.setSelectionRange(focused.start,focused.end);}}if(state.panel==='messenger'){const scroll=document.getElementById('chat-scroll');if(scroll){scroll.scrollTop=nearBottom?scroll.scrollHeight:oldTop;}}}
 function applyContactFilter(query){const term=query.trim().toLowerCase();document.querySelectorAll('[data-contact-name]').forEach(node=>{node.hidden=!!term&&!node.dataset.contactName.includes(term);});}
-function stop(){pendingLocalTavix=null;activeLocalTavix=null;activeDeveloperOverlay=null;developerOverlays.clear();++developerOverlayGeneration;extensionInstallApproval=null;pendingAssetAction=null;assetApprovalBusy=false;++assetCatalogTicket;assetCatalogState='not-configured';assetCatalogItems=[];assetMarketSection='discover';assetMarketQuery='';assetMarketFilter='all';clearPendingLifeLaunch();clearPendingGameSurface();closeNestedGameSurface();++extensionRepoLoad;extensionSuggested=[];extensionRepoStatuses=[];repositoryChecks=[];diagnosticEvents.clear();extensionHost.unmount();extensionSelected='';extensionSettingsReturn=false;extensionGamesReturn=false;extensionCatalog=[];extensionCatalogError='';extensionStore=null;extensionStoreScope='';void assetsEngine.connect(null);appDrawerPage=0;gameDrawerPage='mine';appStoreReturnPanel='home';coreWalletEntry=null;extensionVerified=new Set();state.goldAmount=null;state.goldStatus='loading';state.goldLastCheckedAt=0;extensionLastCheckedAt=0;extensionStaleSources=new Set();if(extensionUpdatePoll){clearInterval(extensionUpdatePoll);extensionUpdatePoll=null;}void closePetWindow();for(const label of nativeChildLabels){void WebviewWindow.getByLabel(label).then(w=>w?.close()).catch(()=>{});}nativeChildLabels.clear();mailboxWake?.close();mailboxWake=null;sessionRetry.disable();state.retryAvailable=false;state.retryOrigin='';if(pulse){pulse.onclose=null;pulse.close();pulse=null;}clearInterval(poll);poll=null;state.api=null;state.connected=false;state.ecosystemAdmin=false;state.assetStudioReady=false;state.companion=newCompanion();state.companionKey=null;state.profile=null;state.lobby=[];state.direct=[];state.contacts=[];state.avatarCode='';state.gameTokens.clear();state.turns=[];state.gameRooms=[];state.selectedRoomId=null;state.roomMessages=[];state.roomError='';state.interactions=[];state.selectedInteraction=null;state.interactionError='';state.catalog=[];state.catalogError='';state.atriumGames=[];state.atriumDiscoveryStatus='not_connected';state.lastCatalogAt=0;state.draft='';state.developerAllowed=false;state.developerVisible=false;state.developerInfo=null;state.developerError='';state.lastSyncAt=null;state.pulseState='disconnected';state.chatRead={};state.unread={};state.peerFeeds.clear();state.chatOffset=0;state.conversationSummaries=[];state.summarySupported=null;state.pendingAcks.clear();state.peerReceipts.clear();state.pendingRequestIds=null;state.notifyPrefs={messages:true,preview:false,requests:true};state.pushPrefs={backgroundEnabled:false};state.pushCapability=null;state.atriumUrl=null;state.pushPermission='unknown';state.step='server';state.panel='home';state.mobileRoster=true;surfaces.clear();closeEmbeddedGame();render();}
+function stop(){marketplaceCategory='discover';marketplaceQuery='';marketplaceFilter='all';void detachedWorkspaces.closeAll();pendingLocalTavix=null;activeLocalTavix=null;activeDeveloperOverlay=null;developerOverlays.clear();++developerOverlayGeneration;extensionInstallApproval=null;pendingAssetAction=null;assetApprovalBusy=false;++assetCatalogTicket;assetCatalogState='not-configured';assetCatalogItems=[];assetMarketSection='discover';assetMarketQuery='';assetMarketFilter='all';clearPendingLifeLaunch();clearPendingGameSurface();closeNestedGameSurface();++extensionRepoLoad;extensionSuggested=[];extensionRepoStatuses=[];repositoryChecks=[];diagnosticEvents.clear();extensionHost.unmount();extensionSelected='';extensionSettingsReturn=false;extensionGamesReturn=false;extensionCatalog=[];extensionCatalogError='';extensionStore=null;extensionStoreScope='';void assetsEngine.connect(null);appDrawerPage=0;gameDrawerPage='mine';appStoreReturnPanel='home';coreWalletEntry=null;extensionVerified=new Set();state.goldAmount=null;state.goldStatus='loading';state.goldLastCheckedAt=0;extensionLastCheckedAt=0;extensionStaleSources=new Set();if(extensionUpdatePoll){clearInterval(extensionUpdatePoll);extensionUpdatePoll=null;}void closePetWindow();for(const label of nativeChildLabels){void WebviewWindow.getByLabel(label).then(w=>w?.close()).catch(()=>{});}nativeChildLabels.clear();mailboxWake?.close();mailboxWake=null;sessionRetry.disable();state.retryAvailable=false;state.retryOrigin='';if(pulse){pulse.onclose=null;pulse.close();pulse=null;}clearInterval(poll);poll=null;state.api=null;state.connected=false;state.ecosystemAdmin=false;state.assetStudioReady=false;state.companion=newCompanion();state.companionKey=null;state.profile=null;state.lobby=[];state.direct=[];state.contacts=[];state.avatarCode='';state.gameTokens.clear();state.turns=[];state.gameRooms=[];state.selectedRoomId=null;state.roomMessages=[];state.roomError='';state.interactions=[];state.selectedInteraction=null;state.interactionError='';state.catalog=[];state.catalogError='';state.atriumGames=[];state.atriumDiscoveryStatus='not_connected';state.lastCatalogAt=0;state.draft='';state.developerAllowed=false;state.developerVisible=false;state.developerInfo=null;state.developerError='';state.lastSyncAt=null;state.pulseState='disconnected';state.chatRead={};state.unread={};state.peerFeeds.clear();state.chatOffset=0;state.conversationSummaries=[];state.summarySupported=null;state.pendingAcks.clear();state.peerReceipts.clear();state.pendingRequestIds=null;state.notifyPrefs={messages:true,preview:false,requests:true};state.pushPrefs={backgroundEnabled:false};state.pushCapability=null;state.atriumUrl=null;state.pushPermission='unknown';state.step='server';state.panel='home';state.mobileRoster=true;surfaces.clear();closeEmbeddedGame();render();}
 async function refreshAssetStudioReadiness(api){
  state.assetStudioReady=false;
  if(!api||api!==state.api||!state.ecosystemAdmin)return;
@@ -1505,7 +1569,7 @@ function goBackInTavi(){
  if(pendingAssetAction){if(assetApprovalBusy)return;pendingAssetAction=null;render();return;}
  if(state.panel==='assets-store'){state.panel=assetStoreReturnPanel==='settings'?'settings':'menu';if(state.panel==='settings')state.settingsPage='assets';render();return;}
  if(state.panel==='app-store'&&extensionSwitchApproval){extensionSwitchApproval=null;render();return;}
- if(state.panel==='app-store'&&marketplaceSelected){marketplaceSelected='';render();return;}
+ if(state.panel==='app-store'&&(marketplaceSelected||marketplaceSelectedAsset)){marketplaceSelected='';marketplaceSelectedAsset='';render();return;}
  if(state.panel==='app-store'&&appStoreReturnPanel==='menu'){state.panel='menu';appDrawerPage=0;render();return;}
  if(state.panel==='app-store'&&appStoreReturnPanel==='settings'){state.panel='settings';state.settingsPage='extensions';render();return;}
  const focused=document.activeElement;
@@ -1568,12 +1632,12 @@ async function acceptAssetAction(){
 }
 async function action(name,requestedPack=null){
  if(name==='back'){goBackInTavi();return;}
- if(name==='assets-store'){assetStoreReturnPanel=state.panel==='settings'?'settings':'menu';pendingAssetAction=null;state.panel='assets-store';state.mobileRoster=false;render();void refreshAssetsCatalog();return;}
+ if(name==='assets-store'){marketplaceCategory='assets';appStoreReturnPanel=state.panel==='settings'?'settings':state.panel==='menu'?'menu':'home';marketplaceSelected='';marketplaceSelectedAsset='';pendingAssetAction=null;state.panel='app-store';state.mobileRoster=false;render();void refreshAssetsCatalog();if(!extensionCatalog.length)void loadExtensionStore();return;}
  if(name==='settings-assets'){pendingAssetAction=null;state.panel='settings';state.settingsPage='assets';state.mobileRoster=false;render();return;}
  if(name==='settings-extensions'||name==='settings-sources'){extensionSettingsReturn=false;state.panel='settings';state.settingsPage=name==='settings-sources'?'sources':'extensions';state.mobileRoster=false;render();return;}
  if(name==='minimize-view'||name==='home'){if(activeGameSurface)closeNestedGameSurface();clearPendingGameSurface();if(state.panel==='messenger'&&!state.mobileRoster)surfaces.minimizeChat(state.peer,nameOf(state.peer));state.panel='home';state.mobileRoster=true;render();return;}
  if(name==='local-tavix-picker'){toast('Open Apps and select Install .tavix to choose a local package.');return;}
- if(name==='app-store'){appStoreReturnPanel=state.panel==='menu'?'menu':state.panel==='settings'?'settings':'home';marketplaceSelected='';state.panel='app-store';state.mobileRoster=false;render();if(!extensionCatalog.length||Date.now()-extensionLastCheckedAt>=EXTENSION_CHECK_INTERVAL)void loadExtensionStore();return;}
+ if(name==='app-store'){appStoreReturnPanel=state.panel==='menu'?'menu':state.panel==='settings'?'settings':'home';marketplaceCategory='discover';marketplaceQuery='';marketplaceFilter='all';marketplaceSelected='';marketplaceSelectedAsset='';state.panel='app-store';state.mobileRoster=false;render();void refreshAssetsCatalog();if(!extensionCatalog.length||Date.now()-extensionLastCheckedAt>=EXTENSION_CHECK_INTERVAL)void loadExtensionStore();return;}
  if(name==='install-free-asset-pack'){
   const scope=extensionAccountStore()&&extensionStoreScope;
   if(!scope||!assetsEngine.ready())return toast('Local Assets storage is unavailable.');
@@ -1583,7 +1647,7 @@ async function action(name,requestedPack=null){
   return;
  }
  if(name==='wallet'){await openCoreWallet();return;}
- if(name==='store-refresh'){void loadExtensionStore({manual:true});return;}
+ if(name==='store-refresh'){void refreshUnifiedStore();return;}
  if(name==='check-extension-updates'){state.panel='app-store';state.mobileRoster=false;render();void loadExtensionStore({manual:true});return;}
  if(name==='main-menu'){appDrawerPage=0;state.panel='menu';state.mobileRoster=false;render();return;}
  if(name==='atrium'){const url=reviewedAtriumBase(state.atriumUrl);if(!url)return toast('Atrium is not configured for this server.');await openExternalGame(url);return;}if(name==='developer'){if(!state.developerAllowed||!state.developerVisible)return;state.panel=name;await updateDeveloperInfo();render();return;}
@@ -1648,6 +1712,19 @@ function wire(){
  wireExclusiveMenus(document.querySelectorAll('.menubar .menu-drop'));
  document.querySelectorAll('[data-settings-page]').forEach(el=>el.addEventListener('click',()=>{state.settingsPage=el.dataset.settingsPage||'root';state.recoveryCodes=null;render();if(state.settingsPage==='about'&&clientPlatform==='android'&&isTauri())void listenAndroidUpdater();}));
  const settingsSearch=document.getElementById('settings-search');if(settingsSearch)settingsSearch.addEventListener('input',()=>{const term=settingsSearch.value.trim().toLowerCase();document.querySelectorAll('[data-settings-search]').forEach(row=>{row.hidden=!!term&&!row.dataset.settingsSearch.includes(term);});document.querySelectorAll('.tavi-settings-index .md-settings-group').forEach(group=>{const rows=[...group.querySelectorAll('[data-settings-search]')];group.hidden=rows.length>0&&rows.every(row=>row.hidden);});});
+ document.querySelectorAll('[data-window-default]').forEach(el=>el.addEventListener('change',()=>{
+  if(!nativeDesktop||!extensionStoreScope)return;
+  try{setDeviceWindowDefault(localStorage,extensionStoreScope,el.dataset.windowDefault,el.value);render();}
+  catch{toast('Unable to save the window preference on this device.');}
+ }));
+ document.querySelectorAll('[data-window-app]').forEach(el=>el.addEventListener('change',()=>{
+  if(!nativeDesktop||!extensionStoreScope)return;
+  const id=el.dataset.windowApp,entry=extensionEntry(id),store=extensionAccountStore();
+  if(!entry||!store?.enabled(id)||store.source(id)!==extensionSource(entry)||store.version(id)!==entry.manifest.version)return;
+  try{if(el.value==='default')forgetPresentation(localStorage,extensionStoreScope,id);
+   else if(['detached','embedded'].includes(el.value))rememberPresentation(localStorage,extensionStoreScope,id,el.value);
+   render();}catch{toast('Unable to save the app window preference.');}
+ }));
  document.querySelectorAll('[data-notify-pref]').forEach(el=>el.addEventListener('change',()=>{const key=el.dataset.notifyPref;if(!['messages','preview','requests'].includes(key))return;state.notifyPrefs[key]=el.checked;saveNotificationPrefs(localStorage,notificationPrefsKey(state.api.origin,state.profile.profileId),state.notifyPrefs);render();}));
  document.querySelectorAll('[data-set-theme]').forEach(el=>el.addEventListener('click',()=>setTheme(el.dataset.setTheme)));
  const pushOptIn=document.getElementById('push-opt-in');if(pushOptIn)pushOptIn.addEventListener('change',()=>{state.pushPrefs.backgroundEnabled=pushOptIn.checked;savePushPreferences(localStorage,pushKey(),state.pushPrefs);render();});
@@ -1665,9 +1742,16 @@ function wire(){
  const storeSearch=document.getElementById('tavi-store-search');
  if(storeSearch)storeSearch.addEventListener('input',()=>{marketplaceQuery=storeSearch.value;marketplaceApplySearch();});
  document.querySelectorAll('[data-marketplace-filter]').forEach(el=>el.addEventListener('click',()=>{marketplaceFilter=el.dataset.marketplaceFilter;marketplaceApplySearch();}));
+ const storeSurface=document.querySelector('.tavi-storefront');
+ const storeScroller=storeSurface?.closest('.aux-content');
+ if(storeSurface&&storeScroller&&!marketplaceSelected&&!marketplaceSelectedAsset){
+  wireStorePullToRefresh({surface:storeSurface,scroller:storeScroller,onRefresh:refreshUnifiedStore});
+ }
+ document.querySelectorAll('[data-store-view]').forEach(el=>el.addEventListener('click',()=>{marketplaceCategory=el.dataset.storeView;marketplaceSelected='';marketplaceSelectedAsset='';marketplaceFilter='all';marketplaceQuery='';render();}));
  marketplaceApplySearch();
- document.querySelectorAll('[data-marketplace-back]').forEach(el=>el.addEventListener('click',()=>{marketplaceSelected='';render();}));
- document.querySelectorAll('[data-extension-details]').forEach(el=>el.addEventListener('click',()=>{marketplaceSelected=el.dataset.extensionDetails;render();}));
+ document.querySelectorAll('[data-marketplace-back]').forEach(el=>el.addEventListener('click',()=>{marketplaceSelected='';marketplaceSelectedAsset='';render();}));
+ document.querySelectorAll('[data-asset-details]').forEach(el=>el.addEventListener('click',()=>{marketplaceSelectedAsset=el.dataset.assetDetails;marketplaceSelected='';render();}));
+ document.querySelectorAll('[data-extension-details]').forEach(el=>el.addEventListener('click',()=>{marketplaceSelected=el.dataset.extensionDetails;marketplaceSelectedAsset='';render();}));
  document.querySelectorAll('[data-extension-switch]').forEach(el=>el.addEventListener('click',()=>{extensionSwitchApproval=el.dataset.extensionSwitch;render();}));
  document.querySelectorAll('[data-extension-switch-cancel]').forEach(el=>el.addEventListener('click',()=>{extensionSwitchApproval=null;render();}));
  document.querySelectorAll('[data-extension-switch-approve]').forEach(el=>el.addEventListener('click',()=>void switchExtensionSource(el.dataset.extensionSwitchApprove)));
@@ -1691,6 +1775,14 @@ function wire(){
   if(!allowed.some(item=>item.id===id)){toast('Game is not installed, enabled or verified.');return;}
   void openInstalledExtension(id,{fromGames:true});
  }));
+ document.querySelectorAll('[data-workspace-detach]').forEach(el=>el.addEventListener('click',()=>void detachExtension(el.dataset.workspaceDetach)));
+ document.querySelectorAll('[data-workspace-drag]').forEach(el=>{
+  let start=null;el.addEventListener('pointerdown',e=>{if(e.button===0){start={x:e.clientX,y:e.clientY};el.setPointerCapture?.(e.pointerId);}});
+  el.addEventListener('pointerup',e=>{if(!start)return;const distance=Math.hypot(e.clientX-start.x,e.clientY-start.y);start=null;
+   if(distance>36)void detachExtension(el.dataset.workspaceDrag);});
+  el.addEventListener('pointercancel',()=>{start=null;});
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();void detachExtension(el.dataset.workspaceDrag);}});
+ });
  document.querySelectorAll('[data-extension-open]').forEach(el=>el.addEventListener('click',()=>developerOverlayFor(el.dataset.extensionOpen)?void openDeveloperOverlay(el.dataset.extensionOpen):void openInstalledExtension(el.dataset.extensionOpen)));
  document.querySelectorAll('[data-developer-preview-open]').forEach(el=>el.addEventListener('click',()=>void openDeveloperOverlay(el.dataset.developerPreviewOpen)));
  document.querySelectorAll('[data-extension-disable]').forEach(el=>el.addEventListener('click',()=>{extensionAccountStore()?.disable(el.dataset.extensionDisable);if(el.dataset.extensionDisable===BUNDLED_COMPANION_ID&&extensionStoreScope)clearCompanionPreview(localStorage,extensionStoreScope);render();}));
@@ -1931,6 +2023,7 @@ window.addEventListener('message',event=>{
   result:['assets_prepared','document_loaded'].includes(code)?'ok':'error'});
 });
 window.addEventListener('message',async e=>{if(e.origin!==location.origin||e.source!==document.getElementById('portrait-frame')?.contentWindow||e.data?.type!=='looprd.portrait.selected/v1'||!state.api)return;const code=e.data.code;try{const result=await state.api.saveProfile({schema:'looprd.social.profile/v1',profileId:state.profile.profileId,displayName:state.profile.displayName,appearance:state.profile.appearance||null,portraitCode:code},state.revision);state.profile=result.profile;state.revision=result.revision;state.avatarCode=code;toast('Portrait saved to Social.');}catch(error){toast(error.message);}});
+window.addEventListener('resize',()=>{extensionHost.publishUIContext();});
 window.addEventListener('focus',()=>{if(state.api){refresh();void refreshGoldBalance(state.api);if(Date.now()-extensionLastCheckedAt>=EXTENSION_CHECK_INTERVAL)void loadExtensionStore();}});
 const sessionRetry=createSessionRetry({retry:()=>restoreSession()});
 window.addEventListener('online',()=>{if(state.retryAvailable&&!state.api)void sessionRetry.trigger().catch(()=>{});});
@@ -1975,7 +2068,7 @@ async function restoreSession(){
   state.step='server';state.authError='';
  }finally{state.restoring=false;render();}
 }
-render();void restoreSession();
+render();window.taviBootComplete?.();void restoreSession();
 // Tauri 2.9+ intercepts Android's hardware/gesture Back before its default
 // WebView pop/Activity exit. No changes to generated MainActivity files.
 if(clientPlatform==='android'){

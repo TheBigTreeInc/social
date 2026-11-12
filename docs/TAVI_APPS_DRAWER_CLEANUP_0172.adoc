@@ -1,0 +1,18 @@
+= TAVI_APPS_DRAWER_CLEANUP_0172 — Apps as an application launcher
+:doctype: article
+
+== Intent
+Keep the persistent Home, Chats, Games, Apps tabs as the canonical navigation on compact Tavi clients. Apps launches installed TaviX and remaining utilities, not duplicate shortcuts for Chat or Games. Tavi Store is reachable from one tile in the Apps list, not an extra full-width CTA.
+
+== 0.3.172 source implementation
+* The Apps projection filters only builtin `contacts` (legacy Messages shortcut) and `games`. The underlying routes and full builtin catalog are preserved, including installed TaviX games that may have a game-related action.
+* A single Tavi Store tile remains. The redundant full-width Store CTA is removed, while the context-menu/Favorites/All interaction and the Developer Mode local file picker remain.
+* New accounts default to Notifications, Wallet and Tavi Store favorites. Legacy persisted favorites are read unchanged; hidden root-nav shortcuts simply do not render, preserving storage if a future UI restores them.
+* The Apps native scroll container, panel minimum height and bottom navigation share one themed background; a right-hand `scrollbar-gutter:stable` reservation is disabled only on the Apps root tab. Thin scrollbars still support normal scrolling; color adjusts to the theme. No global scrollbar or chat/game styling is modified.
+
+== Acceptance and safety
+* On Windows around 355 px wide, open Apps: no white right gutter, no white strip between content and bottom navigation, no duplicate Messages/Games tiles and only one Store entry. Scroll Favorites/All and ensure right-click and touch long press work.
+* Verify Wallet, Contacts directory, Settings, Notifications, Companion, portrait, local TaviX installs and all installed game/utility extensions still appear and launch.
+* On Android portrait and dark mode, confirm safe-area insets, bottom navigation, no horizontal overflow and no extra scrollbar.
+* Native build, visual screenshots and operator acceptance are pending; Node source tests are not device verification.
+* No changes to LoopRD auth, wallet, TaviX permissions, account records, stored favorites, native window manager or release/approval gates.

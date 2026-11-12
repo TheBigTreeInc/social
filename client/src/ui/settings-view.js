@@ -3,7 +3,7 @@ import {uiEscape} from './components.js';
 
 const PAGE_TITLES=Object.freeze({
  root:'Settings',account:'Account',notifications:'Notifications',chats:'Chats',devices:'Connected devices',
- appearance:'Appearance',privacy:'Privacy & safety',storage:'Storage',companion:'Companion apps',extensions:'Apps & extensions',sources:'App sources',assets:'Assets Library',about:'About Tavi'
+ appearance:'Appearance',privacy:'Privacy & safety',storage:'Storage',companion:'Companion apps',extensions:'Apps & extensions',workspace:'App windows',sources:'App sources',assets:'Assets Library',about:'About Tavi'
 });
 export function settingsPageTitle(page='root'){return PAGE_TITLES[page]||PAGE_TITLES.root;}
 
@@ -44,8 +44,9 @@ function root(model){
    ].join(''))}
    ${group('',[
     navRow({page:'companion',iconName:'games',title:'Companion apps',subtitle:`Reviewed Companion ${model.companionVersion||''}`.trim()}),
-    navRow({page:'extensions',iconName:'extension',title:'Apps & extensions',subtitle:'App Store, trusted sources and app settings'}),
-    navRow({action:'assets-store',iconName:'store',title:'Assets Store',subtitle:'Browse cards, themes and shared content'}),
+    navRow({page:'extensions',iconName:'extension',title:'Apps & extensions',subtitle:'Tavi Store, trusted sources and app settings'}),
+    navRow({page:'workspace',iconName:'device',title:'App windows',subtitle:'Where games and applications open on this device'}),
+    navRow({action:'assets-store',iconName:'store',title:'Tavi Store · Assets',subtitle:'Browse packs in the unified Store'}),
     navRow({page:'assets',iconName:'storage',title:'Assets Library',subtitle:'Installed packs and app permissions',trailing:model.assetsAvailable?'Connected':'Preparing'}),
     navRow({page:'about',iconName:'info',title:'About Tavi',subtitle:'Version, updates and diagnostics',trailing:model.updateInfo?`Update ${model.updateInfo.version}`:''})
    ].join(''))}
@@ -144,7 +145,7 @@ function companion(model){
  return `<section class="utility tavi-material-settings">${pageIntro('Manage Tavi companion experiences through the reviewed extension system.')}
   ${group('Companion',[
    navRow({action:'companion',iconName:'games',title:'Tavi Companion',subtitle:`Reviewed bundled release ${model.companionVersion||'unknown'}`,trailing:model.companionVersion||''}),
-   navRow({action:'app-store',iconName:'store',title:'App Store',subtitle:'Install or manage reviewed companion apps'})
+   navRow({action:'app-store',iconName:'store',title:'Tavi Store',subtitle:'Install or manage reviewed companion apps'})
   ].join(''))}
  </section>`;
 }
@@ -152,13 +153,28 @@ function companion(model){
 function extensions(model){
  const linked=(model.appSettings||[]).map(entry=>`<button type="button" class="md-settings-row" data-settings-extension="${safe(entry.id)}">${icon('extension')}<span class="md-settings-copy"><strong>${safe(entry.name)}</strong><small>${safe(entry.label)} · Opens in isolated app</small></span>${chevron()}</button>`).join('');
  return `<section class="utility tavi-material-settings">${pageIntro('Manage app sources and installed extensions. Apps keep their own preferences and never receive Tavi credentials through Settings.')}
-  ${group('App Store & sources',[
-   navRow({action:'app-store',iconName:'store',title:'Browse App Store',subtitle:'Install and update approved apps'}),
+  ${group('Tavi Store & sources',[
+   navRow({action:'app-store',iconName:'store',title:'Browse Tavi Store',subtitle:'Install and update approved apps'}),
+   navRow({page:'workspace',iconName:'device',title:'App window preferences',subtitle:'Choose embedded or separate desktop windows'}),
    navRow({page:'sources',iconName:'extension',title:'App sources',subtitle:'Official and subscribed TaviX repositories',trailing:String(model.repositories?.length||0)+' custom'}),
    navRow({action:'check-extension-updates',iconName:'refresh',title:'Check for updates',subtitle:'Refresh approved extension sources'})
   ].join(''))}
   ${linked?group('Installed app settings',linked):group('Installed app settings',`<div class="md-settings-static-note">Apps that publish a Settings entry will appear here after installation. Game character names and match options remain inside their games.</div>`)}
  </section>`;
+}
+
+function workspace(model){
+ const selector=(attr,value,choices,disabled=false)=>`<select ${attr} ${disabled?'disabled':''}>${choices.map(([id,label])=>`<option value="${safe(id)}" ${value===id?'selected':''}>${safe(label)}</option>`).join('')}</select>`;
+ if(!model.workspaceDesktop)return `<section class="utility tavi-material-settings">${pageIntro('On phones and browsers, apps remain within Tavi. Windows preferences are available on native desktop clients.')}</section>`;
+ const entries=(model.windowApps||[]).map(app=>`<label class="md-window-choice"><span><strong>${safe(app.name)}</strong><small>${app.kind==='game'?'Game':'App'}</small></span>${selector(`data-window-app="${safe(app.id)}"`,app.choice||'default',[['default','Use device default'],['embedded','Inside Tavi'],['detached','Separate window']],!app.canDetach)}</label>`).join('');
+ return `<section class="utility tavi-material-settings" aria-label="App window preferences">${pageIntro('These preferences apply only to this device and account. Tavi remains available while separate windows are open.')}
+ ${group('Default on this PC',[
+  `<label class="md-window-choice"><span><strong>Games</strong><small>Klondike and other eligible installed games</small></span>${selector('data-window-default="game"',model.windowDefaults?.game||'detached',[['detached','Separate window'],['embedded','Inside Tavi']])}</label>`,
+  `<label class="md-window-choice"><span><strong>Other apps</strong><small>Regular TaviX applications</small></span>${selector('data-window-default="app"',model.windowDefaults?.app||'embedded',[['embedded','Inside Tavi'],['detached','Separate window']])}</label>`
+ ].join(''))}
+ ${group('Individual applications',entries||'<div class="md-settings-static-note">Installed applications will appear here once discovered.</div>')}
+ ${group('App Store',infoRow({iconName:'store',title:'App Store currently stays in Tavi',subtitle:'A separate App Store window requires a trusted host-owned window and install-approval relay. It is not enabled by this pass.'}))}
+ <p class="md-settings-intro">A saved per-app choice wins over the device default. Only verified, pinned installations can open outside Tavi. Separate windows do not change permissions or game state.</p></section>`;
 }
 
 function sources(model){
@@ -191,7 +207,7 @@ function assets(model){
    infoRow({iconName:'storage',title:online?'Local Assets engine connected':'Local Assets engine unavailable',subtitle:online?'Tavi Assets 0.1.7 portable engine with device-persistent storage.':'Device storage could not be opened; no asset access is granted.',trailing:online?'Ready':'Unavailable'}),
    infoRow({iconName:'shield',title:'Protected content access',subtitle:'Each app receives only the packs and capabilities you explicitly approve.'})
   ].join(''))}
-  ${group('Asset Store',navRow({action:'assets-store',iconName:'store',title:'Browse the Assets Store',subtitle:'Discover and install approved shared content'}))}
+  ${group('Tavi Store',navRow({action:'assets-store',iconName:'store',title:'Browse assets in Tavi Store',subtitle:'Discover and install approved shared content'}))}
   ${group('Installed packs',`${installed||'<div class="md-settings-static-note">No asset packs installed for this account.</div>'}${online?'<button type="button" class="md-primary-button" data-action="install-free-asset-pack">Install free sample card pack</button>':''}`)}
   ${rows?group('Application permissions',rows):group('Application permissions','<div class="md-settings-static-note">Apps declaring TaviX 0.1.11 asset dependencies will appear here when installed.</div>')}
   <p class="md-settings-intro">Free packs do not spend Gold. Paid ownership, verified online downloads and automatic updates require a connected authoritative Assets catalog. Removing a grant takes effect immediately for subsequent asset requests.</p>
@@ -233,6 +249,7 @@ export function renderSettings(model={}){
   case 'storage':return storage(model);
   case 'companion':return companion(model);
   case 'extensions':return extensions(model);
+  case 'workspace':return workspace(model);
   case 'sources':return sources(model);
   case 'assets':return assets(model);
   case 'about':return about(model);

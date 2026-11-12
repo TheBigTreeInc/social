@@ -1,3 +1,7 @@
+## Tavi 0.3.174 — Store native interaction polish (source candidate)
+
+At the top of the Store, pulling down refreshes TaviX and Assets discovery without reloading the messenger; keyboard users have a footer Refresh action. Simplified four-category layout fits compact windows, profile is borderless and artwork/title open details. Eligible installed apps offer Open, reviewed uninstalled apps offer Install (existing confirmation required), and only trusted free local asset packs offer Install (existing consent required). No Gold checkout or publisher-grant change. The Workboard update is a two-ID delta: see docs/qa/workboard-0.3.173-source-snapshot.json for the preserved old source snapshot; local 239-ticket operator Workboard is not replayed. Windows/Android native acceptance and exact post-update/CI evidence remain pending. See `docs/TAVI_STORE_TOUCH_INTERACTIONS_0174.adoc`.
+
 ### LoopRD schema-13 nullability repair (0.3.154)
 
 Fixed `SocialAccount.companionRevision` migration to `INTEGER DEFAULT 0` rather than `INTEGER NOT NULL DEFAULT 0`, matching its optional LoopRD model field. Strict SQLite ADD COLUMN preflight now checks reflected SQL type, VARCHAR length and required/nullability for every modeled addition; a schema-12→13 fixture verifies account preservation and Companion initialization. Generated server descriptor release 0.3.125; database target stays 13, and publication remains approval-gated. See `docs/TAVI_LOOPRD_SCHEMA13_NULLABILITY_0154.adoc`.
@@ -498,3 +502,7 @@ The operator `reset-companion` action's three write targets are now explicitly r
 ### LoopRD schema-13 string-length compatibility (0.3.153)
 
 Fixed schema-13 `SocialAccount.companionSnapshot` migration: use `VARCHAR(8192)` to match the model, instead of SQLite `TEXT`, which LoopRD rejects on length comparison. Release spec `0.3.124`, database schema target 13. See `docs/TAVI_LOOPRD_SCHEMA13_VARCHAR_0153.adoc`. Approval and staging-db validation required before server deployment; public releases remain separately gated.
+
+### TaviX icon and font UI kit (0.3.165)
+
+See `docs/TAVI_UI_KIT_001.adoc`, `docs/contracts/tavix-ui-kit-v1.json`, and `client/extension-sdk/icons.js`. The offline 50-icon set and platform native fonts are bundled per application; this is not a host permission or a guaranteed tablet window capability. TaviX 0.1.14 ships the matching kit and reference `.tavix` app.

@@ -43,7 +43,8 @@ test('Apps keeps tile behavior, per-account favorites, and Developer Mode gate',
  assert.match(menu,/role="tablist"/);
  assert.match(menu,/role="tabpanel"/);
  assert.match(menu,/launcherTile\(item,favorites\)/);
- assert.match(menu,/data-action="app-store"/);
+ assert.match(main,/drawerApplications\(launcherApps\(\)\)/);
+ assert.doesNotMatch(menu,/class="tavi-explore-apps"/);
  assert.match(menu,/canInstallLocalTavix\(state\)\?`<div class="tavi-local-package-toolbar(?: \w[\w-]*)?"/);
  assert.match(menu,/id="tavi-local-file"/);
  assert.doesNotMatch(menu,/data-app-favorite=/);
@@ -52,7 +53,7 @@ test('Apps keeps tile behavior, per-account favorites, and Developer Mode gate',
  assert.match(css,/\.tavi-menu-panel \.tavi-app-page-tabs button\[aria-selected="true"\]/);
  assert.match(css,/\.tavi-menu-panel \.tavi-app-card \.tavi-app-tile:active/);
  assert.match(css,/\.tavi-menu-panel \.tavi-app-pages\{align-items:start;/);
- assert.match(css,/\.tavi-menu-panel \.tavi-launcher-tools \.tavi-explore-apps/);
+ assert.match(css,/\.tavi-menu-panel \.tavi-app-card \.tavi-app-tile:active/);
  assert.match(css,/@media\(max-width:345px\)/);
 });
 

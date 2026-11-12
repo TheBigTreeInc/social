@@ -1,0 +1,240 @@
+= Tavi Workspace: UX and Social/TaviX Contracts
+:revnumber: 0.2.0
+:revdate: 2026-11-09
+:toc: left
+:sectnums:
+
+[IMPORTANT]
+====
+UX decisions accepted; technical contracts remain proposed and subject to review, not implemented APIs. No migration, publication, permission change or deployment is authorized by this document.
+====
+
+== Purpose and product principles
+
+Tavi is a messenger-first social platform. Games and other TaviX applications are optional extensions. The user must be able to return to messaging without terminating an application. Tavi owns host navigation and presentation; each application owns internal navigation; LoopRD owns authenticated identity and authoritative permissions and shared state.
+
+The same application package and approved host grants must operate in embedded and detached presentations. Window topology must never confer authority.
+
+== Accepted design decisions
+
+* Desktop: remember each application's last successful presentation mode, with an explicit user override. First launch uses the application preference subject to host capability and user policy.
+* Large-screen tablets: adaptive split panes with optional floating panels inside the Tavi workspace. No assumption of OS-level application windows.
+* Chats: multiple simultaneous conversation surfaces, including separate native windows on supported desktop hosts and panes/panels on tablet.
+* Closing: close the view and preserve resumable state; background execution requires a distinct, explicit lifecycle grant and is not implied by closing.
+* Desktop chats: separate native chat windows are opened only on explicit user request, never automatically when selecting a conversation.
+* Tablet: permit multiple simultaneous floating panels subject to host resource limits, accessibility and collision handling; provide a one-action way to recover off-screen panels.
+* Desktop detach: support both a host menu command and drag-to-detach; both must use the same policy-checked surface transition and preserve application state.
+
+== Vocabulary
+
+* *Application*: an installed, reviewed TaviX package with stable identity, version, digest and grants.
+* *Instance*: one running application context, potentially hosting multiple surfaces.
+* *Surface*: a host-managed visual endpoint, e.g. an app view or chat conversation.
+* *Presentation*: embedded, split-pane, floating-panel or native-window placement of a surface.
+* *Workspace*: a collection of surfaces and their layout on a device.
+* *Host navigation*: switching between Tavi messaging, apps, notifications and workspaces.
+* *Application navigation*: app-owned tabs, views, panels and in-app back behavior.
+* *Window management*: host-owned create, focus, resize, dock, move, minimize and close.
+* *Resumable state*: bounded, versioned application-provided state, not an authority token or substitute for authoritative server data.
+
+== UX contract
+
+=== Desktop
+
+The primary Tavi messenger remains a normal independent window. An app may request `embedded` or `native-window`; the host chooses based on capability, last user choice, policy and resource limits. Users can switch presentation mode from the Tavi host menu or drag a host-owned surface header to detach/dock. The host shows a clear preview and cancel affordance; dragging app content never triggers detach. Both interactions use the same validated transition, not separate authorization paths. On a successful explicit change, the host remembers the mode for that application and device. A native-window app does not receive additional privileges. Closing its window closes that surface, not the messenger or the Tavi login session.
+
+Multiple conversations may open as native chat windows only after explicit user action (e.g. host menu `Open chat in window`, or a clearly labeled detach affordance), each linked to one authoritative conversation identifier. Read receipts, drafts, unread counts and notifications remain synchronized through existing Tavi messaging services. A chat window is not a separate account session.
+
+=== Large-screen tablet
+
+A split workspace may show conversations on the left and app content on the right. The divider can be dragged within host-defined minimum sizes. On insufficient width, split panes collapse to a stack before content becomes unusable. Multiple floating chat/app panels are host-managed overlays within Tavi; they can be moved, resized, focused, reordered and dismissed, subject to device-specific limits, without assuming Android multi-window support. The host prevents panels from making the main messenger unreachable and provides a recover/reset control. Tavi must expose an obvious persistent path back to the messenger.
+
+When the available width becomes insufficient, the host collapses secondary panes into a switchable stack, retaining the logical surfaces and unsent drafts. Floating panels are rehomed into the stack, not silently discarded.
+
+=== Phone
+
+Tavi displays one primary focused surface at a time. Apps use a responsive embedded presentation. The host owns the outer back/up behavior and always offers a direct return to messages. An app owns internal navigation and can request an internal-back action, but may not trap host navigation. Chats remain accessible via host navigation and notifications. The application must not render a duplicate Tavi navigation bar.
+
+=== Presentation and state restoration
+
+Restore only previously valid, user-approved presentation preferences and non-sensitive layout metadata. Clamp restored bounds to current displays and safe areas. If a monitor is disconnected or tablet orientation changes, rehome inaccessible windows/panels. Do not restore an admin confirmation, secret, session token or unfinished privileged action. Restore drafts and app state only within explicit size/retention limits; durable game turns and wallet/asset records are fetched from authoritative services.
+
+=== Accessibility and behavior
+
+Keyboard navigation, visible focus, screen-reader labels, scalable text, high contrast, reduced motion, touch targets and predictable back/escape behavior are required. The active chat and unread status must remain discoverable. Host chrome must be distinguishable from app content. Users must be able to reset an application layout or restore a lost window.
+
+== Contract 1: tavix.presentation/v1 (proposed)
+
+Application manifest declaration (not a permission grant):
+
+[source,json]
+----
+{
+  "schema": "tavix.presentation/v1",
+  "preferred": "native-window",
+  "supported": ["embedded", "native-window", "split-pane", "floating-panel"],
+  "minimumSize": {"width": 360, "height": 480},
+  "preferredSize": {"width": 1100, "height": 760},
+  "responsive": true,
+  "resumable": true
+}
+----
+
+Values are logical display pixels, not an entitlement to a native window. Host may reject unsupported modes and clamp dimensions. Apps must provide a usable embedded layout for phone support. Native-window availability is capability-gated, not inferred from desktop user-agent strings. A host capability query returns supported modes, minimum/maximum bounds, and current presentation; it never returns admin authority.
+
+== Contract 2: tavi.workspace/v1 (proposed)
+
+Host-only operations are requested through the trusted TaviX bridge. The application cannot directly invoke native window APIs.
+
+[cols="2,3,3",options="header"]
+|===
+|Method |Request |Result
+|`workspace.capabilities` |`{}` |`{supportedModes, bounds, multiSurface, floatingPanels}`
+|`workspace.surface.open` |`{kind, targetId?, preferredMode?, initialStateRef?}` |`{surfaceId, instanceId, actualMode}`
+|`workspace.surface.present` |`{surfaceId, preferredMode}` |`{surfaceId, actualMode, reason?}`
+|`workspace.surface.focus` |`{surfaceId}` |`{focused}`
+|`workspace.surface.close` |`{surfaceId}` |`{closed, resumeRef?}`
+|`workspace.surface.list` |`{instanceId?}` |`{surfaces:[...]}` scoped to caller
+|`workspace.layout.reset` |`{scope:"application"}` |`{reset}`
+|===
+
+`workspace.surface.present` is the common operation for both host-menu and drag-to-detach; `inputMethod` (`menu` or `drag`) may be included as telemetry but must never affect permissions. A host gesture can call this operation internally without granting arbitrary app code drag/window authority. The host generates opaque `surfaceId` and `instanceId` values. IDs cannot be used as authorization credentials. A normal TaviX app can only manipulate its own app surfaces; opening chat surfaces is a separate, user-mediated messenger capability. A caller cannot choose another app's identity, account ID or granted permissions. Host enforces limits on window count, focus stealing, resource consumption and unsolicited popups. Chat detach is user initiated; apps cannot silently open chat windows. Floating panel limits are capability-advertised and adaptive, not a universal hardcoded count.
+
+Host lifecycle events: `surface.resized`, `surface.presentationChanged`, `surface.visibilityChanged`, `surface.closeRequested`, `surface.closed`, `workspace.capabilitiesChanged`, `session.locked`, `session.revoked`. Events contain no secret credentials. `surface.closeRequested` gives an app a bounded opportunity to checkpoint state; it cannot block host closure indefinitely.
+
+=== Proposed envelope
+
+[source,json]
+----
+{
+  "schema": "tavi.workspace.request/v1",
+  "requestId": "opaque-unique-request-id",
+  "method": "workspace.surface.present",
+  "params": {
+    "surfaceId": "host-generated-id",
+    "preferredMode": "native-window"
+  }
+}
+----
+
+Responses use `{schema:"tavi.workspace.response/v1",requestId,ok,result}` or `{schema,requestId,ok:false,error:{code,message}}`. Error codes include `UNSUPPORTED_MODE`, `POLICY_DENIED`, `NOT_FOUND`, `NOT_OWNER`, `LIMIT_EXCEEDED`, `SESSION_EXPIRED` and `INVALID_REQUEST`. Request/reply correlation and timeouts are mandatory.
+
+== Contract 3: tavix.session-context/v1 (proposed)
+
+Each surface is bound in the trusted host to `(account session, installed app identity, exact reviewed digest, instanceId, surfaceId, granted capabilities)`. The surface receives only an opaque bridge handle and non-secret display context. The host checks grant and session validity on every privileged invocation. Server APIs independently authenticate the account and authorize the operation against current LoopRD roles. A detached surface does not receive cookies, unrestricted bearer tokens, filesystem access, service credentials or raw administrative authority.
+
+An application ID, window title, route, URL, user-agent, local preview or self-reported admin flag is never proof of permission. Window duplication, reload and reconnect revalidate identity and grants. On logout, role revocation or app trust revocation, host-mediated privileged operations fail closed across all surfaces.
+
+== Social and TaviX responsibilities
+
+=== Social/Tavi host
+
+* Own workspace persistence per device and account, native-window creation, tablet pane layout, chat surfaces, lifecycle and focus policy.
+* Preserve messenger availability and back navigation.
+* Enforce trusted package identity and host grants before exposing bridge methods.
+* Synchronize conversation surfaces using existing LoopRD messaging authority; avoid duplicating chat state as independent local accounts.
+* Keep approval-gated Asset Studio admin bridge independent of presentation mode.
+
+=== TaviX SDK
+
+* Publish presentation manifest schema and capability negotiation.
+* Provide typed workspace methods, lifecycle events and responsive viewport information.
+* Offer app state checkpoint/restore callbacks with explicit versioning and size limits.
+* Keep host bridge transport consistent across embedded webview and detached native window.
+* Provide graceful fallback when a mode or operation is unsupported.
+
+=== Application authors
+
+* Implement responsive embedded layouts and app-owned internal navigation.
+* Do not replicate host back/menu/chat navigation.
+* Treat surface lifecycle as distinct from game/match/account lifecycle.
+* Store authoritative game, asset, wallet and entitlement state through approved host APIs.
+
+== Persistence proposal
+
+Device-local, per-account presentation preferences and workspace geometry; versioned schema; bounded entries; atomic updates. Do not add these preferences to shared LoopRD account state without a cross-device synchronization requirement and separate review. Server-authoritative conversation identifiers and game state remain in LoopRD. Closing a surface may write a versioned, non-sensitive resume checkpoint; it must not commit or replay privileged actions.
+
+== Acceptance QA matrix
+
+[cols="1,3,3",options="header"]
+|===
+|ID |Scenario |Expected
+|W01 |Open Asset Studio desktop, detach, close, reopen |Last chosen native-window mode restored; state resumes
+|W02 |Run game detached while chatting |Game remains visible and chat usable independently
+|W03 |Explicitly detach two conversations as windows |Distinct surfaces, synchronized messages and unread counts
+|W04 |Tablet split chat/app, resize divider, rotate |Adaptive layout; no lost drafts or unreachable panels
+|W05 |Tablet float multiple chats, reorder/focus, then reduce width |Panel safely rehomes into stack
+|W06 |Phone launch app, navigate internal pages, return to chat |No duplicate Tavi navigation; reliable return path
+|W07 |Close app window during unsaved edit |Checkpoint attempted; view closes; resumable state available
+|W08 |Disconnect desktop monitor, restore workspace |Window bounds clamped onto available display
+|W09 |Copy trusted Asset Studio app ID into ordinary app |No privileged APIs or admin rights
+|W10 |Detach trusted app, attempt admin operation without role |Server denies regardless of presentation
+|W11 |Revoke session/role while multiple windows open |All privileged bridges fail closed; no leaked tokens
+|W12 |Restore window with previous pending publish confirmation |Confirmation not replayed; requires fresh user approval
+|W13 |Try unsupported mode or exceed adaptive window limit |Deterministic fallback/error; no crash
+|W14 |Keyboard, touch, screen-reader, text scaling |All host controls operable and visible
+|W15 |Windows native and Android tablet/phone smoke tests |Consistent host grants and lifecycle behavior
+|W16 |Desktop detach via host menu and drag |Same surface transition, state preserved, no additional grants
+|W17 |Select a conversation normally |Remains in messenger; never opens a native window automatically
+|W18 |Tablet opens multiple floating panels, then memory pressure |Predictable limit/fallback, visible recovery, drafts preserved
+|===
+
+== Implementation sequence and gates
+
+. Review UX prototype for desktop, landscape tablet and phone, including chat/game/Asset Studio scenarios.
+. Approve contract names, typed schemas, capability policy and persistence boundaries.
+. Implement host-only workspace manager and tests, behind a disabled feature flag.
+. Add TaviX SDK capability negotiation and lifecycle bridge; test cross-window identity isolation.
+. Integrate chat surfaces and tablet adaptive layout.
+. Integrate Asset Studio and Atrium using the same contracts.
+. Run automated tests and native Windows/Android operator QA through ZipRunner.
+. Require explicit approval before migration, deployment or publication. Preserve existing configuration and all approval gates.
+
+== Confirmed UX decisions and remaining technical policy
+
+The following are *accepted*: desktop chats detach only on explicit request; both host-menu and drag-to-detach are supported; tablets may display multiple floating panels subject to host-enforced resource limits. These are product decisions, not proof that current native hosts implement the behavior.
+
+The following require technical review before implementation:
+
+* Device-specific surface/panel limits, memory pressure and eviction policy; never discard unsent chat drafts.
+* Exact drag thresholds, touch gestures, accessibility equivalents, focus/z-order and snap behavior.
+* Whether workspace layouts remain device-local initially (recommended) or later gain opt-in synchronization.
+* Crash/restart recovery and checkpoint retention bounds; background tasks must have a separate explicit grant.
+* Native window isolation and authentication transport for Windows and Android-hosted webviews.
+
+== Implementation work packages (planning only)
+
+[cols="1,2,4,2",options="header"]
+|===
+|Work |Owner |Deliverable |Dependency
+|SOC-W01 |Social |Workspace manager: surface registry, ownership, lifecycle, capability policy, feature flag |UX prototype approved
+|SOC-W02 |Social |Desktop window adapter, native focus/resize, drag and menu detach through one transition |SOC-W01
+|SOC-W03 |Social |Chat surfaces: explicit detach, multi-chat sync, drafts, unread state |SOC-W01, messaging service
+|SOC-W04 |Social |Tablet adaptive split, multiple floating panels, safe rehome and recovery |SOC-W01
+|SOC-W05 |Social |Per-account/device layout persistence, checkpoint safety, restore and reset |SOC-W01
+|SOC-W06 |Social |Cross-window trusted bridge and permission isolation, logout/role revocation |SOC-W01, SDK-W02
+|SDK-W01 |TaviX |`tavix.presentation/v1` manifest schema and capability types |Contract approval
+|SDK-W02 |TaviX |Typed `tavi.workspace/v1` request/response bridge, errors and surface-scoped binding |SOC-W01
+|SDK-W03 |TaviX |Lifecycle events, responsive viewport and resumable-state API |SDK-W02
+|SDK-W04 |TaviX |Embedded/native-window transport parity and unsupported-mode fallback |SDK-W02, SOC-W02
+|INT-W01 |Social + TaviX |Asset Studio/Atrium pilot using identical grants in both presentations |SOC-W06, SDK-W04
+|QA-W01 |ZipRunner/operator |Windows desktop and Android tablet/phone UX, security and recovery acceptance |All pilot work
+|===
+
+=== Acceptance increments
+
+. *Contract freeze*: approve schemas, method semantics, permission model, error codes and capability negotiation; no runtime changes.
+. *Host prototype*: disabled-by-default workspace manager with desktop menu and drag detach, and tablet mock surfaces; no production API authority.
+. *SDK pilot*: sample app verifies parity between embedded and detached presentation; deny copied app IDs and cross-surface ownership.
+. *Messenger integration*: explicit multi-chat windows and tablet floating panels, including draft recovery and logout propagation.
+. *Application adoption*: Asset Studio and Atrium consume shared contracts; no app-specific window manager.
+. *Release gate*: ZipRunner source tests, native Windows/Android tests, operator acceptance; independent deployment/publication approval.
+
+=== Non-goals for the first increment
+
+* No cross-device workspace synchronization.
+* No arbitrary OS-level windows on Android.
+* No implicit background execution or auto-detached chat windows.
+* No new wallet, asset publication or administrative privileges.
+
+No code, database migration, publication or deployment is authorized by this specification.

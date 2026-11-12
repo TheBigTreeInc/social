@@ -1,0 +1,38 @@
+= Tavi Store 0.3.174: viewport-aware discovery and install interactions
+:revnumber: 0.3.174
+:revdate: 2026-11-12
+:status: source candidate; native Windows/Android QA and operator acceptance pending
+
+== Objective
+
+Make the unified Tavi Store feel native in the narrow Windows client, on Android phones, and on tablets without altering TaviX/Assets trust boundaries. Tavi remains a messenger first; chat navigation is always host-owned. This pass changes host-owned Store presentation only.
+
+== Behavior
+
+* Top-right manual refresh icon is removed. From the top of the Store listing, drag downward beyond 72 CSS pixels and release to refresh both TaviX and Assets catalogs. A visible pull/release/refresh state appears only during the gesture. Mouse, pen and touch are supported; horizontal gestures, active scrolling, and presses on controls or cards do not trigger a refresh. Refresh never reloads the Tavi shell or signs the user out. An unobtrusive `Refresh catalog` action remains at the bottom for keyboard and desktop users.
+* The Store profile/avatar control has no heavy border/shadow, retains a 44px-equivalent hit target and visible keyboard focus. It continues opening the personal library, not a separate account authentication flow.
+* Four categories use a 4-column adaptive layout so Discover, Apps, Games and Assets fit the 355px Windows viewport without horizontal clipping. Wider viewports use regular chips.
+* Each app/game's icon, name and status form a single accessible details target. Each installed/eligible app has a separate Open, Enable, Install or Update action, chosen from the existing reviewed-app state. Unavailable and unverified apps have no privileged direct action. Direct install still requires the existing TaviX publisher/permission approval dialog.
+* Asset icon/description opens the pack detail page. Only pinned, trusted, free, locally installable packs show a direct Install action, which opens the existing host-owned consent dialogue. Installed packs show Installed. Remote entries with no verified package/price have no purchase or installation action.
+* The main Store does not charge Gold; no paid checkout is introduced. All install/ownership/permission checks remain with TaviX/Tavi Assets and LoopRD.
+
+== Host and SDK ownership
+
+No TaviX manifest schema, SDK import, looprd.yaml service, Tavi Assets endpoint, or Wallet implementation changes. The Store alone coordinates catalog refresh and opens existing controlled installation flows. The visual change is not a reason to expand TaviX window privileges.
+
+== Exact-package checks
+
+* `node --test client/tests/storefront-touch-174.test.mjs client/tests/storefront-170.test.mjs`
+* `npm run verify`, `python tools/generate-looprd.py --check`, bundled extension integrity checks, ZipRunner package preflight.
+* Windows: 355px client; category names all visible, no green profile rim, mouse drag from top refreshes, nested scrolling does not. Click Klondike icon/title -> details; separate Open works. Check installed and not installed apps, approvals and Back behavior.
+* Android: portrait, top-pull at scrollTop=0, dragging from cards/search does not refresh, no accidental reload on ordinary scroll. Screen reader, keyboard, touch targets; dark mode and 320px viewport.
+* Asset: tap Hollow Meadow artwork -> details; Install -> free-pack consent; remote catalog never exposes Install or spend-Gold. Test cancel before install.
+* Exact 0.3.173 operator QA included missing exact-commit CI and stale/failed post-update checks; this source pass does not waive or resolve that evidence. Preserve 239-ticket operator Workboard and status, not just source update deltas.
+
+== Evidence
+
+Author-source tests are not Windows or Android acceptance. Record actual 0.3.174 ZIP SHA and operator approval separately; no Git push, release, deployment or account-data migration is authorized by this document.
+
+== ZipRunner Workboard preservation
+
+The latest operator-indexed Workboard has 239 tickets. The old 0.3.173 source archive contained 184 older Workboard-update rows. To avoid replaying those stale statuses, the 0.3.174 `.ziprunner-workboard-update.json` is a two-ID delta and does not mention any existing ticket. The previous full source update is retained verbatim at `docs/qa/workboard-0.3.173-source-snapshot.json` for comparison; the authoritative 239-ticket operator Workboard is neither copied nor modified. This is source update hygiene, not Workboard approval.

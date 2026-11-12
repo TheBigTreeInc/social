@@ -1,0 +1,59 @@
+= Tavi 0.3.161 — Desktop workspace first implementation pass
+:toc:
+
+== Design authority and limits
+
+* Governing UX: `docs/TAVI_WORKSPACE_001.adoc` revision 0.2.0, decisions confirmed 2026-11-09.
+* This pass implements the first native desktop TaviX application-window path, not full workspace parity.
+* No server, database schema, wallet, Asset Studio publishing grants or release gates change.
+* Existing chat/game windows remain as they were; messenger is always directly accessible.
+
+== Implemented
+
+. Verified, enabled, installed nonlocal TaviX applications may be detached from the embedded application toolbar via explicit `Window` menu or drag grip (threshold 36 CSS pixels). Browser, Android, local developer previews and Companion are embedded on this pass.
+. A Tauri `workspace-*` native WebviewWindow with a resizable local host shell loads the reviewed existing application URL in a `sandbox=allow-scripts` iframe, with no native capability available to iframe code.
+. The main authenticated Tavi process creates a new per-window `createExtensionHost` instance with the SAME permission validators/callbacks as embedded mode, while overriding only window-close behavior and read-only workspace mode. Native message relay validates an ephemeral nonce, destination label, original sandbox iframe, channel and method format. No bearer token or service key is placed in URLs or window payloads.
+. The last selected mode is remembered in device-local storage scoped to LoopRD server + signed-in account + application ID. `Return to Tavi` changes preference to embedded, opens the regular embedded panel and closes detached surface.
+. The current `tavi.extension/v1` SDK wire format is preserved. `host.info.mode` can be `embedded` or `detached`, and an optional `workspace.info()` read-only API reports `tavi.workspace/v1` capabilities. Optional manifest metadata `presentation` uses `tavix.presentation/v1` validation. Legacy manifests default to embedded.
+. Uninstall, source/version/revision change and signout invalidate the detached session on further interaction; signout closes the managed windows.
+
+== Security and explicit tradeoffs
+
+* A detached window is not an elevation of authority. Tauri `workspace-*` capabilities only include minimal core and scoped event listen/emit-to. No direct network SDK, local filesystem or opener commands are added.
+* Existing host consent for sensitive Asset Studio mutations still runs in Tavi, not inside the iframe. Asset Studio server approval allowlist stays empty until operator approval.
+* Browser/Android hosts never create a new Tauri workspace window. TaviX apps continue to use their embedded sandbox.
+* We do not guarantee in-memory iframe state survives detachment; persistence comes from existing permitted app storage/service. A general checkpoint/resume protocol is a subsequent milestone.
+* UI drag is a threshold-based drag-to-detach gesture within the Tavi toolbar; it does NOT yet support desktop OS window drag/undock animations, snapping or movable tablet floating panels.
+* Current detached launcher requires existing verified installed sources. Local `.tavix` native detachment needs a separate secure resource-loading protocol.
+
+== TaviX presentation contract (additive)
+
+[source,json]
+----
+{
+  "schema": "tavix.presentation/v1",
+  "preferred": "detached",
+  "supported": ["embedded", "detached"],
+  "minimumSize": {"width": 420, "height": 480},
+  "preferredSize": {"width": 1000, "height": 720},
+  "responsive": true
+}
+----
+
+All keys are validated and extra permissions are forbidden. The host can ignore an unsupported preference. TaviX standalone packager/registry schema adoption is a separate partner task; older packages are not required to declare presentation.
+
+== First operator acceptance, Windows ZipRunner
+
+. Import the exact 0.3.161 source ZIP to ZipRunner, build a native Windows client and record build result; this Linux environment has not produced or run an NSIS installer.
+. Sign in to the normal LoopRD staging account, open an installed verified TaviX application, verify the `Window` menu → `Open in separate window` action and drag grip both open ONE resizable desktop native window.
+. Leave the application open and send/receive messages in the separate Tavi chat window; no message state or contact list is replaced.
+. Close the separate application window, reopen from the application launcher and verify it recalls the detached mode; check storage/persisted app data remains where that app already stores it.
+. Select `Return to Tavi`; verify an embedded application panel opens and the next launch stays embedded.
+. Sign out with a detached window open; verify it closes and cannot continue authenticated SDK requests. Sign in as a different account; confirm preferences and grants do not transfer.
+. Change/remove the installed app source or version, or revoke it. Verify any pre-existing detached session fails closed and does not follow unreviewed code.
+. Confirm phone/Android still uses its single embedded app viewport, normal Android Back, and main messenger return path.
+. For Asset Studio, verify source ID alone does NOT grant registry administration, and no unsigned or unapproved release can publish, revoke or price packs.
+
+== Highest priority next pass
+
+Physical Windows WebView2 build and the above acceptance first. Then implement a host-owned generalized surface lifecycle/checkpoint contract and tablet split/floating panels, keeping chat-first layout and account-scoped grants. Evaluate app-host navigation separately from app-owned internal tabs.

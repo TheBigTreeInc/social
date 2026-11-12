@@ -1,0 +1,50 @@
+= TAVI_STORE_UNIFIED_DISCOVERY_001 — unified Tavi Store, first implementation pass
+:toc:
+:sectnums:
+
+== Status and scope
+
+Source candidate 0.3.170, based on reviewed 0.3.169. Operator and native Windows/Android acceptance pending. This pass replaces the first-party *App Store* public discovery with *Tavi Store*, aggregating existing TaviX applications/games and Tavi Assets packs in a single client-side view. It does not merge registries, storage, authorities, installers or accounts.
+
+== User experience
+
+* On phone: Tavi Store fits the main viewport, supports Discover, Apps, Games and Assets. A search searches the current category; no duplicate back bars or second storefront scroll region are added.
+* On desktop/tablet: the same screen uses a responsive CSS grid within its available viewport. A separately managed native Store window and tablet floating panels are not part of this pass.
+* Discover has one curated generic introduction and two truthful sections: installed/published TaviX catalog metadata and asset pack metadata. No fabricated ratings, rankings, downloads, testimonials or popularity claims.
+* The top-right account portrait control opens a lightweight *My library* view of installed apps and packs, including an *Updates* filter and links to existing account-scoped app/asset management.
+* *Private & system apps* are reachable only through My library. This first-pass private list contains system IDs, examples and privileged tools; they are never mixed into Discover, Apps or Games.
+* Phone chat remains portrait. Games may choose landscape according to their existing presentation contract. No orientation privilege is added.
+
+== Host-owned boundaries
+
+The Tavi Store is a read-only catalog composition layer (`client/src/ui/storefront.js`). TaviX remains the authority for application metadata and package installation, and Tavi Assets remains the authority for asset packs. Atrium retains game-specific matching, lobby, catalog context and gameplay, not a second installer. The Tavi client renders only validated catalog metadata and never executes remote store markup.
+
+`client/src/main.js` supplies the existing verified TaviX catalog and `assetMarketEntries()` metadata projection. Existing `data-extension-install` approval, source pinning, local package validation, and `data-action="install-free-asset-pack"` with scoped asset approval remain the only installation actions. Remote Assets catalog items are metadata-only until independently approved and integrity checked. No Wallet entitlement changes are authorized.
+
+== System/private classification
+
+The first-pass public classification is conservative: core (`org.tavi.core.*`), first-party examples (`org.tavi.examples.*`), `inc.thebigtree.ziprunner.review` and entries declaring privileged `ziprunner.review` or `assets.registry.admin/v1` are excluded from public discovery. This classification is UI filtering only and **does not** authorize opening/installing, replace TaviX grants, or declare a signed manifest `system` role. TaviX/Assets teams should later define a reviewed cross-system discoverability field instead of extending this heuristic indefinitely.
+
+== Real dynamic discovery — deferred
+
+Trending, community favorites, recommendations and featured ratings require server-side aggregated signals, anti-fraud rules, child-safe moderation, consent and cohort-size privacy safeguards. No fake popularity sections should be shown without these. Phase two expands My library (ownership, downloads, history, updates across devices); phase three adds curated and privacy-preserving ranking.
+
+== Acceptance
+
+. Use ZipRunner to install the exact 0.3.170 source package on Windows, without replacing config or local state.
+. From Apps, open Tavi Store; verify Discover contains both real TaviX entries and free offline asset packs, with no duplicate Assets Store.
+. Switch Apps, Games and Assets and search; verify responsive layout at approx. 320, 355, 390, tablet and desktop widths, with no horizontal overflow.
+. Click the account portrait; verify installed items, Updates, and Private & system apps. Confirm core Wallet, ZipRunner review and privileged tools are absent from public discovery.
+. Install a free bundled asset only after the canonical approval dialog. Install an app only through its existing approval; test cancellation and account switch.
+. Return to Home/chat. No native detached game regression, credential leakage, new permission or surprise installs.
+. Confirm explicit manual publication/Windows/Android/operator gates remain in ZipRunner.
+
+== Source-owned implementation boundaries
+
+* `client/src/ui/storefront.js`: public/private catalog projection and escaped host-owned HTML
+* `client/src/ui/storefront.css`: responsive presentation, Tavi design tokens, accessible hit targets
+* `client/src/ui/asset-market.js`: reuses existing vetted pack projections/cards and explicit approval flow
+* `client/src/main.js`: composes the two catalogs, retains existing TaviX and Assets commands
+* `client/tests/storefront-170.test.mjs`: classification, rendering, escaping, and authority-boundary checks
+
+This pass does not change LoopRD, TaviX repositories, the Tavi Assets service, Atrium, or the SDK ABI.

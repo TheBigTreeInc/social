@@ -1,7 +1,7 @@
 /* Tavi host UI system v2 / source-of-truth styling for all first-party windows.
  * The separate publisher iframe remains unstyled and isolated by design. */
 :root {
-  --tavi-font: 'Segoe UI', Tahoma, system-ui, sans-serif;
+  --tavi-font: 'Segoe UI', Roboto, 'Noto Sans', system-ui, sans-serif;
   --tavi-control-min: 38px;
   --tavi-color-shadow: #11291b20;
   --tavi-color-overlay: #27412f12;

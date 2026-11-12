@@ -1,0 +1,47 @@
+= Tavi desktop application windows and completed-game Gold — incremental contract
+:revnumber: 0.1
+:revdate: 2026-11-09
+:toc:
+
+== User decisions
+
+Tavi remains a messenger first. On a Windows desktop, launching an eligible installed game such as Klondike should default to a separate resizable Tavi-owned application window; the messenger stays available. Users can select *Settings > App windows* to set the default for games and ordinary TaviX applications and override individual apps. These choices belong to the device and authenticated Social account, not to the global online profile. Closing a window must not end a match or destroy authoritative game progress. On mobile, embedded presentation remains the fallback; games may separately request phone landscape while chat stays portrait.
+
+The *App Store* is a first-party host screen, not an ordinary installed third-party TaviX application. A separate App Store window is a required follow-up, not implemented in this source pass. The native host must render a first-party Store shell and broker catalogue queries, install/update confirmation and trusted source management through the main authenticated Tavi process. The child window never receives a Social bearer token or Wallet/registry service keys. A new standalone webview with its own implicit account session is not an acceptable shortcut.
+
+== Source scope — Tavi 0.3.167
+
+* `client/src/extensions/workspace-presentation.js`: device/account-scoped category defaults and per-app overrides. Default: *games = detached*, *ordinary apps = embedded*. Verified manifest support and host capability still take precedence. A user override is saved; merely following a default is not silently promoted into an explicit override.
+* `client/src/ui/settings-view.js`: native desktop App windows settings, without exposing an inert App Store popup toggle. A per-app override can return to *Use device default*.
+* `client/src/extensions/workspace-native-host.js` / `client/src/workspace.js`: a locally installed `.tavix` may open in the same isolated native-window shell after host installation/source/revision verification. The native shell loads only that account's locally validated archive from same-origin IndexedDB. The sandboxed iframe receives package bytes through the existing local renderer, never login credentials or direct native capabilities.
+* No new wallet grant, currency mutation, database schema, App Store native window, or server deployment is in this pass. Desktop/Android native verification remains operator-owned.
+
+== Award baseline after completed game — requested behavior / proposed contract
+
+* A completed game session, rather than merely a victory, earns a **base Gold reward**. Suggest *5 earned Gold* per verified completion as an initial operator-configurable policy. This amount is not activated by these source changes and can be revised before live deployment.
+* The authoritative game engine (Klondike itself for a local offline game only after an independently approved verifiable result protocol; Atrium/LoopRD game authority for hosted/multiplayer games) must attest that the session reached an actual terminal state. Merely closing a window, clicking Finish, JavaScript UI callbacks, extension SDK messages or repeated local save-file edits are not evidence of completion.
+* A trusted game-service component publishes one immutable final result with `(issuer game ID, unique session/completion ID, recipient account ID, final revision/evidence digest, final time)`. IDs must be stable across retries, reload and device changes. Separate authenticated service identity is essential; do not treat an installed TaviX app ID as a service credential.
+* Only an enrolled LoopRD service with `wallet:reward` / authorized `tavi-wallet` component credentials can call the existing authoritative `tavi.wallet-reward/v1` route (legacy Social broker remains during migration). Reward issuance remains fail-closed until configured by the operator through both the existing merchant and reward allowlists, respecting per-event and per-account UTC-day limits. Use a stable `eventId` derived from trusted game session/completion IDs, not a fresh retry UUID.
+* The wallet's existing unique `(merchant,eventId)` receipt key prevents repeated credits for the same completion. Reject a conflicting replay, invalid recipient, invalid result, revoked issuer or unavailable ledger. Store retry status and dedupe in the game-owned outbox, so disconnection cannot produce duplicate awards. Use a separate durable ledger record, never a local balance addition.
+* Free refill Gold remains **play-only**, never spendable in the item shop. Verified earned completion Gold follows the existing wallet's *shopping-eligible* earned class. No real money, cash-out, stakes, wagers or purchase of Gold.
+* The user should see a non-spoofable completion summary in Tavi showing e.g. `Completed · +5 Gold` only after Wallet confirms the authenticated journal receipt. Missing Wallet integration is `Reward pending/unavailable`, not a fake successful payout.
+
+== Cross-project ownership
+
+[cols="1,3",options="header"]
+|===
+|Owner |Required next integration
+|Tavi / Social |Desktop preferences and signed-in native child relay; implement first-party App Store window with install-consent broker; show confirmed wallet receipts
+|TaviX |Publish optional presentation declarations, local-package compatibility, server-side result schema, examples and conformance checks; no `wallet.mint` client SDK
+|Klondike game owner |Define precise completed-state rule, canonical session identity, validated terminal state and server/proof boundary; offline play requires reviewed anti-replay/anti-tamper policy before reward issuance
+|Atrium |Own game classification, multiplayer orchestration/match lifecycle and game-service registration, not Gold balances or client-side rewards
+|LoopRD wallet |Authenticate service-only grant, dedupe receipt, enforce reward caps, issue balanced journal entries and preserve earned-vs-free provenance
+|===
+
+== Operator acceptance
+
+. Windows: open reviewed **remote and locally installed** Klondike; it defaults to a separate window, never replaces main messenger; minimize/close/reopen and return to Tavi work without changing session privileges. Confirm Tauri IndexedDB visibility and CSP in actual WebView2 rather than assuming it from unit tests.
+. Settings: change game/app category defaults and per-app overrides; launch again, clear overrides, switch Social account and verify preferences stay separated. When native detachment is unsupported, fall back to embedded without failure.
+. App Store: separate window is a subsequent task; check present embedded flow and install approvals are unchanged. No generic TaviX grant to the App Store just for presentation.
+. Rewards: staged game authority proves completed state (including unfinished/abandoned/replayed failures); operator-enrolled service issues 5 Gold once, even across retry or restart, using a real wallet receipt; check daily cap and another account's isolation. No live credit until all QA and authorization steps pass.
+. Keep ZipRunner Windows build, Android QA, Workboard decisions, Git/release approval and operator acceptance independent of source tests.

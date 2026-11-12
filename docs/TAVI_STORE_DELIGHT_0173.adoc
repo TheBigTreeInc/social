@@ -1,0 +1,29 @@
+= Tavi Store: approachable visual design, 0.3.173
+:toc:
+
+== Purpose
+
+Keep the messenger-first Tavi experience and its one Store while making discovery welcoming for children and adults. 0.3.172's small buttons, dense metadata tables and subdued cards looked administrative rather than like a modern mobile app store.
+
+== Source implementation
+
+* `client/src/ui/storefront.js`: playful but noncommercial Discover copy and accessible category icons; retains real TaviX and Assets catalogs, library, refresh, search and catalog filters.
+* `client/src/ui/storefront.css`: responsive brighter cards, enlarged verified package icons, tactile touch controls and system-font typography. Reuses host semantic color tokens; respects reduced motion and keyboard focus.
+* `client/src/ui/store-detail.js`: stronger visual product cover, prominent About and installation actions, native HTML `details` for complete publisher/source/version/permissions, and existing safe price states.
+* `client/tests/store-visual-delight-173.test.mjs`: checks real metadata and no invented popularity/media/pricing, preserved guarded install flows and accessible detail structure.
+
+== Windows/Android operator acceptance
+
+. At 355x630 Windows and Android portrait, Store categories, search, action buttons and product icons must be readable, not overflow, and allow returning to Chats with one tap.
+. Verify dark mode, high text contrast, keyboard tab/Enter, touch hit targets, back/scroll and a screen-reader-ready `details` expansion.
+. Open Companion, Klondike and both bundled asset pack details. Confirm publisher/version/permissions are accessible under product information and existing install approvals remain authoritative.
+. Verify missing screenshot and unverified price copy is honest and that remote assets cannot purchase/install without a trusted offer.
+. Check the source build against the *exact ZIP bytes*. Triage the operator's 0.3.172 post-update failures (tests 1, 2, 13, 14, 15, 16, 19) and mismatched prior results; do not count stale checks. Check exact SHA CI evidence before release.
+
+== Architecture and safety
+
+The UI is a presentation-only change. No new components, data flows, LoopRD authority, TaviX permissions, Gold transactions, application schema, product-media URLs, or backend endpoints were introduced. Existing `docs/architecture/tavi-workspace-ui.dsl` component boundaries remain unchanged; parser validation is not claimed.
+
+== Still remaining
+
+Versioned publisher screenshots/media, moderated discovery rankings, My Library ownership/history, and detached first-party Store window remain separate pending work. Preserve manual ZipRunner approval and no-publish gates.

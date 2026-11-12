@@ -2,6 +2,7 @@
 // silently accepting a grant the installed host does not understand.
 import {resolveTavixClassification} from './classification.js';
 import {validateAssetDependencies} from './asset-dependencies.js';
+import {validatePresentation} from './workspace-presentation.js';
 export {resolveTavixClassification} from './classification.js';
 export const HOST_API_VERSION = '1.0.0';
 export const PERMISSIONS = Object.freeze(['ui.panel', 'ui.toast', 'storage.private', 'ziprunner.review', 'assets.read', 'assets.preferences.write', 'assets.registry.admin/v1']);
@@ -19,10 +20,11 @@ export function compareVersions(a,b){
  for(let i=0;i<3;i++){if(x[i]!==y[i])return Math.sign(x[i]-y[i]);}return 0;
 }
 export function validateExtensionManifest(m,hostVersion=HOST_API_VERSION){
- if(!plain(m)||!only(m,['schema','id','version','name','summary','publisher','kind','hostApi','entrypoints','contributions','permissions','platforms','icon','classification','assetDependencies']))throw Error('Invalid manifest fields');
+ if(!plain(m)||!only(m,['schema','id','version','name','summary','publisher','kind','hostApi','entrypoints','contributions','permissions','platforms','icon','classification','assetDependencies','presentation']))throw Error('Invalid manifest fields');
  if(m.schema!=='tavi.extension/v1'||typeof m.id!=='string'||m.id.length>120||!ID.test(m.id)||!VERSION.test(m.version)||typeof m.name!=='string'||!m.name.trim()||m.name.length>60||typeof m.summary!=='string'||!m.summary.trim()||m.summary.length>240||typeof m.publisher!=='string'||!/^[-a-z0-9]{2,64}$/.test(m.publisher)||m.kind!=='app')throw Error('Invalid extension identity');
  resolveTavixClassification(m);
  validateAssetDependencies(m);
+ validatePresentation(m.presentation);
  if(m.icon!==undefined&&(typeof m.icon!=='string'||!ICON.test(m.icon)||m.icon.length>180))throw Error('Invalid extension icon path');
  if(!plain(m.hostApi)||!only(m.hostApi,['min','maxExclusive'])||!VERSION.test(m.hostApi.min)||!VERSION.test(m.hostApi.maxExclusive)||compareVersions(m.hostApi.min,m.hostApi.maxExclusive)>=0)throw Error('Invalid host API range');
  if(!plain(m.entrypoints)||!only(m.entrypoints,['panel'])||typeof m.entrypoints.panel!=='string'||!FILE.test(m.entrypoints.panel))throw Error('Invalid entrypoint');

@@ -70,7 +70,7 @@ test('App Store has compact rows, source-switch consent and host-owned Back with
  assert.match(main,/data-marketplace-filter/);
  assert.match(main,/data-extension-details/);
  assert.match(main,/data-extension-switch-approve/);
- assert.match(main,/if\(state\.panel==='app-store'&&marketplaceSelected\)/);
+ assert.match(main,/if\(state\.panel==='app-store'&&\(marketplaceSelected\|\|marketplaceSelectedAsset\)\)/);
  assert.match(main,/const fresh=await fetchRepository\(TAVIX_REPOSITORY_URL\)/);
  assert.match(main,/store\.install\(next\.manifest/);
  assert.match(css,/min-height:63px/);

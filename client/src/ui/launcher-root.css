@@ -1,0 +1,18 @@
+/* 0.3.172: Apps is one continuous native viewport. No reserved white scrollbar
+   gutter or unpainted area between the app grid and Tavi's bottom navigation. */
+.tavi-root-tab:has(.tavi-menu-panel)>.auxiliary-window,
+.tavi-root-tab:has(.tavi-menu-panel) .aux-content {
+ background:var(--tavi-color-background,#e8f4e5);
+}
+.native-shell .tavi-root-tab:has(.tavi-menu-panel) .aux-content {
+ scrollbar-gutter:auto;
+ scrollbar-width:thin;
+ scrollbar-color:var(--tavi-color-border,#b4d5bd) transparent;
+}
+.tavi-root-tab:has(.tavi-menu-panel) .tavi-menu-panel {
+ box-sizing:border-box;
+ min-height:100%;
+}
+.tavi-root-tab:has(.tavi-menu-panel) .tavi-mobile-tabs {
+ background:var(--tavi-color-background,#e8f4e5);
+}

@@ -15,10 +15,16 @@ export const BUILTIN_APPS=Object.freeze([
   {action:'inbox', label:'Notifications', symbol:'bell', tone:'gold'},
   {action:'companion', label:'Companion', symbol:'paw', tone:'leaf'},
   {action:'portrait', label:'My portrait', symbol:'portrait', tone:'plum'},
-  {action:'app-store', label:'App Store', symbol:'store', tone:'teal'},
+  {action:'app-store', label:'Tavi Store', symbol:'store', tone:'teal'},
   {action:'people-directory', label:'Contacts', symbol:'people', tone:'blue'},
   {action:'settings', label:'Settings', symbol:'settings', tone:'slate'}
 ]);
+/** Apps is an installed-application launcher, not a duplicate of the persistent
+ * Chats and Games navigation. Preserve the builtins for their original routes. */
+const ROOT_NAV_ACTIONS=new Set(['contacts','games']);
+export function drawerApplications(apps){
+ return apps.filter(app=>!(app.kind==='builtin'&&ROOT_NAV_ACTIONS.has(app.action)));
+}
 export const BUNDLED_COMPANION_ID='org.tavi.community.companion';
 export {appGlyph,uiGlyph} from './ui/glyphs.js';
 export function launchableExtensions({catalog,store,platform}){

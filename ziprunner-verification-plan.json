@@ -1,7 +1,7 @@
 {
   "schema": "ziprunner.verification-plan/v1",
   "project": "looprd-social",
-  "version": "0.3.160",
+  "version": "0.3.174",
   "tasks": [
     {
       "id": "TAVI-WALLET-EMBED-089",
@@ -1884,6 +1884,88 @@
           ]
         }
       ]
+    },
+    {
+      "id": "TAVI-UI-UX-162",
+      "criteria": [
+        {
+          "id": "TAVI-UI-UX-162-SOURCE",
+          "description": "Canonical presentation, SDK discovery, accessibility tokens and startup recovery tests",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/tavix-ui-contract-162.test.mjs client/tests/workspace-first-pass-161.test.mjs"
+          ]
+        },
+        {
+          "id": "TAVI-WIN-BLANK-162-NATIVE",
+          "description": "Build and launch exact ZIP in Windows WebView2 and prove messenger renders or collect redacted frontend error",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        },
+        {
+          "id": "TAVI-ANDROID-ORIENTATION-162-NATIVE",
+          "description": "Android phone chat portrait and landscape game; tablet portrait center and landscape left/center, actual device",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-WIN-BLANK-162",
+      "criteria": [
+        {
+          "id": "TAVI-WIN-BLANK-162-DIAGNOSTIC",
+          "description": "Precise, token-safe initial script failure classification from classic pre-module guard",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/windows-startup-diagnostics-163.test.mjs",
+            "node --check client/src/main.js",
+            "node --check client/public/boot-guard.js"
+          ]
+        },
+        {
+          "id": "TAVI-WIN-BLANK-162-OPERATOR",
+          "description": "Exact-package Windows WebView2 inspection and actual messenger startup acceptance",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED",
+            "Open installed native Tavi and confirm login/home renders, not just recovery shell",
+            "On failure capture only client version and sanitized diagnostic line; check native asset/CSP separately"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TAVI-WIN-TDZ-164",
+      "title": "Defer Windows workspace notification binding until after toast initialization",
+      "status": "review",
+      "priority": "critical"
+    },
+    {
+      "id": "TAVI-WORKSPACE-CLOSE-169",
+      "criteria": [
+        {
+          "id": "TAVI-WORKSPACE-CLOSE-169-SOURCE",
+          "description": "Closing the native workspace no longer intercepts CloseRequested; Rust emits a post-destroyed event and main verifies physical absence before cleanup",
+          "mode": "automated",
+          "checks": [
+            "node --test client/tests/workspace-native-close-169.test.mjs client/tests/workspace-close-168.test.mjs client/tests/workspace-first-pass-161.test.mjs",
+            "node --test client/tests/*.test.mjs"
+          ]
+        },
+        {
+          "id": "TAVI-WORKSPACE-CLOSE-169-OPERATOR",
+          "description": "Exact Windows NSIS build with Klondike: Close window, titlebar X, Alt+F4, Return to Tavi, restart/reopen, signout, no token leak",
+          "mode": "manual",
+          "checks": [
+            "OPERATOR-APPROVAL-REQUIRED"
+          ]
+        }
+      ]
     }
   ],
   "checks": [
@@ -2843,6 +2925,40 @@
     {
       "id": "TAVI-ASSETS-STORE-0143-NATIVE",
       "description": "Windows/Android responsive dialog, offline pack persistence and grant review",
+      "mode": "manual",
+      "checks": [
+        "OPERATOR-APPROVAL-REQUIRED"
+      ]
+    },
+    {
+      "id": "TAVI-UI-UX-162-SOURCE",
+      "description": "Public UI-context and startup guard contract",
+      "mode": "automated",
+      "checks": [
+        "node --test client/tests/tavix-ui-contract-162.test.mjs"
+      ]
+    },
+    {
+      "id": "TAVI-WIN-TDZ-164-SOURCE",
+      "description": "Native-only initialization ordering regression",
+      "mode": "automated",
+      "checks": [
+        "node --test client/tests/windows-startup-tdz-164.test.mjs"
+      ]
+    },
+    {
+      "id": "TAVI-STORE-TOUCH-174-SOURCE",
+      "description": "Store interaction and approval source tests",
+      "mode": "automated",
+      "checks": [
+        "node --test client/tests/storefront-touch-174.test.mjs client/tests/storefront-170.test.mjs",
+        "npm run verify",
+        "python tools/generate-looprd.py --check"
+      ]
+    },
+    {
+      "id": "TAVI-STORE-TOUCH-174-NATIVE-QA",
+      "description": "Physical Windows and Android Store interaction acceptance",
       "mode": "manual",
       "checks": [
         "OPERATOR-APPROVAL-REQUIRED"

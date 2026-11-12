@@ -1,0 +1,72 @@
+= Tavi Workspace: Social and TaviX Implementation Breakdown
+:revnumber: 0.1.0
+:revdate: 2026-11-09
+:toc: left
+:sectnums:
+
+[IMPORTANT]
+====
+Planning document only. No code changes, migrations, deploys, releases or permissions are authorized. Source of truth for UX: `TAVI_WORKSPACE_001.adoc` revision 0.2.0.
+====
+
+== Accepted UX baseline
+
+* Desktop application presentation mode remembered per app, account and device.
+* Chat windows detached only on explicit user action.
+* Desktop supports both host-menu detach and drag-to-detach, sharing one permission-checked transition.
+* Tablet uses adaptive split panes and multiple floating panels, with safe resource limits and fallback.
+* Closing a view preserves bounded resumable state but does not grant background execution.
+* Phone remains embedded with reliable one-action return to messaging.
+
+== Social workstream
+
+[cols="1,3,3,3",options="header"]
+|===
+|Ticket |Implementation scope |Acceptance |Dependencies
+|SOC-W01 |Host workspace registry and surface ownership, `workspace.capabilities`, open/present/focus/close/list, feature flag |Cross-app surface operations denied; capability fallback deterministic |Contract freeze
+|SOC-W02 |Windows native window adapter; host-owned drag header and menu detach converge on `surface.present` |Both paths preserve state, restore bounds and never elevate grants |SOC-W01
+|SOC-W03 |Chat as a first-class surface; explicit detach and multi-conversation synchronization |No automatic detach; receipts, drafts, unread counts synchronized |SOC-W01, existing messaging
+|SOC-W04 |Tablet split and floating panel compositor, z-order, safe areas, rehome on rotation/memory pressure |Multiple panels remain recoverable; no lost unsent drafts |SOC-W01
+|SOC-W05 |Versioned per-device/account layout and bounded resume checkpoint storage |Safe restore on monitor change; no privileged confirmation replay |SOC-W01
+|SOC-W06 |Surface-bound authenticated bridge and role/grant revalidation |Logout/revocation blocks every surface; copied app IDs rejected |SOC-W01, SDK-W02
+|===
+
+== TaviX SDK workstream
+
+[cols="1,3,3,3",options="header"]
+|===
+|Ticket |Implementation scope |Acceptance |Dependencies
+|SDK-W01 |Manifest schema for preferred/supported presentation, minimum and preferred sizes, responsive/resumable flags |Manifest validation; unsupported modes rejected or negotiated |Contract freeze
+|SDK-W02 |Typed workspace request/response envelope, capability negotiation, ownership-scoped surface methods |Same errors and semantics across transports |SOC-W01
+|SDK-W03 |Lifecycle events and bounded checkpoint/restore callbacks |Close timeout respected; no tokens in checkpoint |SDK-W02
+|SDK-W04 |Embedded/detached transport adapters, reconnect and fallback |Identical grants in both modes, revalidated after reload |SDK-W02, SOC-W02
+|===
+
+== Shared interface and security constraints
+
+* `tavix.presentation/v1` is an app preference declaration, not a permission.
+* `tavi.workspace/v1` is host-mediated. No TaviX code may directly call unrestricted OS window APIs.
+* `tavix.session-context/v1` binds account session, reviewed package digest, app identity, instance, surface and grants. It is not an exportable credential.
+* `workspace.surface.present` is used for menu and drag; an optional `inputMethod` is diagnostic only and never authorizes.
+* Chat opening in a separate window requires a host-recorded user gesture; app-initiated popups cannot bypass this.
+* All privileged LoopRD/Asset Studio operations remain server-authorized and are independent of presentation.
+* No administrative token, bearer credential, unapproved publish decision or wallet mutation is stored in resume state.
+
+== Integration and acceptance gates
+
+. Review prototype and finalize JSON schemas and exact transport bindings.
+. Implement SOC-W01/SDK-W01/SDK-W02 behind disabled flags and run unit/security tests.
+. Implement SOC-W02/SDK-W03/SDK-W04; verify Windows native window parity.
+. Implement SOC-W03/SOC-W04/SOC-W05 and Android tablet/phone behavior.
+. Run integration pilot with Asset Studio and Atrium without application-specific window management.
+. Verify QA W01-W18 from the parent specification on actual Windows and Android builds.
+. Submit ZipRunner package for operator acceptance; separately approve deployment and publication.
+
+== Outstanding technical choices
+
+* Adaptive surface limits, memory-pressure fallback and retention bounds.
+* Exact drag affordance, snap zones and keyboard accessibility alternatives.
+* Persistence schema and device-local retention/cleanup policy.
+* Native window transport and bridge reconnect implementation.
+
+These are implementation design decisions, not reasons to reopen the accepted UX choices.

@@ -1167,3 +1167,11 @@ html[data-theme='dark'] .tavi-menu-panel .tavi-app-page-tabs button[aria-selecte
 .tavi-games-browser .tavi-installed-game .tavi-game-list-info strong,
 .tavi-games-browser .tavi-installed-game .tavi-game-list-info small{display:block;overflow-wrap:anywhere;}
 .tavi-games-browser .tavi-installed-game .tavi-game-action{flex:none;min-width:58px;}
+
+/* TAVI-WORKSPACE-001: first-pass host-owned detach controls. */
+.tavi-extension-toolbar .tavi-workspace-detach{margin-left:auto;white-space:nowrap;min-height:30px;border-radius:6px;padding:4px 9px;background:#285f47;color:#fff;border:1px solid #347757;cursor:pointer}
+.tavi-extension-toolbar .tavi-workspace-drag{display:inline-flex;align-items:center;justify-content:center;min-width:30px;min-height:30px;border:1px solid #7ca18c;border-radius:5px;cursor:grab;touch-action:none;user-select:none;font-size:21px}
+.tavi-extension-toolbar .tavi-workspace-drag:active{cursor:grabbing}
+.tavi-extension-toolbar .tavi-workspace-drag:focus-visible{outline:2px solid #285f47;outline-offset:2px}
+
+.tavi-workspace-menu{position:relative;margin-left:auto;flex-shrink:0}.tavi-workspace-menu summary{cursor:pointer;border:1px solid #7ca18c;border-radius:5px;padding:5px 9px;list-style:none}.tavi-workspace-menu summary::-webkit-details-marker{display:none}.tavi-workspace-menu-options{position:absolute;right:0;top:100%;z-index:200;background:#e5f3ee;padding:6px;min-width:180px;box-shadow:0 3px 12px #172d2755;border:1px solid #7ca18c;border-radius:5px}.tavi-workspace-menu .tavi-workspace-detach{width:100%;text-align:left}

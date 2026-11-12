@@ -5,7 +5,7 @@
 
 * Replaced Talk/Explore/Your apps category pages with two accessible tabs: Favorites (default on entering Apps) and All (every currently eligible installed launcher entry).
 * Star controls add/remove installed and built-in app shortcuts without calling extension installation, publisher, trust or permission APIs. A signed-in account gets independent on-device preferences keyed by the canonical extension storage scope (server and profile).
-* Default shortcuts: Messages, Notifications, Games and App Store. Empty favorites show a help message; temporary removed/disabled extensions never appear as launchable, but their saved favorite choice is retained for later reinstallation.
+* Original v0.3.125 defaults: Messages, Notifications, Games and App Store. Since 0.3.172 the Apps projection excludes the duplicate Chats/Messages and Games root links, and new default favorites are Notifications, Wallet and Tavi Store; existing account-local preferences are preserved. Empty favorites show a help message; temporary removed/disabled extensions never appear as launchable, but their saved favorite choice is retained for later reinstallation.
 * Tab swipe, keyboard arrows/Home/End, and chosen tab preservation after re-render are supported; entering Apps via bottom navigation always starts at Favorites.
 * Removed the redundant top-right Home icon from focused screens. One visible contextual Back remains; bottom Home navigation and Android Back are still reachable. App Store opened from Apps returns to Apps with Back, while extensions still return to the App Store or Home according to the existing host policy.
 * Fixed App Store icon-only update control text visually overflowing the header. Accessible labels and privacy settings are unchanged.

@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TaviX read-only UI context v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "theme",
+    "device",
+    "orientation",
+    "presentation",
+    "chat",
+    "games",
+    "viewport",
+    "components"
+  ],
+  "properties": {
+    "schema": {
+      "const": "tavix.ui/v1"
+    },
+    "theme": {
+      "enum": [
+        "light",
+        "dark"
+      ]
+    },
+    "device": {
+      "enum": [
+        "phone",
+        "tablet",
+        "desktop"
+      ]
+    },
+    "orientation": {
+      "enum": [
+        "portrait",
+        "landscape"
+      ]
+    },
+    "presentation": {
+      "enum": [
+        "embedded",
+        "native-window"
+      ]
+    },
+    "chat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "orientation",
+        "placement"
+      ],
+      "properties": {
+        "orientation": {
+          "enum": [
+            "portrait",
+            "adaptive"
+          ]
+        },
+        "placement": {
+          "enum": [
+            "center",
+            "left"
+          ]
+        }
+      }
+    },
+    "games": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "orientations"
+      ],
+      "properties": {
+        "orientations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "portrait",
+              "landscape"
+            ]
+          }
+        }
+      }
+    },
+    "viewport": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "width",
+            "height"
+          ],
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      ]
+    },
+    "components": {
+      "const": "tavix.ui-components/v1"
+    }
+  }
+}

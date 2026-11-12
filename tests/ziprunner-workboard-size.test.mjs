@@ -42,9 +42,11 @@ test('every implemented workboard item has 1 to 20 nonempty operator checks', as
     assert.ok(item.operator_checks.every(check => typeof check === 'string' && check.trim()),
       `Empty operator check for ${item.id}`);
   }
-  const review = board.implemented.find(item => item.id === 'TAVI-STORE-110');
+  const previous = JSON.parse(await readFile(new URL('../docs/qa/workboard-0.3.173-source-snapshot.json', import.meta.url), 'utf8'));
+  const review = previous.implemented.find(item => item.id === 'TAVI-STORE-110');
   assert.ok(review, 'Preserve TAVI-STORE-110 workboard item');
   assert.deepEqual(review.operator_checks, review.acceptance_criteria);
+  assert.deepEqual([...board.implemented,...board.remaining].map(item=>item.id).sort(), ['TAVI-STORE-TOUCH-174','TAVI-STORE-TOUCH-174-NATIVE-QA'].sort(), 'Only current new IDs may update local Workboard');
 });
 
 // A previous release shipped a stale workboard version even though the app

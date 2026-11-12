@@ -220,11 +220,16 @@ async function testViewport(browser,base,device){
   await visible(page,'.tavi-app-store');
   assert.equal(await page.locator('[data-extension-install="org.tavi.core.wallet"], [data-extension-remove="org.tavi.core.wallet"], [data-extension-disable="org.tavi.core.wallet"]').count(),0,'Core Wallet must have no install/remove/disable controls');
   assert.equal(await page.locator('.tavi-store-item').filter({hasText:'Core Gold Wallet'}).count(),0,'Core Wallet is not an optional store app');
-  // Repository configuration is now host Settings, never an App Store widget.
+  // Store discovery combines both catalogs and hides internal tools.
+  await visible(page,'.tavi-storefront-asset [data-asset-item]');
+  assert.equal(await page.locator('.tavi-storefront-section [data-extension-install="org.tavi.examples.notepad"]').count(),0,'Internal Notepad must be absent from public discovery');
+  // Repository configuration is still host Settings, reached via the profile library.
   stage='Settings app sources';
   assert.equal(await page.locator('[data-marketplace-manage], #tavi-marketplace-repositories').count(),0,
     'App Store must not duplicate source-management settings');
-  await page.locator('.tavi-marketplace-settings-help [data-action="settings-sources"]').click();
+  await page.locator('.tavi-storefront-profile[data-store-view="library"]').click();
+  await visible(page,'.tavi-storefront-account');
+  await page.locator('.tavi-storefront-library-nav [data-action="settings-sources"]').click();
   await visible(page,'#extension-repository-form input[name="repository"]');
   await visible(page,'.tavi-material-settings[aria-label="App sources"]');
   await noOverflow(page,`${device.name} Settings app sources`);
@@ -234,12 +239,14 @@ async function testViewport(browser,base,device){
   await page.locator('.tavi-material-settings [data-action="app-store"]').click();
   await visible(page,'.tavi-app-store');
   stage='app-store';
-  // App Store can contain Notepad, Companion, and additional extensions.
+  // Private system apps are accessible from the account library, not discovery.
+  await page.locator('.tavi-storefront-profile[data-store-view="library"]').click();
+  await page.locator('[data-store-view="private"]').click();
   // Never wait on an unscoped multi-match locator (Playwright strict mode).
   const notepadInstall=page.locator('[data-extension-install="org.tavi.examples.notepad"]');
   await notepadInstall.waitFor({state:'visible',timeout:6000});
   const notepadCard=page.locator('.tavi-store-item').filter({has:notepadInstall});
-  assert.equal(await notepadCard.count(),1,'Exactly one Private Notepad App Store card expected');
+  assert.equal(await notepadCard.count(),1,'Exactly one Private Notepad card in the private area expected');
   assert.match(await notepadCard.innerText(),/Private Notepad/);
   await noOverflow(page,`${device.name} app store`);
   stage='review extension install';await page.locator('[data-extension-install="org.tavi.examples.notepad"]').click();

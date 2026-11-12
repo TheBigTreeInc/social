@@ -1,0 +1,34 @@
+= Tavi workspace close lifecycle — 0.3.168
+:toc:
+
+== Scope
+
+Correct the verified Windows detached TaviX workspace close defect introduced before 0.3.167. The separate native Klondike window is a host-controlled view, not a new authenticated Social client. The messenger remains available when the view closes.
+
+== Failure and cause
+
+In 0.3.167, `client/src/extensions/workspace-native-host.js` calls `WebviewWindow.close()` from the main authenticated Tavi window, but `client/src-tauri/capabilities/default.json` lacked `core:window:allow-close`. The isolated workspace likewise lacked that permission. Tauri 2 does not grant `close()` under `core:default`. The manager swallowed the failure after deleting its session, so Return to Tavi could embed a second app view while leaving an orphan window visible.
+
+== Corrected behavior
+
+* A trusted main host can invoke the Tauri close command, but cannot call `destroy()` or grant arbitrary native commands to the untrusted TaviX frame.
+* The workspace shell can close its own window through a dedicated Close window button. A native title-bar X or Alt+F4 must also close the view. The inner TaviX game runs in a `sandbox="allow-scripts"` iframe with no native API or token.
+* Close window preserves the per-device preferred detached presentation mode and does not automatically move gameplay back into Tavi. Game progress must be stored by the app according to its existing persistence contract; closing the view cannot guarantee an unsaved in-memory state survives.
+* Return to Tavi changes the stored mode to `embedded` and invokes the host embed callback **only after** native window close succeeded.
+* If close is denied or interrupted, do not prematurely remove the authorized relay or alter stored presentation; show an actionable, sanitized failure message.
+* Account sign-out still attempts to close every tracked detached workspace. All permission checks and update/release approval gates remain unchanged.
+
+== Tests and acceptance
+
+Automated: `node --test client/tests/workspace-close-168.test.mjs client/tests/workspace-first-pass-161.test.mjs client/tests/workspace-device-preferences-167.test.mjs`, full client and server suites, exact-archive checks.
+
+Native operator acceptance on Windows:
+
+. Launch Klondike from Games; verify separate window opens and messenger remains available.
+. Press Close window; verify only Klondike closes; Tavi remains signed in and responsive.
+. Launch Klondike again and press title-bar X; verify it closes without a stuck window. Repeat with Alt+F4.
+. Launch again and press Return to Tavi; verify separate window disappears and Klondike becomes embedded in Tavi.
+. Open a second unrelated TaviX application; verify it cannot close the messenger or another app via the embedded SDK.
+. After sign-out and restart, confirm no orphan child windows, no wallet/account reset and no changed install approval state.
+
+Native Windows result is pending operator verification. Android unaffected; use embedded navigation on phones. Release and publication remain gated.

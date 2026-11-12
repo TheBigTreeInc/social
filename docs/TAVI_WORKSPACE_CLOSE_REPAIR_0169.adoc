@@ -1,0 +1,32 @@
+= Tavi detached Windows view close — 0.3.169 corrective pass
+:toc:
+
+== Operator observation
+
+Windows 0.3.168 opens Klondike outside the messenger but cannot close with the title-bar X or new Close window button. The Close window button becomes disabled and the game persists. This is a FAILED native operator check for 0.3.168; do not mark it accepted.
+
+== Verified root-cause in Tauri 2.9.x API
+
+The main host registered `WebviewWindow.onCloseRequested` solely to clean up its SDK relay. The Tauri 2 JS implementation intercepts the native close request whenever that listener exists, then calls `Window.destroy` from its callback. That action needs `core:window:allow-destroy`, which this project deliberately denies to both main and isolated workspace windows. Adding `allow-close` in 0.3.168 was therefore insufficient and the intercepted close could never finish. See upstream `packages/api/src/window.ts` on Tauri tag `tauri-v2.9.1` and the Tauri `window` manager's native CloseRequested interception.
+
+== Corrective implementation
+
+* The main broker MUST NOT register `onCloseRequested` for workspace windows. X, Alt+F4 and the shell's `Window.close` must be handled natively without a JavaScript close-request handler.
+* The Rust Tauri `Builder.on_window_event` only observes `WindowEvent::Destroyed` for `workspace-` labels with 32 lowercase hexadecimal characters. It emits a label-only `tavi-workspace-native-destroyed` event to the trusted main window; no user content or credentials are transferred.
+* The main client verifies that the reported native window label is actually absent before disposing its isolated TaviX SDK relay. A forged event while the window still exists is ignored.
+* Return to Tavi still closes first, then remembers `embedded` and invokes the main-host embed path. If a close request fails, retain the native view, authenticated relay and preference.
+* The shell Close window button reports `TAVI_WINDOW_CLOSE_STALLED` if the view has not actually disappeared, rather than staying permanently disabled. A rejected IPC close reports `TAVI_WINDOW_CLOSE_DENIED`.
+* Neither main nor workspace capabilities gain `core:window:allow-destroy` or filesystem grants. The sandbox iframe continues to have `allow-scripts` only.
+
+== Operator checks
+
+. Install exact ZIP via ZipRunner on Windows. Verify existing account, settings and source installation are preserved.
+. Launch local Klondike with separate windows configured. Confirm messenger remains available.
+. Click Close window. Only Klondike closes. Relaunch and use X; relaunch and use Alt+F4. All must close without becoming stuck.
+. Relaunch and use Return to Tavi. It must close the separate window and show Klondike embedded, then reopen externally when configured.
+. Verify one active window per app label, no orphan child after signout, no unexpected session credential exposure, no change to saved local app archive or wallet.
+. Run with a second unrelated TaviX app if available. Closing one must not close the other or the main messenger.
+
+== Verification boundary
+
+Linux/Node source tests and ZIP integrity do not prove the native Rust Windows build, Windows event delivery, or WebView2 behavior. Keep native build and operator approval pending until ZipRunner reports exact-package acceptance.

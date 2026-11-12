@@ -188,3 +188,13 @@
  .tavi-home-messenger .tavi-home-group-title,
  .tavi-home-messenger .tavi-home-buddy {min-height:var(--tavi-hit-target-touch);}
 }
+
+/* 0.3.162: Tablet conversation position is host-owned, not a TaviX back header. */
+@media (min-width:600px) and (orientation:portrait) {
+ .android-shell .tavi-contact-focus.tavi-root-tab > .tavi-message-inbox {box-sizing:border-box;max-width:640px;width:100%;margin-inline:auto;}
+ .android-shell .tavi-chat-history,.android-shell .tavi-chat-composer {max-width:720px;margin-inline:auto;}
+}
+@media (min-width:600px) and (orientation:landscape) {
+ .android-shell .tavi-contact-focus.tavi-root-tab > .tavi-message-inbox {box-sizing:border-box;max-width:640px;width:min(55%,640px);margin-inline:0 auto;}
+ .android-shell .tavi-chat-history,.android-shell .tavi-chat-composer {max-width:720px;margin-inline:0 auto;}
+}

@@ -1,0 +1,42 @@
+= TAVI_STORE_PRODUCT_DETAILS_001 — product detail and pre-install transparency
+:toc:
+:sectnums:
+
+== Status
+
+Tavi / looprd-social source candidate 0.3.171, based on 0.3.170. Native Windows and Android acceptance pending; no release or publication authorized.
+
+== User experience
+
+The unified Tavi Store keeps its Discover, Apps, Games, Assets, and private-library surfaces. Selecting *View details* on a TaviX application/game or asset pack navigates to a host-rendered product page. Product detail includes the catalog icon or illustrative asset cover, publisher/source, actual description, version, category/platform information, installed status, requirements and privileges where known, price status, and the existing guarded install/open/update actions. The Store preserves a clear *Back to Store* action and host Back on mobile, without a second scroll region.
+
+The product page cannot invent reviews, popularity, screenshots, licenses, verified publishers, compatibility, Gold prices, entitlements or purchase availability. When publisher screenshots aren't supplied, show that explicitly. Existing bundled asset covers are illustrations, not screenshots of the full pack. Remote asset catalog entries have *Price not verified*, not a guessed Gold amount or a purchase button.
+
+== Security and trust contract
+
+TaviX app installation uses the existing pinned-source, manifest, permission and install-approval path (`data-extension-install`). New product-details UI does not install or enable applications by itself. Asset packs are installed through `install-free-asset-pack` only if the canonical bundled pack is eligible, storage is available, and the existing host approval is accepted. No remote Assets catalog metadata can request installation, Gold debit, Wallet API access or entitlement creation. Paid packs require a **future** canonical server-issued signed or authenticated offer containing accurate product, version, Gold price, payability, account ownership and confirmation; source-only metadata is never payment authority. A separate backend transaction must be idempotent and server-authorized before paid action UI is enabled.
+
+All dynamic fields from TaviX and Assets metadata are escaped on render. TaviX icons are resolved through the existing vetted local package icon loader, not through a publisher-supplied HTML snippet. Private/system apps remain filtered from public discovery and are viewable only in the private library as before.
+
+== Scope boundaries
+
+* `client/src/ui/store-detail.js`: compact trusted-host HTML for apps and assets, no payment APIs.
+* `client/src/ui/storefront.js`: shows a single detail page instead of a catalog grid when selected; asset tiles link to the detail route.
+* `client/src/ui/asset-market.js`: exports existing illustrative cover and enables detail-only asset cards within Tavi Store; older internal asset management retains canonical install actions.
+* `client/src/main.js`: tracks selected app or asset, composes known metadata and routes Back, app and asset detail selection to the same host actions.
+* `client/src/ui/storefront.css`: responsive detail layout on 320–440 px phones and wide desktop viewport, respects Tavi tokens and keyboard focus.
+
+This pass changes neither API schemas nor TaviX, LoopRD, Tavi Assets, Atrium, Wallet or permissions.
+
+== Acceptance criteria
+
+. Open the Store and tap a TaviX application; see its actual name, description, publisher, version, platform list, permissions and source, with no fabricated Gold price or screenshots.
+. Open a game such as Klondike; confirm the detail page fits a phone-size viewport and returns to the prior category through *Back to Store* or host Back. Opening an installed app retains existing host presentation preferences.
+. Open bundled Classic Playing Cards and Hollow Meadow; see a free-pack detail page and install only after the existing separate approval, with per-account device-local storage preserved.
+. Open a remote Assets listing; see *Price not verified*, no Gold debit or buy button, and clear unavailability of a verified package. No local or unverified listing creates an entitlement.
+. Check app/update/installed paths and cancellation; the catalog does not install products directly from its cards. Check private system apps remain out of Discover.
+. Resize a native Windows Store view and test phone and tablet widths, no horizontal overflow, keyboard focus/Back and screen reader labels. Verify all native, ZipRunner and release gates independently.
+
+== Known gaps
+
+Future publisher-supplied screenshot/gallery metadata requires a separate TaviX/Assets versioned contract, file verification and safe media renderer. Paid Gold offers require a canonical Tavi Assets/LoopRD signed offer and Wallet checkout/entitlement integration. Reviews, installs/download figures, favorites and trends remain out of scope without trusted data.

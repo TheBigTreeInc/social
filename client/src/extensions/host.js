@@ -1,4 +1,5 @@
 import {ZIPRUNNER_ID,ZIPRUNNER_PERMISSION,createZipRunnerReview} from './ziprunner-review.js';
+import {UI_FEATURE,uiContext} from './ui-context.js';
 // Requests are served by Tavi, not by the iframe. No account, message, auth,
 // network, native or contact APIs are exposed directly to applications. TaviX
 // navigation is host-owned: apps may request back/close but cannot navigate Tavi.
@@ -15,9 +16,10 @@ const CHANNEL=TAVIX_CHANNEL;
 export const CORE_WALLET_ID='org.tavi.core.wallet';
 const KEY=/^[a-zA-Z0-9._-]{1,80}$/;
 const throttle=()=>({started:Date.now(),count:0});
-export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');},onSurfaceOpen=()=>{throw Error('Game surfaces unavailable');},walletApi=()=>{throw Error('Wallet service unavailable');},onCompanionPreview=()=>{},isReviewedCompanionSession=()=>false,companionApi=()=>{throw Error('Companion server unavailable');},assetDependencyStatus=()=>{throw Error('Asset dependency service unavailable');},isAssetDependencySession=()=>false,assetService=null,assetGrants=()=>null,approveAssetCustomization=()=>false,isTrustedAtriumSession=()=>false,listInstalledGames=()=>[],onInstalledGameOpen=()=>false,isTrustedAssetStudioSession=()=>false,registryAdminReady=()=>false,registryAdminApi=()=>{throw Error('unavailable');},approveRegistryAdmin=()=>false}){
+export function createExtensionHost({windowRef=window,storage,notify,close,onGameLaunch=()=>{throw Error('Game launching unavailable');},onSurfaceOpen=()=>{throw Error('Game surfaces unavailable');},walletApi=()=>{throw Error('Wallet service unavailable');},onCompanionPreview=()=>{},isReviewedCompanionSession=()=>false,companionApi=()=>{throw Error('Companion server unavailable');},assetDependencyStatus=()=>{throw Error('Asset dependency service unavailable');},isAssetDependencySession=()=>false,assetService=null,assetGrants=()=>null,approveAssetCustomization=()=>false,isTrustedAtriumSession=()=>false,listInstalledGames=()=>[],onInstalledGameOpen=()=>false,isTrustedAssetStudioSession=()=>false,registryAdminReady=()=>false,registryAdminApi=()=>{throw Error('unavailable');},approveRegistryAdmin=()=>false,workspaceInfo=()=>({schema:'tavi.workspace/v1',mode:'embedded',supported:['embedded']}),uiInfo=()=>uiContext()}){
  let session=null;const ziprunner=createZipRunnerReview();
  function send(message){session?.frame?.contentWindow?.postMessage({channel:CHANNEL,direction:'response',...message},'*');}
+ function publishUIContext(){if(!session)return false;session.frame.contentWindow.postMessage({channel:CHANNEL,direction:'event',event:'ui.contextChanged',payload:uiInfo(session)},'*');return true;}
  function onMessage(e){
   const current=session;if(!current||e.source!==current.frame.contentWindow||e.origin!=='null')return;
   const request=e.data;
@@ -34,7 +36,9 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
   try{
    let result=null;
    switch(request.method){
-    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:'embedded',navigation:'host',features:['tavix.navigation/v1',...(ziprunnerAllowed?['ziprunner.review/v1']:[]),...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(authorizedAtrium()?[INSTALLED_GAMES_FEATURE]:[]),...(registryAllowed()?[REGISTRY_ADMIN_FEATURE]:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1','tavi.companion.cloud/v1']:[]),...(permissions.has('assets.read')&&isAssetDependencySession({id:current.id,scope:current.scope,source:current.source})?['tavi.assets.dependencies/v1']:[]),'tavix.settings-entry/v1',...(assetsAvailable(assetService,assetSessionGrants())?[ASSETS_FEATURE]:[])],launchContext:current.launchContext};break;
+    case 'host.info': result={standard:TAVIX_STANDARD,channel:TAVIX_CHANNEL,api:'1.0.0',extensionId:current.id,mode:current.mode,navigation:'host',features:[...(current.mode==='detached'?['tavix.presentation/v1']:[]),'tavix.navigation/v1','tavi.workspace/v1',UI_FEATURE,...(ziprunnerAllowed?['ziprunner.review/v1']:[]),...(reviewedAtrium?['atrium.tavi-launch/v1','tavix.surface/v1']:[]),...(authorizedAtrium()?[INSTALLED_GAMES_FEATURE]:[]),...(registryAllowed()?[REGISTRY_ADMIN_FEATURE]:[]),...(isReviewedCompanionSession(current)?['tavi.companion.preview/v1','tavi.companion.cloud/v1']:[]),...(permissions.has('assets.read')&&isAssetDependencySession({id:current.id,scope:current.scope,source:current.source})?['tavi.assets.dependencies/v1']:[]),'tavix.settings-entry/v1',...(assetsAvailable(assetService,assetSessionGrants())?[ASSETS_FEATURE]:[])],launchContext:current.launchContext};break;
+    case 'workspace.info':{result=workspaceInfo(current);break;}
+    case 'ui.info':{result=uiInfo(current);break;}
     case 'ziprunner.importCredential':
     case 'ziprunner.review':
     case 'ziprunner.clear':{
@@ -184,9 +188,10 @@ export function createExtensionHost({windowRef=window,storage,notify,close,onGam
  }
  windowRef.addEventListener('message',onMessage);
  return {
-  mount(frame,{id,permissions,scope,source='tavi:bundled',reviewedBundle=null,revision=null,launchContext='app'}){
+  publishUIContext,
+  mount(frame,{id,permissions,scope,source='tavi:bundled',reviewedBundle=null,revision=null,launchContext='app',mode='embedded'}){
    if(!frame||!scope||typeof id!=='string'||!Array.isArray(permissions))throw Error('Invalid session');
-   ziprunner.clear();session={frame,id,permissions,scope,source,reviewedBundle,revision,launchContext:launchContext==='settings'?'settings':'app',previewCount:0,rate:throttle()};
+   ziprunner.clear();session={frame,id,permissions,scope,source,reviewedBundle,revision,mode:mode==='detached'?'detached':'embedded',launchContext:launchContext==='settings'?'settings':'app',previewCount:0,rate:throttle()};
   },
   unmount(){ziprunner.clear();session=null;},
   dispose(){ziprunner.clear();session=null;windowRef.removeEventListener('message',onMessage);}

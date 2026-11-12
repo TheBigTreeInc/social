@@ -9,12 +9,18 @@ export type MinorUnitAmount = string;
 export interface ResourceCursor { cursor?:string; limit?:number }
 export interface Balance { currencyId: CurrencyId; postedMinor: MinorUnitAmount; availableMinor: MinorUnitAmount; revision:number; cursor:string }
 export interface LedgerReceipt { schema:'tavi.ledger-receipt/v1'; transactionId:string; idempotencyKey:string; currencyId:CurrencyId; amountMinor:MinorUnitAmount; status:'posted'|'rejected'|'pending'; journalRevision:number; eventCursor:string }
-export interface TaviXHostInfo { standard:'tavix/1.0';channel:'tavi.extension/v1';api:string;extensionId:string;mode:'embedded';navigation:'host';features:string[] }
+export interface TaviXHostInfo { standard:'tavix/1.0';channel:'tavi.extension/v1';api:string;extensionId:string;mode:'embedded'|'detached';navigation:'host';features:string[] }
+export type TaviXPresentationMode='embedded'|'native-window'|'split-pane'|'floating-panel';
+export interface TaviXWorkspaceInfo {schema:'tavi.workspace/v1';mode:'embedded'|'detached';supported:('embedded'|'detached')[];presentation?:{schema:'tavix.presentation-capabilities/v1';current:TaviXPresentationMode;supported:TaviXPresentationMode[]}}
+export interface TaviXUIContext {schema:'tavix.ui/v1';theme:'light'|'dark';device:'phone'|'tablet'|'desktop';orientation:'portrait'|'landscape';presentation:'embedded'|'native-window';chat:{orientation:'portrait'|'adaptive';placement:'center'|'left'};games:{orientations:('portrait'|'landscape')[]};viewport:{width:number;height:number}|null;components:'tavix.ui-components/v1'}
 export interface TaviXSurfaceRequest { schema:'tavix.surface/v1';id:string;kind:'application'|'game';target:string;context?:Record<string,unknown>;presentation?:'embedded'|'external'|'auto' }
 export interface TaviXSDK {
   info(): Promise<TaviXHostInfo>;
   conformance():Promise<TaviXHostInfo>;
   capabilities():Promise<string[]>;
+  workspace:{info():Promise<TaviXWorkspaceInfo>};
+  /** Requires tavix.ui/v1 from info().features. */
+  uiContext():Promise<TaviXUIContext>;
   navigation:{back():Promise<void>;close():Promise<void>};
   storage:{get(key:string):Promise<string|null>;set(key:string,value:string):Promise<void>};
   ui:{toast(message:string):Promise<void>;/** compatibility alias; prefer navigation.close */close():Promise<void>;/** Legacy first-party Atrium bridge; not part of TaviX core. */requestGameLaunch(handoff:{schema:'atrium.tavi-launch/v1';gameId:'life.loop';target:string;matchContext:{matchId:string}}):Promise<{awaitingApproval:boolean}>};

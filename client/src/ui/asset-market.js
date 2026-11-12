@@ -29,12 +29,27 @@ export function assetMarketEntries({installedVersions={},onlineEntries=[]}={}){
  return entries.map(e=>({...e,installedVersion:installedVersions[e.id]||null,installable:[BUNDLED_ASSET_ITEM.id,BUNDLED_SCENE_ITEM.id].includes(e.id)&&!installedVersions[e.id]}));
 }
 const cardArt=`<div class="tavi-asset-card-art" aria-hidden="true"><span class="tavi-asset-playing-card"><b>A</b><span>♠</span></span><span class="tavi-asset-playing-card tavi-asset-playing-back"></span></div>`;
-function assetCard(item,ready){
+export function assetArtwork(item){
+ return item.remote?'<div class="tavi-asset-remote-art" aria-hidden="true">✦</div>':item.id===BUNDLED_SCENE_ITEM.id?'<div class="tavi-asset-remote-art" aria-hidden="true">🌿</div>':cardArt;
+}
+export function assetCard(item,ready,{detailOnly=false}={}){
  const installed=item.installedVersion;
+ const price=item.priceGold===0?'Free':item.priceGold===null?'Price unverified':`${item.priceGold} Gold`;
+ if(detailOnly){
+  // Full artwork/title/details hit target; sibling action stays independent.
+  // Only pinned free packs can offer direct install, via the existing host approval.
+  const action=installed?'<span class="tavi-asset-owned">Installed</span>':
+   item.priceGold===0&&item.installable&&ready?`<button type="button" data-action="install-free-asset-pack" data-asset-install-id="${safe(item.id)}" aria-label="Install ${safe(item.title)} free">Install</button>`:
+   item.remote?'<span class="tavi-asset-not-ready">Details</span>':'<span class="tavi-asset-not-ready">Unavailable</span>';
+  return `<article class="tavi-asset-product" data-asset-item data-asset-search="${safe(`${item.title} ${item.description} ${item.category}`.toLowerCase())}" data-asset-category="${safe(item.category)}" data-asset-installed="${!!installed}">
+   <button type="button" class="tavi-asset-card-open" data-asset-details="${safe(item.id)}" aria-label="View details for ${safe(item.title)}">${assetArtwork(item).replace(/<div/g,'<span').replace(/<\/div>/g,'</span>')}
+    <span class="tavi-asset-product-body"><span class="tavi-asset-category">${safe(item.category)}</span><strong class="tavi-asset-card-name">${safe(item.title)}</strong><span class="tavi-asset-card-description">${safe(item.description)}</span></span></button>
+   <div class="tavi-asset-product-foot"><strong>${price}</strong>${action}</div></article>`;
+ }
  return `<article class="tavi-asset-product" data-asset-item data-asset-search="${safe(`${item.title} ${item.description} ${item.category}`.toLowerCase())}" data-asset-category="${safe(item.category)}" data-asset-installed="${!!installed}">
-  ${item.remote?'<div class="tavi-asset-remote-art" aria-hidden="true">✦</div>':item.id===BUNDLED_SCENE_ITEM.id?'<div class="tavi-asset-remote-art" aria-hidden="true">🌿</div>':cardArt}
+  ${assetArtwork(item)}
   <div class="tavi-asset-product-body"><span class="tavi-asset-category">${safe(item.category)}</span><h3>${safe(item.title)}</h3><p>${safe(item.description)}</p><small>${safe(item.source)} · v${safe(item.version||'—')}</small>
-   <div class="tavi-asset-product-foot"><strong>${item.priceGold===0?'Free':item.priceGold===null?'Not for sale':`${item.priceGold} Gold`}</strong>
+   <div class="tavi-asset-product-foot"><strong>${price}</strong>
     ${installed?'<span class="tavi-asset-owned">Installed</span>':item.installable&&ready?`<button type="button" data-action="install-free-asset-pack" data-asset-install-id="${safe(item.id)}">Install</button>`:item.remote?'<span class="tavi-asset-not-ready">Awaiting verified package</span>':'<span class="tavi-asset-not-ready">Unavailable</span>'}</div></div></article>`;
 }
 

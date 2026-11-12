@@ -64,10 +64,12 @@ test('nested entrypoints resolve extension icons relative to each app, never ind
 });
 test('UI announces last checked time, explicit updates, and compact combined presence',async()=>{
  const source=await readFile(new URL('../src/main.js',import.meta.url),'utf8');
+ const storefront=await readFile(new URL('../src/ui/storefront.js',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/style.css',import.meta.url),'utf8');
  assert.match(source,/EXTENSION_CHECK_INTERVAL=15\*60\*1000/);
- assert.match(source,/Check for updates/);
- assert.match(source,/Updated|Update available/);
+ assert.match(storefront,/Refresh catalog/);
+ const details=await readFile(new URL('../src/ui/store-detail.js',import.meta.url),'utf8');
+ assert.match(source+'\n'+details,/Updated|Update available/);
  assert.match(source,/Conversations &amp; contacts/);
  assert.match(source,/tavi-inline-presence/);
  assert.match(css,/\.tavi-roster-merged \.buddy\{min-height:29px/);

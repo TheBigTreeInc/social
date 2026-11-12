@@ -17,4 +17,4 @@ test('extension fills available stage without loosening iframe permissions',()=>
  assert.match(js,/function attachExtensionFrame\(previous\)/);
 });
 
-test('official iframe host declares host-managed navigation',()=>{const host=fs.readFileSync(new URL('../src/extensions/host.js',import.meta.url),'utf8');assert.match(host,/mode:'embedded',navigation:'host'/);});
+test('official iframe host declares host-managed navigation',()=>{const host=fs.readFileSync(new URL('../src/extensions/host.js',import.meta.url),'utf8');assert.match(host,/mode:current.mode,navigation:'host'/);assert.match(host,/mode='embedded'/);});

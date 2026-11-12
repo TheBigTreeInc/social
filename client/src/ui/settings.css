@@ -108,3 +108,11 @@ button.md-settings-row{cursor:pointer;}
 .md-settings-asset-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:5px}
 .md-settings-asset-actions button{padding:8px 12px;border-radius:8px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;min-height:40px}
 .md-settings-asset-actions button:focus-visible{outline:3px solid currentColor}
+
+/* TAVI-WINDOW-PREF-167: native desktop preferences live in trusted host settings only. */
+.md-window-choice{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px 16px;border-bottom:1px solid var(--tavi-border,#d9e5df);font-size:14px}
+.md-window-choice:last-child{border-bottom:0}
+.md-window-choice>span{display:flex;flex-direction:column;gap:3px;min-width:155px}
+.md-window-choice small{font-size:12px;opacity:.75}
+.md-window-choice select{font:inherit;max-width:100%;min-height:44px;padding:7px 12px;border-radius:10px;border:1px solid var(--tavi-border,#bdcfc3);color:inherit;background:var(--tavi-color-surface,#fff)}
+.md-window-choice select:focus-visible{outline:3px solid var(--tavi-color-primary,#237449);outline-offset:2px}

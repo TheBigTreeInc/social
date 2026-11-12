@@ -36,6 +36,6 @@ test('client, Tauri, Cargo, root, ZipRunner metadata versions agree', () => {
 test('LoopRD schema 13 repair has a separate server release and operator gate', () => {
   const server = json('../../server/looprd-release.json').release;
   assert.equal(server, '0.3.126');
-  assert.equal(json('../../ziprunner-manifest.json').release_notes.server_unchanged, false);
+  assert.equal(json('../../ziprunner-manifest.json').release_notes.server_unchanged, true); // Client-only 0.3.161 pass; 0.3.160 did change server release.
   assert.match(json('../../ziprunner-manifest.json').verification_summary.server_deploy, /Not deployed/);
 });

@@ -99,3 +99,42 @@ server route or persistent data schema and preserves existing installed packs,
 versions, app grants and settings. Rollback removes the first-party storefront
 and restores the previous Settings entry without touching user data. Native
 Windows/Android rendering and operator acceptance remain mandatory.
+
+== ADR TAVI-WIN-DIAG-0163 — Native client fail-visible startup classification
+
+=== Context and decision
+
+An operator screenshot of the exact 0.3.162 Windows package shows the 0.3.162 guard's `TAVI_STARTUP_SCRIPT_ERROR` fallback, not the messenger Home. The guard's global captured `error` handler also classified unrelated failed images/icons as a *script* failure, so that code is insufficient evidence of the native cause. Preserve the existing pre-module, credential-free classic bootstrap, but classify module resource failures, runtime exceptions, promise rejections, first-render timeouts, and missing-module timeouts distinctly. The first-party main module marks its execution start and successful first render. Only the safe type, same-origin asset basename and bounded line/column are shown; raw error messages, full URLs, query strings, credentials and stored account state are excluded.
+
+=== Scope, alternatives, rollback and release
+
+This is diagnostic instrumentation, not a fix for the underlying 0.3.161/0.3.162 native startup failure. Avoid WebView2 developer bypasses, storage resets, special dev mode or weaker extension sandbox. An extracted source test can verify classification but cannot prove installed Windows WebView2 behavior. Physical Windows console/network evidence and a successful messenger render remain hard operator gates. Revert the new boot guard and optional progress hook to return to the 0.3.162 generic fallback; no account or server data migration is involved. Governing work: `TAVI-WIN-BLANK-162`.
+
+== ADR TAVI-WIN-TDZ-0164 — Defer desktop workspace notification binding
+
+=== Context
+
+On the installed Windows client 0.3.163 the operator observed `TAVI_STARTUP_RUNTIME_ERROR ReferenceError` in the main application bundle before Tavi rendered. Source review traced a reproducible premature lexical binding to the original 0.3.161 workspace implementation: `createNativeWorkspaceManager` was passed `notify:toast` while the later `const toast` declaration was still in JavaScript's temporal dead zone. This initializer only executes when `nativeDesktop` is true, explaining why desktop behavior differs from mobile. The observed minified bundle coordinate is not source-mapped here, so native causality still requires acceptance.
+
+=== Decision
+
+Bind `notify:message=>toast(message)` instead. The callback closes over the same `toast` variable, but the reference is evaluated only after initialization when a detached-window failure must be displayed. All TaviX sandbox, authorization, lifecycle and server contracts stay unchanged. Do not change UI/UX design tokens, use storage resets, or circumvent native builds to make the issue disappear.
+
+=== Verification and rollback
+
+`client/tests/windows-startup-tdz-164.test.mjs` executes the actual callback expression in a simulated pre-initialization desktop environment and asserts that the message is delivered after the `toast` declaration. The old eager expression throws a `ReferenceError` under the same test. Node source checks do not prove that Windows WebView2 renders; the operator must build/install the exact ZIP and verify messenger Home, session retention, detached workspace and notification. Rollback is a source-only reversion, though the earlier eager binding must not be reintroduced. Governing work: `TAVI-WIN-TDZ-164` (review) and `TAVI-WIN-BLANK-162` (remaining until native acceptance).
+
+== ADR TAVI-WORKSPACE-CLOSE-0168 — Native application close follows Tauri ACL
+
+=== Context and decision
+
+Governing contract: `docs/TAVI_WORKSPACE_CLOSE_REPAIR_0168.adoc`.
+0.3.167 detached TaviX windows were unable to complete Return to Tavi because the main window lacked Tauri `core:window:allow-close`; errors were swallowed after disposing the authenticated relay. Grant only the native close permission to the main broker and isolated workspace shell. Keep the sandboxed TaviX iframe unprivileged; provide Close window in the shell. Only record embedded preference and reattach after successful native close. For a rejected close, retain the relay and preference and display a sanitized error.
+
+=== Alternatives, migration and rollback
+
+Unrestricted `core:window:allow-destroy`, exposing raw Tauri commands to TaviX, forcing process termination, and automatically resetting app state were rejected. The change adds no persistent data schema, new server API, general native permission or credential flow. Reverting the close repair restores the former broken behavior; preserve local preferences and user state. Exact native Windows close/return/Alt+F4 acceptance and operator approval are required separately from JavaScript source tests.
+
+== ADR TAVI-WORKSPACE-CLOSE-0169 — Do not intercept native close for cleanup
+
+Governing corrective specification: `docs/TAVI_WORKSPACE_CLOSE_REPAIR_0169.adoc`. The 0.3.168 `onCloseRequested` listener intercepts Windows native close and requires Tauri `Window.destroy` permission to finish. Remove that listener, keep `allow-destroy` denied, observe only Rust `WindowEvent::Destroyed` for verified workspace labels and ask the main broker to verify native absence before disposing the scoped SDK relay. Windows operator verification is still required before acceptance.

@@ -14,7 +14,7 @@ test('Favorites defaults to useful local apps and All remains complete',()=>{
  const db=storage(),apps=menuApplications({});
  const favorites=readAppFavorites(db,'account-1');
  assert.deepEqual(favorites,DEFAULT_APP_FAVORITES);
- assert.deepEqual(favoriteApplications(apps,favorites).map(x=>x.label),['Messages','Notifications','Games','App Store']);
+ assert.deepEqual(favoriteApplications(apps,favorites).map(x=>x.label),['Notifications','Wallet','Tavi Store']);
  assert.equal(apps.length,9);
  assert.equal(favoritesStorageKey('account-1').includes('account-1'),true);
 });
@@ -91,9 +91,11 @@ test('two tabs support swipe index, click, keyboard and re-render selection',()=
 });
 
 test('App Store icon-only controls have hidden assistive copy without overflow',async()=>{
- const main=await read('../src/main.js'),css=await read('../src/style.css');
- assert.match(main,/data-action="settings-sources"/);
+ const main=await read('../src/main.js'),storefront=await read('../src/ui/storefront.js'),css=await read('../src/style.css');
+ assert.match(storefront,/data-action="settings-sources"/);
  assert.doesNotMatch(main,/data-marketplace-manage/);
- assert.match(main,/class="sr-only">Check for updates/);
+ assert.match(storefront,/data-store-pull-status/);
+ assert.match(storefront,/data-action="store-refresh"/);
+ assert.match(storefront,/aria-label="Open my library and private apps"/);
  assert.match(css,/\.sr-only\{position:absolute!important/);
 });

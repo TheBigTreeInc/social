@@ -1,0 +1,22 @@
+= Tavi 0.3.162 — native blank-window triage
+:revdate: 2026-11-09
+
+== Observed incident
+
+An operator-provided screenshot from the 0.3.161 Windows candidate shows a native Tavi window at roughly 355 x 630 with a uniform pale background, but no rendered messenger. The screenshot alone cannot identify the JavaScript exception, missing asset, CSP denial, bad build or runtime dependency. The pasted ZipRunner report states that the native build passed but the exact-byte post-update results are awaiting verification; operator acceptance was not recorded. This incident is a new high-priority startup regression, not proof of a LoopRD server/login failure.
+
+== Implemented mitigation
+
+A tiny classic script (`client/public/boot-guard.js`) loads before Vite's module entry. If no UI element has appeared after seven seconds, it offers a visible reload button, reports `TAVI_STARTUP_SCRIPT_ERROR` if the browser recorded an error or rejection, or `TAVI_STARTUP_TIMEOUT` if it did not. It does not expose exception text, credentials, logs, sessions or local data, and does not clear any storage. When the normal first render succeeds, the guard is disabled. The existing native window, sign-in and SDK permission logic is unchanged.
+
+== Must verify on Windows before acceptance
+
+. Build the *exact* 0.3.162 ZIP via ZipRunner and launch its native Windows client. Check that sign-in/home renders, not just the background or recovery panel.
+. If recovery appears, capture WebView2 Console/Network in a disposable QA session: first JavaScript exception, failed asset URL/status or Content Security Policy error, renderer startup event, and whether `index.html` loads its `/assets/*.js` module chunk. Redact tokens and account data. Avoid attaching full session storage dumps.
+. Verify a missing or blocked frontend chunk yields a recovery screen rather than permanently blank mint; verify `Reload Tavi` is an actual reload.
+. Repeat with offline, fresh local profile, saved-session restoration, light and dark themes; do not delete existing production device sessions.
+. Run post-update tests against the new ZIP digest, validate user approvals and only then consider the release gate.
+
+== Known limits
+
+This patch *does not claim* to have identified the original WebView2 root cause. A compiled Windows NSIS installer and physical Android binary have not been built in this environment. Recovery should be accepted as a safety improvement, with the underlying blank-window reproduction remaining open pending operator evidence.
